@@ -11,9 +11,7 @@ import Team from "./pages/Team";
 import Financial from "./pages/Financial";
 import Contracts from "./pages/Contracts";
 import Reports from "./pages/Reports";
-import Integrations from "./pages/Integrations";
 import Partners from "./pages/Partners";
-import Brand from "./pages/Brand";
 import Aikortex from "./pages/Aikortex";
 import WebEdit from "./pages/WebEdit";
 import AlowDigital from "./pages/AlowDigital";
@@ -41,9 +39,7 @@ const App = () => (
           <Route path="/financial" element={<Financial />} />
           <Route path="/contracts" element={<Contracts />} />
           <Route path="/reports" element={<Reports />} />
-          <Route path="/integrations" element={<Integrations />} />
           <Route path="/partners" element={<Partners />} />
-          <Route path="/brand" element={<Brand />} />
           <Route path="/aikortex" element={<Aikortex />} />
           <Route path="/webedit" element={<WebEdit />} />
           <Route path="/alowdigital" element={<AlowDigital />} />
