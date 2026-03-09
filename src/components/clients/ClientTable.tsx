@@ -4,16 +4,17 @@ import { Button } from "@/components/ui/button";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Eye } from "lucide-react";
+import { Eye, Pencil } from "lucide-react";
 import { Client, CLIENT_STATUS_CONFIG } from "@/types/client";
 import ClientHealthScore from "./ClientHealthScore";
 
 interface ClientTableProps {
   clients: Client[];
   onSelect: (c: Client) => void;
+  onEdit?: (c: Client) => void;
 }
 
-const ClientTable = ({ clients, onSelect }: ClientTableProps) => (
+const ClientTable = ({ clients, onSelect, onEdit }: ClientTableProps) => (
   <div className="glass-card rounded-lg overflow-hidden">
     <Table>
       <TableHeader>
@@ -24,7 +25,7 @@ const ClientTable = ({ clients, onSelect }: ClientTableProps) => (
           <TableHead className="hidden md:table-cell">Gerente</TableHead>
           <TableHead className="hidden lg:table-cell">Health</TableHead>
           <TableHead className="hidden lg:table-cell">Receita</TableHead>
-          <TableHead className="w-10" />
+          <TableHead className="w-20" />
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -55,9 +56,19 @@ const ClientTable = ({ clients, onSelect }: ClientTableProps) => (
               </TableCell>
               <TableCell className="hidden lg:table-cell text-sm font-medium text-foreground">{client.revenue}</TableCell>
               <TableCell>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <Eye className="w-4 h-4" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={(e) => { e.stopPropagation(); onEdit?.(client); }}
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Eye className="w-4 h-4" />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           );

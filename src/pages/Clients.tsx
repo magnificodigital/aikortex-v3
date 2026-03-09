@@ -12,6 +12,7 @@ import ClientFilters from "@/components/clients/ClientFilters";
 import ClientTable from "@/components/clients/ClientTable";
 import ClientProfileDialog from "@/components/clients/ClientProfileDialog";
 import NewClientDialog from "@/components/clients/NewClientDialog";
+import EditClientDialog from "@/components/clients/EditClientDialog";
 
 const Clients = () => {
   const [search, setSearch] = useState("");
@@ -19,6 +20,7 @@ const Clients = () => {
   const [industryFilter, setIndustryFilter] = useState("all");
   const [managerFilter, setManagerFilter] = useState("all");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [showNewClient, setShowNewClient] = useState(false);
   const [generatedLink, setGeneratedLink] = useState("");
@@ -51,7 +53,6 @@ const Clients = () => {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-7xl space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -83,10 +84,9 @@ const Clients = () => {
           manager={managerFilter} onManagerChange={setManagerFilter}
         />
 
-        <ClientTable clients={filtered} onSelect={setSelectedClient} />
+        <ClientTable clients={filtered} onSelect={setSelectedClient} onEdit={setEditingClient} />
       </div>
 
-      {/* Link Dialog */}
       <Dialog open={showLinkDialog} onOpenChange={setShowLinkDialog}>
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
@@ -104,9 +104,9 @@ const Clients = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Client Profile */}
       <ClientProfileDialog client={selectedClient} onClose={() => setSelectedClient(null)} />
       <NewClientDialog open={showNewClient} onOpenChange={setShowNewClient} />
+      <EditClientDialog client={editingClient} open={!!editingClient} onOpenChange={(open) => { if (!open) setEditingClient(null); }} />
     </DashboardLayout>
   );
 };
