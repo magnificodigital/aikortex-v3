@@ -37,6 +37,9 @@ import {
   Zap,
   DollarSign,
   Eye,
+  Link2,
+  Copy,
+  Check,
 } from "lucide-react";
 
 interface Client {

@@ -19,6 +19,7 @@ import AlowDigital from "./pages/AlowDigital";
 import IAgora from "./pages/IAgora";
 import SintonIA from "./pages/SintonIA";
 import SettingsPage from "./pages/SettingsPage";
+import ClientRegistration from "./pages/ClientRegistration";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
