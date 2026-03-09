@@ -51,6 +51,7 @@ const Projects = () => {
           onSearchChange={setSearch}
           statusFilter={statusFilter}
           onStatusChange={setStatusFilter}
+          onNewProject={() => setShowNewProject(true)}
         />
 
         {/* Views */}
