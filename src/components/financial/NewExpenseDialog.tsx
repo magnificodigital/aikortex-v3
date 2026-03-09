@@ -12,6 +12,7 @@ import { costCenterLabels, CostCenterType, frequencyLabels, PaymentFrequency } f
 interface NewExpenseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSave?: (expense: Omit<import("@/types/financial").Expense, "id">) => void;
 }
 
 const paymentMethods = ["PIX", "Cartão Corporativo", "Boleto", "Transferência", "DARF", "Débito Automático"];
