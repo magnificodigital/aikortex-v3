@@ -94,6 +94,7 @@ const Financial = () => {
             <TabsTrigger value="subscriptions">Assinaturas</TabsTrigger>
             <TabsTrigger value="budget">Orçamento</TabsTrigger>
             <TabsTrigger value="dre">DRE</TabsTrigger>
+            <TabsTrigger value="cost-centers">Centro de Custos</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
