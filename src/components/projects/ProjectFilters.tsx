@@ -20,7 +20,7 @@ const statuses: { value: ProjectStatus | "all"; label: string }[] = [
   { value: "completed", label: "Concluído" },
 ];
 
-const ProjectFilters = ({ search, onSearchChange, statusFilter, onStatusChange }: ProjectFiltersProps) => (
+const ProjectFilters = ({ search, onSearchChange, statusFilter, onStatusChange, onNewProject }: ProjectFiltersProps) => (
   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
     <div className="relative flex-1 w-full sm:max-w-xs">
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
