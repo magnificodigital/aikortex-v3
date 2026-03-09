@@ -20,6 +20,7 @@ const Clients = () => {
   const [managerFilter, setManagerFilter] = useState("all");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showLinkDialog, setShowLinkDialog] = useState(false);
+  const [showNewClient, setShowNewClient] = useState(false);
   const [generatedLink, setGeneratedLink] = useState("");
   const [copied, setCopied] = useState(false);
 
