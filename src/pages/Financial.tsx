@@ -28,6 +28,7 @@ const Financial = () => {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [showNewInvoice, setShowNewInvoice] = useState(false);
   const [showNewExpense, setShowNewExpense] = useState(false);
+  const [showQuickSale, setShowQuickSale] = useState(false);
 
   const filteredInvoices = mockInvoices.filter(i =>
     i.client.toLowerCase().includes(search.toLowerCase()) ||
