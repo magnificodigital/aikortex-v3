@@ -34,7 +34,23 @@ const NewExpenseDialog = ({ open, onOpenChange, onSave }: NewExpenseDialogProps)
       toast({ title: "Preencha os campos obrigatórios", variant: "destructive" });
       return;
     }
-    toast({ title: "Despesa registrada", description: `${description} - R$ ${amount}` });
+    const expenseData = {
+      description,
+      amount: parseFloat(amount),
+      date,
+      costCenter: costCenter as CostCenterType,
+      category,
+      vendor: vendor || undefined,
+      paymentMethod: paymentMethod || undefined,
+      recurring,
+      frequency: recurring ? frequency : undefined,
+      notes: notes || undefined,
+    };
+    if (onSave) {
+      onSave(expenseData);
+    } else {
+      toast({ title: "Despesa registrada", description: `${description} - R$ ${amount}` });
+    }
     onOpenChange(false);
     setDescription(""); setAmount(""); setDate(""); setCostCenter(""); setCategory("");
     setVendor(""); setPaymentMethod(""); setRecurring(false); setNotes("");
