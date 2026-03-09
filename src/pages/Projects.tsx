@@ -90,6 +90,7 @@ const Projects = () => {
           open={!!selected}
           onClose={() => setSelected(null)}
         />
+        <NewProjectDialog open={showNewProject} onOpenChange={setShowNewProject} />
       </div>
     </DashboardLayout>
   );
