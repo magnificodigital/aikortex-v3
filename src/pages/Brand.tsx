@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -102,20 +102,72 @@ const iconMap: Record<string, React.ReactNode> = {
   link: <Link2 className="w-4 h-4" />,
 };
 
+// ─── HELPERS ────────────────────────────────────────
+const STORAGE_KEY = "aihub_brand";
+
+const loadBrand = () => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+};
+
+const hexToHsl = (hex: string): string => {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+  return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+};
+
+const applyColorsToCSS = (c: BrandColors) => {
+  const root = document.documentElement;
+  root.style.setProperty("--primary", hexToHsl(c.primary));
+  root.style.setProperty("--accent", hexToHsl(c.accent));
+  root.style.setProperty("--secondary", hexToHsl(c.secondary));
+  root.style.setProperty("--success", hexToHsl(c.success));
+  root.style.setProperty("--warning", hexToHsl(c.warning));
+};
+
+const fileToBase64 = (file: File): Promise<string> =>
+  new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.readAsDataURL(file);
+  });
+
 // ─── BRAND PAGE ─────────────────────────────────────
 const Brand = () => {
-  const [colors, setColors] = useState<BrandColors>(defaultColors);
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
-  const [agencyName, setAgencyName] = useState("Minha Agência");
-  const [agencySlogan, setAgencySlogan] = useState("Automação & IA para empresas");
-  const [bioLinks, setBioLinks] = useState<BioLink[]>(defaultBioLinks);
-  const [bioTitle, setBioTitle] = useState("Minha Agência");
-  const [bioDescription, setBioDescription] = useState("Especialistas em automação e inteligência artificial");
-  const [sections, setSections] = useState<LandingSection[]>(defaultSections);
+  const saved = loadBrand();
+
+  const [colors, setColors] = useState<BrandColors>(saved?.colors ?? defaultColors);
+  const [logoUrl, setLogoUrl] = useState<string | null>(saved?.logoUrl ?? null);
+  const [faviconUrl, setFaviconUrl] = useState<string | null>(saved?.faviconUrl ?? null);
+  const [agencyName, setAgencyName] = useState(saved?.agencyName ?? "Minha Agência");
+  const [agencySlogan, setAgencySlogan] = useState(saved?.agencySlogan ?? "Automação & IA para empresas");
+  const [bioLinks, setBioLinks] = useState<BioLink[]>(saved?.bioLinks ?? defaultBioLinks);
+  const [bioTitle, setBioTitle] = useState(saved?.bioTitle ?? "Minha Agência");
+  const [bioDescription, setBioDescription] = useState(saved?.bioDescription ?? "Especialistas em automação e inteligência artificial");
+  const [sections, setSections] = useState<LandingSection[]>(saved?.sections ?? defaultSections);
   const [previewTab, setPreviewTab] = useState<"landing" | "bio">("landing");
   const logoInputRef = useRef<HTMLInputElement>(null);
   const faviconInputRef = useRef<HTMLInputElement>(null);
+
+  // Apply saved colors on mount
+  useEffect(() => {
+    if (saved?.colors) applyColorsToCSS(saved.colors);
+  }, []);
 
   // Color handlers
   const updateColor = (key: keyof BrandColors, value: string) => {
@@ -128,19 +180,19 @@ const Brand = () => {
   };
 
   // Logo handlers
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    setLogoUrl(url);
+    const base64 = await fileToBase64(file);
+    setLogoUrl(base64);
     toast({ title: "Logo atualizado" });
   };
 
-  const handleFaviconUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFaviconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    setFaviconUrl(url);
+    const base64 = await fileToBase64(file);
+    setFaviconUrl(base64);
     toast({ title: "Favicon atualizado" });
   };
 
@@ -205,7 +257,10 @@ const Brand = () => {
   };
 
   const saveBrand = () => {
-    toast({ title: "Brand salvo com sucesso", description: "Todas as configurações foram aplicadas." });
+    const data = { colors, logoUrl, faviconUrl, agencyName, agencySlogan, bioLinks, bioTitle, bioDescription, sections };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    applyColorsToCSS(colors);
+    toast({ title: "Brand salvo com sucesso", description: "Todas as configurações foram aplicadas e persistidas." });
   };
 
   return (
