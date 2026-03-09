@@ -34,7 +34,7 @@ const App = () => (
           <Route path="/cadastro-cliente/:token" element={<ClientRegistration />} />
           <Route path="/clients" element={<Clients />} />
           <Route path="/projects" element={<Projects />} />
-          <Route path="/tasks" element={<Tasks />} />
+          <Route path="/tasks" element={<Navigate to="/projects" replace />} />
           <Route path="/team" element={<Team />} />
           <Route path="/financial" element={<Financial />} />
           <Route path="/contracts" element={<Contracts />} />
