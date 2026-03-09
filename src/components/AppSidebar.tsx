@@ -51,6 +51,7 @@ const AppSidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [modulesOpen, setModulesOpen] = useState(true);
   const location = useLocation();
+  const { theme, toggle } = useTheme();
 
   const renderItem = (item: typeof coreItems[0]) => {
     const isActive = location.pathname === item.path;
