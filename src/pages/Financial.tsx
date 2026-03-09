@@ -19,6 +19,7 @@ import TransactionHistory from "@/components/financial/TransactionHistory";
 import ProfitLossView from "@/components/financial/ProfitLossView";
 import AccountsView from "@/components/financial/AccountsView";
 import CostCenterView from "@/components/financial/CostCenterView";
+import QuickSaleDialog from "@/components/financial/QuickSaleDialog";
 import { mockInvoices, Invoice } from "@/types/financial";
 import { toast } from "@/hooks/use-toast";
 
