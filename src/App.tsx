@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Clients from "./pages/Clients";
 import Projects from "./pages/Projects";
-import Tasks from "./pages/Tasks";
+import { Navigate } from "react-router-dom";
 import Team from "./pages/Team";
 import Financial from "./pages/Financial";
 import Contracts from "./pages/Contracts";
