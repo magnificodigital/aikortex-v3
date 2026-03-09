@@ -17,7 +17,7 @@ interface NewExpenseDialogProps {
 
 const paymentMethods = ["PIX", "Cartão Corporativo", "Boleto", "Transferência", "DARF", "Débito Automático"];
 
-const NewExpenseDialog = ({ open, onOpenChange }: NewExpenseDialogProps) => {
+const NewExpenseDialog = ({ open, onOpenChange, onSave }: NewExpenseDialogProps) => {
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState("");
