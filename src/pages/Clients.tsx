@@ -377,6 +377,31 @@ const Clients = () => {
         </div>
       </div>
 
+      <Dialog open={showLinkDialog} onOpenChange={setShowLinkDialog}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Link de Cadastro do Cliente</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <p className="text-sm text-muted-foreground">
+              Envie este link para o cliente preencher o próprio cadastro.
+            </p>
+            <div className="flex items-center gap-2">
+              <Input value={generatedLink} readOnly className="font-mono text-xs" />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={copyToClipboard}
+                aria-label="Copiar link"
+              >
+                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Detail Dialog */}
       <Dialog open={!!selectedClient} onOpenChange={() => setSelectedClient(null)}>
         <DialogContent className="sm:max-w-lg">
