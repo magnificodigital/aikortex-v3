@@ -136,6 +136,10 @@ const Financial = () => {
           <TabsContent value="dre">
             <ProfitLossView />
           </TabsContent>
+
+          <TabsContent value="cost-centers">
+            <CostCenterView />
+          </TabsContent>
         </Tabs>
 
         <InvoiceDetailDialog invoice={selectedInvoice} open={!!selectedInvoice} onOpenChange={(o) => !o && setSelectedInvoice(null)} />
