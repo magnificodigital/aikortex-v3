@@ -1,4 +1,4 @@
-import { Eye, Pencil, Send, Copy } from "lucide-react";
+import { Eye, Pencil, PenLine, Send, Copy } from "lucide-react";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
