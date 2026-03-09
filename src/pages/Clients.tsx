@@ -199,6 +199,20 @@ const Clients = () => {
     .filter((c) => c.status === "active")
     .reduce((sum, c) => sum + parseFloat(c.revenue.replace(/[^\d]/g, "")) / 100, 0);
 
+  const generateLink = () => {
+    const token = crypto.randomUUID();
+    const link = `${window.location.origin}/cadastro-cliente/${token}`;
+    setGeneratedLink(link);
+    setShowLinkDialog(true);
+    setCopied(false);
+  };
+
+  const copyToClipboard = async () => {
+    await navigator.clipboard.writeText(generatedLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-7xl space-y-6">
