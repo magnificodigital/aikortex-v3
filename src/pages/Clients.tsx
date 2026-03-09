@@ -37,6 +37,9 @@ import {
   Zap,
   DollarSign,
   Eye,
+  Link2,
+  Copy,
+  Check,
 } from "lucide-react";
 
 interface Client {
@@ -179,6 +182,9 @@ const Clients = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [showLinkDialog, setShowLinkDialog] = useState(false);
+  const [generatedLink, setGeneratedLink] = useState("");
+  const [copied, setCopied] = useState(false);
 
   const filtered = mockClients.filter((c) => {
     const matchesSearch =
@@ -192,6 +198,20 @@ const Clients = () => {
   const totalRevenue = mockClients
     .filter((c) => c.status === "active")
     .reduce((sum, c) => sum + parseFloat(c.revenue.replace(/[^\d]/g, "")) / 100, 0);
+
+  const generateLink = () => {
+    const token = crypto.randomUUID();
+    const link = `${window.location.origin}/cadastro-cliente/${token}`;
+    setGeneratedLink(link);
+    setShowLinkDialog(true);
+    setCopied(false);
+  };
+
+  const copyToClipboard = async () => {
+    await navigator.clipboard.writeText(generatedLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <DashboardLayout>
@@ -209,10 +229,16 @@ const Clients = () => {
               </p>
             </div>
           </div>
-          <Button className="glow-primary">
-            <Plus className="w-4 h-4" />
-            Novo Cliente
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={generateLink}>
+              <Link2 className="w-4 h-4" />
+              Gerar Link
+            </Button>
+            <Button className="glow-primary">
+              <Plus className="w-4 h-4" />
+              Novo Cliente
+            </Button>
+          </div>
         </div>
 
         {/* Metrics */}
@@ -350,6 +376,31 @@ const Clients = () => {
           </Table>
         </div>
       </div>
+
+      <Dialog open={showLinkDialog} onOpenChange={setShowLinkDialog}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Link de Cadastro do Cliente</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <p className="text-sm text-muted-foreground">
+              Envie este link para o cliente preencher o próprio cadastro.
+            </p>
+            <div className="flex items-center gap-2">
+              <Input value={generatedLink} readOnly className="font-mono text-xs" />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={copyToClipboard}
+                aria-label="Copiar link"
+              >
+                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Detail Dialog */}
       <Dialog open={!!selectedClient} onOpenChange={() => setSelectedClient(null)}>
