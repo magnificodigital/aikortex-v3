@@ -10,6 +10,7 @@ import ContractFilters from "@/components/contracts/ContractFilters";
 import ContractCharts from "@/components/contracts/ContractCharts";
 import NewContractDialog from "@/components/contracts/NewContractDialog";
 import EditContractDialog from "@/components/contracts/EditContractDialog";
+import SignatureDialog from "@/components/contracts/SignatureDialog";
 import { mockContracts, Contract } from "@/types/contract";
 
 const Contracts = () => {
@@ -18,6 +19,7 @@ const Contracts = () => {
   const [typeFilter, setTypeFilter] = useState("all");
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [editingContract, setEditingContract] = useState<Contract | null>(null);
+  const [signingContract, setSigningContract] = useState<Contract | null>(null);
   const [showNew, setShowNew] = useState(false);
 
   const filtered = mockContracts.filter(c => {
@@ -59,7 +61,7 @@ const Contracts = () => {
               statusFilter={statusFilter} onStatusChange={setStatusFilter}
               typeFilter={typeFilter} onTypeChange={setTypeFilter}
             />
-            <ContractTable contracts={filtered} onView={setSelectedContract} onEdit={setEditingContract} />
+            <ContractTable contracts={filtered} onView={setSelectedContract} onEdit={setEditingContract} onSign={setSigningContract} />
           </TabsContent>
 
           <TabsContent value="analytics">
@@ -70,6 +72,7 @@ const Contracts = () => {
         <ContractDetailDialog contract={selectedContract} open={!!selectedContract} onOpenChange={o => !o && setSelectedContract(null)} />
         <EditContractDialog contract={editingContract} open={!!editingContract} onOpenChange={o => !o && setEditingContract(null)} />
         <NewContractDialog open={showNew} onOpenChange={setShowNew} />
+        <SignatureDialog contract={signingContract} open={!!signingContract} onOpenChange={o => !o && setSigningContract(null)} />
       </div>
     </DashboardLayout>
   );

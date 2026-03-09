@@ -1,4 +1,4 @@
-import { Eye, Pencil, Send, Copy } from "lucide-react";
+import { Eye, Pencil, PenLine, Send, Copy } from "lucide-react";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,10 @@ interface ContractTableProps {
   contracts: Contract[];
   onView: (contract: Contract) => void;
   onEdit: (contract: Contract) => void;
+  onSign?: (contract: Contract) => void;
 }
 
-const ContractTable = ({ contracts, onView, onEdit }: ContractTableProps) => (
+const ContractTable = ({ contracts, onView, onEdit, onSign }: ContractTableProps) => (
   <div className="glass-card rounded-xl overflow-hidden">
     <Table>
       <TableHeader>
@@ -54,9 +55,9 @@ const ContractTable = ({ contracts, onView, onEdit }: ContractTableProps) => (
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={e => { e.stopPropagation(); onEdit(c); }}>
                     <Pencil className="w-3.5 h-3.5" />
                   </Button>
-                  {c.status === "draft" && (
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={e => { e.stopPropagation(); toast({ title: "Enviado para assinatura", description: `Contrato ${c.id} enviado para ${c.client}.` }); }}>
-                      <Send className="w-3.5 h-3.5" />
+                  {(c.status === "draft" || c.status === "pending_signature") && onSign && (
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" onClick={e => { e.stopPropagation(); onSign(c); }} title="Assinar">
+                      <PenLine className="w-3.5 h-3.5" />
                     </Button>
                   )}
                 </div>
