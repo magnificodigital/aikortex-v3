@@ -9,6 +9,7 @@ interface ContractTableProps {
   contracts: Contract[];
   onView: (contract: Contract) => void;
   onEdit: (contract: Contract) => void;
+  onSign?: (contract: Contract) => void;
 }
 
 const ContractTable = ({ contracts, onView, onEdit }: ContractTableProps) => (
