@@ -180,19 +180,19 @@ const Brand = () => {
   };
 
   // Logo handlers
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    setLogoUrl(url);
+    const base64 = await fileToBase64(file);
+    setLogoUrl(base64);
     toast({ title: "Logo atualizado" });
   };
 
-  const handleFaviconUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFaviconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    setFaviconUrl(url);
+    const base64 = await fileToBase64(file);
+    setFaviconUrl(base64);
     toast({ title: "Favicon atualizado" });
   };
 
