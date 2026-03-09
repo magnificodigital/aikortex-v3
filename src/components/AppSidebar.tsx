@@ -37,6 +37,7 @@ const coreItems = [
   { label: "Relatórios", icon: BarChart3, path: "/reports" },
   { label: "Integrações", icon: Plug, path: "/integrations" },
   { label: "Partners", icon: Handshake, path: "/partners" },
+  { label: "Brand", icon: Palette, path: "/brand" },
 ];
 
 const moduleItems = [
