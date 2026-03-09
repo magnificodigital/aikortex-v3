@@ -182,6 +182,9 @@ const Clients = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [showLinkDialog, setShowLinkDialog] = useState(false);
+  const [generatedLink, setGeneratedLink] = useState("");
+  const [copied, setCopied] = useState(false);
 
   const filtered = mockClients.filter((c) => {
     const matchesSearch =
