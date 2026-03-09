@@ -13,6 +13,7 @@ import Contracts from "./pages/Contracts";
 import Reports from "./pages/Reports";
 import Integrations from "./pages/Integrations";
 import Partners from "./pages/Partners";
+import Brand from "./pages/Brand";
 import Aikortex from "./pages/Aikortex";
 import WebEdit from "./pages/WebEdit";
 import AlowDigital from "./pages/AlowDigital";
