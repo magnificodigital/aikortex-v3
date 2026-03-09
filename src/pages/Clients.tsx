@@ -11,6 +11,7 @@ import ClientMetrics from "@/components/clients/ClientMetrics";
 import ClientFilters from "@/components/clients/ClientFilters";
 import ClientTable from "@/components/clients/ClientTable";
 import ClientProfileDialog from "@/components/clients/ClientProfileDialog";
+import NewClientDialog from "@/components/clients/NewClientDialog";
 
 const Clients = () => {
   const [search, setSearch] = useState("");
