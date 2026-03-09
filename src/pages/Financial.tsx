@@ -153,6 +153,7 @@ const Financial = () => {
         <InvoiceDetailDialog invoice={selectedInvoice} open={!!selectedInvoice} onOpenChange={(o) => !o && setSelectedInvoice(null)} />
         <NewInvoiceDialog open={showNewInvoice} onOpenChange={setShowNewInvoice} />
         <NewExpenseDialog open={showNewExpense} onOpenChange={setShowNewExpense} />
+        <QuickSaleDialog open={showQuickSale} onOpenChange={setShowQuickSale} />
       </div>
     </DashboardLayout>
   );
