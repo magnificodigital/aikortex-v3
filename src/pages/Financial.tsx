@@ -2,7 +2,7 @@ import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { DollarSign, Plus, Search, Download, FileText, Receipt } from "lucide-react";
+import { DollarSign, Plus, Search, Download, FileText, Receipt, Zap, ShoppingCart } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import FinancialMetrics from "@/components/financial/FinancialMetrics";
@@ -19,6 +19,7 @@ import TransactionHistory from "@/components/financial/TransactionHistory";
 import ProfitLossView from "@/components/financial/ProfitLossView";
 import AccountsView from "@/components/financial/AccountsView";
 import CostCenterView from "@/components/financial/CostCenterView";
+import QuickSaleDialog from "@/components/financial/QuickSaleDialog";
 import { mockInvoices, Invoice } from "@/types/financial";
 import { toast } from "@/hooks/use-toast";
 
@@ -27,6 +28,7 @@ const Financial = () => {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [showNewInvoice, setShowNewInvoice] = useState(false);
   const [showNewExpense, setShowNewExpense] = useState(false);
+  const [showQuickSale, setShowQuickSale] = useState(false);
 
   const filteredInvoices = mockInvoices.filter(i =>
     i.client.toLowerCase().includes(search.toLowerCase()) ||
@@ -47,7 +49,13 @@ const Financial = () => {
               <p className="text-sm text-muted-foreground">Controle financeiro completo da operação</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button variant="outline" size="sm" className="border-destructive/30 text-destructive hover:bg-destructive/10" onClick={() => setShowNewExpense(true)}>
+              <Zap className="w-4 h-4 mr-1" /> Lançar Despesa
+            </Button>
+            <Button variant="outline" size="sm" className="border-[hsl(var(--success))]/30 text-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/10" onClick={() => setShowQuickSale(true)}>
+              <ShoppingCart className="w-4 h-4 mr-1" /> Lançar Venda
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -145,6 +153,7 @@ const Financial = () => {
         <InvoiceDetailDialog invoice={selectedInvoice} open={!!selectedInvoice} onOpenChange={(o) => !o && setSelectedInvoice(null)} />
         <NewInvoiceDialog open={showNewInvoice} onOpenChange={setShowNewInvoice} />
         <NewExpenseDialog open={showNewExpense} onOpenChange={setShowNewExpense} />
+        <QuickSaleDialog open={showQuickSale} onOpenChange={setShowQuickSale} />
       </div>
     </DashboardLayout>
   );
