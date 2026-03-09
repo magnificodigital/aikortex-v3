@@ -18,6 +18,7 @@ import BudgetTracker from "@/components/financial/BudgetTracker";
 import TransactionHistory from "@/components/financial/TransactionHistory";
 import ProfitLossView from "@/components/financial/ProfitLossView";
 import AccountsView from "@/components/financial/AccountsView";
+import CostCenterView from "@/components/financial/CostCenterView";
 import { mockInvoices, Invoice } from "@/types/financial";
 import { toast } from "@/hooks/use-toast";
 
@@ -93,6 +94,7 @@ const Financial = () => {
             <TabsTrigger value="subscriptions">Assinaturas</TabsTrigger>
             <TabsTrigger value="budget">Orçamento</TabsTrigger>
             <TabsTrigger value="dre">DRE</TabsTrigger>
+            <TabsTrigger value="cost-centers">Centro de Custos</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
@@ -133,6 +135,10 @@ const Financial = () => {
 
           <TabsContent value="dre">
             <ProfitLossView />
+          </TabsContent>
+
+          <TabsContent value="cost-centers">
+            <CostCenterView />
           </TabsContent>
         </Tabs>
 
