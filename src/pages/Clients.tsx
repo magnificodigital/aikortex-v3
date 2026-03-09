@@ -67,7 +67,7 @@ const Clients = () => {
               <Link2 className="w-4 h-4" />
               Gerar Link
             </Button>
-            <Button className="glow-primary">
+            <Button className="glow-primary" onClick={() => setShowNewClient(true)}>
               <Plus className="w-4 h-4" />
               Novo Cliente
             </Button>
