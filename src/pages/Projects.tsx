@@ -16,6 +16,7 @@ const Projects = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "all">("all");
   const [selected, setSelected] = useState<Project | null>(null);
+  const [showNewProject, setShowNewProject] = useState(false);
 
   const filtered = useMemo(() => {
     return mockProjects.filter((p) => {
