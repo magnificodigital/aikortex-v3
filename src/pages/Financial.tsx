@@ -2,7 +2,7 @@ import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { DollarSign, Plus, Search, Download, FileText, Receipt } from "lucide-react";
+import { DollarSign, Plus, Search, Download, FileText, Receipt, Zap, ShoppingCart } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import FinancialMetrics from "@/components/financial/FinancialMetrics";
