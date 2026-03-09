@@ -41,9 +41,7 @@ const App = () => (
           <Route path="/financial" element={<Financial />} />
           <Route path="/contracts" element={<Contracts />} />
           <Route path="/reports" element={<Reports />} />
-          <Route path="/integrations" element={<Integrations />} />
           <Route path="/partners" element={<Partners />} />
-          <Route path="/brand" element={<Brand />} />
           <Route path="/aikortex" element={<Aikortex />} />
           <Route path="/webedit" element={<WebEdit />} />
           <Route path="/alowdigital" element={<AlowDigital />} />
