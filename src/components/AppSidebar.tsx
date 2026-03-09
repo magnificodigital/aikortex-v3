@@ -119,6 +119,19 @@ const AppSidebar = () => {
         {renderItem({ label: "Configurações", icon: Settings, path: "/settings" })}
 
         <button
+          onClick={toggle}
+          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors w-full"
+          title={theme === "dark" ? "Modo claro" : "Modo escuro"}
+        >
+          {theme === "dark" ? (
+            <Sun className="w-4 h-4 shrink-0" />
+          ) : (
+            <Moon className="w-4 h-4 shrink-0" />
+          )}
+          {!collapsed && <span>{theme === "dark" ? "Modo claro" : "Modo escuro"}</span>}
+        </button>
+
+        <button
           onClick={() => setCollapsed(!collapsed)}
           className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors w-full"
         >
