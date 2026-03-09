@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,18 +6,18 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "@/hooks/use-toast";
-import { costCenterLabels, CostCenterType, frequencyLabels, PaymentFrequency } from "@/types/financial";
+import { Expense, costCenterLabels, CostCenterType, frequencyLabels, PaymentFrequency } from "@/types/financial";
 
-interface NewExpenseDialogProps {
+interface EditExpenseDialogProps {
+  expense: Expense | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave?: (expense: Omit<import("@/types/financial").Expense, "id">) => void;
+  onSave: (expense: Expense) => void;
 }
 
 const paymentMethods = ["PIX", "Cartão Corporativo", "Boleto", "Transferência", "DARF", "Débito Automático"];
 
-const NewExpenseDialog = ({ open, onOpenChange, onSave }: NewExpenseDialogProps) => {
+const EditExpenseDialog = ({ expense, open, onOpenChange, onSave }: EditExpenseDialogProps) => {
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState("");
@@ -29,12 +29,25 @@ const NewExpenseDialog = ({ open, onOpenChange, onSave }: NewExpenseDialogProps)
   const [frequency, setFrequency] = useState<PaymentFrequency>("monthly");
   const [notes, setNotes] = useState("");
 
-  const handleSubmit = () => {
-    if (!description || !amount || !date || !costCenter) {
-      toast({ title: "Preencha os campos obrigatórios", variant: "destructive" });
-      return;
+  useEffect(() => {
+    if (expense) {
+      setDescription(expense.description);
+      setAmount(String(expense.amount));
+      setDate(expense.date);
+      setCostCenter(expense.costCenter);
+      setCategory(expense.category);
+      setVendor(expense.vendor || "");
+      setPaymentMethod(expense.paymentMethod || "");
+      setRecurring(expense.recurring);
+      setFrequency(expense.frequency || "monthly");
+      setNotes(expense.notes || "");
     }
-    const expenseData = {
+  }, [expense]);
+
+  const handleSubmit = () => {
+    if (!expense || !description || !amount || !date || !costCenter) return;
+    onSave({
+      ...expense,
       description,
       amount: parseFloat(amount),
       date,
@@ -45,32 +58,25 @@ const NewExpenseDialog = ({ open, onOpenChange, onSave }: NewExpenseDialogProps)
       recurring,
       frequency: recurring ? frequency : undefined,
       notes: notes || undefined,
-    };
-    if (onSave) {
-      onSave(expenseData);
-    } else {
-      toast({ title: "Despesa registrada", description: `${description} - R$ ${amount}` });
-    }
+    });
     onOpenChange(false);
-    setDescription(""); setAmount(""); setDate(""); setCostCenter(""); setCategory("");
-    setVendor(""); setPaymentMethod(""); setRecurring(false); setNotes("");
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Nova Despesa</DialogTitle>
+          <DialogTitle>Editar Despesa</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
           <div>
             <Label className="text-xs">Descrição *</Label>
-            <Input value={description} onChange={e => setDescription(e.target.value)} placeholder="Ex: Servidor Cloud AWS" />
+            <Input value={description} onChange={e => setDescription(e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs">Valor (R$) *</Label>
-              <Input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0,00" />
+              <Input type="number" value={amount} onChange={e => setAmount(e.target.value)} />
             </div>
             <div>
               <Label className="text-xs">Data *</Label>
@@ -91,13 +97,13 @@ const NewExpenseDialog = ({ open, onOpenChange, onSave }: NewExpenseDialogProps)
             </div>
             <div>
               <Label className="text-xs">Categoria</Label>
-              <Input value={category} onChange={e => setCategory(e.target.value)} placeholder="Ex: Software" />
+              <Input value={category} onChange={e => setCategory(e.target.value)} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs">Fornecedor</Label>
-              <Input value={vendor} onChange={e => setVendor(e.target.value)} placeholder="Ex: AWS" />
+              <Input value={vendor} onChange={e => setVendor(e.target.value)} />
             </div>
             <div>
               <Label className="text-xs">Forma de Pagamento</Label>
@@ -131,16 +137,16 @@ const NewExpenseDialog = ({ open, onOpenChange, onSave }: NewExpenseDialogProps)
           )}
           <div>
             <Label className="text-xs">Observações</Label>
-            <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notas adicionais..." rows={2} />
+            <Textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} />
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleSubmit}>Registrar Despesa</Button>
+          <Button onClick={handleSubmit}>Salvar Alterações</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 };
 
-export default NewExpenseDialog;
+export default EditExpenseDialog;
