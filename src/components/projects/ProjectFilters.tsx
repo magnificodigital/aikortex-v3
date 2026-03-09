@@ -9,6 +9,7 @@ interface ProjectFiltersProps {
   onSearchChange: (val: string) => void;
   statusFilter: ProjectStatus | "all";
   onStatusChange: (val: ProjectStatus | "all") => void;
+  onNewProject?: () => void;
 }
 
 const statuses: { value: ProjectStatus | "all"; label: string }[] = [
