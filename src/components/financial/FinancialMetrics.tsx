@@ -1,16 +1,24 @@
-import { DollarSign, TrendingUp, Clock, AlertTriangle } from "lucide-react";
-import { mockInvoices, mockRevenue, mockSubscriptions, mockExpenses } from "@/types/financial";
+import { DollarSign, TrendingUp, Clock, AlertTriangle, Wallet, PiggyBank, CreditCard, BarChart3 } from "lucide-react";
+import { mockInvoices, mockSubscriptions, mockExpenses, mockBankAccounts, mockAccountsReceivable, mockAccountsPayable } from "@/types/financial";
 
 const FinancialMetrics = () => {
   const totalPaid = mockInvoices.filter(i => i.status === "paid").reduce((s, i) => s + i.amount, 0);
   const totalPending = mockInvoices.filter(i => i.status === "pending").reduce((s, i) => s + i.amount, 0);
   const totalOverdue = mockInvoices.filter(i => i.status === "overdue").reduce((s, i) => s + i.amount, 0);
   const mrr = mockSubscriptions.filter(s => s.status === "active" && s.frequency === "monthly").reduce((s, sub) => s + sub.amount, 0);
+  const totalExpenses = mockExpenses.reduce((s, e) => s + e.amount, 0);
+  const totalBalance = mockBankAccounts.reduce((s, a) => s + a.balance, 0);
+  const totalReceivable = mockAccountsReceivable.reduce((s, a) => s + a.amount, 0);
+  const totalPayable = mockAccountsPayable.reduce((s, a) => s + a.amount, 0);
 
   const metrics = [
     { label: "MRR", value: `R$ ${(mrr / 1000).toFixed(1)}k`, sub: "+18% vs mês anterior", icon: TrendingUp, accent: "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]" },
-    { label: "Receita Total", value: `R$ ${((totalPaid + totalPending) / 1000).toFixed(1)}k`, sub: "este mês", icon: DollarSign, accent: "bg-primary/10 text-primary" },
-    { label: "Pendente", value: `R$ ${(totalPending / 1000).toFixed(1)}k`, sub: `${mockInvoices.filter(i => i.status === "pending").length} faturas`, icon: Clock, accent: "bg-[hsl(var(--warning))]/10 text-[hsl(var(--warning))]" },
+    { label: "Saldo Total", value: `R$ ${(totalBalance / 1000).toFixed(0)}k`, sub: "Todas as contas", icon: Wallet, accent: "bg-primary/10 text-primary" },
+    { label: "Receita Realizada", value: `R$ ${(totalPaid / 1000).toFixed(1)}k`, sub: "este mês", icon: DollarSign, accent: "bg-primary/10 text-primary" },
+    { label: "Despesas", value: `R$ ${(totalExpenses / 1000).toFixed(1)}k`, sub: `Margem: ${((1 - totalExpenses / (totalPaid || 1)) * 100).toFixed(0)}%`, icon: CreditCard, accent: "bg-destructive/10 text-destructive" },
+    { label: "A Receber", value: `R$ ${(totalReceivable / 1000).toFixed(1)}k`, sub: `${mockAccountsReceivable.length} títulos`, icon: Clock, accent: "bg-[hsl(var(--warning))]/10 text-[hsl(var(--warning))]" },
+    { label: "A Pagar", value: `R$ ${(totalPayable / 1000).toFixed(1)}k`, sub: `${mockAccountsPayable.length} títulos`, icon: BarChart3, accent: "bg-destructive/10 text-destructive" },
+    { label: "Pendente", value: `R$ ${(totalPending / 1000).toFixed(1)}k`, sub: `${mockInvoices.filter(i => i.status === "pending").length} faturas`, icon: PiggyBank, accent: "bg-[hsl(var(--warning))]/10 text-[hsl(var(--warning))]" },
     { label: "Atrasado", value: `R$ ${(totalOverdue / 1000).toFixed(1)}k`, sub: `${mockInvoices.filter(i => i.status === "overdue").length} faturas`, icon: AlertTriangle, accent: "bg-destructive/10 text-destructive" },
   ];
 
