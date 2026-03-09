@@ -28,8 +28,7 @@ import { useTheme } from "@/hooks/use-theme";
 const coreItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/" },
   { label: "Clientes", icon: Users, path: "/clients" },
-  { label: "Projetos", icon: FolderKanban, path: "/projects" },
-  { label: "Tarefas", icon: CheckSquare, path: "/tasks" },
+  { label: "Projetos & Tarefas", icon: FolderKanban, path: "/projects" },
   { label: "Equipe", icon: UsersRound, path: "/team" },
   { label: "Financeiro", icon: DollarSign, path: "/financial" },
   { label: "Contratos", icon: FileText, path: "/contracts" },
