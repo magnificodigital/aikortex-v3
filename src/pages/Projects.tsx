@@ -10,11 +10,13 @@ import ProjectList from "@/components/projects/ProjectList";
 import ProjectCalendar from "@/components/projects/ProjectCalendar";
 import ProjectTimeline from "@/components/projects/ProjectTimeline";
 import ProjectDetailDialog from "@/components/projects/ProjectDetailDialog";
+import NewProjectDialog from "@/components/projects/NewProjectDialog";
 
 const Projects = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "all">("all");
   const [selected, setSelected] = useState<Project | null>(null);
+  const [showNewProject, setShowNewProject] = useState(false);
 
   const filtered = useMemo(() => {
     return mockProjects.filter((p) => {
@@ -49,6 +51,7 @@ const Projects = () => {
           onSearchChange={setSearch}
           statusFilter={statusFilter}
           onStatusChange={setStatusFilter}
+          onNewProject={() => setShowNewProject(true)}
         />
 
         {/* Views */}
@@ -87,6 +90,7 @@ const Projects = () => {
           open={!!selected}
           onClose={() => setSelected(null)}
         />
+        <NewProjectDialog open={showNewProject} onOpenChange={setShowNewProject} />
       </div>
     </DashboardLayout>
   );

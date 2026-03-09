@@ -11,6 +11,7 @@ import ClientMetrics from "@/components/clients/ClientMetrics";
 import ClientFilters from "@/components/clients/ClientFilters";
 import ClientTable from "@/components/clients/ClientTable";
 import ClientProfileDialog from "@/components/clients/ClientProfileDialog";
+import NewClientDialog from "@/components/clients/NewClientDialog";
 
 const Clients = () => {
   const [search, setSearch] = useState("");
@@ -19,6 +20,7 @@ const Clients = () => {
   const [managerFilter, setManagerFilter] = useState("all");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showLinkDialog, setShowLinkDialog] = useState(false);
+  const [showNewClient, setShowNewClient] = useState(false);
   const [generatedLink, setGeneratedLink] = useState("");
   const [copied, setCopied] = useState(false);
 
@@ -65,7 +67,7 @@ const Clients = () => {
               <Link2 className="w-4 h-4" />
               Gerar Link
             </Button>
-            <Button className="glow-primary">
+            <Button className="glow-primary" onClick={() => setShowNewClient(true)}>
               <Plus className="w-4 h-4" />
               Novo Cliente
             </Button>
@@ -104,6 +106,7 @@ const Clients = () => {
 
       {/* Client Profile */}
       <ClientProfileDialog client={selectedClient} onClose={() => setSelectedClient(null)} />
+      <NewClientDialog open={showNewClient} onOpenChange={setShowNewClient} />
     </DashboardLayout>
   );
 };
