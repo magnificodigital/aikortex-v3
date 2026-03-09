@@ -229,10 +229,16 @@ const Clients = () => {
               </p>
             </div>
           </div>
-          <Button className="glow-primary">
-            <Plus className="w-4 h-4" />
-            Novo Cliente
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={generateLink}>
+              <Link2 className="w-4 h-4" />
+              Gerar Link
+            </Button>
+            <Button className="glow-primary">
+              <Plus className="w-4 h-4" />
+              Novo Cliente
+            </Button>
+          </div>
         </div>
 
         {/* Metrics */}
