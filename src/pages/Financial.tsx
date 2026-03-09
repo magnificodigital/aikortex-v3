@@ -49,7 +49,13 @@ const Financial = () => {
               <p className="text-sm text-muted-foreground">Controle financeiro completo da operação</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button variant="outline" size="sm" className="border-destructive/30 text-destructive hover:bg-destructive/10" onClick={() => setShowNewExpense(true)}>
+              <Zap className="w-4 h-4 mr-1" /> Lançar Despesa
+            </Button>
+            <Button variant="outline" size="sm" className="border-[hsl(var(--success))]/30 text-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/10" onClick={() => setShowQuickSale(true)}>
+              <ShoppingCart className="w-4 h-4 mr-1" /> Lançar Venda
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
