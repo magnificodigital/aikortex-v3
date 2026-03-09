@@ -106,6 +106,7 @@ const Clients = () => {
 
       {/* Client Profile */}
       <ClientProfileDialog client={selectedClient} onClose={() => setSelectedClient(null)} />
+      <NewClientDialog open={showNewClient} onOpenChange={setShowNewClient} />
     </DashboardLayout>
   );
 };

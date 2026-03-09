@@ -10,6 +10,7 @@ import ProjectList from "@/components/projects/ProjectList";
 import ProjectCalendar from "@/components/projects/ProjectCalendar";
 import ProjectTimeline from "@/components/projects/ProjectTimeline";
 import ProjectDetailDialog from "@/components/projects/ProjectDetailDialog";
+import NewProjectDialog from "@/components/projects/NewProjectDialog";
 
 const Projects = () => {
   const [search, setSearch] = useState("");
