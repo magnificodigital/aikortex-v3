@@ -46,7 +46,7 @@ const ProjectFilters = ({ search, onSearchChange, statusFilter, onStatusChange, 
         </button>
       ))}
     </div>
-    <Button size="sm" className="ml-auto gap-1.5">
+    <Button size="sm" className="ml-auto gap-1.5" onClick={onNewProject}>
       <Plus className="w-4 h-4" />
       Novo Projeto
     </Button>
