@@ -21,7 +21,10 @@ import {
   ChevronRight,
   ChevronDown,
   Zap,
+  Sun,
+  Moon,
 } from "lucide-react";
+import { useTheme } from "@/hooks/use-theme";
 
 const coreItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/" },
