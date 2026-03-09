@@ -1,6 +1,6 @@
 import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
-import { BarChart3, Users, FolderKanban, DollarSign, FileText, UsersRound, Download } from "lucide-react";
+import { BarChart3, Users, FolderKanban, DollarSign, FileText, UsersRound, Download, Clock, Wand2, Handshake } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,9 +10,14 @@ import ProjectTaskCharts from "@/components/reports/ProjectTaskCharts";
 import TeamPerformanceCharts from "@/components/reports/TeamPerformanceCharts";
 import ClientReports from "@/components/reports/ClientReports";
 import ContractReports from "@/components/reports/ContractReports";
+import PartnerReports from "@/components/reports/PartnerReports";
+import CustomReportBuilder from "@/components/reports/CustomReportBuilder";
+import { ExportDialog, ScheduleDialog } from "@/components/reports/ReportExportSchedule";
 
 const Reports = () => {
   const [period, setPeriod] = useState("6m");
+  const [exportOpen, setExportOpen] = useState(false);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
 
   return (
     <DashboardLayout>
@@ -40,7 +45,11 @@ const Reports = () => {
                 <SelectItem value="12m">Último ano</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" size="sm" className="gap-1.5">
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setScheduleOpen(true)}>
+              <Clock className="w-3.5 h-3.5" />
+              Agendar
+            </Button>
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setExportOpen(true)}>
               <Download className="w-3.5 h-3.5" />
               Exportar
             </Button>
@@ -54,7 +63,7 @@ const Reports = () => {
 
         {/* Tabbed Reports */}
         <Tabs defaultValue="financeiro" className="space-y-4">
-          <TabsList className="bg-muted/50 p-1">
+          <TabsList className="bg-muted/50 p-1 flex-wrap h-auto">
             <TabsTrigger value="financeiro" className="gap-1.5 text-xs">
               <DollarSign className="w-3.5 h-3.5" />
               Financeiro
@@ -75,6 +84,14 @@ const Reports = () => {
               <FileText className="w-3.5 h-3.5" />
               Contratos
             </TabsTrigger>
+            <TabsTrigger value="parceiros" className="gap-1.5 text-xs">
+              <Handshake className="w-3.5 h-3.5" />
+              Parceiros
+            </TabsTrigger>
+            <TabsTrigger value="custom" className="gap-1.5 text-xs">
+              <Wand2 className="w-3.5 h-3.5" />
+              Personalizado
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="financeiro">
@@ -92,8 +109,17 @@ const Reports = () => {
           <TabsContent value="contratos">
             <ContractReports />
           </TabsContent>
+          <TabsContent value="parceiros">
+            <PartnerReports />
+          </TabsContent>
+          <TabsContent value="custom">
+            <CustomReportBuilder />
+          </TabsContent>
         </Tabs>
       </div>
+
+      <ExportDialog open={exportOpen} onOpenChange={setExportOpen} />
+      <ScheduleDialog open={scheduleOpen} onOpenChange={setScheduleOpen} />
     </DashboardLayout>
   );
 };
