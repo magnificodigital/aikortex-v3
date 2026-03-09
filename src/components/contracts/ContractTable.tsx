@@ -55,9 +55,9 @@ const ContractTable = ({ contracts, onView, onEdit, onSign }: ContractTableProps
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={e => { e.stopPropagation(); onEdit(c); }}>
                     <Pencil className="w-3.5 h-3.5" />
                   </Button>
-                  {c.status === "draft" && (
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={e => { e.stopPropagation(); toast({ title: "Enviado para assinatura", description: `Contrato ${c.id} enviado para ${c.client}.` }); }}>
-                      <Send className="w-3.5 h-3.5" />
+                  {(c.status === "draft" || c.status === "pending_signature") && onSign && (
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" onClick={e => { e.stopPropagation(); onSign(c); }} title="Assinar">
+                      <PenLine className="w-3.5 h-3.5" />
                     </Button>
                   )}
                 </div>
