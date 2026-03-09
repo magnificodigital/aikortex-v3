@@ -11,6 +11,7 @@ import {
   BarChart3,
   Plug,
   Handshake,
+  Palette,
   Bot,
   Globe,
   Phone,
