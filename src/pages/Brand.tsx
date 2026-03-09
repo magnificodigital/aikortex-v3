@@ -257,7 +257,10 @@ const Brand = () => {
   };
 
   const saveBrand = () => {
-    toast({ title: "Brand salvo com sucesso", description: "Todas as configurações foram aplicadas." });
+    const data = { colors, logoUrl, faviconUrl, agencyName, agencySlogan, bioLinks, bioTitle, bioDescription, sections };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    applyColorsToCSS(colors);
+    toast({ title: "Brand salvo com sucesso", description: "Todas as configurações foram aplicadas e persistidas." });
   };
 
   return (
