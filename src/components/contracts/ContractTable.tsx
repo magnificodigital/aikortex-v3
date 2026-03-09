@@ -12,7 +12,7 @@ interface ContractTableProps {
   onSign?: (contract: Contract) => void;
 }
 
-const ContractTable = ({ contracts, onView, onEdit }: ContractTableProps) => (
+const ContractTable = ({ contracts, onView, onEdit, onSign }: ContractTableProps) => (
   <div className="glass-card rounded-xl overflow-hidden">
     <Table>
       <TableHeader>
