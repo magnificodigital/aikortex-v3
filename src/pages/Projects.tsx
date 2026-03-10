@@ -59,6 +59,10 @@ const Projects = () => {
     if (selected?.id === updated.id) setSelected(updated);
   };
 
+  const handleStatusChange = (itemId: string, newStatus: UnifiedStatus) => {
+    setItems((prev) => prev.map((i) => i.id === itemId ? { ...i, status: newStatus } : i));
+  };
+
   const handleAddItem = (item: TaskEngineItem) => {
     setItems((prev) => [...prev, item]);
   };
@@ -128,7 +132,7 @@ const Projects = () => {
               <TabsTrigger value="timeline" className="gap-1.5"><GanttChart className="w-3.5 h-3.5" /> Timeline</TabsTrigger>
             </TabsList>
             <TabsContent value="kanban">
-              <ProjectKanban projects={filtered} allItems={items} onSelect={setSelected} />
+              <ProjectKanban projects={filtered} allItems={items} onSelect={setSelected} onStatusChange={handleStatusChange} />
             </TabsContent>
             <TabsContent value="list">
               <ProjectList projects={filtered} allItems={items} onSelect={setSelected} />
@@ -155,7 +159,7 @@ const Projects = () => {
               })} onItemClick={handleTaskClick} />
             </TabsContent>
             <TabsContent value="kanban">
-              <UnifiedKanban items={items} onItemClick={handleTaskClick} />
+              <UnifiedKanban items={items} onItemClick={handleTaskClick} onStatusChange={handleStatusChange} />
             </TabsContent>
             <TabsContent value="my">
               <UnifiedMyTasks items={items} onItemClick={handleTaskClick} />
