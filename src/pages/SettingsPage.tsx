@@ -43,7 +43,9 @@ import {
   Calendar,
   CreditCard,
   Zap,
+  Shield,
 } from "lucide-react";
+import PermissionsManager from "@/components/settings/PermissionsManager";
 
 // ─── TYPES ──────────────────────────────────────────
 interface BrandColors {
