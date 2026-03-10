@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { CheckSquare, List, LayoutGrid, Calendar, User, Users } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { mockTasks, Task } from "@/types/task";
+import { mockTasks, Task, TaskStatus } from "@/types/task";
 import TaskFilters from "@/components/tasks/TaskFilters";
 import TaskMetrics from "@/components/tasks/TaskMetrics";
 import TaskListView from "@/components/tasks/TaskListView";
