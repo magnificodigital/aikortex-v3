@@ -731,6 +731,11 @@ const SettingsPage = () => {
               </div>
             </div>
           </TabsContent>
+
+          {/* ── PERMISSÕES ─────────────────────────── */}
+          <TabsContent value="permissions">
+            <PermissionsManager />
+          </TabsContent>
         </Tabs>
       </div>
     </DashboardLayout>
