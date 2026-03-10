@@ -59,6 +59,10 @@ const Projects = () => {
     if (selected?.id === updated.id) setSelected(updated);
   };
 
+  const handleStatusChange = (itemId: string, newStatus: UnifiedStatus) => {
+    setItems((prev) => prev.map((i) => i.id === itemId ? { ...i, status: newStatus } : i));
+  };
+
   const handleAddItem = (item: TaskEngineItem) => {
     setItems((prev) => [...prev, item]);
   };
