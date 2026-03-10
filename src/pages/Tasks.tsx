@@ -95,7 +95,7 @@ const Tasks = () => {
             <TaskListView tasks={filteredTasks} onTaskClick={setSelectedTask} />
           </TabsContent>
           <TabsContent value="kanban" className="mt-0">
-            <TaskKanbanView tasks={filteredTasks} onTaskClick={setSelectedTask} />
+            <TaskKanbanView tasks={filteredTasks} onTaskClick={setSelectedTask} onStatusChange={handleStatusChange} />
           </TabsContent>
           <TabsContent value="calendar" className="mt-0">
             <TaskCalendarView tasks={filteredTasks} onTaskClick={setSelectedTask} />
