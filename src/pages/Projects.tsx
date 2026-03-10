@@ -132,7 +132,7 @@ const Projects = () => {
               <TabsTrigger value="timeline" className="gap-1.5"><GanttChart className="w-3.5 h-3.5" /> Timeline</TabsTrigger>
             </TabsList>
             <TabsContent value="kanban">
-              <ProjectKanban projects={filtered} allItems={items} onSelect={setSelected} />
+              <ProjectKanban projects={filtered} allItems={items} onSelect={setSelected} onStatusChange={handleStatusChange} />
             </TabsContent>
             <TabsContent value="list">
               <ProjectList projects={filtered} allItems={items} onSelect={setSelected} />
