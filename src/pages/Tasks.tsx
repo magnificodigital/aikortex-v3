@@ -58,7 +58,7 @@ const Tasks = () => {
         </div>
 
         {/* Metrics */}
-        <TaskMetrics tasks={mockTasks} />
+        <TaskMetrics tasks={tasks} />
 
         {/* Filters */}
         <TaskFilters
