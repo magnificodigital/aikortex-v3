@@ -351,6 +351,7 @@ const SettingsPage = () => {
             <TabsTrigger value="landing" className="text-xs gap-1"><Globe className="w-3.5 h-3.5" /> Landing Page</TabsTrigger>
             <TabsTrigger value="biolink" className="text-xs gap-1"><Link2 className="w-3.5 h-3.5" /> Bio Link</TabsTrigger>
             <TabsTrigger value="integrations" className="text-xs gap-1"><Plug className="w-3.5 h-3.5" /> Integrações</TabsTrigger>
+            <TabsTrigger value="permissions" className="text-xs gap-1"><Shield className="w-3.5 h-3.5" /> Permissões</TabsTrigger>
           </TabsList>
 
           {/* ── CORES ──────────────────────────────── */}
