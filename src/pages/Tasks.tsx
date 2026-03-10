@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { CheckSquare, List, LayoutGrid, Calendar, User, Users } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { mockTasks, Task } from "@/types/task";
+import { mockTasks, Task, TaskStatus } from "@/types/task";
 import TaskFilters from "@/components/tasks/TaskFilters";
 import TaskMetrics from "@/components/tasks/TaskMetrics";
 import TaskListView from "@/components/tasks/TaskListView";
@@ -14,6 +14,7 @@ import TaskDetailDialog from "@/components/tasks/TaskDetailDialog";
 import NewTaskDialog from "@/components/tasks/NewTaskDialog";
 
 const Tasks = () => {
+  const [tasks, setTasks] = useState<Task[]>(mockTasks);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
@@ -22,8 +23,12 @@ const Tasks = () => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [showNewTask, setShowNewTask] = useState(false);
 
+  const handleStatusChange = (taskId: string, newStatus: TaskStatus) => {
+    setTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, status: newStatus } : t));
+  };
+
   const filteredTasks = useMemo(() => {
-    return mockTasks.filter((task) => {
+    return tasks.filter((task) => {
       if (search && !task.title.toLowerCase().includes(search.toLowerCase()) &&
           !task.description.toLowerCase().includes(search.toLowerCase()) &&
           !task.tags.some((t) => t.toLowerCase().includes(search.toLowerCase()))) return false;
@@ -36,7 +41,7 @@ const Tasks = () => {
       }
       return true;
     });
-  }, [search, statusFilter, priorityFilter, assigneeFilter, projectFilter]);
+  }, [search, statusFilter, priorityFilter, assigneeFilter, projectFilter, tasks]);
 
   return (
     <DashboardLayout>
@@ -53,7 +58,7 @@ const Tasks = () => {
         </div>
 
         {/* Metrics */}
-        <TaskMetrics tasks={mockTasks} />
+        <TaskMetrics tasks={tasks} />
 
         {/* Filters */}
         <TaskFilters
@@ -90,7 +95,7 @@ const Tasks = () => {
             <TaskListView tasks={filteredTasks} onTaskClick={setSelectedTask} />
           </TabsContent>
           <TabsContent value="kanban" className="mt-0">
-            <TaskKanbanView tasks={filteredTasks} onTaskClick={setSelectedTask} />
+            <TaskKanbanView tasks={filteredTasks} onTaskClick={setSelectedTask} onStatusChange={handleStatusChange} />
           </TabsContent>
           <TabsContent value="calendar" className="mt-0">
             <TaskCalendarView tasks={filteredTasks} onTaskClick={setSelectedTask} />
