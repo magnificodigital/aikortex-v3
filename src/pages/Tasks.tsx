@@ -14,6 +14,7 @@ import TaskDetailDialog from "@/components/tasks/TaskDetailDialog";
 import NewTaskDialog from "@/components/tasks/NewTaskDialog";
 
 const Tasks = () => {
+  const [tasks, setTasks] = useState<Task[]>(mockTasks);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
@@ -21,6 +22,10 @@ const Tasks = () => {
   const [projectFilter, setProjectFilter] = useState("all");
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [showNewTask, setShowNewTask] = useState(false);
+
+  const handleStatusChange = (taskId: string, newStatus: TaskStatus) => {
+    setTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, status: newStatus } : t));
+  };
 
   const filteredTasks = useMemo(() => {
     return mockTasks.filter((task) => {
