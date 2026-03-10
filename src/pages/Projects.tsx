@@ -159,7 +159,7 @@ const Projects = () => {
               })} onItemClick={handleTaskClick} />
             </TabsContent>
             <TabsContent value="kanban">
-              <UnifiedKanban items={items} onItemClick={handleTaskClick} />
+              <UnifiedKanban items={items} onItemClick={handleTaskClick} onStatusChange={handleStatusChange} />
             </TabsContent>
             <TabsContent value="my">
               <UnifiedMyTasks items={items} onItemClick={handleTaskClick} />
