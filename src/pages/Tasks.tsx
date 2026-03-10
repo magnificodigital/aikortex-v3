@@ -41,7 +41,7 @@ const Tasks = () => {
       }
       return true;
     });
-  }, [search, statusFilter, priorityFilter, assigneeFilter, projectFilter]);
+  }, [search, statusFilter, priorityFilter, assigneeFilter, projectFilter, tasks]);
 
   return (
     <DashboardLayout>
