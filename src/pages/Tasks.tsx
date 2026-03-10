@@ -28,7 +28,7 @@ const Tasks = () => {
   };
 
   const filteredTasks = useMemo(() => {
-    return mockTasks.filter((task) => {
+    return tasks.filter((task) => {
       if (search && !task.title.toLowerCase().includes(search.toLowerCase()) &&
           !task.description.toLowerCase().includes(search.toLowerCase()) &&
           !task.tags.some((t) => t.toLowerCase().includes(search.toLowerCase()))) return false;
