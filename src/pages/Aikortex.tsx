@@ -52,19 +52,17 @@ const Aikortex = () => {
   };
 
   const handleAnalysisComplete = useCallback(() => {
-    const enrichedAgents = generateMockRecommendations(context);
-    // Keep user selections
-    const merged = enrichedAgents.map((a) => ({
-      ...a,
-      selected: selectedAgents.some((s) => s.id === a.id),
-    }));
-    setSelectedAgents(merged.filter((a) => a.selected));
+    if (selectedAgent) {
+      const enriched = generateMockRecommendations(context);
+      const match = enriched.find((a) => a.id === selectedAgent.id);
+      if (match) setSelectedAgent({ ...match, selected: true });
+    }
     if (selectedGoal) {
       setConversationSteps(generateMockConversation(context, selectedGoal));
       setAgentProfile(generateMockProfile(context, selectedGoal));
     }
     goTo("conversation");
-  }, [context, selectedAgents, selectedGoal]);
+  }, [context, selectedAgent, selectedGoal]);
 
   const regenerateConversation = () => {
     if (selectedGoal) {
