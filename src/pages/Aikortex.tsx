@@ -103,14 +103,15 @@ const Aikortex = () => {
         {/* Steps */}
         {step === "agents" && (
           <StepAgents
-            selected={selectedAgents}
-            onSelect={setSelectedAgents}
+            selected={selectedAgent}
+            onSelect={setSelectedAgent}
             onNext={() => goTo("goal")}
           />
         )}
-        {step === "goal" && (
+        {step === "goal" && selectedAgent && (
           <StepGoal
             selectedGoal={selectedGoal}
+            agentType={selectedAgent.type}
             onSelect={setSelectedGoal}
             onNext={() => goTo("context")}
           />
