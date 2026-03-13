@@ -35,16 +35,12 @@ import {
 
 const gestaoItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/" },
-  { label: "Contratos", icon: FileText, path: "/contracts" },
-  { label: "Vendas", icon: ShoppingCart, path: "/sales" },
-  { label: "Partners", icon: Handshake, path: "/partners" },
-  { label: "Financeiro", icon: DollarSign, path: "/financial" },
-  { label: "Relatórios", icon: BarChart3, path: "/reports" },
-];
-
-const projetosItems = [
   { label: "Clientes", icon: Users, path: "/clients" },
   { label: "Tarefas", icon: CheckSquare, path: "/tasks" },
+  { label: "Vendas", icon: ShoppingCart, path: "/sales" },
+  { label: "Financeiro", icon: DollarSign, path: "/financial" },
+  { label: "Contratos", icon: FileText, path: "/contracts" },
+  { label: "Relatórios", icon: BarChart3, path: "/reports" },
 ];
 
 const aikortexItems = [
@@ -58,7 +54,6 @@ const aikortexItems = [
 const AppSidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [gestaoOpen, setGestaoOpen] = useState(true);
-  const [projetosOpen, setProjetosOpen] = useState(true);
   const [aikortexOpen, setAikortexOpen] = useState(true);
   const location = useLocation();
   const { theme, toggle } = useTheme();
@@ -145,7 +140,6 @@ const AppSidebar = () => {
       {/* Nav */}
       <nav className="flex-1 py-1 px-2 space-y-0.5 overflow-y-auto scrollbar-thin">
         {renderGroup("Gestão", gestaoItems, gestaoOpen, setGestaoOpen)}
-        {renderGroup("Projetos", projetosItems, projetosOpen, setProjetosOpen)}
         {renderGroup("Aikortex", aikortexItems, aikortexOpen, setAikortexOpen)}
       </nav>
 
