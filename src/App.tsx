@@ -12,6 +12,7 @@ import Financial from "./pages/Financial";
 import Contracts from "./pages/Contracts";
 import Reports from "./pages/Reports";
 import Partners from "./pages/Partners";
+import Sales from "./pages/Sales";
 import Aikortex from "./pages/Aikortex";
 import AikortexCRM from "./pages/AikortexCRM";
 import AikortexAutomations from "./pages/AikortexAutomations";
@@ -44,6 +45,7 @@ const App = () => (
           <Route path="/contracts" element={<Contracts />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/partners" element={<Partners />} />
+          <Route path="/sales" element={<Sales />} />
           <Route path="/aikortex" element={<AikortexCRM />} />
           <Route path="/aikortex/crm" element={<AikortexCRM />} />
           <Route path="/aikortex/agents" element={<Aikortex />} />
