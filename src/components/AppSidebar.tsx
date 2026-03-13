@@ -140,7 +140,6 @@ const AppSidebar = () => {
       {/* Nav */}
       <nav className="flex-1 py-1 px-2 space-y-0.5 overflow-y-auto scrollbar-thin">
         {renderGroup("Gestão", gestaoItems, gestaoOpen, setGestaoOpen)}
-        {renderGroup("Projetos", projetosItems, projetosOpen, setProjetosOpen)}
         {renderGroup("Aikortex", aikortexItems, aikortexOpen, setAikortexOpen)}
       </nav>
 
