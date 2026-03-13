@@ -22,6 +22,11 @@ import {
   Zap,
   Sun,
   Moon,
+  Contact,
+  UserCheck,
+  Workflow,
+  MessageSquare,
+  Send,
 } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 
@@ -37,8 +42,15 @@ const coreItems = [
   { label: "Partners", icon: Handshake, path: "/partners" },
 ];
 
-const moduleItems = [
-  { label: "Aikortex", icon: Bot, path: "/aikortex" },
+const aikortexSubItems = [
+  { label: "CRM", icon: Contact, path: "/aikortex/crm" },
+  { label: "Agentes", icon: UserCheck, path: "/aikortex/agents" },
+  { label: "Automações", icon: Workflow, path: "/aikortex/automations" },
+  { label: "Mensagens", icon: MessageSquare, path: "/aikortex/messages" },
+  { label: "Disparos", icon: Send, path: "/aikortex/broadcasts" },
+];
+
+const otherModuleItems = [
   { label: "WebEdit", icon: Globe, path: "/webedit" },
   { label: "AlowDigital", icon: Phone, path: "/alowdigital" },
   { label: "IAgora", icon: Calendar, path: "/iagora" },
@@ -51,13 +63,18 @@ const AppSidebar = () => {
   const location = useLocation();
   const { theme, toggle } = useTheme();
 
-  const renderItem = (item: typeof coreItems[0]) => {
+  const isAikortexActive = location.pathname.startsWith("/aikortex");
+  const [aikortexOpen, setAikortexOpen] = useState(isAikortexActive);
+
+  const renderItem = (item: { label: string; icon: typeof LayoutDashboard; path: string }, indent = false) => {
     const isActive = location.pathname === item.path;
     return (
       <Link
         key={item.path}
         to={item.path}
         className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+          indent && !collapsed ? "pl-9" : ""
+        } ${
           isActive
             ? "bg-sidebar-accent text-sidebar-accent-foreground"
             : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
@@ -94,7 +111,7 @@ const AppSidebar = () => {
             Core
           </span>
         )}
-        {coreItems.map(renderItem)}
+        {coreItems.map((item) => renderItem(item))}
 
         {/* Modules separator */}
         {!collapsed ? (
@@ -109,7 +126,36 @@ const AppSidebar = () => {
           <div className="border-t border-sidebar-border my-2" />
         )}
 
-        {(modulesOpen || collapsed) && moduleItems.map(renderItem)}
+        {(modulesOpen || collapsed) && (
+          <>
+            {/* Aikortex with sub-items */}
+            {collapsed ? (
+              renderItem({ label: "Aikortex", icon: Bot, path: "/aikortex" })
+            ) : (
+              <div>
+                <button
+                  onClick={() => setAikortexOpen(!aikortexOpen)}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full ${
+                    isAikortexActive
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  }`}
+                >
+                  <Bot className={`w-4 h-4 shrink-0 ${isAikortexActive ? "text-primary" : ""}`} />
+                  <span className="flex-1 text-left">Aikortex</span>
+                  <ChevronDown className={`w-3 h-3 transition-transform ${aikortexOpen ? "" : "-rotate-90"}`} />
+                </button>
+                {aikortexOpen && (
+                  <div className="space-y-0.5 mt-0.5">
+                    {aikortexSubItems.map((item) => renderItem(item, true))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {otherModuleItems.map((item) => renderItem(item))}
+          </>
+        )}
       </nav>
 
       {/* Bottom */}
