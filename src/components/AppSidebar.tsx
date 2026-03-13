@@ -37,6 +37,7 @@ const gestaoItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/" },
   { label: "Contratos", icon: FileText, path: "/contracts" },
   { label: "Vendas", icon: ShoppingCart, path: "/sales" },
+  { label: "Partners", icon: Handshake, path: "/partners" },
   { label: "Financeiro", icon: DollarSign, path: "/financial" },
   { label: "Relatórios", icon: BarChart3, path: "/reports" },
 ];
