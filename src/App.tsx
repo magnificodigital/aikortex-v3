@@ -12,6 +12,7 @@ import Financial from "./pages/Financial";
 import Contracts from "./pages/Contracts";
 import Reports from "./pages/Reports";
 import Partners from "./pages/Partners";
+import Sales from "./pages/Sales";
 import Aikortex from "./pages/Aikortex";
 import AikortexCRM from "./pages/AikortexCRM";
 import AikortexAutomations from "./pages/AikortexAutomations";
