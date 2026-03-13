@@ -45,6 +45,7 @@ const App = () => (
           <Route path="/contracts" element={<Contracts />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/partners" element={<Partners />} />
+          <Route path="/sales" element={<Sales />} />
           <Route path="/aikortex" element={<AikortexCRM />} />
           <Route path="/aikortex/crm" element={<AikortexCRM />} />
           <Route path="/aikortex/agents" element={<Aikortex />} />
