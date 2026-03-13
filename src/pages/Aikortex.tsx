@@ -36,7 +36,7 @@ const STEP_ORDER: WizardStep[] = WIZARD_STEPS.map((s) => s.key);
 const Aikortex = () => {
   const [step, setStep] = useState<WizardStep>("agents");
   const [context, setContext] = useState<BusinessContext>(INITIAL_CONTEXT);
-  const [selectedAgents, setSelectedAgents] = useState<AgentRecommendation[]>([]);
+  const [selectedAgent, setSelectedAgent] = useState<AgentRecommendation | null>(null);
   const [selectedGoal, setSelectedGoal] = useState<AgentGoal | null>(null);
   const [conversationSteps, setConversationSteps] = useState<ConversationStep[]>([]);
   const [qualificationTiers, setQualificationTiers] = useState<QualificationTier[]>(DEFAULT_QUALIFICATION_TIERS);
