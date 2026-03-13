@@ -41,6 +41,7 @@ const gestaoItems = [
   { label: "Financeiro", icon: DollarSign, path: "/financial" },
   { label: "Contratos", icon: FileText, path: "/contracts" },
   { label: "Relatórios", icon: BarChart3, path: "/reports" },
+  { label: "Partners", icon: Handshake, path: "/partners" },
 ];
 
 const aikortexItems = [
