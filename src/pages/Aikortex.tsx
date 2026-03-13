@@ -20,10 +20,10 @@ import {
   generateMockProfile,
 } from "@/types/agent-builder";
 import WizardStepper from "@/components/aikortex/WizardStepper";
+import StepAgents from "@/components/aikortex/StepAgents";
+import StepGoal from "@/components/aikortex/StepGoal";
 import StepContext from "@/components/aikortex/StepContext";
 import StepAnalysis from "@/components/aikortex/StepAnalysis";
-import StepRecommendations from "@/components/aikortex/StepRecommendations";
-import StepGoal from "@/components/aikortex/StepGoal";
 import StepConversation from "@/components/aikortex/StepConversation";
 import StepQualification from "@/components/aikortex/StepQualification";
 import StepProfile from "@/components/aikortex/StepProfile";
@@ -34,9 +34,9 @@ import StepTesting from "@/components/aikortex/StepTesting";
 const STEP_ORDER: WizardStep[] = WIZARD_STEPS.map((s) => s.key);
 
 const Aikortex = () => {
-  const [step, setStep] = useState<WizardStep>("context");
+  const [step, setStep] = useState<WizardStep>("agents");
   const [context, setContext] = useState<BusinessContext>(INITIAL_CONTEXT);
-  const [recommendations, setRecommendations] = useState<AgentRecommendation[]>([]);
+  const [selectedAgents, setSelectedAgents] = useState<AgentRecommendation[]>([]);
   const [selectedGoal, setSelectedGoal] = useState<AgentGoal | null>(null);
   const [conversationSteps, setConversationSteps] = useState<ConversationStep[]>([]);
   const [qualificationTiers, setQualificationTiers] = useState<QualificationTier[]>(DEFAULT_QUALIFICATION_TIERS);
@@ -52,22 +52,24 @@ const Aikortex = () => {
   };
 
   const handleAnalysisComplete = useCallback(() => {
-    setRecommendations(generateMockRecommendations(context));
-    goTo("recommendations");
-  }, [context]);
-
-  const handleGoalNext = () => {
+    const enrichedAgents = generateMockRecommendations(context);
+    // Keep user selections
+    const merged = enrichedAgents.map((a) => ({
+      ...a,
+      selected: selectedAgents.some((s) => s.id === a.id),
+    }));
+    setSelectedAgents(merged.filter((a) => a.selected));
     if (selectedGoal) {
       setConversationSteps(generateMockConversation(context, selectedGoal));
       setAgentProfile(generateMockProfile(context, selectedGoal));
-      goTo("conversation");
     }
-  };
+    goTo("conversation");
+  }, [context, selectedAgents, selectedGoal]);
 
-  const toggleRecommendation = (id: string) => {
-    setRecommendations((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, selected: !r.selected } : r))
-    );
+  const regenerateConversation = () => {
+    if (selectedGoal) {
+      setConversationSteps(generateMockConversation(context, selectedGoal));
+    }
   };
 
   const toggleChannel = (ch: DeployChannel) => {
@@ -76,23 +78,17 @@ const Aikortex = () => {
     );
   };
 
-  const regenerateConversation = () => {
-    if (selectedGoal) {
-      setConversationSteps(generateMockConversation(context, selectedGoal));
-    }
-  };
-
   return (
     <DashboardLayout>
-      <div className="p-6 lg:p-8 max-w-5xl mx-auto space-y-6">
+      <div className="p-4 lg:p-8 max-w-5xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Bot className="w-5 h-5 text-primary" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-[hsl(199,89%,48%)] flex items-center justify-center shadow-sm">
+            <Bot className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Aikortex — AI Agent Builder</h1>
-            <p className="text-sm text-muted-foreground">Crie sua equipe de agentes de IA automaticamente</p>
+            <h1 className="text-xl font-bold text-foreground">Aikortex</h1>
+            <p className="text-xs text-muted-foreground">AI Agent Builder</p>
           </div>
         </div>
 
@@ -101,23 +97,31 @@ const Aikortex = () => {
 
         {/* Back button */}
         {currentIndex > 0 && step !== "analysis" && (
-          <Button variant="ghost" size="sm" onClick={goBack} className="gap-1.5 text-muted-foreground">
+          <Button variant="ghost" size="sm" onClick={goBack} className="gap-1.5 text-muted-foreground hover:text-foreground">
             <ArrowLeft className="w-3.5 h-3.5" /> Voltar
           </Button>
         )}
 
         {/* Steps */}
+        {step === "agents" && (
+          <StepAgents
+            selected={selectedAgents}
+            onSelect={setSelectedAgents}
+            onNext={() => goTo("goal")}
+          />
+        )}
+        {step === "goal" && (
+          <StepGoal
+            selectedGoal={selectedGoal}
+            onSelect={setSelectedGoal}
+            onNext={() => goTo("context")}
+          />
+        )}
         {step === "context" && (
           <StepContext context={context} onChange={setContext} onNext={() => goTo("analysis")} />
         )}
         {step === "analysis" && (
           <StepAnalysis context={context} onComplete={handleAnalysisComplete} />
-        )}
-        {step === "recommendations" && (
-          <StepRecommendations recommendations={recommendations} onToggle={toggleRecommendation} onNext={() => goTo("goal")} />
-        )}
-        {step === "goal" && (
-          <StepGoal selectedGoal={selectedGoal} onSelect={setSelectedGoal} onNext={handleGoalNext} />
         )}
         {step === "conversation" && (
           <StepConversation steps={conversationSteps} onRegenerate={regenerateConversation} onNext={() => goTo("qualification")} />
@@ -135,7 +139,7 @@ const Aikortex = () => {
           <StepCRM selected={selectedCRM} onSelect={setSelectedCRM} onNext={() => goTo("testing")} />
         )}
         {step === "testing" && (
-          <StepTesting context={context} agents={recommendations} channels={selectedChannels} crm={selectedCRM} />
+          <StepTesting context={context} agents={selectedAgents} channels={selectedChannels} crm={selectedCRM} />
         )}
       </div>
     </DashboardLayout>

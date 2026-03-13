@@ -9,38 +9,45 @@ const WizardStepper = ({ currentStep }: Props) => {
   const currentIndex = WIZARD_STEPS.findIndex((s) => s.key === currentStep);
 
   return (
-    <div className="flex items-center gap-1 overflow-x-auto pb-2 px-1">
-      {WIZARD_STEPS.map((step, i) => {
-        const isDone = i < currentIndex;
-        const isActive = i === currentIndex;
-        return (
-          <div key={step.key} className="flex items-center">
-            <div className="flex flex-col items-center gap-1 min-w-[56px]">
+    <div className="w-full">
+      {/* Progress bar */}
+      <div className="relative h-1.5 bg-muted rounded-full overflow-hidden mb-4">
+        <div
+          className="absolute inset-y-0 left-0 bg-primary rounded-full transition-all duration-500 ease-out"
+          style={{ width: `${((currentIndex + 1) / WIZARD_STEPS.length) * 100}%` }}
+        />
+      </div>
+
+      {/* Step indicators */}
+      <div className="flex items-center justify-between">
+        {WIZARD_STEPS.map((step, i) => {
+          const isDone = i < currentIndex;
+          const isActive = i === currentIndex;
+          const isUpcoming = i > currentIndex;
+          return (
+            <div key={step.key} className="flex flex-col items-center gap-1.5 relative">
               <div
-                className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold transition-all duration-300 ${
                   isDone
-                    ? "bg-success text-success-foreground"
+                    ? "bg-primary text-primary-foreground scale-90"
                     : isActive
-                    ? "bg-primary text-primary-foreground"
+                    ? "bg-primary text-primary-foreground ring-4 ring-primary/20 scale-110"
                     : "bg-muted text-muted-foreground"
                 }`}
               >
                 {isDone ? <Check className="w-3.5 h-3.5" /> : step.number}
               </div>
-              <span className={`text-[10px] font-medium whitespace-nowrap ${
-                isActive ? "text-primary" : isDone ? "text-foreground" : "text-muted-foreground"
-              }`}>
+              <span
+                className={`text-[10px] font-medium whitespace-nowrap transition-colors hidden sm:block ${
+                  isActive ? "text-primary font-semibold" : isDone ? "text-foreground" : "text-muted-foreground"
+                }`}
+              >
                 {step.label}
               </span>
             </div>
-            {i < WIZARD_STEPS.length - 1 && (
-              <div className={`w-6 h-px mx-0.5 mt-[-14px] ${
-                i < currentIndex ? "bg-success" : "bg-border"
-              }`} />
-            )}
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 };
