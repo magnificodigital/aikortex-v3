@@ -46,7 +46,7 @@ const Partners = () => {
             <Handshake className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Partner Ecosystem</h1>
+            <h1 className="text-2xl font-bold text-foreground">Partners</h1>
             <p className="text-sm text-muted-foreground">Evolua, certifique-se e monetize no ecossistema AIHUB</p>
           </div>
         </div>
