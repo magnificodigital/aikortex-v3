@@ -140,7 +140,11 @@ export type AgentGoal =
   | "capture_leads"
   | "answer_questions"
   | "qualify_opportunities"
-  | "support_customers";
+  | "support_customers"
+  | "resolve_tickets"
+  | "onboard_customers"
+  | "collect_feedback"
+  | "reduce_churn";
 
 export const AGENT_GOALS: { value: AgentGoal; label: string; description: string }[] = [
   { value: "schedule_meetings", label: "Agendar reuniões", description: "Qualificar e agendar reuniões com leads" },
@@ -148,7 +152,19 @@ export const AGENT_GOALS: { value: AgentGoal; label: string; description: string
   { value: "answer_questions", label: "Responder perguntas", description: "Atendimento e suporte ao cliente" },
   { value: "qualify_opportunities", label: "Qualificar oportunidades", description: "Identificar leads com potencial de compra" },
   { value: "support_customers", label: "Suporte a clientes", description: "Acompanhamento e sucesso do cliente" },
+  { value: "resolve_tickets", label: "Resolver chamados", description: "Solucionar problemas e dúvidas de clientes" },
+  { value: "onboard_customers", label: "Onboarding", description: "Guiar novos clientes na adoção do produto" },
+  { value: "collect_feedback", label: "Coletar feedback", description: "Pesquisas de satisfação e NPS" },
+  { value: "reduce_churn", label: "Reduzir churn", description: "Identificar e reter clientes em risco" },
 ];
+
+// Goals filtered by agent type
+export const GOALS_BY_AGENT_TYPE: Record<AgentType, AgentGoal[]> = {
+  SDR: ["capture_leads", "qualify_opportunities", "schedule_meetings"],
+  BDR: ["qualify_opportunities", "schedule_meetings", "capture_leads"],
+  SAC: ["answer_questions", "resolve_tickets", "collect_feedback"],
+  CS: ["onboard_customers", "support_customers", "reduce_churn", "collect_feedback"],
+};
 
 export interface ConversationStep {
   id: string;

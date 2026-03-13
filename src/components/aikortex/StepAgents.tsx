@@ -1,12 +1,11 @@
-import { useState } from "react";
 import { AgentRecommendation, AGENT_TEMPLATES } from "@/types/agent-builder";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Check, Bot, Users, Zap, HeadphonesIcon, TrendingUp } from "lucide-react";
 
 interface Props {
-  selected: AgentRecommendation[];
-  onSelect: (agents: AgentRecommendation[]) => void;
+  selected: AgentRecommendation | null;
+  onSelect: (agent: AgentRecommendation | null) => void;
   onNext: () => void;
 }
 
@@ -19,15 +18,12 @@ const TYPE_META: Record<string, { icon: typeof Bot; gradient: string; accent: st
 
 const StepAgents = ({ selected, onSelect, onNext }: Props) => {
   const toggle = (agent: AgentRecommendation) => {
-    const exists = selected.find((a) => a.id === agent.id);
-    if (exists) {
-      onSelect(selected.filter((a) => a.id !== agent.id));
+    if (selected?.id === agent.id) {
+      onSelect(null);
     } else {
-      onSelect([...selected, { ...agent, selected: true }]);
+      onSelect({ ...agent, selected: true });
     }
   };
-
-  const isSelected = (id: string) => selected.some((a) => a.id === id);
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -38,10 +34,10 @@ const StepAgents = ({ selected, onSelect, onNext }: Props) => {
           Comece aqui
         </div>
         <h2 className="text-3xl font-bold text-foreground">
-          Monte sua equipe de IA
+          Escolha o tipo de agente
         </h2>
         <p className="text-muted-foreground max-w-lg mx-auto">
-          Escolha os agentes que vão trabalhar para sua empresa. Você pode selecionar quantos quiser.
+          Selecione o agente mais adequado para sua necessidade. Cada tipo tem objetivos e habilidades específicas.
         </p>
       </div>
 
@@ -50,7 +46,7 @@ const StepAgents = ({ selected, onSelect, onNext }: Props) => {
         {AGENT_TEMPLATES.map((agent) => {
           const meta = TYPE_META[agent.type];
           const Icon = meta.icon;
-          const active = isSelected(agent.id);
+          const active = selected?.id === agent.id;
           return (
             <button
               key={agent.id}
@@ -101,11 +97,11 @@ const StepAgents = ({ selected, onSelect, onNext }: Props) => {
       {/* Footer */}
       <div className="flex items-center justify-between max-w-3xl mx-auto">
         <p className="text-sm text-muted-foreground">
-          {selected.length === 0
-            ? "Selecione pelo menos um agente"
-            : `${selected.length} agente${selected.length > 1 ? "s" : ""} selecionado${selected.length > 1 ? "s" : ""}`}
+          {!selected
+            ? "Selecione um agente para continuar"
+            : `${selected.name} selecionado`}
         </p>
-        <Button onClick={onNext} disabled={selected.length === 0} size="lg" className="gap-2 px-6">
+        <Button onClick={onNext} disabled={!selected} size="lg" className="gap-2 px-6">
           Continuar <ArrowRight className="w-4 h-4" />
         </Button>
       </div>
