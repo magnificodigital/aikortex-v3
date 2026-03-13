@@ -5,7 +5,7 @@ import {
   Users,
   FolderKanban,
   CheckSquare,
-  DollarSign,
+  Handshake,
   FileText,
   BarChart3,
   Bot,
