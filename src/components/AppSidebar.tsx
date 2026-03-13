@@ -54,7 +54,6 @@ const aikortexItems = [
 const AppSidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [gestaoOpen, setGestaoOpen] = useState(true);
-  const [projetosOpen, setProjetosOpen] = useState(true);
   const [aikortexOpen, setAikortexOpen] = useState(true);
   const location = useLocation();
   const { theme, toggle } = useTheme();
