@@ -138,7 +138,7 @@ const Aikortex = () => {
           <StepCRM selected={selectedCRM} onSelect={setSelectedCRM} onNext={() => goTo("testing")} />
         )}
         {step === "testing" && (
-          <StepTesting context={context} agents={selectedAgents} channels={selectedChannels} crm={selectedCRM} />
+          <StepTesting context={context} agents={selectedAgent ? [selectedAgent] : []} channels={selectedChannels} crm={selectedCRM} />
         )}
       </div>
     </DashboardLayout>
