@@ -1,10 +1,10 @@
 // ── Agent Builder Wizard Types ──
 
 export type WizardStep =
+  | "agents"
+  | "goal"
   | "context"
   | "analysis"
-  | "recommendations"
-  | "goal"
   | "conversation"
   | "qualification"
   | "profile"
@@ -13,16 +13,102 @@ export type WizardStep =
   | "testing";
 
 export const WIZARD_STEPS: { key: WizardStep; label: string; number: number }[] = [
-  { key: "context", label: "Contexto", number: 1 },
-  { key: "analysis", label: "Análise", number: 2 },
-  { key: "recommendations", label: "Agentes", number: 3 },
-  { key: "goal", label: "Objetivo", number: 4 },
+  { key: "agents", label: "Agentes", number: 1 },
+  { key: "goal", label: "Objetivo", number: 2 },
+  { key: "context", label: "Empresa", number: 3 },
+  { key: "analysis", label: "Análise", number: 4 },
   { key: "conversation", label: "Conversa", number: 5 },
   { key: "qualification", label: "Qualificação", number: 6 },
   { key: "profile", label: "Perfil", number: 7 },
   { key: "channels", label: "Canais", number: 8 },
   { key: "crm", label: "CRM", number: 9 },
   { key: "testing", label: "Teste", number: 10 },
+];
+
+// ── Data Types ──
+
+export type AgentType = "SDR" | "BDR" | "SAC" | "CS";
+
+export interface AgentRecommendation {
+  id: string;
+  type: AgentType;
+  name: string;
+  objective: string;
+  targetAudience: string;
+  benefits: string[];
+  exampleConversation: { role: "customer" | "agent"; message: string }[];
+  selected: boolean;
+}
+
+export const AGENT_TEMPLATES: AgentRecommendation[] = [
+  {
+    id: "sdr-1",
+    type: "SDR",
+    name: "Agente SDR",
+    objective: "Qualificar leads inbound e coletar informações para agendar reuniões com o time comercial.",
+    targetAudience: "Leads inbound interessados",
+    benefits: [
+      "Qualificação automática 24/7",
+      "Redução de 60% no tempo de resposta",
+      "Aumento de 35% na taxa de conversão",
+    ],
+    exampleConversation: [
+      { role: "agent", message: "Olá! Vi que você demonstrou interesse. Posso te ajudar?" },
+      { role: "customer", message: "Sim, gostaria de saber mais sobre os planos." },
+    ],
+    selected: false,
+  },
+  {
+    id: "bdr-1",
+    type: "BDR",
+    name: "Agente BDR",
+    objective: "Prospectar novos leads e gerar oportunidades de negócio através de abordagem outbound.",
+    targetAudience: "Empresas-alvo para prospecção",
+    benefits: [
+      "Prospecção automatizada em escala",
+      "Abordagem personalizada por segmento",
+      "Pipeline de vendas sempre alimentado",
+    ],
+    exampleConversation: [
+      { role: "agent", message: "Oi! Notei que sua empresa pode se beneficiar da nossa solução." },
+      { role: "customer", message: "Interessante, como funciona?" },
+    ],
+    selected: false,
+  },
+  {
+    id: "sac-1",
+    type: "SAC",
+    name: "Agente SAC",
+    objective: "Atender clientes com dúvidas, resolver problemas e fornecer suporte baseado no conhecimento da empresa.",
+    targetAudience: "Clientes ativos",
+    benefits: [
+      "Atendimento instantâneo 24/7",
+      "Redução de 70% nos tickets",
+      "Satisfação do cliente aumentada",
+    ],
+    exampleConversation: [
+      { role: "customer", message: "Estou com dificuldade para acessar minha conta." },
+      { role: "agent", message: "Vou te ajudar agora! Pode me informar o email cadastrado?" },
+    ],
+    selected: false,
+  },
+  {
+    id: "cs-1",
+    type: "CS",
+    name: "Agente CS",
+    objective: "Garantir o sucesso dos clientes, realizar follow-ups e coletar feedbacks.",
+    targetAudience: "Clientes em onboarding e pós-venda",
+    benefits: [
+      "Onboarding automatizado",
+      "Redução de churn em 40%",
+      "Coleta contínua de feedback",
+    ],
+    exampleConversation: [
+      { role: "agent", message: "Como tem sido sua experiência? Estou aqui para ajudar!" },
+      { role: "customer", message: "Tenho dúvidas sobre uma funcionalidade." },
+    ],
+    selected: false,
+  },
 ];
 
 export interface BusinessContext {
@@ -48,19 +134,6 @@ export const INITIAL_CONTEXT: BusinessContext = {
   mainSalesChannel: "",
   description: "",
 };
-
-export type AgentType = "SDR" | "BDR" | "SAC" | "CS";
-
-export interface AgentRecommendation {
-  id: string;
-  type: AgentType;
-  name: string;
-  objective: string;
-  targetAudience: string;
-  benefits: string[];
-  exampleConversation: { role: "customer" | "agent"; message: string }[];
-  selected: boolean;
-}
 
 export type AgentGoal =
   | "schedule_meetings"
@@ -144,81 +217,15 @@ export interface WizardState {
 // ── Mock generators ──
 
 export function generateMockRecommendations(ctx: BusinessContext): AgentRecommendation[] {
-  return [
-    {
-      id: "sdr-1",
-      type: "SDR",
-      name: `SDR Agent — ${ctx.companyName}`,
-      objective: "Qualificar leads inbound e coletar informações para agendar reuniões com o time comercial.",
-      targetAudience: `Leads interessados em ${ctx.mainProduct}`,
-      benefits: [
-        "Qualificação automática 24/7",
-        "Redução de 60% no tempo de resposta",
-        "Aumento de 35% na taxa de conversão",
-      ],
-      exampleConversation: [
-        { role: "agent", message: `Olá! Sou o assistente da ${ctx.companyName}. Vi que você demonstrou interesse em ${ctx.mainProduct}. Posso te ajudar?` },
-        { role: "customer", message: "Sim, gostaria de saber mais sobre os planos." },
-        { role: "agent", message: "Ótimo! Para te indicar a melhor opção, pode me contar qual é o tamanho da sua equipe?" },
-      ],
-      selected: true,
-    },
-    {
-      id: "bdr-1",
-      type: "BDR",
-      name: `BDR Agent — ${ctx.companyName}`,
-      objective: "Prospectar novos leads e gerar oportunidades de negócio através de abordagem outbound.",
-      targetAudience: `Empresas do setor de ${ctx.industry}`,
-      benefits: [
-        "Prospecção automatizada em escala",
-        "Abordagem personalizada por segmento",
-        "Pipeline de vendas sempre alimentado",
-      ],
-      exampleConversation: [
-        { role: "agent", message: `Oi! Sou da ${ctx.companyName}. Notei que sua empresa atua em ${ctx.industry} e acredito que podemos ajudar com ${ctx.mainProduct}.` },
-        { role: "customer", message: "Interessante, como funciona?" },
-        { role: "agent", message: "Posso te explicar em 2 minutos! Qual o principal desafio que vocês enfrentam hoje?" },
-      ],
-      selected: true,
-    },
-    {
-      id: "sac-1",
-      type: "SAC",
-      name: `SAC Agent — ${ctx.companyName}`,
-      objective: "Atender clientes com dúvidas, resolver problemas e fornecer suporte baseado no conhecimento da empresa.",
-      targetAudience: "Clientes ativos da empresa",
-      benefits: [
-        "Atendimento instantâneo 24/7",
-        "Redução de 70% nos tickets de suporte",
-        "Satisfação do cliente aumentada",
-      ],
-      exampleConversation: [
-        { role: "customer", message: "Olá, estou com dificuldade para acessar minha conta." },
-        { role: "agent", message: `Olá! Sinto muito pelo inconveniente. Vou te ajudar a resolver isso agora. Pode me informar o email cadastrado?` },
-        { role: "customer", message: "joao@email.com" },
-        { role: "agent", message: "Encontrei sua conta! Vou enviar um link de redefinição de senha para esse email. Deve chegar em poucos segundos." },
-      ],
-      selected: false,
-    },
-    {
-      id: "cs-1",
-      type: "CS",
-      name: `CS Agent — ${ctx.companyName}`,
-      objective: "Garantir o sucesso dos clientes, realizar follow-ups e coletar feedbacks.",
-      targetAudience: "Clientes em onboarding e pós-venda",
-      benefits: [
-        "Onboarding automatizado",
-        "Redução de churn em 40%",
-        "Coleta contínua de feedback",
-      ],
-      exampleConversation: [
-        { role: "agent", message: `Olá! Como tem sido sua experiência com ${ctx.mainProduct}? Estou aqui para ajudar!` },
-        { role: "customer", message: "Estou gostando, mas tenho dúvidas sobre uma funcionalidade." },
-        { role: "agent", message: "Que bom saber! Me conta qual funcionalidade e vou te guiar passo a passo." },
-      ],
-      selected: false,
-    },
-  ];
+  return AGENT_TEMPLATES.map((t) => ({
+    ...t,
+    name: `${t.type} Agent — ${ctx.companyName}`,
+    targetAudience: t.type === "BDR" ? `Empresas do setor de ${ctx.industry}` : t.targetAudience,
+    exampleConversation: [
+      { role: "agent" as const, message: `Olá! Sou o assistente da ${ctx.companyName}. ${t.exampleConversation[0]?.message || ""}` },
+      ...t.exampleConversation.slice(1),
+    ],
+  }));
 }
 
 export function generateMockConversation(ctx: BusinessContext, goal: AgentGoal): ConversationStep[] {
