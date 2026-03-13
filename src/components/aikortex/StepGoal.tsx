@@ -1,9 +1,10 @@
-import { AgentGoal, AGENT_GOALS } from "@/types/agent-builder";
+import { AgentGoal, AgentType, AGENT_GOALS, GOALS_BY_AGENT_TYPE } from "@/types/agent-builder";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Target, CalendarCheck, UserPlus, HelpCircle, Handshake } from "lucide-react";
+import { ArrowRight, Target, CalendarCheck, UserPlus, HelpCircle, Handshake, TicketCheck, Rocket, MessageSquareHeart, ShieldAlert } from "lucide-react";
 
 interface Props {
   selectedGoal: AgentGoal | null;
+  agentType: AgentType;
   onSelect: (goal: AgentGoal) => void;
   onNext: () => void;
 }
@@ -14,9 +15,16 @@ const GOAL_ICONS: Record<AgentGoal, typeof Target> = {
   answer_questions: HelpCircle,
   qualify_opportunities: Target,
   support_customers: Handshake,
+  resolve_tickets: TicketCheck,
+  onboard_customers: Rocket,
+  collect_feedback: MessageSquareHeart,
+  reduce_churn: ShieldAlert,
 };
 
-const StepGoal = ({ selectedGoal, onSelect, onNext }: Props) => {
+const StepGoal = ({ selectedGoal, agentType, onSelect, onNext }: Props) => {
+  const allowedGoals = GOALS_BY_AGENT_TYPE[agentType];
+  const filteredGoals = AGENT_GOALS.filter((g) => allowedGoals.includes(g.value));
+
   return (
     <div className="max-w-2xl mx-auto space-y-8 animate-fade-in">
       <div className="text-center space-y-2">
@@ -24,11 +32,11 @@ const StepGoal = ({ selectedGoal, onSelect, onNext }: Props) => {
           <Target className="w-7 h-7 text-primary" />
         </div>
         <h2 className="text-2xl font-bold text-foreground">Qual é o objetivo principal?</h2>
-        <p className="text-sm text-muted-foreground">Este objetivo vai definir como seu agente conduz as conversas</p>
+        <p className="text-sm text-muted-foreground">Objetivos disponíveis para o agente <span className="font-semibold text-foreground">{agentType}</span></p>
       </div>
 
       <div className="grid gap-3">
-        {AGENT_GOALS.map((goal) => {
+        {filteredGoals.map((goal) => {
           const Icon = GOAL_ICONS[goal.value];
           const isSelected = selectedGoal === goal.value;
           return (

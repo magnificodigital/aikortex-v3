@@ -36,7 +36,7 @@ const STEP_ORDER: WizardStep[] = WIZARD_STEPS.map((s) => s.key);
 const Aikortex = () => {
   const [step, setStep] = useState<WizardStep>("agents");
   const [context, setContext] = useState<BusinessContext>(INITIAL_CONTEXT);
-  const [selectedAgents, setSelectedAgents] = useState<AgentRecommendation[]>([]);
+  const [selectedAgent, setSelectedAgent] = useState<AgentRecommendation | null>(null);
   const [selectedGoal, setSelectedGoal] = useState<AgentGoal | null>(null);
   const [conversationSteps, setConversationSteps] = useState<ConversationStep[]>([]);
   const [qualificationTiers, setQualificationTiers] = useState<QualificationTier[]>(DEFAULT_QUALIFICATION_TIERS);
@@ -52,19 +52,17 @@ const Aikortex = () => {
   };
 
   const handleAnalysisComplete = useCallback(() => {
-    const enrichedAgents = generateMockRecommendations(context);
-    // Keep user selections
-    const merged = enrichedAgents.map((a) => ({
-      ...a,
-      selected: selectedAgents.some((s) => s.id === a.id),
-    }));
-    setSelectedAgents(merged.filter((a) => a.selected));
+    if (selectedAgent) {
+      const enriched = generateMockRecommendations(context);
+      const match = enriched.find((a) => a.id === selectedAgent.id);
+      if (match) setSelectedAgent({ ...match, selected: true });
+    }
     if (selectedGoal) {
       setConversationSteps(generateMockConversation(context, selectedGoal));
       setAgentProfile(generateMockProfile(context, selectedGoal));
     }
     goTo("conversation");
-  }, [context, selectedAgents, selectedGoal]);
+  }, [context, selectedAgent, selectedGoal]);
 
   const regenerateConversation = () => {
     if (selectedGoal) {
@@ -105,14 +103,15 @@ const Aikortex = () => {
         {/* Steps */}
         {step === "agents" && (
           <StepAgents
-            selected={selectedAgents}
-            onSelect={setSelectedAgents}
+            selected={selectedAgent}
+            onSelect={setSelectedAgent}
             onNext={() => goTo("goal")}
           />
         )}
-        {step === "goal" && (
+        {step === "goal" && selectedAgent && (
           <StepGoal
             selectedGoal={selectedGoal}
+            agentType={selectedAgent.type}
             onSelect={setSelectedGoal}
             onNext={() => goTo("context")}
           />
@@ -139,7 +138,7 @@ const Aikortex = () => {
           <StepCRM selected={selectedCRM} onSelect={setSelectedCRM} onNext={() => goTo("testing")} />
         )}
         {step === "testing" && (
-          <StepTesting context={context} agents={selectedAgents} channels={selectedChannels} crm={selectedCRM} />
+          <StepTesting context={context} agents={selectedAgent ? [selectedAgent] : []} channels={selectedChannels} crm={selectedCRM} />
         )}
       </div>
     </DashboardLayout>
