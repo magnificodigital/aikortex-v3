@@ -41,6 +41,11 @@ const App = () => (
           <Route path="/reports" element={<Reports />} />
           <Route path="/partners" element={<Partners />} />
           <Route path="/aikortex" element={<Aikortex />} />
+          <Route path="/aikortex/crm" element={<Aikortex />} />
+          <Route path="/aikortex/agents" element={<Aikortex />} />
+          <Route path="/aikortex/automations" element={<Aikortex />} />
+          <Route path="/aikortex/messages" element={<Aikortex />} />
+          <Route path="/aikortex/broadcasts" element={<Aikortex />} />
           <Route path="/webedit" element={<WebEdit />} />
           <Route path="/alowdigital" element={<AlowDigital />} />
           <Route path="/iagora" element={<IAgora />} />
