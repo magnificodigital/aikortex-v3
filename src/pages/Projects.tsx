@@ -43,7 +43,7 @@ const Projects = () => {
   };
 
   const handleStatusChange = (itemId: string, newStatus: UnifiedStatus) => {
-    setItems((prev) => prev.map((i) => (i.id === itemId ? { ...i, status: newStatus } : i));
+    setItems((prev) => prev.map((i) => (i.id === itemId ? { ...i, status: newStatus } : i)));
   };
 
   const handleAddItem = (item: TaskEngineItem) => {
