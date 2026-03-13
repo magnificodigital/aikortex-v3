@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Clients from "./pages/Clients";
 import Projects from "./pages/Projects";
-import { Navigate } from "react-router-dom";
+import Tasks from "./pages/Tasks";
 import Team from "./pages/Team";
 import Financial from "./pages/Financial";
 import Contracts from "./pages/Contracts";
@@ -34,7 +34,7 @@ const App = () => (
           <Route path="/cadastro-cliente/:token" element={<ClientRegistration />} />
           <Route path="/clients" element={<Clients />} />
           <Route path="/projects" element={<Projects />} />
-          <Route path="/tasks" element={<Navigate to="/projects" replace />} />
+          <Route path="/tasks" element={<Tasks />} />
           <Route path="/team" element={<Team />} />
           <Route path="/financial" element={<Financial />} />
           <Route path="/contracts" element={<Contracts />} />
