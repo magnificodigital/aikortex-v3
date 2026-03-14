@@ -23,10 +23,54 @@ const CRMKanban = ({ leads, onLeadClick, onStageChange }: Props) => {
 
   const handleDragStart = () => setIsDragging(true);
 
+  const celebrateWin = useCallback(() => {
+    // Confetti burst with dollars 💵
+    const defaults = { startVelocity: 30, spread: 360, ticks: 80, zIndex: 9999 };
+
+    confetti({ ...defaults, particleCount: 80, origin: { x: 0.3, y: 0.6 } });
+    confetti({ ...defaults, particleCount: 80, origin: { x: 0.7, y: 0.6 } });
+
+    // Second wave with dollar shapes
+    setTimeout(() => {
+      confetti({
+        ...defaults,
+        particleCount: 40,
+        origin: { x: 0.5, y: 0.5 },
+        shapes: ["circle"],
+        colors: ["#22c55e", "#16a34a", "#facc15", "#f59e0b"],
+      });
+    }, 300);
+
+    // Applause sound via Web Audio
+    try {
+      const ctx = new AudioContext();
+      const duration = 1.5;
+      const sampleRate = ctx.sampleRate;
+      const buffer = ctx.createBuffer(1, sampleRate * duration, sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < data.length; i++) {
+        const t = i / sampleRate;
+        const envelope = Math.max(0, 1 - t / duration) * 0.3;
+        data[i] = (Math.random() * 2 - 1) * envelope * (0.5 + 0.5 * Math.sin(t * 200));
+      }
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      const gain = ctx.createGain();
+      gain.gain.value = 0.15;
+      source.connect(gain).connect(ctx.destination);
+      source.start();
+    } catch (e) {
+      // Audio not supported
+    }
+  }, []);
+
   const handleDragEnd = (result: DropResult) => {
     setIsDragging(false);
     if (!result.destination) return;
     const newStage = result.destination.droppableId as PipelineStage;
+    if (newStage === "ganho") {
+      celebrateWin();
+    }
     onStageChange(result.draggableId, newStage);
   };
 
