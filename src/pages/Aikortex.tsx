@@ -66,7 +66,10 @@ const Aikortex = () => {
           />
         )}
         {step === "context" && (
-          <StepContext context={context} onChange={setContext} onNext={() => setStep("launch")} />
+          <StepContext context={context} onChange={setContext} onNext={() => setStep("channels")} selectedTools={selectedTools} onToggleTool={toggleTool} />
+        )}
+        {step === "channels" && (
+          <StepChannels selected={selectedChannels} onToggle={toggleChannel} onNext={() => setStep("launch")} />
         )}
         {step === "launch" && (
           <StepLaunch

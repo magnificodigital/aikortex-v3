@@ -190,14 +190,27 @@ export interface AgentProfile {
   constraints: string;
 }
 
-export type DeployChannel = "whatsapp" | "instagram" | "messenger" | "website" | "email";
+export type DeployChannel = "whatsapp" | "instagram" | "tiktok" | "facebook" | "linkedin" | "google_maps" | "website" | "email";
 
 export const DEPLOY_CHANNELS: { value: DeployChannel; label: string; icon: string }[] = [
   { value: "whatsapp", label: "WhatsApp", icon: "📱" },
   { value: "instagram", label: "Instagram", icon: "📸" },
-  { value: "messenger", label: "Messenger", icon: "💬" },
+  { value: "tiktok", label: "TikTok", icon: "🎵" },
+  { value: "facebook", label: "Facebook", icon: "👤" },
+  { value: "linkedin", label: "LinkedIn", icon: "💼" },
+  { value: "google_maps", label: "Google Maps", icon: "📍" },
   { value: "website", label: "Website Chat", icon: "🌐" },
   { value: "email", label: "Email", icon: "📧" },
+];
+
+export type ExternalTool = "google_calendar" | "outlook" | "piperun" | "rd_station" | "crm_generic";
+
+export const EXTERNAL_TOOLS: { value: ExternalTool; label: string; icon: string; description: string }[] = [
+  { value: "google_calendar", label: "Google Agenda", icon: "📅", description: "Agendar reuniões e compromissos" },
+  { value: "outlook", label: "Outlook", icon: "📧", description: "Calendário e e-mails Microsoft" },
+  { value: "piperun", label: "PipeRun", icon: "🔧", description: "CRM e gestão de vendas" },
+  { value: "rd_station", label: "RD Station", icon: "🚀", description: "Marketing e automação" },
+  { value: "crm_generic", label: "CRM", icon: "🗂️", description: "Integração com CRM externo" },
 ];
 
 export type CRMProvider = "hubspot" | "pipedrive" | "zoho" | "salesforce" | "activecampaign" | "zendesk";

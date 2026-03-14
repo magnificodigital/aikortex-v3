@@ -241,25 +241,34 @@ const StepContext = ({ context, onChange, onNext, selectedTools, onToggleTool }:
         </div>
       )}
 
-      {/* Operacional */}
-      {activeSection === "operacional" && (
+      {/* Funções */}
+      {activeSection === "funcoes" && (
         <div className="space-y-4 animate-fade-in">
-          <div className="space-y-1.5">
-            <Label>Horário de funcionamento</Label>
-            <Select value={context.businessHours} onValueChange={(v) => update("businessHours", v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{HOURS.map((h) => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="escalation">Regras de escalonamento</Label>
-            <Textarea
-              id="escalation"
-              placeholder="Ex: Transferir para humano quando o cliente pedir, em casos de reclamação grave, ou quando não souber responder..."
-              value={context.escalationRules}
-              onChange={(e) => update("escalationRules", e.target.value)}
-              rows={3}
-            />
+          <p className="text-sm text-muted-foreground">Conecte ferramentas externas para expandir as capacidades do agente.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {EXTERNAL_TOOLS.map((tool) => {
+              const isSelected = selectedTools.includes(tool.value);
+              return (
+                <button
+                  key={tool.value}
+                  onClick={() => onToggleTool(tool.value)}
+                  className={`flex items-center gap-3 rounded-xl border-2 p-4 text-left transition-all ${
+                    isSelected ? "border-primary bg-primary/5 shadow-md" : "border-border bg-card hover:border-primary/30"
+                  }`}
+                >
+                  <span className="text-xl">{tool.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground">{tool.label}</p>
+                    <p className="text-xs text-muted-foreground truncate">{tool.description}</p>
+                  </div>
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+                    isSelected ? "bg-primary border-primary" : "border-border"
+                  }`}>
+                    {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
