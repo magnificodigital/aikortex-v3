@@ -59,8 +59,8 @@ const StepAgents = ({ selected, onSelect, onNext }: Props) => {
                     <Check className="w-3 h-3 text-primary-foreground" />
                   </div>
                 )}
-                <div className={`w-9 h-9 rounded-lg ${meta.accentBg} flex items-center justify-center`}>
-                  <Icon className={`w-4.5 h-4.5 ${meta.accent}`} />
+                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Icon className="w-4.5 h-4.5 text-primary" />
                 </div>
                 <div className="space-y-1">
                   <Badge variant={active ? "default" : "secondary"} className="text-[10px] font-bold">
