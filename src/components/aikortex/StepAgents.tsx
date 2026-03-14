@@ -9,12 +9,12 @@ interface Props {
   onNext: () => void;
 }
 
-const TYPE_META: Record<string, { icon: typeof Bot; accent: string; accentBg: string }> = {
-  SDR: { icon: Zap, accent: "text-warning", accentBg: "bg-warning/10" },
-  BDR: { icon: TrendingUp, accent: "text-info", accentBg: "bg-info/10" },
-  SAC: { icon: HeadphonesIcon, accent: "text-success", accentBg: "bg-success/10" },
-  CS: { icon: Users, accent: "text-primary", accentBg: "bg-primary/10" },
-  Custom: { icon: Settings2, accent: "text-accent-foreground", accentBg: "bg-accent" },
+const TYPE_META: Record<string, { icon: typeof Bot }> = {
+  SDR: { icon: Zap },
+  BDR: { icon: TrendingUp },
+  SAC: { icon: HeadphonesIcon },
+  CS: { icon: Users },
+  Custom: { icon: Settings2 },
 };
 
 const StepAgents = ({ selected, onSelect, onNext }: Props) => {
@@ -59,8 +59,8 @@ const StepAgents = ({ selected, onSelect, onNext }: Props) => {
                     <Check className="w-3 h-3 text-primary-foreground" />
                   </div>
                 )}
-                <div className={`w-9 h-9 rounded-lg ${meta.accentBg} flex items-center justify-center`}>
-                  <Icon className={`w-4.5 h-4.5 ${meta.accent}`} />
+                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Icon className="w-4.5 h-4.5 text-primary" />
                 </div>
                 <div className="space-y-1">
                   <Badge variant={active ? "default" : "secondary"} className="text-[10px] font-bold">
