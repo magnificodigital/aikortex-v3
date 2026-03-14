@@ -219,6 +219,22 @@ export const EXTERNAL_TOOLS: { value: ExternalTool; label: string; logo: string;
   { value: "deepseek", label: "DeepSeek", logo: "/logos/deepseek.png", description: "Modelos de IA open-source" },
 ];
 
+// ── Agent-type specific mappings ──
+
+export const CHANNELS_BY_AGENT_TYPE: Record<AgentType, DeployChannel[]> = {
+  SDR: ["whatsapp", "instagram", "website", "email"],
+  BDR: ["linkedin", "google_maps", "email"],
+  SAC: ["whatsapp", "instagram", "facebook", "website", "email"],
+  CS: ["whatsapp", "email", "website"],
+};
+
+export const TOOLS_BY_AGENT_TYPE: Record<AgentType, ExternalTool[]> = {
+  SDR: ["piperun", "rd_station", "crm_generic", "google_calendar", "outlook"],
+  BDR: ["piperun", "rd_station", "crm_generic", "google_calendar", "outlook", "openai", "gemini"],
+  SAC: ["openai", "gemini", "anthropic", "deepseek", "elevenlabs", "crm_generic"],
+  CS: ["crm_generic", "piperun", "openai", "google_calendar", "outlook"],
+};
+
 export type CRMProvider = "hubspot" | "pipedrive" | "zoho" | "salesforce" | "activecampaign" | "zendesk";
 
 export const CRM_PROVIDERS: { value: CRMProvider; label: string }[] = [
