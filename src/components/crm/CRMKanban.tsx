@@ -263,7 +263,7 @@ const CRMKanban = ({ leads, onLeadClick, onStageChange }: Props) => {
         </div>
 
         {/* Final stages - always visible as clean footer rows */}
-        <div className="space-y-2">
+        <div className="space-y-2 shrink-0">
           {FINAL_STAGES.map((stage) => renderFinalStage(stage))}
         </div>
       </div>
