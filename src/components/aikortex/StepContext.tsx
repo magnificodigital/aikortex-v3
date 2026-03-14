@@ -28,16 +28,14 @@ const TONES = [
   "Empático e acolhedor",
 ];
 
-const HOURS = ["24/7", "Horário comercial (8h-18h)", "Personalizado"];
-
-type Section = "empresa" | "publico" | "conhecimento" | "tom" | "operacional";
+type Section = "empresa" | "publico" | "conhecimento" | "tom" | "funcoes";
 
 const SECTIONS: { key: Section; label: string; icon: typeof Building2 }[] = [
   { key: "empresa", label: "Empresa", icon: Building2 },
   { key: "publico", label: "Público-alvo", icon: Users },
   { key: "conhecimento", label: "Base de conhecimento", icon: BookOpen },
   { key: "tom", label: "Tom e estilo", icon: MessageCircle },
-  { key: "operacional", label: "Operacional", icon: Settings2 },
+  { key: "funcoes", label: "Funções", icon: Puzzle },
 ];
 
 const StepContext = ({ context, onChange, onNext }: Props) => {
