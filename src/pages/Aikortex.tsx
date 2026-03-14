@@ -17,6 +17,7 @@ import WizardStepper from "@/components/aikortex/WizardStepper";
 import StepAgents from "@/components/aikortex/StepAgents";
 import StepContext from "@/components/aikortex/StepContext";
 import StepChannels from "@/components/aikortex/StepChannels";
+import StepIntegrations from "@/components/aikortex/StepIntegrations";
 import StepLaunch from "@/components/aikortex/StepLaunch";
 
 const STEP_ORDER: WizardStep[] = WIZARD_STEPS.map((s) => s.key);
