@@ -1,12 +1,30 @@
-import { BusinessContext, KnowledgeFile } from "@/types/agent-builder";
-import { Client, MOCK_CLIENTS } from "@/types/client";
+import {
+  BusinessContext,
+  KnowledgeFile,
+  AgentIntent,
+  MANDATORY_INTENTS,
+  CUSTOM_INTENT_SUGGESTIONS,
+  ConversationStage,
+  DEFAULT_CONVERSATION_STAGES,
+  AgentAdvancedConfig,
+  DEFAULT_ADVANCED_CONFIG,
+  MessageSize,
+  CreativityLevel,
+} from "@/types/agent-builder";
+import { MOCK_CLIENTS } from "@/types/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, ArrowLeft, Building2, Users, BookOpen, MessageCircle, Upload, X, FileText, Image, File, Bot, Briefcase, Zap, Plus, Check, AlertCircle } from "lucide-react";
+import {
+  ArrowRight, ArrowLeft, User, Target, MessageSquare, Layers, BookOpen, Settings2,
+  Upload, X, FileText, Image, File, Plus, Check, GripVertical, Trash2, ChevronDown, ChevronUp,
+  Shield, AlertTriangle, ArrowRightLeft, Ban, Clock, Volume2, Sparkles, Mic,
+} from "lucide-react";
 import { useState, useRef } from "react";
 
 interface Props {
@@ -14,11 +32,23 @@ interface Props {
   onChange: (ctx: BusinessContext) => void;
   onNext: () => void;
   onBack: () => void;
+  advancedConfig: AgentAdvancedConfig;
+  onAdvancedConfigChange: (cfg: AgentAdvancedConfig) => void;
+  intents: AgentIntent[];
+  onIntentsChange: (intents: AgentIntent[]) => void;
+  stages: ConversationStage[];
+  onStagesChange: (stages: ConversationStage[]) => void;
 }
 
-const INDUSTRIES = [
-  "Tecnologia", "SaaS", "E-commerce", "Marketing Digital", "Consultoria",
-  "Educação", "Saúde", "Financeiro", "Imobiliário", "Varejo", "Outro",
+type Section = "identidade" | "objetivo" | "intencoes" | "estagios" | "conhecimento" | "avancado";
+
+const SECTIONS: { key: Section; label: string; icon: typeof User }[] = [
+  { key: "identidade", label: "Identidade", icon: User },
+  { key: "objetivo", label: "Objetivo", icon: Target },
+  { key: "intencoes", label: "Intenções", icon: MessageSquare },
+  { key: "estagios", label: "Estágios", icon: Layers },
+  { key: "conhecimento", label: "Conhecimento", icon: BookOpen },
+  { key: "avancado", label: "Avançado", icon: Settings2 },
 ];
 
 const TONES = [
@@ -29,40 +59,43 @@ const TONES = [
   "Empático e acolhedor",
 ];
 
-const DEFAULT_SKILLS = [
-  "Qualificação de leads",
-  "Atendimento ao cliente",
-  "Agendamento de reuniões",
-  "Follow-up automático",
-  "Coleta de feedback",
-  "Onboarding de clientes",
-  "Resolução de dúvidas técnicas",
-  "Negociação e vendas",
-  "Suporte pós-venda",
-  "Pesquisa de satisfação",
+const COMM_STYLES = [
+  "Respostas curtas e diretas",
+  "Respostas detalhadas e explicativas",
+  "Tom consultivo com perguntas",
+  "Conversacional e natural",
 ];
 
-type Section = "empresa" | "agente" | "servicos" | "publico" | "conhecimento" | "tom" | "skills";
-
-const SECTIONS: { key: Section; label: string; icon: typeof Building2 }[] = [
-  { key: "empresa", label: "Empresa", icon: Building2 },
-  { key: "agente", label: "Nome do Agente", icon: Bot },
-  { key: "servicos", label: "Serviços", icon: Briefcase },
-  { key: "publico", label: "Público-alvo", icon: Users },
-  { key: "conhecimento", label: "Base de conhecimento", icon: BookOpen },
-  { key: "tom", label: "Tom e estilo", icon: MessageCircle },
-  { key: "skills", label: "Skills", icon: Zap },
+const INDUSTRIES = [
+  "Tecnologia", "SaaS", "E-commerce", "Marketing Digital", "Consultoria",
+  "Educação", "Saúde", "Financeiro", "Imobiliário", "Varejo", "Outro",
 ];
 
-const StepContext = ({ context, onChange, onNext, onBack }: Props) => {
-  const [activeSection, setActiveSection] = useState<Section>("empresa");
+const INTENT_ICONS: Record<string, typeof Shield> = {
+  end_conversation: Ban,
+  transfer_human: ArrowRightLeft,
+  invalid_content: AlertTriangle,
+  response_limit: Clock,
+};
+
+const StepContext = ({
+  context, onChange, onNext, onBack,
+  advancedConfig, onAdvancedConfigChange,
+  intents, onIntentsChange,
+  stages, onStagesChange,
+}: Props) => {
+  const [activeSection, setActiveSection] = useState<Section>("identidade");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [newService, setNewService] = useState("");
-  const [newSkill, setNewSkill] = useState("");
+  const [expandedIntent, setExpandedIntent] = useState<string | null>(null);
+  const [newIntentName, setNewIntentName] = useState("");
+  const [newIntentAction, setNewIntentAction] = useState("");
+  const [expandedStage, setExpandedStage] = useState<string | null>(null);
+  const [newStageName, setNewStageName] = useState("");
 
   const update = (field: keyof BusinessContext, value: string) =>
     onChange({ ...context, [field]: value });
 
+  // File handling
   const handleFiles = (files: FileList) => {
     const newFiles: KnowledgeFile[] = Array.from(files)
       .filter((f) => f.size <= 10 * 1024 * 1024)
@@ -70,9 +103,8 @@ const StepContext = ({ context, onChange, onNext, onBack }: Props) => {
     onChange({ ...context, knowledgeFiles: [...context.knowledgeFiles, ...newFiles] });
   };
 
-  const removeFile = (id: string) => {
+  const removeFile = (id: string) =>
     onChange({ ...context, knowledgeFiles: context.knowledgeFiles.filter((f) => f.id !== id) });
-  };
 
   const getFileIcon = (type: string) => {
     if (type.startsWith("image/")) return <Image className="w-4 h-4 text-primary shrink-0" />;
@@ -86,54 +118,80 @@ const StepContext = ({ context, onChange, onNext, onBack }: Props) => {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const addService = () => {
-    const trimmed = newService.trim();
-    if (trimmed && !context.services.includes(trimmed)) {
-      onChange({ ...context, services: [...context.services, trimmed] });
-      setNewService("");
-    }
+  // Intent helpers
+  const customIntents = intents.filter((i) => !i.isMandatory);
+  const canAddIntent = customIntents.length < 10;
+
+  const addCustomIntent = () => {
+    if (!newIntentName.trim() || !canAddIntent) return;
+    const newIntent: AgentIntent = {
+      id: crypto.randomUUID(),
+      name: newIntentName.trim(),
+      description: "",
+      triggers: [],
+      action: newIntentAction.trim() || newIntentName.trim(),
+      isMandatory: false,
+    };
+    onIntentsChange([...intents, newIntent]);
+    setNewIntentName("");
+    setNewIntentAction("");
   };
 
-  const removeService = (service: string) => {
-    onChange({ ...context, services: context.services.filter((s) => s !== service) });
+  const addSuggestedIntent = (suggestion: { name: string; action: string }) => {
+    if (!canAddIntent || intents.some((i) => i.name === suggestion.name)) return;
+    const newIntent: AgentIntent = {
+      id: crypto.randomUUID(),
+      name: suggestion.name,
+      description: "",
+      triggers: [],
+      action: suggestion.action,
+      isMandatory: false,
+    };
+    onIntentsChange([...intents, newIntent]);
   };
 
-  const toggleSkill = (skill: string) => {
-    const exists = context.skills.includes(skill);
-    onChange({
-      ...context,
-      skills: exists ? context.skills.filter((s) => s !== skill) : [...context.skills, skill],
-    });
+  const removeIntent = (id: string) =>
+    onIntentsChange(intents.filter((i) => i.id !== id));
+
+  // Stage helpers
+  const canAddStage = stages.length < 10;
+
+  const addStage = () => {
+    if (!newStageName.trim() || !canAddStage) return;
+    const newStage: ConversationStage = {
+      id: crypto.randomUUID(),
+      name: newStageName.trim(),
+      description: "",
+      example: "",
+      order: stages.length + 1,
+    };
+    onStagesChange([...stages, newStage]);
+    setNewStageName("");
   };
 
-  const addCustomSkill = () => {
-    const trimmed = newSkill.trim();
-    if (trimmed && !context.skills.includes(trimmed)) {
-      onChange({ ...context, skills: [...context.skills, trimmed] });
-      setNewSkill("");
-    }
+  const removeStage = (id: string) => {
+    const filtered = stages.filter((s) => s.id !== id);
+    onStagesChange(filtered.map((s, i) => ({ ...s, order: i + 1 })));
   };
 
-  // Validation per section
-  const sectionValid: Record<Section, boolean> = {
-    empresa: !!(context.companyName && context.industry && context.mainProduct),
-    agente: !!context.agentName.trim(),
-    servicos: context.services.length > 0,
-    publico: !!context.targetAudienceDescription.trim(),
-    conhecimento: context.knowledgeFiles.length > 0 || !!context.knowledgeSources.trim(),
-    tom: !!context.toneOfVoice,
-    skills: context.skills.length > 0,
+  const moveStage = (id: string, direction: "up" | "down") => {
+    const idx = stages.findIndex((s) => s.id === id);
+    if ((direction === "up" && idx === 0) || (direction === "down" && idx === stages.length - 1)) return;
+    const newStages = [...stages];
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    [newStages[idx], newStages[swapIdx]] = [newStages[swapIdx], newStages[idx]];
+    onStagesChange(newStages.map((s, i) => ({ ...s, order: i + 1 })));
   };
 
-  const allValid = Object.values(sectionValid).every(Boolean);
-
-  const incompleteSections = SECTIONS.filter((s) => !sectionValid[s.key]);
+  const updateStage = (id: string, field: keyof ConversationStage, value: string) => {
+    onStagesChange(stages.map((s) => s.id === id ? { ...s, [field]: value } : s));
+  };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 animate-fade-in">
+    <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold text-foreground">Configure seu agente</h2>
-        <p className="text-sm text-muted-foreground">Preencha todas as seções para criar um agente eficaz.</p>
+        <p className="text-sm text-muted-foreground">Preencha as seções para criar um agente funcional em minutos.</p>
       </div>
 
       {/* Section tabs */}
@@ -141,7 +199,6 @@ const StepContext = ({ context, onChange, onNext, onBack }: Props) => {
         {SECTIONS.map((s) => {
           const Icon = s.icon;
           const isActive = activeSection === s.key;
-          const isComplete = sectionValid[s.key];
           return (
             <button
               key={s.key}
@@ -149,220 +206,376 @@ const StepContext = ({ context, onChange, onNext, onBack }: Props) => {
               className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
                 isActive
                   ? "bg-primary text-primary-foreground"
-                  : isComplete
-                  ? "text-foreground bg-muted/80"
                   : "text-muted-foreground hover:bg-muted"
               }`}
             >
-              {isComplete && !isActive ? (
-                <Check className="w-3.5 h-3.5 text-[hsl(var(--success))]" />
-              ) : (
-                <Icon className="w-3.5 h-3.5" />
-              )}
+              <Icon className="w-3.5 h-3.5" />
               {s.label}
             </button>
           );
         })}
       </div>
 
-      {/* Empresa */}
-      {activeSection === "empresa" && (
+      {/* ── 1. Identidade do Agente ── */}
+      {activeSection === "identidade" && (
         <div className="space-y-4 animate-fade-in">
-          <div className="space-y-1.5">
-            <Label>Selecionar cliente cadastrado *</Label>
-            <Select
-              value={context.companyName ? MOCK_CLIENTS.find(c => c.companyName === context.companyName)?.id || "" : ""}
-              onValueChange={(clientId) => {
-                const client = MOCK_CLIENTS.find(c => c.id === clientId);
-                if (client) {
-                  onChange({
-                    ...context,
-                    companyName: client.companyName,
-                    website: client.website ? `https://${client.website}` : "",
-                    industry: INDUSTRIES.includes(client.industry) ? client.industry : client.industry || "",
-                  });
-                }
-              }}
-            >
-              <SelectTrigger><SelectValue placeholder="Escolha um cliente" /></SelectTrigger>
-              <SelectContent>
-                {MOCK_CLIENTS.filter(c => c.status === "active" || c.status === "onboarding").map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 rounded bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground">{c.initials}</div>
-                      <span>{c.companyName}</span>
-                      <span className="text-muted-foreground text-xs">— {c.industry}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {context.companyName && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-lg border border-border bg-muted/30 p-4">
+          <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Empresa</Label>
-                <p className="text-sm font-medium text-foreground">{context.companyName}</p>
+                <Label htmlFor="agentName">Nome do agente *</Label>
+                <Input id="agentName" placeholder="Ex: Ivy, Sofia, Max..." value={context.agentName} onChange={(e) => update("agentName", e.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Indústria</Label>
-                <p className="text-sm font-medium text-foreground">{context.industry || "—"}</p>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Website</Label>
-                <p className="text-sm font-medium text-foreground">{context.website || "—"}</p>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">País / Idioma</Label>
-                <p className="text-sm font-medium text-foreground">{context.country} / {context.language}</p>
+                <Label>Cargo / Função</Label>
+                <Input placeholder="Ex: SDR, Atendente, Consultor..." value={context.mainProduct} onChange={(e) => update("mainProduct", e.target.value)} />
               </div>
             </div>
-          )}
 
-          <div className="space-y-1.5">
-            <Label htmlFor="product">Produto ou serviço principal *</Label>
-            <Input id="product" placeholder="Ex: Plataforma de automação" value={context.mainProduct} onChange={(e) => update("mainProduct", e.target.value)} />
-          </div>
-        </div>
-      )}
-
-      {/* Nome do Agente */}
-      {activeSection === "agente" && (
-        <div className="space-y-4 animate-fade-in">
-          <div className="space-y-1.5">
-            <Label htmlFor="agentName">Nome do agente *</Label>
-            <Input
-              id="agentName"
-              placeholder="Ex: Sofia, Max, Assistente Comercial..."
-              value={context.agentName}
-              onChange={(e) => update("agentName", e.target.value)}
-            />
-            <p className="text-[11px] text-muted-foreground">Escolha um nome que represente a personalidade do agente.</p>
-          </div>
-        </div>
-      )}
-
-      {/* Serviços */}
-      {activeSection === "servicos" && (
-        <div className="space-y-4 animate-fade-in">
-          <div className="space-y-1.5">
-            <Label>Serviços que a empresa oferece *</Label>
-            <p className="text-[11px] text-muted-foreground">Adicione os serviços/produtos que o agente deve conhecer.</p>
-          </div>
-          <div className="flex gap-2">
-            <Input
-              placeholder="Ex: Consultoria em marketing digital"
-              value={newService}
-              onChange={(e) => setNewService(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addService(); } }}
-            />
-            <Button type="button" size="sm" onClick={addService} disabled={!newService.trim()} className="gap-1 shrink-0">
-              <Plus className="w-4 h-4" /> Adicionar
-            </Button>
-          </div>
-          {context.services.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {context.services.map((service) => (
-                <Badge key={service} variant="secondary" className="gap-1.5 py-1.5 px-3 text-xs">
-                  {service}
-                  <button onClick={() => removeService(service)} className="hover:text-destructive transition-colors">
-                    <X className="w-3 h-3" />
-                  </button>
-                </Badge>
-              ))}
+            <div className="space-y-1.5">
+              <Label>Empresa que representa *</Label>
+              <Select
+                value={context.companyName ? MOCK_CLIENTS.find(c => c.companyName === context.companyName)?.id || "" : ""}
+                onValueChange={(clientId) => {
+                  const client = MOCK_CLIENTS.find(c => c.id === clientId);
+                  if (client) {
+                    onChange({
+                      ...context,
+                      companyName: client.companyName,
+                      website: client.website ? `https://${client.website}` : "",
+                      industry: INDUSTRIES.includes(client.industry) ? client.industry : client.industry || "",
+                    });
+                  }
+                }}
+              >
+                <SelectTrigger><SelectValue placeholder="Escolha um cliente cadastrado" /></SelectTrigger>
+                <SelectContent>
+                  {MOCK_CLIENTS.filter(c => c.status === "active" || c.status === "onboarding").map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 rounded bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground">{c.initials}</div>
+                        <span>{c.companyName}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {context.companyName && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {context.companyName} — {context.industry || "Sem indústria"} — {context.website || "Sem website"}
+                </p>
+              )}
             </div>
-          )}
-          {context.services.length === 0 && (
-            <p className="text-xs text-muted-foreground/70 text-center py-4 border border-dashed border-border rounded-lg">
-              Nenhum serviço adicionado ainda
-            </p>
-          )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>Tom de voz *</Label>
+                <Select value={context.toneOfVoice} onValueChange={(v) => update("toneOfVoice", v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{TONES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Estilo de comunicação</Label>
+                <Select value={context.escalationRules || COMM_STYLES[0]} onValueChange={(v) => update("escalationRules", v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{COMM_STYLES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="greeting">Mensagem de saudação</Label>
+              <Textarea
+                id="greeting"
+                placeholder="Ex: Olá! 👋 Sou a Ivy, assistente virtual da empresa X. Como posso te ajudar?"
+                value={context.greetingMessage}
+                onChange={(e) => update("greetingMessage", e.target.value)}
+                rows={2}
+              />
+            </div>
+          </div>
+
+          <div className="text-[11px] text-muted-foreground bg-muted/30 rounded-lg px-4 py-3">
+            <strong>Exemplo:</strong> Nome: Ivy · Função: SDR · Objetivo: Qualificar leads e agendar reuniões · Tom: profissional, humano e consultivo · Estilo: respostas curtas e diretas
+          </div>
         </div>
       )}
 
-      {/* Público-alvo */}
-      {activeSection === "publico" && (
+      {/* ── 2. Objetivo do Agente ── */}
+      {activeSection === "objetivo" && (
         <div className="space-y-4 animate-fade-in">
-          <div className="space-y-1.5">
-            <Label htmlFor="audience">Quem é seu público-alvo? *</Label>
-            <Textarea
-              id="audience"
-              placeholder="Ex: PMEs de tecnologia com 10-50 funcionários, decisores de nível C-level..."
-              value={context.targetAudienceDescription}
-              onChange={(e) => update("targetAudienceDescription", e.target.value)}
-              rows={3}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="pains">Principais dores / problemas do público</Label>
-            <Textarea
-              id="pains"
-              placeholder="Ex: Dificuldade em escalar atendimento, perda de leads por demora na resposta..."
-              value={context.painPoints}
-              onChange={(e) => update("painPoints", e.target.value)}
-              rows={3}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="ticket">Ticket médio</Label>
-            <Input id="ticket" placeholder="R$ 2.000" value={context.averageTicket} onChange={(e) => update("averageTicket", e.target.value)} />
+          <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="whatDoes">O que este agente faz? *</Label>
+              <Textarea
+                id="whatDoes"
+                placeholder="Ex: Este agente conversa com visitantes do site para entender seu interesse, qualificar o lead e agendar uma reunião com o time comercial."
+                value={context.targetAudienceDescription}
+                onChange={(e) => update("targetAudienceDescription", e.target.value)}
+                rows={3}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="expectedResult">Qual o resultado esperado da conversa?</Label>
+              <Textarea
+                id="expectedResult"
+                placeholder="Ex: Lead qualificado com reunião agendada, ticket resolvido, proposta enviada..."
+                value={context.painPoints}
+                onChange={(e) => update("painPoints", e.target.value)}
+                rows={2}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="audience">Quem é o público atendido?</Label>
+              <Textarea
+                id="audience"
+                placeholder="Ex: PMEs de tecnologia, decisores C-level, clientes existentes com dúvidas..."
+                value={context.knowledgeSources}
+                onChange={(e) => update("knowledgeSources", e.target.value)}
+                rows={2}
+              />
+            </div>
           </div>
         </div>
       )}
 
-      {/* Base de conhecimento */}
-      {activeSection === "conhecimento" && (
+      {/* ── 3. Intenções ── */}
+      {activeSection === "intencoes" && (
         <div className="space-y-4 animate-fade-in">
+          {/* Mandatory intents */}
           <div className="space-y-2">
-            <Label>Arquivos de referência *</Label>
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-              onDrop={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (e.dataTransfer.files) handleFiles(e.dataTransfer.files);
-              }}
-              className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors"
-            >
-              <Upload className="w-8 h-8 mx-auto text-muted-foreground/50 mb-2" />
-              <p className="text-sm text-muted-foreground">Arraste arquivos ou clique para enviar</p>
-              <p className="text-[10px] text-muted-foreground/60 mt-1">PDF, TXT, imagens (máx. 10MB cada)</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Intenções obrigatórias</p>
+            <div className="space-y-2">
+              {MANDATORY_INTENTS.map((intent) => {
+                const Icon = INTENT_ICONS[intent.id] || Shield;
+                const isExpanded = expandedIntent === intent.id;
+                return (
+                  <div key={intent.id} className="rounded-lg border border-border bg-muted/20">
+                    <button
+                      onClick={() => setExpandedIntent(isExpanded ? null : intent.id)}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <Icon className="w-4 h-4 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-foreground">{intent.name}</span>
+                          <Badge variant="outline" className="text-[9px]">Obrigatória</Badge>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground truncate">{intent.description}</p>
+                      </div>
+                      {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                    </button>
+                    {isExpanded && (
+                      <div className="px-4 pb-3 space-y-2 border-t border-border pt-3">
+                        <div className="space-y-1">
+                          <Label className="text-[11px]">Quando ativar:</Label>
+                          <div className="flex flex-wrap gap-1">
+                            {intent.triggers.map((t) => (
+                              <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[11px]">Ação:</Label>
+                          <p className="text-xs text-foreground">{intent.action}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept=".pdf,.txt,.md,.doc,.docx,.png,.jpg,.jpeg,.webp"
-              className="hidden"
-              onChange={(e) => { if (e.target.files) handleFiles(e.target.files); e.target.value = ""; }}
-            />
-            {context.knowledgeFiles.length > 0 && (
-              <div className="space-y-1.5 mt-3">
-                {context.knowledgeFiles.map((file) => (
-                  <div key={file.id} className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm">
-                    {getFileIcon(file.type)}
-                    <span className="flex-1 truncate text-foreground">{file.name}</span>
-                    <span className="text-[10px] text-muted-foreground">{formatSize(file.size)}</span>
-                    <button onClick={() => removeFile(file.id)} className="text-muted-foreground hover:text-destructive transition-colors">
-                      <X className="w-3.5 h-3.5" />
+          </div>
+
+          {/* Custom intents */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Intenções personalizadas</p>
+              <span className="text-[10px] text-muted-foreground">{customIntents.length}/10</span>
+            </div>
+
+            {customIntents.length > 0 && (
+              <div className="space-y-2">
+                {customIntents.map((intent) => (
+                  <div key={intent.id} className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-3">
+                    <Sparkles className="w-4 h-4 text-primary shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground">{intent.name}</p>
+                      <p className="text-[11px] text-muted-foreground">{intent.action}</p>
+                    </div>
+                    <button onClick={() => removeIntent(intent.id)} className="text-muted-foreground hover:text-destructive transition-colors">
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 ))}
               </div>
             )}
+
+            {/* Suggestions */}
+            <div className="space-y-1.5">
+              <Label className="text-[11px]">Sugestões rápidas:</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {CUSTOM_INTENT_SUGGESTIONS.filter((s) => !intents.some((i) => i.name === s.name)).map((s) => (
+                  <button
+                    key={s.name}
+                    onClick={() => addSuggestedIntent(s)}
+                    disabled={!canAddIntent}
+                    className="text-[11px] px-2.5 py-1 rounded-full border border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground transition-all disabled:opacity-50"
+                  >
+                    + {s.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Add custom */}
+            {canAddIntent && (
+              <div className="flex gap-2 pt-1">
+                <Input
+                  placeholder="Nome da intenção"
+                  value={newIntentName}
+                  onChange={(e) => setNewIntentName(e.target.value)}
+                  className="flex-1"
+                />
+                <Input
+                  placeholder="Ação"
+                  value={newIntentAction}
+                  onChange={(e) => setNewIntentAction(e.target.value)}
+                  className="flex-1"
+                />
+                <Button size="sm" onClick={addCustomIntent} disabled={!newIntentName.trim()} className="gap-1 shrink-0">
+                  <Plus className="w-4 h-4" /> Adicionar
+                </Button>
+              </div>
+            )}
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="knowledge">Fontes de conhecimento (URLs, descrições)</Label>
-            <Textarea
-              id="knowledge"
-              placeholder="Cole links de documentação, manuais, artigos, scripts de vendas..."
-              value={context.knowledgeSources}
-              onChange={(e) => update("knowledgeSources", e.target.value)}
-              rows={3}
-            />
+        </div>
+      )}
+
+      {/* ── 4. Estágios da Conversa ── */}
+      {activeSection === "estagios" && (
+        <div className="space-y-4 animate-fade-in">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">A IA seguirá esta ordem durante a conversa. Arraste para reordenar.</p>
+            <span className="text-[10px] text-muted-foreground">{stages.length}/10 estágios</span>
           </div>
+
+          <div className="space-y-2">
+            {stages.map((stage, idx) => {
+              const isExpanded = expandedStage === stage.id;
+              return (
+                <div key={stage.id} className="rounded-lg border border-border bg-card">
+                  <div className="flex items-center gap-2 px-3 py-2.5">
+                    <GripVertical className="w-4 h-4 text-muted-foreground/50 shrink-0" />
+                    <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-[11px] font-bold flex items-center justify-center shrink-0">
+                      {idx + 1}
+                    </span>
+                    <button onClick={() => setExpandedStage(isExpanded ? null : stage.id)} className="flex-1 text-left">
+                      <span className="text-sm font-medium text-foreground">{stage.name}</span>
+                      {stage.description && <p className="text-[11px] text-muted-foreground truncate">{stage.description}</p>}
+                    </button>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => moveStage(stage.id, "up")} disabled={idx === 0} className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30">
+                        <ChevronUp className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => moveStage(stage.id, "down")} disabled={idx === stages.length - 1} className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30">
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => removeStage(stage.id)} className="p-1 text-muted-foreground hover:text-destructive">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                  {isExpanded && (
+                    <div className="px-4 pb-3 space-y-2 border-t border-border pt-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-[11px]">Descrição</Label>
+                        <Input value={stage.description} onChange={(e) => updateStage(stage.id, "description", e.target.value)} placeholder="O que o agente faz neste estágio?" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-[11px]">Exemplo de mensagem</Label>
+                        <Textarea value={stage.example} onChange={(e) => updateStage(stage.id, "example", e.target.value)} placeholder="Como o agente se comunica neste estágio?" rows={2} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {canAddStage && (
+            <div className="flex gap-2">
+              <Input
+                placeholder="Nome do novo estágio..."
+                value={newStageName}
+                onChange={(e) => setNewStageName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addStage(); } }}
+              />
+              <Button size="sm" onClick={addStage} disabled={!newStageName.trim()} className="gap-1 shrink-0">
+                <Plus className="w-4 h-4" /> Adicionar
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── 5. Base de Conhecimento ── */}
+      {activeSection === "conhecimento" && (
+        <div className="space-y-4 animate-fade-in">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">Conecte fontes de conhecimento para alimentar o agente.</p>
+            <Badge variant="outline" className="text-[10px]">
+              {context.knowledgeFiles.length} base{context.knowledgeFiles.length !== 1 ? "s" : ""} conectada{context.knowledgeFiles.length !== 1 ? "s" : ""}
+            </Badge>
+          </div>
+
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            onDrop={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (e.dataTransfer.files) handleFiles(e.dataTransfer.files);
+            }}
+            className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors"
+          >
+            <Upload className="w-10 h-10 mx-auto text-muted-foreground/50 mb-3" />
+            <p className="text-sm font-medium text-foreground">Arraste arquivos ou clique para enviar</p>
+            <p className="text-[11px] text-muted-foreground mt-1">PDFs, documentos, websites, FAQ, Notion, Google Drive</p>
+            <p className="text-[10px] text-muted-foreground/60 mt-0.5">Máx. 10MB por arquivo</p>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept=".pdf,.txt,.md,.doc,.docx,.png,.jpg,.jpeg,.webp"
+            className="hidden"
+            onChange={(e) => { if (e.target.files) handleFiles(e.target.files); e.target.value = ""; }}
+          />
+
+          {context.knowledgeFiles.length > 0 && (
+            <div className="space-y-1.5">
+              {context.knowledgeFiles.map((file) => (
+                <div key={file.id} className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm">
+                  {getFileIcon(file.type)}
+                  <span className="flex-1 truncate text-foreground">{file.name}</span>
+                  <span className="text-[10px] text-muted-foreground">{formatSize(file.size)}</span>
+                  <button onClick={() => removeFile(file.id)} className="text-muted-foreground hover:text-destructive transition-colors">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {context.knowledgeFiles.length === 0 && (
+            <div className="text-center py-4 border border-dashed border-border rounded-lg">
+              <p className="text-xs text-muted-foreground/70">0 bases conectadas — Nenhuma base conectada</p>
+            </div>
+          )}
+
           <div className="space-y-1.5">
             <Label htmlFor="faq">URL do FAQ ou Central de Ajuda</Label>
             <Input id="faq" placeholder="https://suaempresa.com/faq" value={context.faqUrl} onChange={(e) => update("faqUrl", e.target.value)} />
@@ -370,95 +583,130 @@ const StepContext = ({ context, onChange, onNext, onBack }: Props) => {
         </div>
       )}
 
-      {/* Tom e estilo */}
-      {activeSection === "tom" && (
-        <div className="space-y-4 animate-fade-in">
-          <div className="space-y-1.5">
-            <Label>Tom de voz do agente *</Label>
-            <Select value={context.toneOfVoice} onValueChange={(v) => update("toneOfVoice", v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{TONES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="greeting">Mensagem de saudação</Label>
-            <Textarea
-              id="greeting"
-              placeholder="Ex: Olá! 👋 Sou o assistente da [Empresa]. Como posso ajudar?"
-              value={context.greetingMessage}
-              onChange={(e) => update("greetingMessage", e.target.value)}
-              rows={2}
+      {/* ── 6. Configurações Avançadas ── */}
+      {activeSection === "avancado" && (
+        <div className="space-y-5 animate-fade-in">
+          {/* Max responses */}
+          <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-sm font-medium">Número máximo de respostas</Label>
+                <p className="text-[11px] text-muted-foreground">Evita loops de conversa.</p>
+              </div>
+              <Badge variant="outline" className="text-sm font-mono">{advancedConfig.maxResponses}</Badge>
+            </div>
+            <Slider
+              value={[advancedConfig.maxResponses]}
+              onValueChange={([v]) => onAdvancedConfigChange({ ...advancedConfig, maxResponses: v })}
+              min={10}
+              max={100}
+              step={5}
             />
           </div>
-        </div>
-      )}
 
-      {/* Skills */}
-      {activeSection === "skills" && (
-        <div className="space-y-4 animate-fade-in">
-          <div className="space-y-1.5">
-            <Label>Skills do agente *</Label>
-            <p className="text-[11px] text-muted-foreground">Selecione ou adicione as habilidades do agente.</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {DEFAULT_SKILLS.map((skill) => {
-              const selected = context.skills.includes(skill);
-              return (
+          {/* Message size */}
+          <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
+            <Label className="text-sm font-medium">Tamanho das mensagens</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { value: "short" as MessageSize, label: "Curtas", desc: "~200 caracteres" },
+                { value: "medium" as MessageSize, label: "Médias", desc: "~600 caracteres" },
+                { value: "long" as MessageSize, label: "Longas", desc: "~1200 caracteres" },
+              ]).map((opt) => (
                 <button
-                  key={skill}
-                  onClick={() => toggleSkill(skill)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
-                    selected
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-muted/50 text-muted-foreground border-border hover:border-primary/50"
+                  key={opt.value}
+                  onClick={() => onAdvancedConfigChange({ ...advancedConfig, messageSize: opt.value })}
+                  className={`rounded-lg border p-3 text-center transition-all ${
+                    advancedConfig.messageSize === opt.value
+                      ? "border-primary bg-primary/5 text-foreground"
+                      : "border-border bg-card text-muted-foreground hover:border-primary/40"
                   }`}
                 >
-                  {selected && <Check className="w-3 h-3 inline mr-1" />}
-                  {skill}
+                  <p className="text-xs font-medium">{opt.label}</p>
+                  <p className="text-[10px] text-muted-foreground">{opt.desc}</p>
                 </button>
-              );
-            })}
-          </div>
-          {/* Custom skills */}
-          {context.skills.filter((s) => !DEFAULT_SKILLS.includes(s)).length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {context.skills.filter((s) => !DEFAULT_SKILLS.includes(s)).map((skill) => (
-                <Badge key={skill} variant="secondary" className="gap-1.5 py-1.5 px-3 text-xs">
-                  {skill}
-                  <button onClick={() => toggleSkill(skill)} className="hover:text-destructive transition-colors">
-                    <X className="w-3 h-3" />
-                  </button>
-                </Badge>
               ))}
             </div>
-          )}
-          <div className="flex gap-2">
-            <Input
-              placeholder="Adicionar skill personalizada..."
-              value={newSkill}
-              onChange={(e) => setNewSkill(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomSkill(); } }}
+          </div>
+
+          {/* Min response time */}
+          <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-sm font-medium">Tempo mínimo para resposta</Label>
+                <p className="text-[11px] text-muted-foreground">Consolida múltiplas mensagens do usuário.</p>
+              </div>
+              <Badge variant="outline" className="text-sm font-mono">{advancedConfig.minResponseTime}s</Badge>
+            </div>
+            <Slider
+              value={[advancedConfig.minResponseTime]}
+              onValueChange={([v]) => onAdvancedConfigChange({ ...advancedConfig, minResponseTime: v })}
+              min={0}
+              max={30}
+              step={1}
             />
-            <Button type="button" size="sm" onClick={addCustomSkill} disabled={!newSkill.trim()} className="gap-1 shrink-0">
-              <Plus className="w-4 h-4" /> Adicionar
-            </Button>
+          </div>
+
+          {/* Toggles */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between rounded-lg border border-border bg-muted/20 px-4 py-3">
+              <div>
+                <Label className="text-sm font-medium">Responder na transferência</Label>
+                <p className="text-[11px] text-muted-foreground">Envia resposta imediata ao receber chat transferido.</p>
+              </div>
+              <Switch
+                checked={advancedConfig.respondOnTransfer}
+                onCheckedChange={(v) => onAdvancedConfigChange({ ...advancedConfig, respondOnTransfer: v })}
+              />
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg border border-border bg-muted/20 px-4 py-3">
+              <div className="flex items-center gap-2">
+                <Mic className="w-4 h-4 text-primary" />
+                <div>
+                  <Label className="text-sm font-medium">Responder em áudio</Label>
+                  <p className="text-[11px] text-muted-foreground">Permite respostas em áudio em determinados contextos.</p>
+                </div>
+              </div>
+              <Switch
+                checked={advancedConfig.respondInAudio}
+                onCheckedChange={(v) => onAdvancedConfigChange({ ...advancedConfig, respondInAudio: v })}
+              />
+            </div>
+          </div>
+
+          {/* Creativity */}
+          <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
+            <Label className="text-sm font-medium">Criatividade das respostas</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { value: "none" as CreativityLevel, label: "Sem criatividade", desc: "100% baseado no treinamento" },
+                { value: "restricted" as CreativityLevel, label: "Restrito", desc: "Prioriza treinamento" },
+                { value: "creative" as CreativityLevel, label: "Criativo", desc: "Respostas mais variadas" },
+              ]).map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => onAdvancedConfigChange({ ...advancedConfig, creativity: opt.value })}
+                  className={`rounded-lg border p-3 text-center transition-all ${
+                    advancedConfig.creativity === opt.value
+                      ? "border-primary bg-primary/5 text-foreground"
+                      : "border-border bg-card text-muted-foreground hover:border-primary/40"
+                  }`}
+                >
+                  <p className="text-xs font-medium">{opt.label}</p>
+                  <p className="text-[10px] text-muted-foreground">{opt.desc}</p>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
 
       {/* Footer */}
       <div className="flex items-center justify-between pt-2">
-        <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={onBack} className="gap-1.5">
-            <ArrowLeft className="w-4 h-4" /> Voltar
-          </Button>
-          {!allValid && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <AlertCircle className="w-3.5 h-3.5 text-destructive" />
-              <span>Faltam: {incompleteSections.map((s) => s.label).join(", ")}</span>
-            </div>
-          )}
-        </div>
+        <Button variant="outline" onClick={onBack} className="gap-1.5">
+          <ArrowLeft className="w-4 h-4" /> Voltar
+        </Button>
         <Button onClick={onNext} className="gap-2">
           Continuar <ArrowRight className="w-4 h-4" />
         </Button>
