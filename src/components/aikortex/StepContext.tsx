@@ -1,11 +1,11 @@
-import { BusinessContext, KnowledgeFile, ExternalTool, EXTERNAL_TOOLS } from "@/types/agent-builder";
+import { BusinessContext, KnowledgeFile } from "@/types/agent-builder";
 import { Client, MOCK_CLIENTS } from "@/types/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, ArrowLeft, Building2, Users, BookOpen, MessageCircle, Puzzle, Upload, X, FileText, Image, File, Check } from "lucide-react";
+import { ArrowRight, ArrowLeft, Building2, Users, BookOpen, MessageCircle, Upload, X, FileText, Image, File } from "lucide-react";
 import { useState, useRef } from "react";
 
 interface Props {
@@ -13,8 +13,6 @@ interface Props {
   onChange: (ctx: BusinessContext) => void;
   onNext: () => void;
   onBack: () => void;
-  selectedTools: ExternalTool[];
-  onToggleTool: (tool: ExternalTool) => void;
 }
 
 const INDUSTRIES = [
@@ -30,17 +28,16 @@ const TONES = [
   "Empático e acolhedor",
 ];
 
-type Section = "empresa" | "publico" | "conhecimento" | "tom" | "funcoes";
+type Section = "empresa" | "publico" | "conhecimento" | "tom";
 
 const SECTIONS: { key: Section; label: string; icon: typeof Building2 }[] = [
   { key: "empresa", label: "Empresa", icon: Building2 },
   { key: "publico", label: "Público-alvo", icon: Users },
   { key: "conhecimento", label: "Base de conhecimento", icon: BookOpen },
   { key: "tom", label: "Tom e estilo", icon: MessageCircle },
-  { key: "funcoes", label: "Integrações", icon: Puzzle },
 ];
 
-const StepContext = ({ context, onChange, onNext, onBack, selectedTools, onToggleTool }: Props) => {
+const StepContext = ({ context, onChange, onNext, onBack }: Props) => {
   const [activeSection, setActiveSection] = useState<Section>("empresa");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -278,48 +275,6 @@ const StepContext = ({ context, onChange, onNext, onBack, selectedTools, onToggl
         </div>
       )}
 
-      {/* Funções / Integrações */}
-      {activeSection === "funcoes" && (
-        <div className="space-y-4 animate-fade-in">
-          <p className="text-sm text-muted-foreground">Conecte ferramentas externas para expandir as capacidades do agente.</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {EXTERNAL_TOOLS.map((tool) => {
-              const isSelected = selectedTools.includes(tool.value);
-              return (
-                <div
-                  key={tool.value}
-                  className={`flex items-center gap-3 rounded-xl border-2 p-4 transition-all ${
-                    isSelected ? "border-primary bg-primary/5 shadow-md" : "border-border bg-card"
-                  }`}
-                >
-                  <img
-                    src={tool.logo}
-                    alt={tool.label}
-                    className="w-9 h-9 rounded-lg object-contain shrink-0"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground">{tool.label}</p>
-                    <p className="text-xs text-muted-foreground truncate">{tool.description}</p>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant={isSelected ? "default" : "outline"}
-                    onClick={() => onToggleTool(tool.value)}
-                    className="shrink-0 text-xs h-8 gap-1.5"
-                  >
-                    {isSelected ? (
-                      <><Check className="w-3 h-3" /> Conectado</>
-                    ) : (
-                      "Conectar"
-                    )}
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* Footer */}
       <div className="flex items-center justify-between pt-2">

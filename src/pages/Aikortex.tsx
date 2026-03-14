@@ -17,6 +17,7 @@ import WizardStepper from "@/components/aikortex/WizardStepper";
 import StepAgents from "@/components/aikortex/StepAgents";
 import StepContext from "@/components/aikortex/StepContext";
 import StepChannels from "@/components/aikortex/StepChannels";
+import StepIntegrations from "@/components/aikortex/StepIntegrations";
 import StepLaunch from "@/components/aikortex/StepLaunch";
 
 const STEP_ORDER: WizardStep[] = WIZARD_STEPS.map((s) => s.key);
@@ -60,10 +61,13 @@ const Aikortex = () => {
           />
         )}
         {step === "context" && (
-          <StepContext context={context} onChange={setContext} onNext={() => setStep("channels")} onBack={goBack} selectedTools={selectedTools} onToggleTool={toggleTool} />
+          <StepContext context={context} onChange={setContext} onNext={() => setStep("channels")} onBack={goBack} />
         )}
         {step === "channels" && (
-          <StepChannels selected={selectedChannels} onToggle={toggleChannel} onNext={() => setStep("launch")} onBack={goBack} />
+          <StepChannels selected={selectedChannels} onToggle={toggleChannel} onNext={() => setStep("integrations")} onBack={goBack} />
+        )}
+        {step === "integrations" && (
+          <StepIntegrations selected={selectedTools} onToggle={toggleTool} onNext={() => setStep("launch")} onBack={goBack} />
         )}
         {step === "launch" && (
           <StepLaunch
