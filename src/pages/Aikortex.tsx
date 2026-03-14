@@ -27,6 +27,7 @@ const Aikortex = () => {
   const [selectedAgent, setSelectedAgent] = useState<AgentRecommendation | null>(null);
   const [selectedChannels, setSelectedChannels] = useState<DeployChannel[]>([]);
   const [selectedCRM, setSelectedCRM] = useState<CRMProvider | null>(null);
+  const [selectedTools, setSelectedTools] = useState<ExternalTool[]>([]);
 
   const currentIndex = STEP_ORDER.indexOf(step);
 
