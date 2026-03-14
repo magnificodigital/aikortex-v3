@@ -266,6 +266,25 @@ const StepContext = ({
               )}
             </div>
 
+            <div className="space-y-1.5">
+              <Label>Tipo de voz (ElevenLabs)</Label>
+              <Select value={context.businessHours} onValueChange={(v) => update("businessHours", v)}>
+                <SelectTrigger><SelectValue placeholder="Selecione uma voz" /></SelectTrigger>
+                <SelectContent>
+                  {ELEVENLABS_VOICES.map((v) => (
+                    <SelectItem key={v.id} value={v.id}>
+                      <div className="flex items-center gap-2">
+                        <Volume2 className="w-3.5 h-3.5 text-primary" />
+                        <span>{v.name}</span>
+                        <span className="text-[10px] text-muted-foreground">— {v.style}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-muted-foreground">Voz utilizada quando o agente responde em áudio.</p>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label>Tom de voz *</Label>
