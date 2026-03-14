@@ -3,7 +3,7 @@ import { BusinessContext, AgentRecommendation, DeployChannel, DEPLOY_CHANNELS, C
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Bot, Send, Rocket, User, Check } from "lucide-react";
+import { Bot, Send, Rocket, User, Check, ArrowLeft } from "lucide-react";
 
 interface Props {
   context: BusinessContext;
@@ -12,6 +12,7 @@ interface Props {
   onToggleChannel: (ch: DeployChannel) => void;
   selectedCRM: CRMProvider | null;
   onSelectCRM: (crm: CRMProvider | null) => void;
+  onBack: () => void;
 }
 
 const MOCK_RESPONSES: Record<string, string> = {
