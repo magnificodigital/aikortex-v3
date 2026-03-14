@@ -22,7 +22,7 @@ const CHANNEL_LOGOS: Record<DeployChannel, string> = {
 
 const MAIN_CHANNELS: DeployChannel[] = ["whatsapp", "instagram", "tiktok", "facebook", "linkedin", "google_maps"];
 
-const StepChannels = ({ selected, onToggle, onNext }: Props) => {
+const StepChannels = ({ selected, onToggle, onNext, onBack }: Props) => {
   return (
     <div className="max-w-2xl mx-auto space-y-8 animate-fade-in">
       <div className="text-center space-y-2">
