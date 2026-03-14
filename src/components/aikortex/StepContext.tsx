@@ -11,6 +11,8 @@ interface Props {
   context: BusinessContext;
   onChange: (ctx: BusinessContext) => void;
   onNext: () => void;
+  selectedTools: ExternalTool[];
+  onToggleTool: (tool: ExternalTool) => void;
 }
 
 const INDUSTRIES = [
