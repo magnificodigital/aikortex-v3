@@ -78,6 +78,13 @@ export const AGENT_TEMPLATES: AgentRecommendation[] = [
   },
 ];
 
+export interface KnowledgeFile {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+}
+
 export interface BusinessContext {
   // Empresa
   companyName: string;
