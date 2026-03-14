@@ -209,14 +209,14 @@ export type ExternalTool = "google_calendar" | "outlook" | "piperun" | "rd_stati
 export const EXTERNAL_TOOLS: { value: ExternalTool; label: string; logo: string; description: string }[] = [
   { value: "google_calendar", label: "Google Agenda", logo: "https://www.gstatic.com/images/branding/product/1x/calendar_2020q4_48dp.png", description: "Agendar reuniões e compromissos" },
   { value: "outlook", label: "Outlook", logo: "https://img.icons8.com/color/48/microsoft-outlook-2019.png", description: "Calendário e e-mails Microsoft" },
-  { value: "piperun", label: "PipeRun", logo: "https://play-lh.googleusercontent.com/rVfiRz2i3pJGdVpnFsLg5OlSMC3Bd7MINuqMDH_RYOLAM9WF6bRRVHH7RP5w5IFqkQ=w240-h480-rw", description: "CRM e gestão de vendas" },
-  { value: "rd_station", label: "RD Station", logo: "https://play-lh.googleusercontent.com/6g3gxPY0tR3UOs6FQ5MX-4yrO7rmHFfXoAiNwf7Y_hkDyH_VrGiiehGfqDPqRtyPhQ=w240-h480-rw", description: "Marketing e automação" },
-  { value: "crm_generic", label: "HubSpot", logo: "https://www.hubspot.com/hubfs/HubSpot_Logos/HubSpot-Inversed-Favicon.png", description: "CRM e automação de vendas" },
-  { value: "openai", label: "OpenAI", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/OpenAI_Logo.svg/512px-OpenAI_Logo.svg.png", description: "GPT e modelos de linguagem" },
-  { value: "elevenlabs", label: "ElevenLabs", logo: "https://upload.wikimedia.org/wikipedia/en/thumb/3/3b/ElevenLabs_logo.svg/512px-ElevenLabs_logo.svg.png", description: "Voz IA e text-to-speech" },
-  { value: "gemini", label: "Google Gemini", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Google_Gemini_logo.svg/512px-Google_Gemini_logo.svg.png", description: "IA multimodal do Google" },
-  { value: "anthropic", label: "Anthropic", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Anthropic_logo.svg/512px-Anthropic_logo.svg.png", description: "Claude e modelos de IA seguros" },
-  { value: "deepseek", label: "DeepSeek", logo: "https://upload.wikimedia.org/wikipedia/commons/e/e9/DeepSeek_logo.svg", description: "Modelos de IA open-source" },
+  { value: "piperun", label: "PipeRun", logo: "/logos/piperun.png", description: "CRM e gestão de vendas" },
+  { value: "rd_station", label: "RD Station", logo: "/logos/rdstation.png", description: "Marketing e automação" },
+  { value: "crm_generic", label: "HubSpot", logo: "/logos/hubspot.png", description: "CRM e automação de vendas" },
+  { value: "openai", label: "OpenAI", logo: "/logos/openai.png", description: "GPT e modelos de linguagem" },
+  { value: "elevenlabs", label: "ElevenLabs", logo: "/logos/elevenlabs.png", description: "Voz IA e text-to-speech" },
+  { value: "gemini", label: "Google Gemini", logo: "/logos/gemini.png", description: "IA multimodal do Google" },
+  { value: "anthropic", label: "Anthropic", logo: "/logos/anthropic.png", description: "Claude e modelos de IA seguros" },
+  { value: "deepseek", label: "DeepSeek", logo: "/logos/deepseek.png", description: "Modelos de IA open-source" },
 ];
 
 export type CRMProvider = "hubspot" | "pipedrive" | "zoho" | "salesforce" | "activecampaign" | "zendesk";
