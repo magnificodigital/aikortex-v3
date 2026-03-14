@@ -50,13 +50,19 @@ const Aikortex = () => {
   return (
     <DashboardLayout>
       <div className="p-4 lg:p-8 max-w-5xl mx-auto space-y-6">
-        <WizardStepper currentStep={step} />
-
-        {currentIndex > 0 && (
-          <Button variant="ghost" size="sm" onClick={goBack} className="gap-1.5 text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="w-3.5 h-3.5" /> Voltar
-          </Button>
-        )}
+        <div className="flex items-center gap-4">
+          {currentIndex > 0 ? (
+            <Button variant="ghost" size="icon" onClick={goBack} className="text-muted-foreground hover:text-foreground shrink-0 h-8 w-8">
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+          ) : (
+            <div className="w-8" />
+          )}
+          <div className="flex-1">
+            <WizardStepper currentStep={step} />
+          </div>
+          <div className="w-8" />
+        </div>
 
         {step === "agent" && (
           <StepAgents
