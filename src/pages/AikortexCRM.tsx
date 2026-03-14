@@ -102,8 +102,8 @@ const AikortexCRM = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-sm">
-              <Contact className="w-5 h-5 text-primary-foreground" />
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Contact className="w-5 h-5 text-primary" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-foreground">CRM</h1>
