@@ -72,7 +72,7 @@ const Tasks = () => {
         />
 
         {/* Views */}
-        <Tabs defaultValue="list">
+        <Tabs defaultValue="kanban">
           <TabsList className="mb-4">
             <TabsTrigger value="list" className="text-xs gap-1.5">
               <List className="w-3.5 h-3.5" /> Lista
