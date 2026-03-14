@@ -216,7 +216,10 @@ const CRMKanban = ({ leads, onLeadClick, onStageChange }: Props) => {
                   : "border-border bg-card/50"
             }`}
           >
-            <div className="flex items-center gap-2 shrink-0">
+            <div
+              className="flex items-center gap-2 shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => setLightboxStage(stage as "ganho" | "perdido")}
+            >
               {isWon ? (
                 <Trophy className="w-4 h-4 text-success" />
               ) : (
