@@ -17,12 +17,12 @@ const typeColors: Record<string, string> = {
 };
 
 const NotificationsCenter = () => (
-  <div className="glass-card rounded-xl flex flex-col h-full">
-    <div className="flex items-center justify-between px-5 py-3.5 border-b border-border/50">
+  <div className="glass-card flex flex-col h-full">
+    <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
       <h2 className="text-sm font-semibold text-foreground">Notificações</h2>
-      <span className="text-[10px] bg-destructive text-destructive-foreground px-2 py-0.5 rounded-full font-medium">5</span>
+      <span className="text-[10px] bg-destructive/10 text-destructive px-2 py-0.5 rounded-full font-medium">5</span>
     </div>
-    <div className="flex-1 overflow-y-auto p-3 space-y-0.5">
+    <div className="flex-1 overflow-y-auto p-2">
       {notifications.map((n, i) => (
         <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-accent/50 transition-colors">
           <n.icon className={`w-4 h-4 shrink-0 ${typeColors[n.type]}`} />
