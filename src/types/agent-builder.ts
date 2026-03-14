@@ -1,10 +1,11 @@
 // ── Agent Builder Wizard Types (Simplified 3-step flow) ──
 
-export type WizardStep = "agent" | "context" | "launch";
+export type WizardStep = "agent" | "context" | "channels" | "launch";
 
 export const WIZARD_STEPS: { key: WizardStep; label: string }[] = [
   { key: "agent", label: "Agente" },
   { key: "context", label: "Empresa" },
+  { key: "channels", label: "Canais" },
   { key: "launch", label: "Ativar" },
 ];
 
