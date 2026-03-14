@@ -35,7 +35,7 @@ const SECTIONS: { key: Section; label: string; icon: typeof Building2 }[] = [
   { key: "publico", label: "Público-alvo", icon: Users },
   { key: "conhecimento", label: "Base de conhecimento", icon: BookOpen },
   { key: "tom", label: "Tom e estilo", icon: MessageCircle },
-  { key: "funcoes", label: "Funções", icon: Puzzle },
+  { key: "funcoes", label: "Integrações", icon: Puzzle },
 ];
 
 const StepContext = ({ context, onChange, onNext, selectedTools, onToggleTool }: Props) => {
