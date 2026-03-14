@@ -8,6 +8,7 @@ import {
   type AgentRecommendation,
   type DeployChannel,
   type CRMProvider,
+  type ExternalTool,
   INITIAL_CONTEXT,
   WIZARD_STEPS,
   GOALS_BY_AGENT_TYPE,
@@ -15,6 +16,7 @@ import {
 import WizardStepper from "@/components/aikortex/WizardStepper";
 import StepAgents from "@/components/aikortex/StepAgents";
 import StepContext from "@/components/aikortex/StepContext";
+import StepChannels from "@/components/aikortex/StepChannels";
 import StepLaunch from "@/components/aikortex/StepLaunch";
 
 const STEP_ORDER: WizardStep[] = WIZARD_STEPS.map((s) => s.key);
