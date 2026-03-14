@@ -99,29 +99,64 @@ const StepContext = ({ context, onChange, onNext, selectedTools, onToggleTool }:
 
       {/* Empresa */}
       {activeSection === "empresa" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-in">
+        <div className="space-y-4 animate-fade-in">
+          {/* Client selector */}
           <div className="space-y-1.5">
-            <Label htmlFor="name">Nome da empresa *</Label>
-            <Input id="name" placeholder="Sua Empresa" value={context.companyName} onChange={(e) => update("companyName", e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Indústria *</Label>
-            <Select value={context.industry} onValueChange={(v) => update("industry", v)}>
-              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-              <SelectContent>{INDUSTRIES.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}</SelectContent>
+            <Label>Selecionar cliente cadastrado *</Label>
+            <Select
+              value={context.companyName ? MOCK_CLIENTS.find(c => c.companyName === context.companyName)?.id || "" : ""}
+              onValueChange={(clientId) => {
+                const client = MOCK_CLIENTS.find(c => c.id === clientId);
+                if (client) {
+                  onChange({
+                    ...context,
+                    companyName: client.companyName,
+                    website: client.website ? `https://${client.website}` : "",
+                    industry: INDUSTRIES.includes(client.industry) ? client.industry : client.industry || "",
+                  });
+                }
+              }}
+            >
+              <SelectTrigger><SelectValue placeholder="Escolha um cliente" /></SelectTrigger>
+              <SelectContent>
+                {MOCK_CLIENTS.filter(c => c.status === "active" || c.status === "onboarding").map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground">{c.initials}</div>
+                      <span>{c.companyName}</span>
+                      <span className="text-muted-foreground text-xs">— {c.industry}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1.5 sm:col-span-2">
+
+          {/* Auto-filled fields */}
+          {context.companyName && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-lg border border-border bg-muted/30 p-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Empresa</Label>
+                <p className="text-sm font-medium text-foreground">{context.companyName}</p>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Indústria</Label>
+                <p className="text-sm font-medium text-foreground">{context.industry || "—"}</p>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Website</Label>
+                <p className="text-sm font-medium text-foreground">{context.website || "—"}</p>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">País / Idioma</Label>
+                <p className="text-sm font-medium text-foreground">{context.country} / {context.language}</p>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-1.5">
             <Label htmlFor="product">Produto ou serviço principal *</Label>
             <Input id="product" placeholder="Ex: Plataforma de automação" value={context.mainProduct} onChange={(e) => update("mainProduct", e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="website">Website</Label>
-            <Input id="website" placeholder="https://suaempresa.com" value={context.website} onChange={(e) => update("website", e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="country">País / Idioma</Label>
-            <Input id="country" placeholder="Brasil" value={context.country} onChange={(e) => update("country", e.target.value)} />
           </div>
         </div>
       )}
