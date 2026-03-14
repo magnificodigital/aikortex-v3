@@ -1,10 +1,10 @@
-export type PipelineStage = "novo" | "contato" | "qualificado" | "proposta" | "negociacao" | "ganho" | "perdido";
+export type PipelineStage = "lead" | "em_atendimento" | "qualificado" | "agendado" | "negociacao" | "ganho" | "perdido";
 
 export const PIPELINE_STAGES: { value: PipelineStage; label: string; color: string; bg: string; dot: string }[] = [
-  { value: "novo", label: "Novo", color: "text-muted-foreground", bg: "bg-muted", dot: "bg-muted-foreground" },
-  { value: "contato", label: "Contato", color: "text-info", bg: "bg-info/10", dot: "bg-info" },
+  { value: "lead", label: "Lead", color: "text-muted-foreground", bg: "bg-muted", dot: "bg-muted-foreground" },
+  { value: "em_atendimento", label: "Em Atendimento", color: "text-info", bg: "bg-info/10", dot: "bg-info" },
   { value: "qualificado", label: "Qualificado", color: "text-warning", bg: "bg-warning/10", dot: "bg-warning" },
-  { value: "proposta", label: "Proposta", color: "text-primary", bg: "bg-primary/10", dot: "bg-primary" },
+  { value: "agendado", label: "Agendado", color: "text-primary", bg: "bg-primary/10", dot: "bg-primary" },
   { value: "negociacao", label: "Negociação", color: "text-accent-foreground", bg: "bg-accent", dot: "bg-accent-foreground" },
   { value: "ganho", label: "Ganho", color: "text-success", bg: "bg-success/10", dot: "bg-success" },
   { value: "perdido", label: "Perdido", color: "text-destructive", bg: "bg-destructive/10", dot: "bg-destructive" },
@@ -62,7 +62,7 @@ export const TEMPERATURE_CONFIG: Record<LeadTemperature, { label: string; color:
 export const MOCK_LEADS: Lead[] = [
   {
     id: "lead-1", name: "Carlos Mendes", email: "carlos@techsol.com", phone: "(11) 99999-1234",
-    company: "TechSol Ltda", position: "CEO", stage: "novo", source: "linkedin", temperature: "morno",
+    company: "TechSol Ltda", position: "CEO", stage: "lead", source: "linkedin", temperature: "morno",
     value: 15000, assignee: "Ana Silva", tags: ["SaaS", "B2B"], notes: "Interessado em automação",
     activities: [
       { id: "a1", type: "note", description: "Lead capturado via LinkedIn pelo agente BDR", createdAt: "2026-03-13T10:00:00", createdBy: "Agente BDR" },
@@ -71,7 +71,7 @@ export const MOCK_LEADS: Lead[] = [
   },
   {
     id: "lead-2", name: "Fernanda Costa", email: "fernanda@inovamkt.com", phone: "(21) 98888-5678",
-    company: "InovaMKT", position: "Diretora de Marketing", stage: "contato", source: "google_maps", temperature: "quente",
+    company: "InovaMKT", position: "Diretora de Marketing", stage: "em_atendimento", source: "google_maps", temperature: "quente",
     value: 28000, assignee: "Pedro Rocha", tags: ["Marketing", "Agência"], notes: "Quer demo esta semana",
     activities: [
       { id: "a2", type: "stage_change", description: "Movido para Contato", createdAt: "2026-03-12T14:00:00", createdBy: "Pedro Rocha" },
@@ -90,7 +90,7 @@ export const MOCK_LEADS: Lead[] = [
   },
   {
     id: "lead-4", name: "Juliana Pires", email: "juliana@logistica.com", phone: "(41) 96666-3456",
-    company: "LogísticaPro", position: "COO", stage: "proposta", source: "linkedin", temperature: "quente",
+    company: "LogísticaPro", position: "COO", stage: "agendado", source: "linkedin", temperature: "quente",
     value: 65000, assignee: "Pedro Rocha", tags: ["Logística", "Enterprise"], notes: "Proposta enviada, aguardando retorno",
     activities: [
       { id: "a5", type: "email", description: "Proposta comercial enviada - R$ 65.000", createdAt: "2026-03-09T16:00:00", createdBy: "Pedro Rocha" },
@@ -127,7 +127,7 @@ export const MOCK_LEADS: Lead[] = [
   },
   {
     id: "lead-8", name: "Luciana Martins", email: "luciana@educacao.com", phone: "(19) 92222-9012",
-    company: "EduTech Brasil", position: "Head de Produto", stage: "novo", source: "google_maps", temperature: "frio",
+    company: "EduTech Brasil", position: "Head de Produto", stage: "lead", source: "google_maps", temperature: "frio",
     value: 20000, assignee: "Pedro Rocha", tags: ["EdTech", "B2B"], notes: "Capturado via Google Maps",
     activities: [
       { id: "a9", type: "note", description: "Lead capturado automaticamente via Google Maps", createdAt: "2026-03-14T08:00:00", createdBy: "Agente BDR" },

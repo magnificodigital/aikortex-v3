@@ -17,7 +17,7 @@ interface Props {
 const NewLeadDialog = ({ open, onOpenChange, onSave }: Props) => {
   const [form, setForm] = useState({
     name: "", email: "", phone: "", company: "", position: "",
-    stage: "novo" as PipelineStage, source: "manual" as LeadSource,
+    stage: "lead" as PipelineStage, source: "manual" as LeadSource,
     temperature: "frio" as LeadTemperature, value: 0,
     assignee: "", tags: "", notes: "",
   });
@@ -28,7 +28,7 @@ const NewLeadDialog = ({ open, onOpenChange, onSave }: Props) => {
       ...form,
       tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
     });
-    setForm({ name: "", email: "", phone: "", company: "", position: "", stage: "novo", source: "manual", temperature: "frio", value: 0, assignee: "", tags: "", notes: "" });
+    setForm({ name: "", email: "", phone: "", company: "", position: "", stage: "lead", source: "manual", temperature: "frio", value: 0, assignee: "", tags: "", notes: "" });
     onOpenChange(false);
   };
 
