@@ -1,11 +1,11 @@
-import { BusinessContext } from "@/types/agent-builder";
+import { BusinessContext, KnowledgeFile } from "@/types/agent-builder";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, Building2, Users, BookOpen, MessageCircle, Settings2 } from "lucide-react";
-import { useState } from "react";
+import { ArrowRight, Building2, Users, BookOpen, MessageCircle, Settings2, Upload, X, FileText, Image, File } from "lucide-react";
+import { useState, useRef } from "react";
 
 interface Props {
   context: BusinessContext;
@@ -40,9 +40,32 @@ const SECTIONS: { key: Section; label: string; icon: typeof Building2 }[] = [
 
 const StepContext = ({ context, onChange, onNext }: Props) => {
   const [activeSection, setActiveSection] = useState<Section>("empresa");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const update = (field: keyof BusinessContext, value: string) =>
     onChange({ ...context, [field]: value });
+
+  const handleFiles = (files: FileList) => {
+    const newFiles: KnowledgeFile[] = Array.from(files)
+      .filter((f) => f.size <= 10 * 1024 * 1024)
+      .map((f) => ({ id: crypto.randomUUID(), name: f.name, size: f.size, type: f.type }));
+    onChange({ ...context, knowledgeFiles: [...context.knowledgeFiles, ...newFiles] });
+  };
+
+  const removeFile = (id: string) => {
+    onChange({ ...context, knowledgeFiles: context.knowledgeFiles.filter((f) => f.id !== id) });
+  };
+  const getFileIcon = (type: string) => {
+    if (type.startsWith("image/")) return <Image className="w-4 h-4 text-primary shrink-0" />;
+    if (type === "application/pdf") return <FileText className="w-4 h-4 text-destructive shrink-0" />;
+    return <File className="w-4 h-4 text-muted-foreground shrink-0" />;
+  };
+
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
   const isValid = context.companyName && context.industry && context.mainProduct;
 
@@ -135,16 +158,58 @@ const StepContext = ({ context, onChange, onNext }: Props) => {
       {/* Base de conhecimento */}
       {activeSection === "conhecimento" && (
         <div className="space-y-4 animate-fade-in">
+          {/* File upload area */}
+          <div className="space-y-2">
+            <Label>Arquivos de referência</Label>
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (e.dataTransfer.files) handleFiles(e.dataTransfer.files);
+              }}
+              className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors"
+            >
+              <Upload className="w-8 h-8 mx-auto text-muted-foreground/50 mb-2" />
+              <p className="text-sm text-muted-foreground">Arraste arquivos ou clique para enviar</p>
+              <p className="text-[10px] text-muted-foreground/60 mt-1">PDF, TXT, imagens (máx. 10MB cada)</p>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".pdf,.txt,.md,.doc,.docx,.png,.jpg,.jpeg,.webp"
+              className="hidden"
+              onChange={(e) => { if (e.target.files) handleFiles(e.target.files); e.target.value = ""; }}
+            />
+
+            {/* File list */}
+            {context.knowledgeFiles.length > 0 && (
+              <div className="space-y-1.5 mt-3">
+                {context.knowledgeFiles.map((file) => (
+                  <div key={file.id} className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm">
+                    {getFileIcon(file.type)}
+                    <span className="flex-1 truncate text-foreground">{file.name}</span>
+                    <span className="text-[10px] text-muted-foreground">{formatSize(file.size)}</span>
+                    <button onClick={() => removeFile(file.id)} className="text-muted-foreground hover:text-destructive transition-colors">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="space-y-1.5">
-            <Label htmlFor="knowledge">Fontes de conhecimento</Label>
+            <Label htmlFor="knowledge">Fontes de conhecimento (URLs, descrições)</Label>
             <Textarea
               id="knowledge"
-              placeholder="Descreva ou cole links de materiais que o agente deve usar: documentação, manuais, artigos, scripts de vendas..."
+              placeholder="Cole links de documentação, manuais, artigos, scripts de vendas..."
               value={context.knowledgeSources}
               onChange={(e) => update("knowledgeSources", e.target.value)}
-              rows={4}
+              rows={3}
             />
-            <p className="text-[10px] text-muted-foreground">O agente usará essas informações para responder de forma precisa</p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="faq">URL do FAQ ou Central de Ajuda</Label>

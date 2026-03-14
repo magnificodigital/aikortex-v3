@@ -78,6 +78,13 @@ export const AGENT_TEMPLATES: AgentRecommendation[] = [
   },
 ];
 
+export interface KnowledgeFile {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+}
+
 export interface BusinessContext {
   // Empresa
   companyName: string;
@@ -92,6 +99,7 @@ export interface BusinessContext {
   // Base de conhecimento
   knowledgeSources: string;
   faqUrl: string;
+  knowledgeFiles: KnowledgeFile[];
   // Tom e comportamento
   toneOfVoice: string;
   greetingMessage: string;
@@ -112,6 +120,7 @@ export const INITIAL_CONTEXT: BusinessContext = {
   painPoints: "",
   knowledgeSources: "",
   faqUrl: "",
+  knowledgeFiles: [],
   toneOfVoice: "Profissional e amigável",
   greetingMessage: "",
   businessHours: "24/7",
