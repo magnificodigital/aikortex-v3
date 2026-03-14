@@ -154,11 +154,11 @@ const CRMKanban = ({ leads, onLeadClick, onStageChange }: Props) => {
           >
             <div className="flex items-center gap-2 shrink-0">
               {isWon ? (
-                <Trophy className={`w-4 h-4 ${snapshot.isDraggingOver ? "text-success" : "text-muted-foreground"}`} />
+                <Trophy className="w-4 h-4 text-success" />
               ) : (
-                <XCircle className={`w-4 h-4 ${snapshot.isDraggingOver ? "text-destructive" : "text-muted-foreground"}`} />
+                <XCircle className="w-4 h-4 text-destructive" />
               )}
-              <span className={`text-xs font-semibold ${snapshot.isDraggingOver ? cfg.color : "text-muted-foreground"}`}>
+              <span className={`text-xs font-semibold ${isWon ? "text-success" : "text-destructive"}`}>
                 {cfg.label}
               </span>
               {columnLeads.length > 0 && (
