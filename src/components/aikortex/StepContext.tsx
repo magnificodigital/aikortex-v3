@@ -55,6 +55,17 @@ const StepContext = ({ context, onChange, onNext }: Props) => {
   const removeFile = (id: string) => {
     onChange({ ...context, knowledgeFiles: context.knowledgeFiles.filter((f) => f.id !== id) });
   };
+  const getFileIcon = (type: string) => {
+    if (type.startsWith("image/")) return <Image className="w-4 h-4 text-primary shrink-0" />;
+    if (type === "application/pdf") return <FileText className="w-4 h-4 text-destructive shrink-0" />;
+    return <File className="w-4 h-4 text-muted-foreground shrink-0" />;
+  };
+
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
   const isValid = context.companyName && context.industry && context.mainProduct;
 
