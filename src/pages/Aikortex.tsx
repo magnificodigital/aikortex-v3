@@ -8,6 +8,7 @@ import {
   type AgentRecommendation,
   type DeployChannel,
   type CRMProvider,
+  type ExternalTool,
   INITIAL_CONTEXT,
   WIZARD_STEPS,
   GOALS_BY_AGENT_TYPE,
@@ -15,6 +16,7 @@ import {
 import WizardStepper from "@/components/aikortex/WizardStepper";
 import StepAgents from "@/components/aikortex/StepAgents";
 import StepContext from "@/components/aikortex/StepContext";
+import StepChannels from "@/components/aikortex/StepChannels";
 import StepLaunch from "@/components/aikortex/StepLaunch";
 
 const STEP_ORDER: WizardStep[] = WIZARD_STEPS.map((s) => s.key);
@@ -25,6 +27,7 @@ const Aikortex = () => {
   const [selectedAgent, setSelectedAgent] = useState<AgentRecommendation | null>(null);
   const [selectedChannels, setSelectedChannels] = useState<DeployChannel[]>([]);
   const [selectedCRM, setSelectedCRM] = useState<CRMProvider | null>(null);
+  const [selectedTools, setSelectedTools] = useState<ExternalTool[]>([]);
 
   const currentIndex = STEP_ORDER.indexOf(step);
 
@@ -35,6 +38,12 @@ const Aikortex = () => {
   const toggleChannel = (ch: DeployChannel) => {
     setSelectedChannels((prev) =>
       prev.includes(ch) ? prev.filter((c) => c !== ch) : [...prev, ch]
+    );
+  };
+
+  const toggleTool = (tool: ExternalTool) => {
+    setSelectedTools((prev) =>
+      prev.includes(tool) ? prev.filter((t) => t !== tool) : [...prev, tool]
     );
   };
 
@@ -57,7 +66,10 @@ const Aikortex = () => {
           />
         )}
         {step === "context" && (
-          <StepContext context={context} onChange={setContext} onNext={() => setStep("launch")} />
+          <StepContext context={context} onChange={setContext} onNext={() => setStep("channels")} selectedTools={selectedTools} onToggleTool={toggleTool} />
+        )}
+        {step === "channels" && (
+          <StepChannels selected={selectedChannels} onToggle={toggleChannel} onNext={() => setStep("launch")} />
         )}
         {step === "launch" && (
           <StepLaunch
