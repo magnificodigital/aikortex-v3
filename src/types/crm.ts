@@ -62,7 +62,7 @@ export const TEMPERATURE_CONFIG: Record<LeadTemperature, { label: string; color:
 export const MOCK_LEADS: Lead[] = [
   {
     id: "lead-1", name: "Carlos Mendes", email: "carlos@techsol.com", phone: "(11) 99999-1234",
-    company: "TechSol Ltda", position: "CEO", stage: "novo", source: "linkedin", temperature: "morno",
+    company: "TechSol Ltda", position: "CEO", stage: "lead", source: "linkedin", temperature: "morno",
     value: 15000, assignee: "Ana Silva", tags: ["SaaS", "B2B"], notes: "Interessado em automação",
     activities: [
       { id: "a1", type: "note", description: "Lead capturado via LinkedIn pelo agente BDR", createdAt: "2026-03-13T10:00:00", createdBy: "Agente BDR" },
