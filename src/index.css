@@ -138,12 +138,17 @@
 
 /* Dark mode ambient effects */
 .dark body {
-  background: linear-gradient(
-    160deg,
-    hsl(228 22% 5%) 0%,
-    hsl(228 20% 7%) 40%,
-    hsl(225 18% 6%) 100%
-  );
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 0%, hsl(217 91% 60% / 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 90% 100%, hsl(270 80% 50% / 0.05) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 40% at 50% 50%, hsl(199 89% 48% / 0.03) 0%, transparent 50%),
+    linear-gradient(
+      160deg,
+      hsl(228 22% 5%) 0%,
+      hsl(230 20% 7%) 40%,
+      hsl(225 18% 6%) 100%
+    );
+  min-height: 100vh;
 }
 
 .dark aside {
