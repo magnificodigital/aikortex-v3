@@ -24,7 +24,7 @@ const StepIntegrations = ({ selected, onToggle, onNext, onBack, agentType }: Pro
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {EXTERNAL_TOOLS.map((tool) => {
+        {filteredTools.map((tool) => {
           const isSelected = selected.includes(tool.value);
           return (
             <div
