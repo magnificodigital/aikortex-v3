@@ -1,28 +1,11 @@
-// ── Agent Builder Wizard Types ──
+// ── Agent Builder Wizard Types (Simplified 3-step flow) ──
 
-export type WizardStep =
-  | "agents"
-  | "goal"
-  | "context"
-  | "analysis"
-  | "conversation"
-  | "qualification"
-  | "profile"
-  | "channels"
-  | "crm"
-  | "testing";
+export type WizardStep = "agent" | "context" | "launch";
 
-export const WIZARD_STEPS: { key: WizardStep; label: string; number: number }[] = [
-  { key: "agents", label: "Agentes", number: 1 },
-  { key: "goal", label: "Objetivo", number: 2 },
-  { key: "context", label: "Empresa", number: 3 },
-  { key: "analysis", label: "Análise", number: 4 },
-  { key: "conversation", label: "Conversa", number: 5 },
-  { key: "qualification", label: "Qualificação", number: 6 },
-  { key: "profile", label: "Perfil", number: 7 },
-  { key: "channels", label: "Canais", number: 8 },
-  { key: "crm", label: "CRM", number: 9 },
-  { key: "testing", label: "Teste", number: 10 },
+export const WIZARD_STEPS: { key: WizardStep; label: string }[] = [
+  { key: "agent", label: "Agente" },
+  { key: "context", label: "Empresa" },
+  { key: "launch", label: "Ativar" },
 ];
 
 // ── Data Types ──
@@ -45,13 +28,9 @@ export const AGENT_TEMPLATES: AgentRecommendation[] = [
     id: "sdr-1",
     type: "SDR",
     name: "Agente SDR",
-    objective: "Qualificar leads inbound e coletar informações para agendar reuniões com o time comercial.",
+    objective: "Qualificar leads inbound e agendar reuniões com o time comercial.",
     targetAudience: "Leads inbound interessados",
-    benefits: [
-      "Qualificação automática 24/7",
-      "Redução de 60% no tempo de resposta",
-      "Aumento de 35% na taxa de conversão",
-    ],
+    benefits: ["Qualificação 24/7", "60% menos tempo de resposta", "+35% conversão"],
     exampleConversation: [
       { role: "agent", message: "Olá! Vi que você demonstrou interesse. Posso te ajudar?" },
       { role: "customer", message: "Sim, gostaria de saber mais sobre os planos." },
@@ -62,13 +41,9 @@ export const AGENT_TEMPLATES: AgentRecommendation[] = [
     id: "bdr-1",
     type: "BDR",
     name: "Agente BDR",
-    objective: "Prospectar novos leads e gerar oportunidades de negócio através de abordagem outbound.",
+    objective: "Prospectar leads e gerar oportunidades via abordagem outbound.",
     targetAudience: "Empresas-alvo para prospecção",
-    benefits: [
-      "Prospecção automatizada em escala",
-      "Abordagem personalizada por segmento",
-      "Pipeline de vendas sempre alimentado",
-    ],
+    benefits: ["Prospecção em escala", "Abordagem personalizada", "Pipeline alimentado"],
     exampleConversation: [
       { role: "agent", message: "Oi! Notei que sua empresa pode se beneficiar da nossa solução." },
       { role: "customer", message: "Interessante, como funciona?" },
@@ -79,13 +54,9 @@ export const AGENT_TEMPLATES: AgentRecommendation[] = [
     id: "sac-1",
     type: "SAC",
     name: "Agente SAC",
-    objective: "Atender clientes com dúvidas, resolver problemas e fornecer suporte baseado no conhecimento da empresa.",
+    objective: "Atender clientes, resolver problemas e fornecer suporte automatizado.",
     targetAudience: "Clientes ativos",
-    benefits: [
-      "Atendimento instantâneo 24/7",
-      "Redução de 70% nos tickets",
-      "Satisfação do cliente aumentada",
-    ],
+    benefits: ["Atendimento 24/7", "70% menos tickets", "CSAT elevado"],
     exampleConversation: [
       { role: "customer", message: "Estou com dificuldade para acessar minha conta." },
       { role: "agent", message: "Vou te ajudar agora! Pode me informar o email cadastrado?" },
@@ -96,13 +67,9 @@ export const AGENT_TEMPLATES: AgentRecommendation[] = [
     id: "cs-1",
     type: "CS",
     name: "Agente CS",
-    objective: "Garantir o sucesso dos clientes, realizar follow-ups e coletar feedbacks.",
+    objective: "Garantir o sucesso dos clientes com follow-ups e feedbacks.",
     targetAudience: "Clientes em onboarding e pós-venda",
-    benefits: [
-      "Onboarding automatizado",
-      "Redução de churn em 40%",
-      "Coleta contínua de feedback",
-    ],
+    benefits: ["Onboarding automático", "-40% churn", "Feedback contínuo"],
     exampleConversation: [
       { role: "agent", message: "Como tem sido sua experiência? Estou aqui para ajudar!" },
       { role: "customer", message: "Tenho dúvidas sobre uma funcionalidade." },
@@ -158,7 +125,6 @@ export const AGENT_GOALS: { value: AgentGoal; label: string; description: string
   { value: "reduce_churn", label: "Reduzir churn", description: "Identificar e reter clientes em risco" },
 ];
 
-// Goals filtered by agent type
 export const GOALS_BY_AGENT_TYPE: Record<AgentType, AgentGoal[]> = {
   SDR: ["capture_leads", "qualify_opportunities", "schedule_meetings"],
   BDR: ["qualify_opportunities", "schedule_meetings", "capture_leads"],
@@ -248,13 +214,10 @@ export function generateMockConversation(ctx: BusinessContext, goal: AgentGoal):
   return [
     { id: "1", label: "Saudação", content: `Olá! Sou o assistente virtual da ${ctx.companyName}. Posso te ajudar a conhecer mais sobre ${ctx.mainProduct}?` },
     { id: "2", label: "Descoberta", content: "Que ótimo! Para te recomendar a melhor solução, pode me contar um pouco sobre seu negócio e principais desafios?" },
-    { id: "3", label: "Exploração de dor", content: "Entendo. E como isso impacta seus resultados hoje? Quanto tempo/dinheiro isso representa?" },
-    { id: "4", label: "Proposta de valor", content: `Com ${ctx.mainProduct}, empresas como a sua conseguem resolver exatamente esse problema. Nossos clientes reportam resultados em menos de 30 dias.` },
-    { id: "5", label: "Qualificação", content: "Para entender se faz sentido pra vocês, pode me dizer qual é o tamanho da sua equipe e o budget disponível para essa solução?" },
-    { id: "6", label: "Objeções", content: "Entendo sua preocupação. Muitos dos nossos clientes tinham a mesma dúvida antes de começar. O que posso te garantir é que..." },
-    { id: "7", label: "Fechamento", content: goal === "schedule_meetings"
-      ? "Que tal agendarmos uma conversa rápida de 15 minutos com nosso especialista? Qual horário funciona melhor para você?"
-      : "Posso enviar uma proposta personalizada para você avaliar? Qual o melhor email para receber?" },
+    { id: "3", label: "Qualificação", content: "Para entender se faz sentido pra vocês, pode me dizer qual é o tamanho da sua equipe e o budget disponível?" },
+    { id: "4", label: "Fechamento", content: goal === "schedule_meetings"
+      ? "Que tal agendarmos uma conversa de 15 minutos com nosso especialista?"
+      : "Posso enviar uma proposta personalizada para você avaliar?" },
   ];
 }
 
@@ -264,8 +227,8 @@ export function generateMockProfile(ctx: BusinessContext, goal: AgentGoal): Agen
     primaryGoal: AGENT_GOALS.find((g) => g.value === goal)?.description || "",
     conversationFlow: "Saudação → Descoberta → Qualificação → Proposta de Valor → Fechamento",
     instructions: `1. Sempre se apresentar como assistente da ${ctx.companyName}\n2. Focar em entender as necessidades do lead\n3. Qualificar usando critérios BANT\n4. Nunca prometer o que não pode cumprir\n5. Direcionar para próximo passo claro`,
-    communicationStyle: `Profissional e consultivo. Linguagem em ${ctx.language}. Respostas curtas e objetivas. Uso de emojis moderado.`,
-    safetyGuidelines: "Não compartilhar informações confidenciais. Não fazer promessas de resultados específicos. Encaminhar para humano em casos sensíveis.",
-    constraints: `Horário: 24/7. Idioma: ${ctx.language}. Escopo: ${ctx.mainProduct}. Não discutir concorrentes.`,
+    communicationStyle: `Profissional e consultivo. Linguagem em ${ctx.language}. Respostas curtas e objetivas.`,
+    safetyGuidelines: "Não compartilhar informações confidenciais. Encaminhar para humano em casos sensíveis.",
+    constraints: `Horário: 24/7. Idioma: ${ctx.language}. Escopo: ${ctx.mainProduct}.`,
   };
 }
