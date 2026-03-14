@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import {
   type WizardStep,
@@ -16,6 +16,7 @@ import {
   DEFAULT_CONVERSATION_STAGES,
   DEFAULT_ADVANCED_CONFIG,
 } from "@/types/agent-builder";
+import { AGENT_PRESETS } from "@/types/agent-presets";
 import WizardStepper from "@/components/aikortex/WizardStepper";
 import StepAgents from "@/components/aikortex/StepAgents";
 import StepContext from "@/components/aikortex/StepContext";
@@ -42,6 +43,17 @@ const Aikortex = () => {
     if (currentIndex > 0) setStep(STEP_ORDER[currentIndex - 1]);
   };
 
+  const applyPresetAndGoToContext = useCallback(() => {
+    if (selectedAgent) {
+      const preset = AGENT_PRESETS[selectedAgent.type];
+      setContext((prev) => ({ ...prev, ...preset.context }));
+      setIntents([...preset.intents]);
+      setStages([...preset.stages]);
+      setAdvancedConfig({ ...preset.advancedConfig });
+    }
+    setStep("context");
+  }, [selectedAgent]);
+
   const toggleChannel = (ch: DeployChannel) => {
     setSelectedChannels((prev) =>
       prev.includes(ch) ? prev.filter((c) => c !== ch) : [...prev, ch]
@@ -63,7 +75,7 @@ const Aikortex = () => {
           <StepAgents
             selected={selectedAgent}
             onSelect={setSelectedAgent}
-            onNext={() => setStep("context")}
+            onNext={applyPresetAndGoToContext}
           />
         )}
         {step === "context" && (
