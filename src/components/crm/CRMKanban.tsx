@@ -227,7 +227,7 @@ const CRMKanban = ({ leads, onLeadClick, onStageChange }: Props) => {
                 <Badge variant="secondary" className="text-[10px] h-4 px-1.5">{columnLeads.length}</Badge>
               )}
             </div>
-            <div className="flex gap-2 flex-1 overflow-x-auto min-h-[32px]">
+            <div className="flex gap-2 flex-1 overflow-x-auto min-h-[24px]">
               {columnLeads.map((lead, index) => (
                 <Draggable key={lead.id} draggableId={lead.id} index={index}>
                   {(provided) => (
