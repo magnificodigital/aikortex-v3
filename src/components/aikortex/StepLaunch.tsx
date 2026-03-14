@@ -98,28 +98,21 @@ const StepLaunch = ({ context, agent, selectedChannels, onToggleChannel, selecte
           </div>
         </div>
 
-        {/* Right: Channels + CRM */}
+        {/* Right: Summary */}
         <div className="space-y-6">
-          {/* Channels */}
+          {/* Connected channels */}
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-foreground">Canais de atendimento</h3>
-            <div className="grid grid-cols-2 gap-2">
-              {DEPLOY_CHANNELS.map((ch) => {
-                const isSelected = selectedChannels.includes(ch.value);
-                return (
-                  <button
-                    key={ch.value}
-                    onClick={() => onToggleChannel(ch.value)}
-                    className={`flex items-center gap-2.5 rounded-lg border p-3 text-left transition-all text-sm ${
-                      isSelected ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/30"
-                    }`}
-                  >
-                    <span>{ch.icon}</span>
-                    <span className="font-medium text-foreground flex-1 text-xs">{ch.label}</span>
-                    {isSelected && <Check className="w-3.5 h-3.5 text-primary" />}
-                  </button>
-                );
-              })}
+            <h3 className="text-sm font-semibold text-foreground">Canais conectados</h3>
+            <div className="flex flex-wrap gap-2">
+              {selectedChannels.length > 0 ? (
+                DEPLOY_CHANNELS.filter(ch => selectedChannels.includes(ch.value)).map((ch) => (
+                  <Badge key={ch.value} variant="secondary" className="gap-1.5 px-3 py-1.5 text-xs">
+                    <span>{ch.icon}</span> {ch.label}
+                  </Badge>
+                ))
+              ) : (
+                <p className="text-xs text-muted-foreground">Nenhum canal selecionado</p>
+              )}
             </div>
           </div>
 
