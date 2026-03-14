@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import { LayoutDashboard } from "lucide-react";
 import BusinessOverview from "@/components/dashboard/BusinessOverview";
 import ActivityFeed from "@/components/dashboard/ActivityFeed";
 import TaskOverview from "@/components/dashboard/TaskOverview";
