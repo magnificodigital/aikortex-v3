@@ -9,11 +9,11 @@ interface Props {
   onNext: () => void;
 }
 
-const TYPE_META: Record<string, { icon: typeof Bot; gradient: string }> = {
-  SDR: { icon: Zap, gradient: "from-[hsl(217,91%,50%)] to-[hsl(199,89%,48%)]" },
-  BDR: { icon: TrendingUp, gradient: "from-[hsl(142,71%,45%)] to-[hsl(160,60%,45%)]" },
-  SAC: { icon: HeadphonesIcon, gradient: "from-[hsl(38,92%,50%)] to-[hsl(25,95%,53%)]" },
-  CS: { icon: Users, gradient: "from-[hsl(280,70%,50%)] to-[hsl(300,60%,50%)]" },
+const TYPE_META: Record<string, { icon: typeof Bot }> = {
+  SDR: { icon: Zap },
+  BDR: { icon: TrendingUp },
+  SAC: { icon: HeadphonesIcon },
+  CS: { icon: Users },
 };
 
 const StepAgents = ({ selected, onSelect, onNext }: Props) => {
