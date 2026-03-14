@@ -71,7 +71,7 @@ export const MOCK_LEADS: Lead[] = [
   },
   {
     id: "lead-2", name: "Fernanda Costa", email: "fernanda@inovamkt.com", phone: "(21) 98888-5678",
-    company: "InovaMKT", position: "Diretora de Marketing", stage: "contato", source: "google_maps", temperature: "quente",
+    company: "InovaMKT", position: "Diretora de Marketing", stage: "em_atendimento", source: "google_maps", temperature: "quente",
     value: 28000, assignee: "Pedro Rocha", tags: ["Marketing", "Agência"], notes: "Quer demo esta semana",
     activities: [
       { id: "a2", type: "stage_change", description: "Movido para Contato", createdAt: "2026-03-12T14:00:00", createdBy: "Pedro Rocha" },
