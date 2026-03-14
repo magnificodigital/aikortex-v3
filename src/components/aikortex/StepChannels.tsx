@@ -1,11 +1,12 @@
 import { DeployChannel, DEPLOY_CHANNELS } from "@/types/agent-builder";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, ArrowLeft, Check } from "lucide-react";
 
 interface Props {
   selected: DeployChannel[];
   onToggle: (ch: DeployChannel) => void;
   onNext: () => void;
+  onBack: () => void;
 }
 
 const CHANNEL_LOGOS: Record<DeployChannel, string> = {
