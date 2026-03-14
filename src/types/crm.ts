@@ -1,13 +1,13 @@
 export type PipelineStage = "novo" | "contato" | "qualificado" | "proposta" | "negociacao" | "ganho" | "perdido";
 
-export const PIPELINE_STAGES: { value: PipelineStage; label: string; color: string; bg: string }[] = [
-  { value: "novo", label: "Novo", color: "text-muted-foreground", bg: "bg-muted" },
-  { value: "contato", label: "Contato", color: "text-info", bg: "bg-info/10" },
-  { value: "qualificado", label: "Qualificado", color: "text-warning", bg: "bg-warning/10" },
-  { value: "proposta", label: "Proposta", color: "text-primary", bg: "bg-primary/10" },
-  { value: "negociacao", label: "Negociação", color: "text-accent-foreground", bg: "bg-accent" },
-  { value: "ganho", label: "Ganho", color: "text-success", bg: "bg-success/10" },
-  { value: "perdido", label: "Perdido", color: "text-destructive", bg: "bg-destructive/10" },
+export const PIPELINE_STAGES: { value: PipelineStage; label: string; color: string; bg: string; dot: string }[] = [
+  { value: "novo", label: "Novo", color: "text-muted-foreground", bg: "bg-muted", dot: "bg-muted-foreground" },
+  { value: "contato", label: "Contato", color: "text-info", bg: "bg-info/10", dot: "bg-info" },
+  { value: "qualificado", label: "Qualificado", color: "text-warning", bg: "bg-warning/10", dot: "bg-warning" },
+  { value: "proposta", label: "Proposta", color: "text-primary", bg: "bg-primary/10", dot: "bg-primary" },
+  { value: "negociacao", label: "Negociação", color: "text-accent-foreground", bg: "bg-accent", dot: "bg-accent-foreground" },
+  { value: "ganho", label: "Ganho", color: "text-success", bg: "bg-success/10", dot: "bg-success" },
+  { value: "perdido", label: "Perdido", color: "text-destructive", bg: "bg-destructive/10", dot: "bg-destructive" },
 ];
 
 export type LeadSource = "linkedin" | "google_maps" | "whatsapp" | "instagram" | "website" | "indicacao" | "manual";

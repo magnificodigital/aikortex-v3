@@ -39,15 +39,25 @@ const TaskKanbanView = ({ tasks, onTaskClick, onStatusChange }: TaskKanbanViewPr
 
           return (
             <div key={status} className="flex flex-col">
-              <div className="flex items-center justify-between mb-3 px-1">
+              <div className={`flex items-center justify-between mb-3 px-2 py-2 rounded-lg ${
+                status === "todo" ? "bg-muted" :
+                status === "in_progress" ? "bg-info/10" :
+                status === "review" ? "bg-warning/10" :
+                "bg-success/10"
+              }`}>
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full" style={{
-                    backgroundColor: status === "todo" ? "hsl(var(--muted-foreground))" :
-                      status === "in_progress" ? "hsl(var(--info))" :
-                      status === "review" ? "hsl(var(--warning))" :
-                      "hsl(var(--success))"
-                  }} />
-                  <span className="text-xs font-semibold text-foreground">{sc.label}</span>
+                  <div className={`w-2.5 h-2.5 rounded-full ${
+                    status === "todo" ? "bg-muted-foreground" :
+                    status === "in_progress" ? "bg-info" :
+                    status === "review" ? "bg-warning" :
+                    "bg-success"
+                  }`} />
+                  <span className={`text-xs font-semibold ${
+                    status === "todo" ? "text-muted-foreground" :
+                    status === "in_progress" ? "text-info" :
+                    status === "review" ? "text-warning" :
+                    "text-success"
+                  }`}>{sc.label}</span>
                 </div>
                 <Badge variant="secondary" className="text-[10px] h-5">{columnTasks.length}</Badge>
               </div>
