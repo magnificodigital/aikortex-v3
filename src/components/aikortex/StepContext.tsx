@@ -12,6 +12,7 @@ interface Props {
   context: BusinessContext;
   onChange: (ctx: BusinessContext) => void;
   onNext: () => void;
+  onBack: () => void;
   selectedTools: ExternalTool[];
   onToggleTool: (tool: ExternalTool) => void;
 }
