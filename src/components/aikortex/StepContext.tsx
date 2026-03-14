@@ -87,6 +87,7 @@ const ELEVENLABS_VOICES = [
   { id: "pqHfZKP75CvOlQylNhV4", name: "Bill", style: "Masculina, narradora" },
 ];
 
+const INDUSTRIES = [
   "Tecnologia", "SaaS", "E-commerce", "Marketing Digital", "Consultoria",
   "Educação", "Saúde", "Financeiro", "Imobiliário", "Varejo", "Outro",
 ];
