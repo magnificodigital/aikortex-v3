@@ -259,22 +259,87 @@ const CRMKanban = ({ leads, onLeadClick, onStageChange }: Props) => {
     );
   };
 
-  return (
-    <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex flex-col gap-2 h-[calc(100vh-260px)]">
-        {/* Main pipeline columns */}
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 min-h-0 flex-1 overflow-hidden">
-          {MAIN_STAGES.map((stage) => renderColumn(stage))}
-        </div>
+    const lightboxLeads = lightboxStage ? leads.filter((l) => l.stage === lightboxStage) : [];
+    const lightboxIsWon = lightboxStage === "ganho";
+    const lightboxCfg = lightboxStage ? PIPELINE_STAGES.find((s) => s.value === lightboxStage) : null;
+    const lightboxTotal = lightboxLeads.reduce((sum, l) => sum + l.value, 0);
 
-        {/* Final stages - Perdido left, Ganho right */}
-        <div className="grid grid-cols-2 gap-2 shrink-0">
-          {renderFinalStage("perdido")}
-          {renderFinalStage("ganho")}
-        </div>
-      </div>
-    </DragDropContext>
-  );
-};
+    return (
+      <>
+        <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+          <div className="flex flex-col gap-2 h-[calc(100vh-260px)]">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 min-h-0 flex-1 overflow-hidden">
+              {MAIN_STAGES.map((stage) => renderColumn(stage))}
+            </div>
+            <div className="grid grid-cols-2 gap-2 shrink-0">
+              {renderFinalStage("perdido")}
+              {renderFinalStage("ganho")}
+            </div>
+          </div>
+        </DragDropContext>
+
+        <Dialog open={!!lightboxStage} onOpenChange={(open) => !open && setLightboxStage(null)}>
+          <DialogContent className="max-w-2xl max-h-[80vh]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                {lightboxIsWon ? (
+                  <Trophy className="w-5 h-5 text-success" />
+                ) : (
+                  <XCircle className="w-5 h-5 text-destructive" />
+                )}
+                <span>{lightboxCfg?.label}</span>
+                <Badge variant="secondary" className="ml-1">{lightboxLeads.length}</Badge>
+              </DialogTitle>
+              <DialogDescription>
+                Total: R$ {lightboxTotal.toLocaleString("pt-BR")}
+              </DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="max-h-[60vh]">
+              <div className="space-y-2 pr-2">
+                {lightboxLeads.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">Nenhum lead nesta etapa</p>
+                ) : (
+                  lightboxLeads.map((lead) => {
+                    const temp = TEMPERATURE_CONFIG[lead.temperature];
+                    const source = LEAD_SOURCES.find((s) => s.value === lead.source);
+                    return (
+                      <div
+                        key={lead.id}
+                        onClick={() => { setLightboxStage(null); onLeadClick(lead); }}
+                        className="flex items-center justify-between rounded-lg border border-border bg-card p-4 cursor-pointer hover:shadow-md hover:border-primary/30 transition-all"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <Avatar className="w-8 h-8 shrink-0">
+                            <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                              {lead.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-foreground truncate">{lead.name}</p>
+                            <p className="text-xs text-muted-foreground truncate">{lead.company} • {lead.position}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <Badge variant="outline" className={`text-[10px] ${temp.color} ${temp.bg} border-0`}>
+                            {temp.label}
+                          </Badge>
+                          <div className="text-right">
+                            <p className="text-sm font-medium text-foreground">
+                              R$ {lead.value.toLocaleString("pt-BR")}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">{source?.icon} {lead.assignee}</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
+      </>
+    );
+  };
 
 export default CRMKanban;
