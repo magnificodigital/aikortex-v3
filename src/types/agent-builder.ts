@@ -120,6 +120,7 @@ export const INITIAL_CONTEXT: BusinessContext = {
   painPoints: "",
   knowledgeSources: "",
   faqUrl: "",
+  knowledgeFiles: [],
   toneOfVoice: "Profissional e amigável",
   greetingMessage: "",
   businessHours: "24/7",
