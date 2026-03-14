@@ -204,7 +204,7 @@ const CRMKanban = ({ leads, onLeadClick, onStageChange }: Props) => {
           <div
             ref={provided.innerRef}
             {...provided.droppableProps}
-            className={`flex items-center gap-3 rounded-xl border border-dashed px-4 py-3 transition-all ${
+            className={`flex items-center gap-2 rounded-lg border border-dashed px-3 py-2 transition-all ${
               snapshot.isDraggingOver
                 ? isWon
                   ? "border-success bg-success/10 shadow-sm"
