@@ -12,7 +12,7 @@ export const WIZARD_STEPS: { key: WizardStep; label: string }[] = [
 
 // ── Data Types ──
 
-export type AgentType = "SDR" | "BDR" | "SAC" | "CS";
+export type AgentType = "SDR" | "BDR" | "SAC" | "CS" | "Custom";
 
 export interface AgentRecommendation {
   id: string;
