@@ -61,10 +61,13 @@ const Aikortex = () => {
           />
         )}
         {step === "context" && (
-          <StepContext context={context} onChange={setContext} onNext={() => setStep("channels")} onBack={goBack} selectedTools={selectedTools} onToggleTool={toggleTool} />
+          <StepContext context={context} onChange={setContext} onNext={() => setStep("channels")} onBack={goBack} />
         )}
         {step === "channels" && (
-          <StepChannels selected={selectedChannels} onToggle={toggleChannel} onNext={() => setStep("launch")} onBack={goBack} />
+          <StepChannels selected={selectedChannels} onToggle={toggleChannel} onNext={() => setStep("integrations")} onBack={goBack} />
+        )}
+        {step === "integrations" && (
+          <StepIntegrations selected={selectedTools} onToggle={toggleTool} onNext={() => setStep("launch")} onBack={goBack} />
         )}
         {step === "launch" && (
           <StepLaunch
