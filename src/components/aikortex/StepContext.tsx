@@ -35,7 +35,7 @@ const SECTIONS: { key: Section; label: string; icon: typeof Building2 }[] = [
   { key: "publico", label: "Público-alvo", icon: Users },
   { key: "conhecimento", label: "Base de conhecimento", icon: BookOpen },
   { key: "tom", label: "Tom e estilo", icon: MessageCircle },
-  { key: "funcoes", label: "Funções", icon: Puzzle },
+  { key: "funcoes", label: "Integrações", icon: Puzzle },
 ];
 
 const StepContext = ({ context, onChange, onNext, selectedTools, onToggleTool }: Props) => {
@@ -241,7 +241,7 @@ const StepContext = ({ context, onChange, onNext, selectedTools, onToggleTool }:
         </div>
       )}
 
-      {/* Funções */}
+      {/* Funções / Integrações */}
       {activeSection === "funcoes" && (
         <div className="space-y-4 animate-fade-in">
           <p className="text-sm text-muted-foreground">Conecte ferramentas externas para expandir as capacidades do agente.</p>
@@ -249,24 +249,35 @@ const StepContext = ({ context, onChange, onNext, selectedTools, onToggleTool }:
             {EXTERNAL_TOOLS.map((tool) => {
               const isSelected = selectedTools.includes(tool.value);
               return (
-                <button
+                <div
                   key={tool.value}
-                  onClick={() => onToggleTool(tool.value)}
-                  className={`flex items-center gap-3 rounded-xl border-2 p-4 text-left transition-all ${
-                    isSelected ? "border-primary bg-primary/5 shadow-md" : "border-border bg-card hover:border-primary/30"
+                  className={`flex items-center gap-3 rounded-xl border-2 p-4 transition-all ${
+                    isSelected ? "border-primary bg-primary/5 shadow-md" : "border-border bg-card"
                   }`}
                 >
-                  <span className="text-xl">{tool.icon}</span>
+                  <img
+                    src={tool.logo}
+                    alt={tool.label}
+                    className="w-9 h-9 rounded-lg object-contain shrink-0"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground">{tool.label}</p>
                     <p className="text-xs text-muted-foreground truncate">{tool.description}</p>
                   </div>
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
-                    isSelected ? "bg-primary border-primary" : "border-border"
-                  }`}>
-                    {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
-                  </div>
-                </button>
+                  <Button
+                    size="sm"
+                    variant={isSelected ? "default" : "outline"}
+                    onClick={() => onToggleTool(tool.value)}
+                    className="shrink-0 text-xs h-8 gap-1.5"
+                  >
+                    {isSelected ? (
+                      <><Check className="w-3 h-3" /> Conectado</>
+                    ) : (
+                      "Conectar"
+                    )}
+                  </Button>
+                </div>
               );
             })}
           </div>

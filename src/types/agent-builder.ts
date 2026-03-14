@@ -205,12 +205,12 @@ export const DEPLOY_CHANNELS: { value: DeployChannel; label: string; icon: strin
 
 export type ExternalTool = "google_calendar" | "outlook" | "piperun" | "rd_station" | "crm_generic";
 
-export const EXTERNAL_TOOLS: { value: ExternalTool; label: string; icon: string; description: string }[] = [
-  { value: "google_calendar", label: "Google Agenda", icon: "📅", description: "Agendar reuniões e compromissos" },
-  { value: "outlook", label: "Outlook", icon: "📧", description: "Calendário e e-mails Microsoft" },
-  { value: "piperun", label: "PipeRun", icon: "🔧", description: "CRM e gestão de vendas" },
-  { value: "rd_station", label: "RD Station", icon: "🚀", description: "Marketing e automação" },
-  { value: "crm_generic", label: "CRM", icon: "🗂️", description: "Integração com CRM externo" },
+export const EXTERNAL_TOOLS: { value: ExternalTool; label: string; logo: string; description: string }[] = [
+  { value: "google_calendar", label: "Google Agenda", logo: "https://www.gstatic.com/images/branding/product/1x/calendar_2020q4_48dp.png", description: "Agendar reuniões e compromissos" },
+  { value: "outlook", label: "Outlook", logo: "https://img.icons8.com/color/48/microsoft-outlook-2019.png", description: "Calendário e e-mails Microsoft" },
+  { value: "piperun", label: "PipeRun", logo: "https://play-lh.googleusercontent.com/rVfiRz2i3pJGdVpnFsLg5OlSMC3Bd7MINuqMDH_RYOLAM9WF6bRRVHH7RP5w5IFqkQ=w240-h480-rw", description: "CRM e gestão de vendas" },
+  { value: "rd_station", label: "RD Station", logo: "https://play-lh.googleusercontent.com/6g3gxPY0tR3UOs6FQ5MX-4yrO7rmHFfXoAiNwf7Y_hkDyH_VrGiiehGfqDPqRtyPhQ=w240-h480-rw", description: "Marketing e automação" },
+  { value: "crm_generic", label: "HubSpot", logo: "https://www.hubspot.com/hubfs/HubSpot_Logos/HubSpot-Inversed-Favicon.png", description: "CRM e automação de vendas" },
 ];
 
 export type CRMProvider = "hubspot" | "pipedrive" | "zoho" | "salesforce" | "activecampaign" | "zendesk";
