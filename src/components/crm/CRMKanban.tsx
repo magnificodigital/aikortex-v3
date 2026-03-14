@@ -266,6 +266,32 @@ const CRMKanban = ({ leads, onLeadClick, onStageChange }: Props) => {
     const lightboxCfg = lightboxStage ? PIPELINE_STAGES.find((s) => s.value === lightboxStage) : null;
     const lightboxTotal = lightboxLeads.reduce((sum, l) => sum + l.value, 0);
 
+    const filteredLightboxLeads = useMemo(() => {
+      let filtered = lightboxLeads;
+      if (lightboxSearch.trim()) {
+        const q = lightboxSearch.toLowerCase();
+        filtered = filtered.filter(
+          (l) =>
+            l.name.toLowerCase().includes(q) ||
+            l.company.toLowerCase().includes(q) ||
+            l.position.toLowerCase().includes(q) ||
+            l.assignee.toLowerCase().includes(q)
+        );
+      }
+      if (lightboxTempFilter !== "all") {
+        filtered = filtered.filter((l) => l.temperature === lightboxTempFilter);
+      }
+      return filtered;
+    }, [lightboxLeads, lightboxSearch, lightboxTempFilter]);
+
+    const handleLightboxOpen = (open: boolean) => {
+      if (!open) {
+        setLightboxStage(null);
+        setLightboxSearch("");
+        setLightboxTempFilter("all");
+      }
+    };
+
     return (
       <>
         <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
@@ -280,7 +306,7 @@ const CRMKanban = ({ leads, onLeadClick, onStageChange }: Props) => {
           </div>
         </DragDropContext>
 
-        <Dialog open={!!lightboxStage} onOpenChange={(open) => !open && setLightboxStage(null)}>
+        <Dialog open={!!lightboxStage} onOpenChange={handleLightboxOpen}>
           <DialogContent className="max-w-2xl max-h-[80vh]">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
@@ -296,10 +322,41 @@ const CRMKanban = ({ leads, onLeadClick, onStageChange }: Props) => {
                 Total: R$ {lightboxTotal.toLocaleString("pt-BR")}
               </DialogDescription>
             </DialogHeader>
-            <ScrollArea className="max-h-[60vh]">
+
+            {/* Search & Filter */}
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Buscar por nome, empresa, cargo..."
+                  value={lightboxSearch}
+                  onChange={(e) => setLightboxSearch(e.target.value)}
+                  className="w-full rounded-md border border-input bg-background pl-8 pr-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              <select
+                value={lightboxTempFilter}
+                onChange={(e) => setLightboxTempFilter(e.target.value)}
+                className="rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="all">Todas temp.</option>
+                <option value="quente">🔥 Quente</option>
+                <option value="morno">🌤️ Morno</option>
+                <option value="frio">❄️ Frio</option>
+              </select>
+            </div>
+
+            {filteredLightboxLeads.length !== lightboxLeads.length && (
+              <p className="text-xs text-muted-foreground">
+                Mostrando {filteredLightboxLeads.length} de {lightboxLeads.length} leads
+              </p>
+            )}
+
+            <ScrollArea className="max-h-[50vh]">
               <div className="space-y-2 pr-2">
-                {lightboxLeads.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-8">Nenhum lead nesta etapa</p>
+                {filteredLightboxLeads.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">Nenhum lead encontrado</p>
                 ) : (
                   lightboxLeads.map((lead) => {
                     const temp = TEMPERATURE_CONFIG[lead.temperature];
