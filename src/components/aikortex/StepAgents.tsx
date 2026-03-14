@@ -1,7 +1,7 @@
 import { AgentRecommendation, AGENT_TEMPLATES, GOALS_BY_AGENT_TYPE } from "@/types/agent-builder";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Check, Bot, Users, Zap, HeadphonesIcon, TrendingUp } from "lucide-react";
+import { ArrowRight, Check, Bot, Users, Zap, HeadphonesIcon, TrendingUp, Settings2 } from "lucide-react";
 
 interface Props {
   selected: AgentRecommendation | null;
@@ -14,6 +14,7 @@ const TYPE_META: Record<string, { icon: typeof Bot }> = {
   BDR: { icon: TrendingUp },
   SAC: { icon: HeadphonesIcon },
   CS: { icon: Users },
+  Custom: { icon: Settings2 },
 };
 
 const StepAgents = ({ selected, onSelect, onNext }: Props) => {
@@ -32,7 +33,7 @@ const StepAgents = ({ selected, onSelect, onNext }: Props) => {
         <p className="text-sm text-muted-foreground">Cada agente já vem configurado com os objetivos ideais para sua função</p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {AGENT_TEMPLATES.map((agent) => {
           const meta = TYPE_META[agent.type];
           const Icon = meta.icon;

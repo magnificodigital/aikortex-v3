@@ -12,7 +12,7 @@ export const WIZARD_STEPS: { key: WizardStep; label: string }[] = [
 
 // ── Data Types ──
 
-export type AgentType = "SDR" | "BDR" | "SAC" | "CS";
+export type AgentType = "SDR" | "BDR" | "SAC" | "CS" | "Custom";
 
 export interface AgentRecommendation {
   id: string;
@@ -75,6 +75,19 @@ export const AGENT_TEMPLATES: AgentRecommendation[] = [
     exampleConversation: [
       { role: "agent", message: "Como tem sido sua experiência? Estou aqui para ajudar!" },
       { role: "customer", message: "Tenho dúvidas sobre uma funcionalidade." },
+    ],
+    selected: false,
+  },
+  {
+    id: "custom-1",
+    type: "Custom",
+    name: "Agente Personalizado",
+    objective: "Configure um agente sob medida com objetivos, canais e integrações livres.",
+    targetAudience: "Definido por você",
+    benefits: ["100% configurável", "Todos os canais disponíveis", "Todas as integrações"],
+    exampleConversation: [
+      { role: "agent", message: "Olá! Como posso te ajudar hoje?" },
+      { role: "customer", message: "Preciso de uma solução específica para meu negócio." },
     ],
     selected: false,
   },
@@ -158,6 +171,7 @@ export const GOALS_BY_AGENT_TYPE: Record<AgentType, AgentGoal[]> = {
   BDR: ["qualify_opportunities", "schedule_meetings", "capture_leads"],
   SAC: ["answer_questions", "resolve_tickets", "collect_feedback"],
   CS: ["onboard_customers", "support_customers", "reduce_churn", "collect_feedback"],
+  Custom: ["schedule_meetings", "capture_leads", "answer_questions", "qualify_opportunities", "support_customers", "resolve_tickets", "onboard_customers", "collect_feedback", "reduce_churn"],
 };
 
 export interface ConversationStep {
@@ -226,6 +240,7 @@ export const CHANNELS_BY_AGENT_TYPE: Record<AgentType, DeployChannel[]> = {
   BDR: ["linkedin", "google_maps", "email"],
   SAC: ["whatsapp", "instagram", "facebook", "website", "email"],
   CS: ["whatsapp", "email", "website"],
+  Custom: ["whatsapp", "instagram", "tiktok", "facebook", "linkedin", "google_maps", "website", "email"],
 };
 
 export const TOOLS_BY_AGENT_TYPE: Record<AgentType, ExternalTool[]> = {
@@ -233,6 +248,7 @@ export const TOOLS_BY_AGENT_TYPE: Record<AgentType, ExternalTool[]> = {
   BDR: ["piperun", "rd_station", "crm_generic", "google_calendar", "outlook", "openai", "gemini"],
   SAC: ["openai", "gemini", "anthropic", "deepseek", "elevenlabs", "crm_generic"],
   CS: ["crm_generic", "piperun", "openai", "google_calendar", "outlook"],
+  Custom: ["google_calendar", "outlook", "piperun", "rd_station", "crm_generic", "openai", "elevenlabs", "gemini", "anthropic", "deepseek"],
 };
 
 export type CRMProvider = "hubspot" | "pipedrive" | "zoho" | "salesforce" | "activecampaign" | "zendesk";
