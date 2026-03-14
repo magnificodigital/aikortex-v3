@@ -33,7 +33,7 @@ const StepAgents = ({ selected, onSelect, onNext }: Props) => {
         <p className="text-sm text-muted-foreground">Cada agente já vem configurado com os objetivos ideais para sua função</p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {AGENT_TEMPLATES.map((agent) => {
           const meta = TYPE_META[agent.type];
           const Icon = meta.icon;

@@ -240,6 +240,7 @@ export const CHANNELS_BY_AGENT_TYPE: Record<AgentType, DeployChannel[]> = {
   BDR: ["linkedin", "google_maps", "email"],
   SAC: ["whatsapp", "instagram", "facebook", "website", "email"],
   CS: ["whatsapp", "email", "website"],
+  Custom: ["whatsapp", "instagram", "tiktok", "facebook", "linkedin", "google_maps", "website", "email"],
 };
 
 export const TOOLS_BY_AGENT_TYPE: Record<AgentType, ExternalTool[]> = {
@@ -247,6 +248,7 @@ export const TOOLS_BY_AGENT_TYPE: Record<AgentType, ExternalTool[]> = {
   BDR: ["piperun", "rd_station", "crm_generic", "google_calendar", "outlook", "openai", "gemini"],
   SAC: ["openai", "gemini", "anthropic", "deepseek", "elevenlabs", "crm_generic"],
   CS: ["crm_generic", "piperun", "openai", "google_calendar", "outlook"],
+  Custom: ["google_calendar", "outlook", "piperun", "rd_station", "crm_generic", "openai", "elevenlabs", "gemini", "anthropic", "deepseek"],
 };
 
 export type CRMProvider = "hubspot" | "pipedrive" | "zoho" | "salesforce" | "activecampaign" | "zendesk";
