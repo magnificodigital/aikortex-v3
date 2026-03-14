@@ -1,13 +1,11 @@
-import { AgentRecommendation, AgentGoal, AgentType, AGENT_TEMPLATES, AGENT_GOALS, GOALS_BY_AGENT_TYPE } from "@/types/agent-builder";
+import { AgentRecommendation, AGENT_TEMPLATES, GOALS_BY_AGENT_TYPE } from "@/types/agent-builder";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Check, Bot, Users, Zap, HeadphonesIcon, TrendingUp } from "lucide-react";
 
 interface Props {
   selected: AgentRecommendation | null;
-  selectedGoal: AgentGoal | null;
   onSelect: (agent: AgentRecommendation | null) => void;
-  onSelectGoal: (goal: AgentGoal) => void;
   onNext: () => void;
 }
 
@@ -18,7 +16,7 @@ const TYPE_META: Record<string, { icon: typeof Bot; gradient: string }> = {
   CS: { icon: Users, gradient: "from-[hsl(280,70%,50%)] to-[hsl(300,60%,50%)]" },
 };
 
-const StepAgents = ({ selected, selectedGoal, onSelect, onSelectGoal, onNext }: Props) => {
+const StepAgents = ({ selected, onSelect, onNext }: Props) => {
   const toggle = (agent: AgentRecommendation) => {
     if (selected?.id === agent.id) {
       onSelect(null);
@@ -27,19 +25,13 @@ const StepAgents = ({ selected, selectedGoal, onSelect, onSelectGoal, onNext }: 
     }
   };
 
-  const allowedGoals = selected ? GOALS_BY_AGENT_TYPE[selected.type] : [];
-  const filteredGoals = AGENT_GOALS.filter((g) => allowedGoals.includes(g.value));
-  const canContinue = selected && selectedGoal;
-
   return (
     <div className="space-y-8 animate-fade-in max-w-3xl mx-auto">
-      {/* Header */}
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-foreground">Escolha o agente e objetivo</h2>
-        <p className="text-sm text-muted-foreground">Selecione o tipo de agente e o que ele deve fazer</p>
+        <h2 className="text-2xl font-bold text-foreground">Escolha o tipo de agente</h2>
+        <p className="text-sm text-muted-foreground">Cada agente já vem configurado com os objetivos ideais para sua função</p>
       </div>
 
-      {/* Agent type cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {AGENT_TEMPLATES.map((agent) => {
           const meta = TYPE_META[agent.type];
@@ -72,38 +64,11 @@ const StepAgents = ({ selected, selectedGoal, onSelect, onSelectGoal, onNext }: 
         })}
       </div>
 
-      {/* Goal selection - only shows after agent is selected */}
-      {selected && (
-        <div className="space-y-3 animate-fade-in">
-          <h3 className="text-sm font-semibold text-foreground">Objetivo do agente {selected.type}</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            {filteredGoals.map((goal) => {
-              const isSelected = selectedGoal === goal.value;
-              return (
-                <button
-                  key={goal.value}
-                  onClick={() => onSelectGoal(goal.value)}
-                  className={`rounded-lg border p-3 text-left transition-all ${
-                    isSelected
-                      ? "border-primary bg-primary/5"
-                      : "border-border bg-card hover:border-primary/30"
-                  }`}
-                >
-                  <p className="text-sm font-medium text-foreground">{goal.label}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{goal.description}</p>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Footer */}
       <div className="flex items-center justify-between">
         <p className="text-xs text-muted-foreground">
-          {!selected ? "Selecione um agente" : !selectedGoal ? "Selecione um objetivo" : "Pronto para continuar"}
+          {!selected ? "Selecione um agente para continuar" : `${selected.name} selecionado`}
         </p>
-        <Button onClick={onNext} disabled={!canContinue} className="gap-2">
+        <Button onClick={onNext} disabled={!selected} className="gap-2">
           Continuar <ArrowRight className="w-4 h-4" />
         </Button>
       </div>

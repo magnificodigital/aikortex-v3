@@ -6,11 +6,11 @@ import {
   type WizardStep,
   type BusinessContext,
   type AgentRecommendation,
-  type AgentGoal,
   type DeployChannel,
   type CRMProvider,
   INITIAL_CONTEXT,
   WIZARD_STEPS,
+  GOALS_BY_AGENT_TYPE,
 } from "@/types/agent-builder";
 import WizardStepper from "@/components/aikortex/WizardStepper";
 import StepAgents from "@/components/aikortex/StepAgents";
@@ -23,7 +23,6 @@ const Aikortex = () => {
   const [step, setStep] = useState<WizardStep>("agent");
   const [context, setContext] = useState<BusinessContext>(INITIAL_CONTEXT);
   const [selectedAgent, setSelectedAgent] = useState<AgentRecommendation | null>(null);
-  const [selectedGoal, setSelectedGoal] = useState<AgentGoal | null>(null);
   const [selectedChannels, setSelectedChannels] = useState<DeployChannel[]>([]);
   const [selectedCRM, setSelectedCRM] = useState<CRMProvider | null>(null);
 
@@ -53,9 +52,7 @@ const Aikortex = () => {
         {step === "agent" && (
           <StepAgents
             selected={selectedAgent}
-            selectedGoal={selectedGoal}
             onSelect={setSelectedAgent}
-            onSelectGoal={setSelectedGoal}
             onNext={() => setStep("context")}
           />
         )}
