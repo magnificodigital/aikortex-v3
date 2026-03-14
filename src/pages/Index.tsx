@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import { LayoutDashboard } from "lucide-react";
 import BusinessOverview from "@/components/dashboard/BusinessOverview";
 import ActivityFeed from "@/components/dashboard/ActivityFeed";
 import TaskOverview from "@/components/dashboard/TaskOverview";
@@ -12,11 +13,14 @@ const Index = () => {
     <DashboardLayout>
       <div className="p-6 lg:p-8 space-y-6 max-w-[1600px]">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Central de comando da agência
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <LayoutDashboard className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+            <p className="text-sm text-muted-foreground">Central de comando da agência</p>
+          </div>
         </div>
 
         {/* 1. Business Overview */}

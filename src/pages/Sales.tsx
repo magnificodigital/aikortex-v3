@@ -28,9 +28,14 @@ const Sales = () => {
     <DashboardLayout>
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Vendas</h1>
-            <p className="text-sm text-muted-foreground">Pipeline e oportunidades da agência</p>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Vendas</h1>
+              <p className="text-sm text-muted-foreground">Pipeline e oportunidades da agência</p>
+            </div>
           </div>
           <Button size="sm" className="gap-2">
             <Plus className="w-4 h-4" /> Nova Oportunidade
