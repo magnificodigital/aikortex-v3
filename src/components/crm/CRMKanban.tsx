@@ -21,6 +21,7 @@ const FINAL_STAGES: PipelineStage[] = ["ganho", "perdido"];
 
 const CRMKanban = ({ leads, onLeadClick, onStageChange }: Props) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [lightboxStage, setLightboxStage] = useState<"ganho" | "perdido" | null>(null);
 
   const handleDragStart = () => setIsDragging(true);
 
