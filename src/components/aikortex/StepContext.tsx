@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, Building2, Users, BookOpen, MessageCircle, Puzzle, Upload, X, FileText, Image, File, Check } from "lucide-react";
+import { ArrowRight, ArrowLeft, Building2, Users, BookOpen, MessageCircle, Puzzle, Upload, X, FileText, Image, File, Check } from "lucide-react";
 import { useState, useRef } from "react";
 
 interface Props {
