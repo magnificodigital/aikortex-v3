@@ -97,7 +97,7 @@ const CRMKanban = ({ leads, onLeadClick, onStageChange }: Props) => {
     const totalValue = columnLeads.reduce((sum, l) => sum + l.value, 0);
 
     return (
-      <div key={stage} className={`flex flex-col min-w-0 rounded-xl ${cfg.bg} p-2 ${isFinal ? "min-h-[80px]" : ""}`}>
+      <div key={stage} className={`flex flex-col min-w-0 rounded-xl ${cfg.bg} p-2 overflow-hidden ${isFinal ? "min-h-[80px]" : ""}`}>
         <div className="mb-2 px-1 py-1.5 space-y-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
