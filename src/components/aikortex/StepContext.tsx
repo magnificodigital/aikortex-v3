@@ -135,16 +135,58 @@ const StepContext = ({ context, onChange, onNext }: Props) => {
       {/* Base de conhecimento */}
       {activeSection === "conhecimento" && (
         <div className="space-y-4 animate-fade-in">
+          {/* File upload area */}
+          <div className="space-y-2">
+            <Label>Arquivos de referência</Label>
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (e.dataTransfer.files) handleFiles(e.dataTransfer.files);
+              }}
+              className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors"
+            >
+              <Upload className="w-8 h-8 mx-auto text-muted-foreground/50 mb-2" />
+              <p className="text-sm text-muted-foreground">Arraste arquivos ou clique para enviar</p>
+              <p className="text-[10px] text-muted-foreground/60 mt-1">PDF, TXT, imagens (máx. 10MB cada)</p>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".pdf,.txt,.md,.doc,.docx,.png,.jpg,.jpeg,.webp"
+              className="hidden"
+              onChange={(e) => { if (e.target.files) handleFiles(e.target.files); e.target.value = ""; }}
+            />
+
+            {/* File list */}
+            {context.knowledgeFiles.length > 0 && (
+              <div className="space-y-1.5 mt-3">
+                {context.knowledgeFiles.map((file) => (
+                  <div key={file.id} className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm">
+                    {getFileIcon(file.type)}
+                    <span className="flex-1 truncate text-foreground">{file.name}</span>
+                    <span className="text-[10px] text-muted-foreground">{formatSize(file.size)}</span>
+                    <button onClick={() => removeFile(file.id)} className="text-muted-foreground hover:text-destructive transition-colors">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="space-y-1.5">
-            <Label htmlFor="knowledge">Fontes de conhecimento</Label>
+            <Label htmlFor="knowledge">Fontes de conhecimento (URLs, descrições)</Label>
             <Textarea
               id="knowledge"
-              placeholder="Descreva ou cole links de materiais que o agente deve usar: documentação, manuais, artigos, scripts de vendas..."
+              placeholder="Cole links de documentação, manuais, artigos, scripts de vendas..."
               value={context.knowledgeSources}
               onChange={(e) => update("knowledgeSources", e.target.value)}
-              rows={4}
+              rows={3}
             />
-            <p className="text-[10px] text-muted-foreground">O agente usará essas informações para responder de forma precisa</p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="faq">URL do FAQ ou Central de Ajuda</Label>
