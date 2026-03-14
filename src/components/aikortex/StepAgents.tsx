@@ -14,6 +14,7 @@ const TYPE_META: Record<string, { icon: typeof Bot }> = {
   BDR: { icon: TrendingUp },
   SAC: { icon: HeadphonesIcon },
   CS: { icon: Users },
+  Custom: { icon: Settings2 },
 };
 
 const StepAgents = ({ selected, onSelect, onNext }: Props) => {
