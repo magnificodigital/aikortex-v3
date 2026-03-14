@@ -1,7 +1,5 @@
 import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
-import { ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   type WizardStep,
   type BusinessContext,
@@ -9,9 +7,14 @@ import {
   type DeployChannel,
   type CRMProvider,
   type ExternalTool,
+  type AgentIntent,
+  type ConversationStage,
+  type AgentAdvancedConfig,
   INITIAL_CONTEXT,
   WIZARD_STEPS,
-  GOALS_BY_AGENT_TYPE,
+  MANDATORY_INTENTS,
+  DEFAULT_CONVERSATION_STAGES,
+  DEFAULT_ADVANCED_CONFIG,
 } from "@/types/agent-builder";
 import WizardStepper from "@/components/aikortex/WizardStepper";
 import StepAgents from "@/components/aikortex/StepAgents";
@@ -29,6 +32,9 @@ const Aikortex = () => {
   const [selectedChannels, setSelectedChannels] = useState<DeployChannel[]>([]);
   const [selectedCRM, setSelectedCRM] = useState<CRMProvider | null>(null);
   const [selectedTools, setSelectedTools] = useState<ExternalTool[]>([]);
+  const [intents, setIntents] = useState<AgentIntent[]>([...MANDATORY_INTENTS]);
+  const [stages, setStages] = useState<ConversationStage[]>([...DEFAULT_CONVERSATION_STAGES]);
+  const [advancedConfig, setAdvancedConfig] = useState<AgentAdvancedConfig>({ ...DEFAULT_ADVANCED_CONFIG });
 
   const currentIndex = STEP_ORDER.indexOf(step);
 
@@ -61,7 +67,18 @@ const Aikortex = () => {
           />
         )}
         {step === "context" && (
-          <StepContext context={context} onChange={setContext} onNext={() => setStep("channels")} onBack={goBack} />
+          <StepContext
+            context={context}
+            onChange={setContext}
+            onNext={() => setStep("channels")}
+            onBack={goBack}
+            advancedConfig={advancedConfig}
+            onAdvancedConfigChange={setAdvancedConfig}
+            intents={intents}
+            onIntentsChange={setIntents}
+            stages={stages}
+            onStagesChange={setStages}
+          />
         )}
         {step === "channels" && (
           <StepChannels selected={selectedChannels} onToggle={toggleChannel} onNext={() => setStep("integrations")} onBack={goBack} agentType={selectedAgent?.type || null} />
