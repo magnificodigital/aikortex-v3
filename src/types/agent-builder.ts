@@ -108,6 +108,10 @@ export interface BusinessContext {
   mainProduct: string;
   country: string;
   language: string;
+  // Agente
+  agentName: string;
+  // Serviços
+  services: string[];
   // Público-alvo
   targetAudienceDescription: string;
   painPoints: string;
@@ -118,6 +122,8 @@ export interface BusinessContext {
   // Tom e comportamento
   toneOfVoice: string;
   greetingMessage: string;
+  // Skills
+  skills: string[];
   // Operacional
   businessHours: string;
   escalationRules: string;
@@ -131,6 +137,8 @@ export const INITIAL_CONTEXT: BusinessContext = {
   mainProduct: "",
   country: "Brasil",
   language: "Português",
+  agentName: "",
+  services: [],
   targetAudienceDescription: "",
   painPoints: "",
   knowledgeSources: "",
@@ -138,6 +146,7 @@ export const INITIAL_CONTEXT: BusinessContext = {
   knowledgeFiles: [],
   toneOfVoice: "Profissional e amigável",
   greetingMessage: "",
+  skills: [],
   businessHours: "24/7",
   escalationRules: "",
   averageTicket: "",

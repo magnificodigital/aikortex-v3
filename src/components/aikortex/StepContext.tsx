@@ -4,8 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, ArrowLeft, Building2, Users, BookOpen, MessageCircle, Upload, X, FileText, Image, File } from "lucide-react";
+import { ArrowRight, ArrowLeft, Building2, Users, BookOpen, MessageCircle, Upload, X, FileText, Image, File, Bot, Briefcase, Zap, Plus, Check, AlertCircle } from "lucide-react";
 import { useState, useRef } from "react";
 
 interface Props {
@@ -28,18 +29,36 @@ const TONES = [
   "Empático e acolhedor",
 ];
 
-type Section = "empresa" | "publico" | "conhecimento" | "tom";
+const DEFAULT_SKILLS = [
+  "Qualificação de leads",
+  "Atendimento ao cliente",
+  "Agendamento de reuniões",
+  "Follow-up automático",
+  "Coleta de feedback",
+  "Onboarding de clientes",
+  "Resolução de dúvidas técnicas",
+  "Negociação e vendas",
+  "Suporte pós-venda",
+  "Pesquisa de satisfação",
+];
+
+type Section = "empresa" | "agente" | "servicos" | "publico" | "conhecimento" | "tom" | "skills";
 
 const SECTIONS: { key: Section; label: string; icon: typeof Building2 }[] = [
   { key: "empresa", label: "Empresa", icon: Building2 },
+  { key: "agente", label: "Nome do Agente", icon: Bot },
+  { key: "servicos", label: "Serviços", icon: Briefcase },
   { key: "publico", label: "Público-alvo", icon: Users },
   { key: "conhecimento", label: "Base de conhecimento", icon: BookOpen },
   { key: "tom", label: "Tom e estilo", icon: MessageCircle },
+  { key: "skills", label: "Skills", icon: Zap },
 ];
 
 const StepContext = ({ context, onChange, onNext, onBack }: Props) => {
   const [activeSection, setActiveSection] = useState<Section>("empresa");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [newService, setNewService] = useState("");
+  const [newSkill, setNewSkill] = useState("");
 
   const update = (field: keyof BusinessContext, value: string) =>
     onChange({ ...context, [field]: value });
@@ -54,6 +73,7 @@ const StepContext = ({ context, onChange, onNext, onBack }: Props) => {
   const removeFile = (id: string) => {
     onChange({ ...context, knowledgeFiles: context.knowledgeFiles.filter((f) => f.id !== id) });
   };
+
   const getFileIcon = (type: string) => {
     if (type.startsWith("image/")) return <Image className="w-4 h-4 text-primary shrink-0" />;
     if (type === "application/pdf") return <FileText className="w-4 h-4 text-destructive shrink-0" />;
@@ -66,13 +86,54 @@ const StepContext = ({ context, onChange, onNext, onBack }: Props) => {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const isValid = context.companyName && context.industry && context.mainProduct;
+  const addService = () => {
+    const trimmed = newService.trim();
+    if (trimmed && !context.services.includes(trimmed)) {
+      onChange({ ...context, services: [...context.services, trimmed] });
+      setNewService("");
+    }
+  };
+
+  const removeService = (service: string) => {
+    onChange({ ...context, services: context.services.filter((s) => s !== service) });
+  };
+
+  const toggleSkill = (skill: string) => {
+    const exists = context.skills.includes(skill);
+    onChange({
+      ...context,
+      skills: exists ? context.skills.filter((s) => s !== skill) : [...context.skills, skill],
+    });
+  };
+
+  const addCustomSkill = () => {
+    const trimmed = newSkill.trim();
+    if (trimmed && !context.skills.includes(trimmed)) {
+      onChange({ ...context, skills: [...context.skills, trimmed] });
+      setNewSkill("");
+    }
+  };
+
+  // Validation per section
+  const sectionValid: Record<Section, boolean> = {
+    empresa: !!(context.companyName && context.industry && context.mainProduct),
+    agente: !!context.agentName.trim(),
+    servicos: context.services.length > 0,
+    publico: !!context.targetAudienceDescription.trim(),
+    conhecimento: context.knowledgeFiles.length > 0 || !!context.knowledgeSources.trim(),
+    tom: !!context.toneOfVoice,
+    skills: context.skills.length > 0,
+  };
+
+  const allValid = Object.values(sectionValid).every(Boolean);
+
+  const incompleteSections = SECTIONS.filter((s) => !sectionValid[s.key]);
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 animate-fade-in">
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold text-foreground">Configure seu agente</h2>
-        <p className="text-sm text-muted-foreground">Preencha as informações para criar um agente eficaz. Campos com * são obrigatórios.</p>
+        <p className="text-sm text-muted-foreground">Preencha todas as seções para criar um agente eficaz.</p>
       </div>
 
       {/* Section tabs */}
@@ -80,15 +141,24 @@ const StepContext = ({ context, onChange, onNext, onBack }: Props) => {
         {SECTIONS.map((s) => {
           const Icon = s.icon;
           const isActive = activeSection === s.key;
+          const isComplete = sectionValid[s.key];
           return (
             <button
               key={s.key}
               onClick={() => setActiveSection(s.key)}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
-                isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+                isActive
+                  ? "bg-primary text-primary-foreground"
+                  : isComplete
+                  ? "text-foreground bg-muted/80"
+                  : "text-muted-foreground hover:bg-muted"
               }`}
             >
-              <Icon className="w-3.5 h-3.5" />
+              {isComplete && !isActive ? (
+                <Check className="w-3.5 h-3.5 text-[hsl(var(--success))]" />
+              ) : (
+                <Icon className="w-3.5 h-3.5" />
+              )}
               {s.label}
             </button>
           );
@@ -98,7 +168,6 @@ const StepContext = ({ context, onChange, onNext, onBack }: Props) => {
       {/* Empresa */}
       {activeSection === "empresa" && (
         <div className="space-y-4 animate-fade-in">
-          {/* Client selector */}
           <div className="space-y-1.5">
             <Label>Selecionar cliente cadastrado *</Label>
             <Select
@@ -130,7 +199,6 @@ const StepContext = ({ context, onChange, onNext, onBack }: Props) => {
             </Select>
           </div>
 
-          {/* Auto-filled fields */}
           {context.companyName && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-lg border border-border bg-muted/30 p-4">
               <div className="space-y-1.5">
@@ -159,11 +227,65 @@ const StepContext = ({ context, onChange, onNext, onBack }: Props) => {
         </div>
       )}
 
+      {/* Nome do Agente */}
+      {activeSection === "agente" && (
+        <div className="space-y-4 animate-fade-in">
+          <div className="space-y-1.5">
+            <Label htmlFor="agentName">Nome do agente *</Label>
+            <Input
+              id="agentName"
+              placeholder="Ex: Sofia, Max, Assistente Comercial..."
+              value={context.agentName}
+              onChange={(e) => update("agentName", e.target.value)}
+            />
+            <p className="text-[11px] text-muted-foreground">Escolha um nome que represente a personalidade do agente.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Serviços */}
+      {activeSection === "servicos" && (
+        <div className="space-y-4 animate-fade-in">
+          <div className="space-y-1.5">
+            <Label>Serviços que a empresa oferece *</Label>
+            <p className="text-[11px] text-muted-foreground">Adicione os serviços/produtos que o agente deve conhecer.</p>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              placeholder="Ex: Consultoria em marketing digital"
+              value={newService}
+              onChange={(e) => setNewService(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addService(); } }}
+            />
+            <Button type="button" size="sm" onClick={addService} disabled={!newService.trim()} className="gap-1 shrink-0">
+              <Plus className="w-4 h-4" /> Adicionar
+            </Button>
+          </div>
+          {context.services.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {context.services.map((service) => (
+                <Badge key={service} variant="secondary" className="gap-1.5 py-1.5 px-3 text-xs">
+                  {service}
+                  <button onClick={() => removeService(service)} className="hover:text-destructive transition-colors">
+                    <X className="w-3 h-3" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          )}
+          {context.services.length === 0 && (
+            <p className="text-xs text-muted-foreground/70 text-center py-4 border border-dashed border-border rounded-lg">
+              Nenhum serviço adicionado ainda
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Público-alvo */}
       {activeSection === "publico" && (
         <div className="space-y-4 animate-fade-in">
           <div className="space-y-1.5">
-            <Label htmlFor="audience">Quem é seu público-alvo?</Label>
+            <Label htmlFor="audience">Quem é seu público-alvo? *</Label>
             <Textarea
               id="audience"
               placeholder="Ex: PMEs de tecnologia com 10-50 funcionários, decisores de nível C-level..."
@@ -192,9 +314,8 @@ const StepContext = ({ context, onChange, onNext, onBack }: Props) => {
       {/* Base de conhecimento */}
       {activeSection === "conhecimento" && (
         <div className="space-y-4 animate-fade-in">
-          {/* File upload area */}
           <div className="space-y-2">
-            <Label>Arquivos de referência</Label>
+            <Label>Arquivos de referência *</Label>
             <div
               onClick={() => fileInputRef.current?.click()}
               onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
@@ -217,8 +338,6 @@ const StepContext = ({ context, onChange, onNext, onBack }: Props) => {
               className="hidden"
               onChange={(e) => { if (e.target.files) handleFiles(e.target.files); e.target.value = ""; }}
             />
-
-            {/* File list */}
             {context.knowledgeFiles.length > 0 && (
               <div className="space-y-1.5 mt-3">
                 {context.knowledgeFiles.map((file) => (
@@ -234,7 +353,6 @@ const StepContext = ({ context, onChange, onNext, onBack }: Props) => {
               </div>
             )}
           </div>
-
           <div className="space-y-1.5">
             <Label htmlFor="knowledge">Fontes de conhecimento (URLs, descrições)</Label>
             <Textarea
@@ -256,7 +374,7 @@ const StepContext = ({ context, onChange, onNext, onBack }: Props) => {
       {activeSection === "tom" && (
         <div className="space-y-4 animate-fade-in">
           <div className="space-y-1.5">
-            <Label>Tom de voz do agente</Label>
+            <Label>Tom de voz do agente *</Label>
             <Select value={context.toneOfVoice} onValueChange={(v) => update("toneOfVoice", v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>{TONES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
@@ -275,6 +393,58 @@ const StepContext = ({ context, onChange, onNext, onBack }: Props) => {
         </div>
       )}
 
+      {/* Skills */}
+      {activeSection === "skills" && (
+        <div className="space-y-4 animate-fade-in">
+          <div className="space-y-1.5">
+            <Label>Skills do agente *</Label>
+            <p className="text-[11px] text-muted-foreground">Selecione ou adicione as habilidades do agente.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {DEFAULT_SKILLS.map((skill) => {
+              const selected = context.skills.includes(skill);
+              return (
+                <button
+                  key={skill}
+                  onClick={() => toggleSkill(skill)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
+                    selected
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-muted/50 text-muted-foreground border-border hover:border-primary/50"
+                  }`}
+                >
+                  {selected && <Check className="w-3 h-3 inline mr-1" />}
+                  {skill}
+                </button>
+              );
+            })}
+          </div>
+          {/* Custom skills */}
+          {context.skills.filter((s) => !DEFAULT_SKILLS.includes(s)).length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {context.skills.filter((s) => !DEFAULT_SKILLS.includes(s)).map((skill) => (
+                <Badge key={skill} variant="secondary" className="gap-1.5 py-1.5 px-3 text-xs">
+                  {skill}
+                  <button onClick={() => toggleSkill(skill)} className="hover:text-destructive transition-colors">
+                    <X className="w-3 h-3" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Input
+              placeholder="Adicionar skill personalizada..."
+              value={newSkill}
+              onChange={(e) => setNewSkill(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomSkill(); } }}
+            />
+            <Button type="button" size="sm" onClick={addCustomSkill} disabled={!newSkill.trim()} className="gap-1 shrink-0">
+              <Plus className="w-4 h-4" /> Adicionar
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <div className="flex items-center justify-between pt-2">
@@ -282,11 +452,14 @@ const StepContext = ({ context, onChange, onNext, onBack }: Props) => {
           <Button variant="outline" onClick={onBack} className="gap-1.5">
             <ArrowLeft className="w-4 h-4" /> Voltar
           </Button>
-          <p className="text-xs text-muted-foreground">
-            {!isValid && "Preencha os campos obrigatórios na aba Empresa"}
-          </p>
+          {!allValid && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <AlertCircle className="w-3.5 h-3.5 text-destructive" />
+              <span>Faltam: {incompleteSections.map((s) => s.label).join(", ")}</span>
+            </div>
+          )}
         </div>
-        <Button onClick={onNext} disabled={!isValid} className="gap-2">
+        <Button onClick={onNext} disabled={!allValid} className="gap-2">
           Continuar <ArrowRight className="w-4 h-4" />
         </Button>
       </div>
