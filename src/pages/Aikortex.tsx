@@ -41,6 +41,12 @@ const Aikortex = () => {
     );
   };
 
+  const toggleTool = (tool: ExternalTool) => {
+    setSelectedTools((prev) =>
+      prev.includes(tool) ? prev.filter((t) => t !== tool) : [...prev, tool]
+    );
+  };
+
   return (
     <DashboardLayout>
       <div className="p-4 lg:p-8 max-w-5xl mx-auto space-y-6">
