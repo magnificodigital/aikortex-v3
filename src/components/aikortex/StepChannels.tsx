@@ -1,6 +1,6 @@
 import { DeployChannel, DEPLOY_CHANNELS } from "@/types/agent-builder";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Check, Radio } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 
 interface Props {
   selected: DeployChannel[];
@@ -8,36 +8,62 @@ interface Props {
   onNext: () => void;
 }
 
+const CHANNEL_LOGOS: Record<DeployChannel, string> = {
+  whatsapp: "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg",
+  instagram: "https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png",
+  tiktok: "https://sf-tb-sg.ibytedtos.com/obj/eden-sg/uhtyvueh7nulogpoguhm/tiktok-icon2.png",
+  facebook: "https://upload.wikimedia.org/wikipedia/commons/0/05/Facebook_Logo_%282019%29.png",
+  linkedin: "https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png",
+  google_maps: "https://upload.wikimedia.org/wikipedia/commons/a/aa/Google_Maps_icon_%282020%29.svg",
+  website: "",
+  email: "",
+};
+
+const MAIN_CHANNELS: DeployChannel[] = ["whatsapp", "instagram", "tiktok", "facebook", "linkedin", "google_maps"];
+
 const StepChannels = ({ selected, onToggle, onNext }: Props) => {
   return (
     <div className="max-w-2xl mx-auto space-y-8 animate-fade-in">
       <div className="text-center space-y-2">
-        <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
-          <Radio className="w-7 h-7 text-primary" />
-        </div>
-        <h2 className="text-2xl font-bold text-foreground">Canais de deploy</h2>
+        <h2 className="text-2xl font-bold text-foreground">Canais</h2>
         <p className="text-sm text-muted-foreground">Onde seu agente vai operar?</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {DEPLOY_CHANNELS.map((ch) => {
+        {DEPLOY_CHANNELS.filter(ch => MAIN_CHANNELS.includes(ch.value)).map((ch) => {
           const isSelected = selected.includes(ch.value);
+          const logo = CHANNEL_LOGOS[ch.value];
           return (
-            <button
+            <div
               key={ch.value}
-              onClick={() => onToggle(ch.value)}
-              className={`flex items-center gap-4 rounded-xl border-2 p-5 text-left transition-all ${
-                isSelected ? "border-primary bg-primary/5 shadow-md" : "border-border bg-card hover:border-primary/30"
+              className={`flex items-center gap-4 rounded-xl border-2 p-4 transition-all ${
+                isSelected ? "border-primary bg-primary/5 shadow-md" : "border-border bg-card"
               }`}
             >
-              <span className="text-2xl">{ch.icon}</span>
+              {logo && (
+                <img
+                  src={logo}
+                  alt={ch.label}
+                  className="w-8 h-8 rounded-lg object-contain shrink-0"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = "none";
+                  }}
+                />
+              )}
               <span className="text-sm font-semibold text-foreground flex-1">{ch.label}</span>
-              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
-                isSelected ? "bg-primary border-primary" : "border-border"
-              }`}>
-                {isSelected && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
-              </div>
-            </button>
+              <Button
+                size="sm"
+                variant={isSelected ? "default" : "outline"}
+                onClick={() => onToggle(ch.value)}
+                className="shrink-0 text-xs h-8 gap-1.5"
+              >
+                {isSelected ? (
+                  <><Check className="w-3 h-3" /> Conectado</>
+                ) : (
+                  "Conectar"
+                )}
+              </Button>
+            </div>
           );
         })}
       </div>
