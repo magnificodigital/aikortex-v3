@@ -22,7 +22,7 @@ const MOCK_RESPONSES: Record<string, string> = {
   funciona: "Nosso sistema é super intuitivo! Quer que eu te mostre como?",
 };
 
-const StepLaunch = ({ context, agent, selectedChannels, onToggleChannel, selectedCRM, onSelectCRM }: Props) => {
+const StepLaunch = ({ context, agent, selectedChannels, onToggleChannel, selectedCRM, onSelectCRM, onBack }: Props) => {
   const [messages, setMessages] = useState<{ role: "user" | "agent"; text: string }[]>([
     { role: "agent", text: `Olá! Sou o assistente da ${context.companyName || "sua empresa"}. Como posso ajudar?` },
   ]);
