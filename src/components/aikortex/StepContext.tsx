@@ -38,7 +38,7 @@ const SECTIONS: { key: Section; label: string; icon: typeof Building2 }[] = [
   { key: "funcoes", label: "Funções", icon: Puzzle },
 ];
 
-const StepContext = ({ context, onChange, onNext }: Props) => {
+const StepContext = ({ context, onChange, onNext, selectedTools, onToggleTool }: Props) => {
   const [activeSection, setActiveSection] = useState<Section>("empresa");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
