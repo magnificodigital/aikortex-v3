@@ -19,16 +19,16 @@ const accentMap: Record<string, string> = {
 const BusinessOverview = () => (
   <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
     {metrics.map((m) => (
-      <div key={m.label} className="glass-card rounded-xl p-4 flex flex-col gap-3 group hover:border-primary/30 transition-colors">
+      <div key={m.label} className="glass-card p-4 flex flex-col gap-3 hover:border-border transition-colors">
         <div className="flex items-center justify-between">
           <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${accentMap[m.accent]}`}>
             <m.icon className="w-4 h-4" />
           </div>
-          <span className="text-[10px] font-medium text-success">{m.change}</span>
+          <span className="text-[10px] font-medium text-muted-foreground">{m.change}</span>
         </div>
         <div>
-          <div className="text-xl font-bold text-foreground">{m.value}</div>
-          <div className="text-[11px] text-muted-foreground">{m.label}</div>
+          <div className="text-xl font-semibold text-foreground">{m.value}</div>
+          <div className="text-[11px] text-muted-foreground mt-0.5">{m.label}</div>
         </div>
       </div>
     ))}
