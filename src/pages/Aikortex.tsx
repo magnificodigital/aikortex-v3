@@ -50,19 +50,7 @@ const Aikortex = () => {
   return (
     <DashboardLayout>
       <div className="p-4 lg:p-8 max-w-5xl mx-auto space-y-6">
-        <div className="flex items-center gap-4">
-          {currentIndex > 0 ? (
-            <Button variant="ghost" size="icon" onClick={goBack} className="text-muted-foreground hover:text-foreground shrink-0 h-8 w-8">
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-          ) : (
-            <div className="w-8" />
-          )}
-          <div className="flex-1">
-            <WizardStepper currentStep={step} />
-          </div>
-          <div className="w-8" />
-        </div>
+        <WizardStepper currentStep={step} />
 
         {step === "agent" && (
           <StepAgents
@@ -72,10 +60,10 @@ const Aikortex = () => {
           />
         )}
         {step === "context" && (
-          <StepContext context={context} onChange={setContext} onNext={() => setStep("channels")} selectedTools={selectedTools} onToggleTool={toggleTool} />
+          <StepContext context={context} onChange={setContext} onNext={() => setStep("channels")} onBack={goBack} selectedTools={selectedTools} onToggleTool={toggleTool} />
         )}
         {step === "channels" && (
-          <StepChannels selected={selectedChannels} onToggle={toggleChannel} onNext={() => setStep("launch")} />
+          <StepChannels selected={selectedChannels} onToggle={toggleChannel} onNext={() => setStep("launch")} onBack={goBack} />
         )}
         {step === "launch" && (
           <StepLaunch
@@ -85,6 +73,7 @@ const Aikortex = () => {
             onToggleChannel={toggleChannel}
             selectedCRM={selectedCRM}
             onSelectCRM={setSelectedCRM}
+            onBack={goBack}
           />
         )}
       </div>

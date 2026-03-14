@@ -1,11 +1,12 @@
 import { DeployChannel, DEPLOY_CHANNELS } from "@/types/agent-builder";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, ArrowLeft, Check } from "lucide-react";
 
 interface Props {
   selected: DeployChannel[];
   onToggle: (ch: DeployChannel) => void;
   onNext: () => void;
+  onBack: () => void;
 }
 
 const CHANNEL_LOGOS: Record<DeployChannel, string> = {
@@ -21,7 +22,7 @@ const CHANNEL_LOGOS: Record<DeployChannel, string> = {
 
 const MAIN_CHANNELS: DeployChannel[] = ["whatsapp", "instagram", "tiktok", "facebook", "linkedin", "google_maps"];
 
-const StepChannels = ({ selected, onToggle, onNext }: Props) => {
+const StepChannels = ({ selected, onToggle, onNext, onBack }: Props) => {
   return (
     <div className="max-w-2xl mx-auto space-y-8 animate-fade-in">
       <div className="text-center space-y-2">
@@ -68,7 +69,10 @@ const StepChannels = ({ selected, onToggle, onNext }: Props) => {
         })}
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={onBack} className="gap-1.5">
+          <ArrowLeft className="w-4 h-4" /> Voltar
+        </Button>
         <Button onClick={onNext} disabled={selected.length === 0} className="gap-2">
           Continuar <ArrowRight className="w-4 h-4" />
         </Button>

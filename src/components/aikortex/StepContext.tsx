@@ -5,13 +5,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, Building2, Users, BookOpen, MessageCircle, Puzzle, Upload, X, FileText, Image, File, Check } from "lucide-react";
+import { ArrowRight, ArrowLeft, Building2, Users, BookOpen, MessageCircle, Puzzle, Upload, X, FileText, Image, File, Check } from "lucide-react";
 import { useState, useRef } from "react";
 
 interface Props {
   context: BusinessContext;
   onChange: (ctx: BusinessContext) => void;
   onNext: () => void;
+  onBack: () => void;
   selectedTools: ExternalTool[];
   onToggleTool: (tool: ExternalTool) => void;
 }
@@ -39,7 +40,7 @@ const SECTIONS: { key: Section; label: string; icon: typeof Building2 }[] = [
   { key: "funcoes", label: "Integrações", icon: Puzzle },
 ];
 
-const StepContext = ({ context, onChange, onNext, selectedTools, onToggleTool }: Props) => {
+const StepContext = ({ context, onChange, onNext, onBack, selectedTools, onToggleTool }: Props) => {
   const [activeSection, setActiveSection] = useState<Section>("empresa");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -322,11 +323,16 @@ const StepContext = ({ context, onChange, onNext, selectedTools, onToggleTool }:
 
       {/* Footer */}
       <div className="flex items-center justify-between pt-2">
-        <p className="text-xs text-muted-foreground">
-          {!isValid && "Preencha os campos obrigatórios na aba Empresa"}
-        </p>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" onClick={onBack} className="gap-1.5">
+            <ArrowLeft className="w-4 h-4" /> Voltar
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            {!isValid && "Preencha os campos obrigatórios na aba Empresa"}
+          </p>
+        </div>
         <Button onClick={onNext} disabled={!isValid} className="gap-2">
-          Criar agente <ArrowRight className="w-4 h-4" />
+          Continuar <ArrowRight className="w-4 h-4" />
         </Button>
       </div>
     </div>

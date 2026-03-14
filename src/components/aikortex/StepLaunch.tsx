@@ -3,7 +3,7 @@ import { BusinessContext, AgentRecommendation, DeployChannel, DEPLOY_CHANNELS, C
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Bot, Send, Rocket, User, Check } from "lucide-react";
+import { Bot, Send, Rocket, User, Check, ArrowLeft } from "lucide-react";
 
 interface Props {
   context: BusinessContext;
@@ -12,6 +12,7 @@ interface Props {
   onToggleChannel: (ch: DeployChannel) => void;
   selectedCRM: CRMProvider | null;
   onSelectCRM: (crm: CRMProvider | null) => void;
+  onBack: () => void;
 }
 
 const MOCK_RESPONSES: Record<string, string> = {
@@ -21,7 +22,7 @@ const MOCK_RESPONSES: Record<string, string> = {
   funciona: "Nosso sistema é super intuitivo! Quer que eu te mostre como?",
 };
 
-const StepLaunch = ({ context, agent, selectedChannels, onToggleChannel, selectedCRM, onSelectCRM }: Props) => {
+const StepLaunch = ({ context, agent, selectedChannels, onToggleChannel, selectedCRM, onSelectCRM, onBack }: Props) => {
   const [messages, setMessages] = useState<{ role: "user" | "agent"; text: string }[]>([
     { role: "agent", text: `Olá! Sou o assistente da ${context.companyName || "sua empresa"}. Como posso ajudar?` },
   ]);
@@ -138,8 +139,11 @@ const StepLaunch = ({ context, agent, selectedChannels, onToggleChannel, selecte
         </div>
       </div>
 
-      {/* Activate */}
-      <div className="flex justify-center pt-2">
+      {/* Footer */}
+      <div className="flex justify-between pt-2">
+        <Button variant="outline" onClick={onBack} className="gap-1.5">
+          <ArrowLeft className="w-4 h-4" /> Voltar
+        </Button>
         <Button size="lg" className="gap-2 px-8">
           <Rocket className="w-4 h-4" /> Ativar agente em produção
         </Button>
