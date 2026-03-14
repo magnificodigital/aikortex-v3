@@ -459,7 +459,7 @@ const StepContext = ({ context, onChange, onNext, onBack }: Props) => {
             </div>
           )}
         </div>
-        <Button onClick={onNext} disabled={!allValid} className="gap-2">
+        <Button onClick={onNext} className="gap-2">
           Continuar <ArrowRight className="w-4 h-4" />
         </Button>
       </div>
