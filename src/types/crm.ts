@@ -127,7 +127,7 @@ export const MOCK_LEADS: Lead[] = [
   },
   {
     id: "lead-8", name: "Luciana Martins", email: "luciana@educacao.com", phone: "(19) 92222-9012",
-    company: "EduTech Brasil", position: "Head de Produto", stage: "novo", source: "google_maps", temperature: "frio",
+    company: "EduTech Brasil", position: "Head de Produto", stage: "lead", source: "google_maps", temperature: "frio",
     value: 20000, assignee: "Pedro Rocha", tags: ["EdTech", "B2B"], notes: "Capturado via Google Maps",
     activities: [
       { id: "a9", type: "note", description: "Lead capturado automaticamente via Google Maps", createdAt: "2026-03-14T08:00:00", createdBy: "Agente BDR" },
