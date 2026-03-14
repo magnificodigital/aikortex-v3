@@ -126,9 +126,10 @@
   }
 }
 
-/* Dark mode - clean flat background */
+/* Dark mode - subtle gradient background */
 .dark body {
-  background: hsl(var(--background));
+  background: linear-gradient(145deg, hsl(225 15% 8%) 0%, hsl(230 18% 6%) 50%, hsl(220 20% 10%) 100%);
+  min-height: 100vh;
 }
 
 .dark aside {
