@@ -256,14 +256,14 @@ const CRMKanban = ({ leads, onLeadClick, onStageChange }: Props) => {
 
   return (
     <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex flex-col gap-3 h-[calc(100vh-380px)]">
+      <div className="flex flex-col gap-2 h-[calc(100vh-340px)]">
         {/* Main pipeline columns */}
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 min-h-0 flex-1 overflow-hidden">
           {MAIN_STAGES.map((stage) => renderColumn(stage))}
         </div>
 
         {/* Final stages - Perdido left, Ganho right */}
-        <div className="grid grid-cols-2 gap-3 shrink-0">
+        <div className="grid grid-cols-2 gap-2 shrink-0">
           {renderFinalStage("perdido")}
           {renderFinalStage("ganho")}
         </div>
