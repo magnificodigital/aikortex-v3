@@ -92,6 +92,7 @@ export interface BusinessContext {
   // Base de conhecimento
   knowledgeSources: string;
   faqUrl: string;
+  knowledgeFiles: KnowledgeFile[];
   // Tom e comportamento
   toneOfVoice: string;
   greetingMessage: string;
