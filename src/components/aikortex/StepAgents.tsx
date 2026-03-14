@@ -47,8 +47,8 @@ const StepAgents = ({ selected, onSelect, onNext }: Props) => {
                   : "border-border bg-card hover:border-primary/40"
               }`}
             >
-              <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${meta.gradient} flex items-center justify-center mx-auto mb-3`}>
-                <Icon className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center mx-auto mb-3">
+                <Icon className="w-5 h-5 text-muted-foreground" />
               </div>
               <Badge variant={active ? "default" : "outline"} className="text-[10px] font-bold">
                 {agent.type}
