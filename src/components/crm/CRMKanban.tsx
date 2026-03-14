@@ -39,55 +39,6 @@ const CRMKanban = ({ leads, onLeadClick, onStageChange }: Props) => {
       confetti({ ...defaults, particleCount: 40, origin: { x: 0.6, y: 0.5 }, colors: ["#fbbf24", "#f59e0b", "#22c55e"] });
     }, 500);
 
-    // Applause sound - layered filtered noise to simulate crowd clapping
-    try {
-      const ctx = new AudioContext();
-      const duration = 2.5;
-      const sr = ctx.sampleRate;
-      const buffer = ctx.createBuffer(2, sr * duration, sr);
-
-      for (let ch = 0; ch < 2; ch++) {
-        const data = buffer.getChannelData(ch);
-        const clapCount = 18 + Math.floor(Math.random() * 6);
-        
-        for (let c = 0; c < clapCount; c++) {
-          const clapTime = (c / clapCount) * (duration - 0.3) + Math.random() * 0.08;
-          const clapStart = Math.floor(clapTime * sr);
-          const clapLen = Math.floor((0.02 + Math.random() * 0.03) * sr);
-          
-          for (let i = 0; i < clapLen && (clapStart + i) < data.length; i++) {
-            const t = i / clapLen;
-            const env = Math.exp(-t * 15) * (0.4 + Math.random() * 0.3);
-            const overall = Math.max(0, 1 - clapTime / duration) * 0.8 + 0.2;
-            data[clapStart + i] += (Math.random() * 2 - 1) * env * overall;
-          }
-        }
-
-        // Add ambient crowd noise
-        for (let i = 0; i < data.length; i++) {
-          const t = i / sr;
-          const fade = Math.min(t * 4, 1) * Math.max(0, 1 - t / duration);
-          data[i] += (Math.random() * 2 - 1) * 0.03 * fade;
-        }
-      }
-
-      const source = ctx.createBufferSource();
-      source.buffer = buffer;
-
-      // Bandpass filter for realistic clap sound
-      const filter = ctx.createBiquadFilter();
-      filter.type = "bandpass";
-      filter.frequency.value = 2500;
-      filter.Q.value = 0.7;
-
-      const gain = ctx.createGain();
-      gain.gain.value = 0.25;
-
-      source.connect(filter).connect(gain).connect(ctx.destination);
-      source.start();
-    } catch (e) {
-      // Audio not supported
-    }
   }, []);
 
   const mourningLoss = useCallback(() => {
