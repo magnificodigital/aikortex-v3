@@ -262,9 +262,10 @@ const CRMKanban = ({ leads, onLeadClick, onStageChange }: Props) => {
           {MAIN_STAGES.map((stage) => renderColumn(stage))}
         </div>
 
-        {/* Final stages - always visible as clean footer rows */}
-        <div className="space-y-2 shrink-0">
-          {FINAL_STAGES.map((stage) => renderFinalStage(stage))}
+        {/* Final stages - Perdido left, Ganho right */}
+        <div className="grid grid-cols-2 gap-3 shrink-0">
+          {renderFinalStage("perdido")}
+          {renderFinalStage("ganho")}
         </div>
       </div>
     </DragDropContext>
