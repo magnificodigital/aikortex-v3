@@ -131,23 +131,79 @@ const CRMKanban = ({ leads, onLeadClick, onStageChange }: Props) => {
     );
   };
 
+  const renderFinalStage = (stage: PipelineStage) => {
+    const cfg = PIPELINE_STAGES.find((s) => s.value === stage)!;
+    const columnLeads = leads.filter((l) => l.stage === stage);
+    const isWon = stage === "ganho";
+
+    return (
+      <Droppable key={stage} droppableId={stage}>
+        {(provided, snapshot) => (
+          <div
+            ref={provided.innerRef}
+            {...provided.droppableProps}
+            className={`flex items-center gap-3 rounded-xl border border-dashed px-4 py-3 transition-all ${
+              snapshot.isDraggingOver
+                ? isWon
+                  ? "border-success bg-success/10 shadow-sm"
+                  : "border-destructive bg-destructive/10 shadow-sm"
+                : isDragging
+                  ? "border-muted-foreground/30 bg-muted/50"
+                  : "border-border bg-card/50"
+            }`}
+          >
+            <div className="flex items-center gap-2 shrink-0">
+              {isWon ? (
+                <Trophy className={`w-4 h-4 ${snapshot.isDraggingOver ? "text-success" : "text-muted-foreground"}`} />
+              ) : (
+                <XCircle className={`w-4 h-4 ${snapshot.isDraggingOver ? "text-destructive" : "text-muted-foreground"}`} />
+              )}
+              <span className={`text-xs font-semibold ${snapshot.isDraggingOver ? cfg.color : "text-muted-foreground"}`}>
+                {cfg.label}
+              </span>
+              {columnLeads.length > 0 && (
+                <Badge variant="secondary" className="text-[10px] h-4 px-1.5">{columnLeads.length}</Badge>
+              )}
+            </div>
+            <div className="flex gap-2 flex-1 overflow-x-auto">
+              {columnLeads.map((lead, index) => (
+                <Draggable key={lead.id} draggableId={lead.id} index={index}>
+                  {(provided) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                      onClick={() => onLeadClick(lead)}
+                      className="shrink-0 rounded-lg border border-border bg-card px-3 py-1.5 cursor-pointer hover:shadow-sm transition-all"
+                    >
+                      <p className="text-[11px] font-medium text-foreground whitespace-nowrap">{lead.name}</p>
+                      <p className="text-[9px] text-muted-foreground whitespace-nowrap">
+                        R$ {lead.value.toLocaleString("pt-BR")}
+                      </p>
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+            </div>
+            {provided.placeholder}
+          </div>
+        )}
+      </Droppable>
+    );
+  };
+
   return (
     <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="space-y-3">
+      <div className="flex flex-col gap-3">
         {/* Main pipeline columns */}
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 h-[calc(100vh-380px)]">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 h-[calc(100vh-420px)]">
           {MAIN_STAGES.map((stage) => renderColumn(stage))}
         </div>
 
-        {/* Final stages - appear when dragging */}
-        <div
-          className={`grid grid-cols-2 gap-3 transition-all duration-300 overflow-hidden ${
-            isDragging ? "max-h-[200px] opacity-100" : "max-h-0 opacity-0"
-          }`}
-        >
-          {FINAL_STAGES.map((stage) => renderColumn(stage, true))}
+        {/* Final stages - always visible as clean footer rows */}
+        <div className="space-y-2">
+          {FINAL_STAGES.map((stage) => renderFinalStage(stage))}
         </div>
-
       </div>
     </DragDropContext>
   );
