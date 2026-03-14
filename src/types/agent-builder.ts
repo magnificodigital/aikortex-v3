@@ -79,27 +79,44 @@ export const AGENT_TEMPLATES: AgentRecommendation[] = [
 ];
 
 export interface BusinessContext {
-  website: string;
+  // Empresa
   companyName: string;
-  country: string;
-  language: string;
+  website: string;
   industry: string;
   mainProduct: string;
+  country: string;
+  language: string;
+  // Público-alvo
+  targetAudienceDescription: string;
+  painPoints: string;
+  // Base de conhecimento
+  knowledgeSources: string;
+  faqUrl: string;
+  // Tom e comportamento
+  toneOfVoice: string;
+  greetingMessage: string;
+  // Operacional
+  businessHours: string;
+  escalationRules: string;
   averageTicket: string;
-  mainSalesChannel: string;
-  description: string;
 }
 
 export const INITIAL_CONTEXT: BusinessContext = {
-  website: "",
   companyName: "",
-  country: "Brasil",
-  language: "Português",
+  website: "",
   industry: "",
   mainProduct: "",
+  country: "Brasil",
+  language: "Português",
+  targetAudienceDescription: "",
+  painPoints: "",
+  knowledgeSources: "",
+  faqUrl: "",
+  toneOfVoice: "Profissional e amigável",
+  greetingMessage: "",
+  businessHours: "24/7",
+  escalationRules: "",
   averageTicket: "",
-  mainSalesChannel: "",
-  description: "",
 };
 
 export type AgentGoal =
