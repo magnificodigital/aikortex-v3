@@ -97,7 +97,7 @@ const CRMKanban = ({ leads, onLeadClick, onStageChange }: Props) => {
     const totalValue = columnLeads.reduce((sum, l) => sum + l.value, 0);
 
     return (
-      <div key={stage} className={`flex flex-col min-w-0 rounded-xl ${cfg.bg} p-2 ${isFinal ? "min-h-[80px]" : ""}`}>
+      <div key={stage} className={`flex flex-col min-w-0 rounded-xl ${cfg.bg} p-2 overflow-hidden ${isFinal ? "min-h-[80px]" : ""}`}>
         <div className="mb-2 px-1 py-1.5 space-y-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
@@ -256,14 +256,14 @@ const CRMKanban = ({ leads, onLeadClick, onStageChange }: Props) => {
 
   return (
     <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 h-[calc(100vh-380px)]">
         {/* Main pipeline columns */}
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 h-[calc(100vh-420px)]">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 min-h-0 flex-1 overflow-hidden">
           {MAIN_STAGES.map((stage) => renderColumn(stage))}
         </div>
 
         {/* Final stages - always visible as clean footer rows */}
-        <div className="space-y-2">
+        <div className="space-y-2 shrink-0">
           {FINAL_STAGES.map((stage) => renderFinalStage(stage))}
         </div>
       </div>
