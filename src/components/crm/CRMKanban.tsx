@@ -3,7 +3,7 @@ import { Lead, PipelineStage, PIPELINE_STAGES, TEMPERATURE_CONFIG, LEAD_SOURCES 
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
-import { DollarSign, Calendar, Trophy, XCircle } from "lucide-react";
+import { DollarSign, Calendar, Trophy, XCircle, Search } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ScrollArea } from "@/components/ui/scroll-area";
