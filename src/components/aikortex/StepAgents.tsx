@@ -1,7 +1,7 @@
 import { AgentRecommendation, AGENT_TEMPLATES, GOALS_BY_AGENT_TYPE } from "@/types/agent-builder";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Check, Bot, Users, Zap, HeadphonesIcon, TrendingUp } from "lucide-react";
+import { ArrowRight, Check, Bot, Users, Zap, HeadphonesIcon, TrendingUp, Settings2 } from "lucide-react";
 
 interface Props {
   selected: AgentRecommendation | null;
