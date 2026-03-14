@@ -40,9 +40,21 @@ const SECTIONS: { key: Section; label: string; icon: typeof Building2 }[] = [
 
 const StepContext = ({ context, onChange, onNext }: Props) => {
   const [activeSection, setActiveSection] = useState<Section>("empresa");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const update = (field: keyof BusinessContext, value: string) =>
     onChange({ ...context, [field]: value });
+
+  const handleFiles = (files: FileList) => {
+    const newFiles: KnowledgeFile[] = Array.from(files)
+      .filter((f) => f.size <= 10 * 1024 * 1024)
+      .map((f) => ({ id: crypto.randomUUID(), name: f.name, size: f.size, type: f.type }));
+    onChange({ ...context, knowledgeFiles: [...context.knowledgeFiles, ...newFiles] });
+  };
+
+  const removeFile = (id: string) => {
+    onChange({ ...context, knowledgeFiles: context.knowledgeFiles.filter((f) => f.id !== id) });
+  };
 
   const isValid = context.companyName && context.industry && context.mainProduct;
 
