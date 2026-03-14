@@ -28,14 +28,13 @@ const TONES = [
   "Empático e acolhedor",
 ];
 
-type Section = "empresa" | "publico" | "conhecimento" | "tom" | "funcoes";
+type Section = "empresa" | "publico" | "conhecimento" | "tom";
 
 const SECTIONS: { key: Section; label: string; icon: typeof Building2 }[] = [
   { key: "empresa", label: "Empresa", icon: Building2 },
   { key: "publico", label: "Público-alvo", icon: Users },
   { key: "conhecimento", label: "Base de conhecimento", icon: BookOpen },
   { key: "tom", label: "Tom e estilo", icon: MessageCircle },
-  { key: "funcoes", label: "Integrações", icon: Puzzle },
 ];
 
 const StepContext = ({ context, onChange, onNext, onBack, selectedTools, onToggleTool }: Props) => {
