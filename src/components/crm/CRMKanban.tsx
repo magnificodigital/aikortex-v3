@@ -256,7 +256,7 @@ const CRMKanban = ({ leads, onLeadClick, onStageChange }: Props) => {
 
   return (
     <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 h-[calc(100vh-380px)]">
         {/* Main pipeline columns */}
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 min-h-0 flex-1 overflow-hidden">
           {MAIN_STAGES.map((stage) => renderColumn(stage))}
