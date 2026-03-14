@@ -204,6 +204,108 @@ export const DEFAULT_QUALIFICATION_TIERS: QualificationTier[] = [
   { id: "sal", name: "Sales Accepted Lead", description: "Totalmente qualificado e pronto para contato comercial.", color: "bg-success/10 text-success" },
 ];
 
+// ── Agent Intent System ──
+
+export interface AgentIntent {
+  id: string;
+  name: string;
+  description: string;
+  triggers: string[];
+  action: string;
+  isMandatory: boolean;
+}
+
+export const MANDATORY_INTENTS: AgentIntent[] = [
+  {
+    id: "end_conversation",
+    name: "Encerrar conversa",
+    description: "Quando o cliente finaliza, agradece ou a conversa é concluída.",
+    triggers: ["cliente finaliza", "cliente agradece", "conversa concluída"],
+    action: "Encerrar atendimento",
+    isMandatory: true,
+  },
+  {
+    id: "transfer_human",
+    name: "Transferir para humano",
+    description: "Quando o cliente pede humano, IA não resolve ou assunto sensível.",
+    triggers: ["cliente pede humano", "IA não resolve", "assunto sensível"],
+    action: "Transferir para atendente humano",
+    isMandatory: true,
+  },
+  {
+    id: "invalid_content",
+    name: "Conteúdo inválido",
+    description: "Quando o usuário envia vídeo, arquivo não suportado ou conteúdo não interpretável.",
+    triggers: ["vídeo enviado", "arquivo não suportado", "conteúdo não interpretável"],
+    action: "Informar limitação e oferecer transferência",
+    isMandatory: true,
+  },
+  {
+    id: "response_limit",
+    name: "Limite de respostas atingido",
+    description: "Quando o agente atinge o máximo de respostas sem resolver.",
+    triggers: ["limite de respostas", "não consegue resolver"],
+    action: "Transferir para humano",
+    isMandatory: true,
+  },
+];
+
+export const CUSTOM_INTENT_SUGGESTIONS: { name: string; action: string }[] = [
+  { name: "Agendar reunião", action: "Criar agendamento" },
+  { name: "Solicitar dados do cliente", action: "Coletar informações" },
+  { name: "Enviar link", action: "Compartilhar link relevante" },
+  { name: "Consultar base de conhecimento", action: "Buscar na base" },
+  { name: "Criar ticket", action: "Abrir chamado no sistema" },
+  { name: "Encaminhar setor", action: "Direcionar para departamento" },
+  { name: "Enviar proposta", action: "Gerar e enviar proposta" },
+  { name: "Registrar interesse", action: "Salvar lead no CRM" },
+  { name: "Abrir atendimento", action: "Iniciar novo atendimento" },
+  { name: "Qualificar lead", action: "Aplicar critérios de qualificação" },
+];
+
+// ── Conversation Stages ──
+
+export interface ConversationStage {
+  id: string;
+  name: string;
+  description: string;
+  example: string;
+  order: number;
+}
+
+export const DEFAULT_CONVERSATION_STAGES: ConversationStage[] = [
+  { id: "greeting", name: "Saudação", description: "Apresentar o agente de forma cordial.", example: "Olá! Eu sou a Ivy, assistente virtual da empresa X. Como posso te ajudar hoje?", order: 1 },
+  { id: "identification", name: "Identificação", description: "Coletar dados básicos: nome, empresa, interesse.", example: "Para te atender melhor, pode me dizer seu nome e empresa?", order: 2 },
+  { id: "understanding", name: "Entendimento da necessidade", description: "Perguntar ao usuário qual é sua necessidade ou problema.", example: "Me conta mais sobre o que você precisa resolver.", order: 3 },
+  { id: "qualification", name: "Qualificação", description: "Identificar se o cliente tem potencial para avançar.", example: "Quantas pessoas tem na sua equipe? Já usam alguma solução similar?", order: 4 },
+  { id: "solution", name: "Apresentação da solução", description: "Apresentar solução ou direcionamento.", example: "Com base no que me contou, a solução ideal seria...", order: 5 },
+  { id: "next_step", name: "Próximo passo", description: "Agendar reunião, enviar proposta ou encaminhar.", example: "Posso agendar uma conversa de 15 min com nosso especialista?", order: 6 },
+  { id: "closing", name: "Encerramento", description: "Finalizar conversa de forma educada.", example: "Foi um prazer te atender! Qualquer dúvida, estou por aqui.", order: 7 },
+];
+
+// ── Advanced Config ──
+
+export type MessageSize = "short" | "medium" | "long";
+export type CreativityLevel = "none" | "restricted" | "creative";
+
+export interface AgentAdvancedConfig {
+  maxResponses: number;
+  messageSize: MessageSize;
+  minResponseTime: number;
+  respondOnTransfer: boolean;
+  respondInAudio: boolean;
+  creativity: CreativityLevel;
+}
+
+export const DEFAULT_ADVANCED_CONFIG: AgentAdvancedConfig = {
+  maxResponses: 50,
+  messageSize: "medium",
+  minResponseTime: 8,
+  respondOnTransfer: false,
+  respondInAudio: false,
+  creativity: "restricted",
+};
+
 export interface AgentProfile {
   persona: string;
   primaryGoal: string;
