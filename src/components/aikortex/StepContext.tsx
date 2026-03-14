@@ -66,7 +66,27 @@ const COMM_STYLES = [
   "Conversacional e natural",
 ];
 
-const INDUSTRIES = [
+const ELEVENLABS_VOICES = [
+  { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah", style: "Feminina, suave e natural" },
+  { id: "FGY2WhTYpPnrIDTdsKH5", name: "Laura", style: "Feminina, profissional" },
+  { id: "Xb7hH8MSUJpSbSDYk0k2", name: "Alice", style: "Feminina, amigável" },
+  { id: "XrExE9yKIg1WjnnlVkGX", name: "Matilda", style: "Feminina, confiante" },
+  { id: "pFZP5JQG7iQjIQuC4Bku", name: "Lily", style: "Feminina, jovem" },
+  { id: "cgSgspJ2msm6clMCkdW9", name: "Jessica", style: "Feminina, calorosa" },
+  { id: "CwhRBWXzGAHq8TQ4Fs17", name: "Roger", style: "Masculina, profissional" },
+  { id: "IKne3meq5aSn9XLyUdCD", name: "Charlie", style: "Masculina, amigável" },
+  { id: "JBFqnCBsd6RMkjVDRZzb", name: "George", style: "Masculina, madura" },
+  { id: "TX3LPaxmHKxFdv7VOQHJ", name: "Liam", style: "Masculina, jovem" },
+  { id: "nPczCjzI2devNBz1zQrb", name: "Brian", style: "Masculina, grave" },
+  { id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel", style: "Masculina, confiante" },
+  { id: "cjVigY5qzO86Huf0OWal", name: "Eric", style: "Masculina, versátil" },
+  { id: "iP95p4xoKVk53GoZ742B", name: "Chris", style: "Masculina, casual" },
+  { id: "bIHbv24MWmeRgasZH58o", name: "Will", style: "Masculina, dinâmica" },
+  { id: "N2lVS1w4EtoT3dr4eOWO", name: "Callum", style: "Masculina, clara" },
+  { id: "SAz9YHcvj6GT2YYXdXww", name: "River", style: "Neutra, moderna" },
+  { id: "pqHfZKP75CvOlQylNhV4", name: "Bill", style: "Masculina, narradora" },
+];
+
   "Tecnologia", "SaaS", "E-commerce", "Marketing Digital", "Consultoria",
   "Educação", "Saúde", "Financeiro", "Imobiliário", "Varejo", "Outro",
 ];
