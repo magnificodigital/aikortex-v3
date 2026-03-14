@@ -171,6 +171,7 @@ export const GOALS_BY_AGENT_TYPE: Record<AgentType, AgentGoal[]> = {
   BDR: ["qualify_opportunities", "schedule_meetings", "capture_leads"],
   SAC: ["answer_questions", "resolve_tickets", "collect_feedback"],
   CS: ["onboard_customers", "support_customers", "reduce_churn", "collect_feedback"],
+  Custom: ["schedule_meetings", "capture_leads", "answer_questions", "qualify_opportunities", "support_customers", "resolve_tickets", "onboard_customers", "collect_feedback", "reduce_churn"],
 };
 
 export interface ConversationStep {
