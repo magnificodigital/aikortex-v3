@@ -1,4 +1,4 @@
-import { DeployChannel, DEPLOY_CHANNELS } from "@/types/agent-builder";
+import { DeployChannel, DEPLOY_CHANNELS, AgentType, CHANNELS_BY_AGENT_TYPE } from "@/types/agent-builder";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ArrowLeft, Check } from "lucide-react";
 
@@ -7,6 +7,7 @@ interface Props {
   onToggle: (ch: DeployChannel) => void;
   onNext: () => void;
   onBack: () => void;
+  agentType: AgentType | null;
 }
 
 const CHANNEL_LOGOS: Record<DeployChannel, string> = {
@@ -20,9 +21,10 @@ const CHANNEL_LOGOS: Record<DeployChannel, string> = {
   email: "",
 };
 
-const MAIN_CHANNELS: DeployChannel[] = ["whatsapp", "instagram", "tiktok", "facebook", "linkedin", "google_maps"];
+const StepChannels = ({ selected, onToggle, onNext, onBack, agentType }: Props) => {
+  const allowedChannels = agentType ? CHANNELS_BY_AGENT_TYPE[agentType] : DEPLOY_CHANNELS.map(c => c.value);
+  const filteredChannels = DEPLOY_CHANNELS.filter(ch => allowedChannels.includes(ch.value));
 
-const StepChannels = ({ selected, onToggle, onNext, onBack }: Props) => {
   return (
     <div className="max-w-2xl mx-auto space-y-8 animate-fade-in">
       <div className="text-center space-y-2">
@@ -31,7 +33,7 @@ const StepChannels = ({ selected, onToggle, onNext, onBack }: Props) => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {DEPLOY_CHANNELS.filter(ch => MAIN_CHANNELS.includes(ch.value)).map((ch) => {
+        {filteredChannels.map((ch) => {
           const isSelected = selected.includes(ch.value);
           const logo = CHANNEL_LOGOS[ch.value];
           return (

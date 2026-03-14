@@ -1,4 +1,4 @@
-import { ExternalTool, EXTERNAL_TOOLS } from "@/types/agent-builder";
+import { ExternalTool, EXTERNAL_TOOLS, AgentType, TOOLS_BY_AGENT_TYPE } from "@/types/agent-builder";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ArrowLeft, Check, Puzzle } from "lucide-react";
 
@@ -7,9 +7,12 @@ interface Props {
   onToggle: (tool: ExternalTool) => void;
   onNext: () => void;
   onBack: () => void;
+  agentType: AgentType | null;
 }
 
-const StepIntegrations = ({ selected, onToggle, onNext, onBack }: Props) => {
+const StepIntegrations = ({ selected, onToggle, onNext, onBack, agentType }: Props) => {
+  const allowedTools = agentType ? TOOLS_BY_AGENT_TYPE[agentType] : EXTERNAL_TOOLS.map(t => t.value);
+  const filteredTools = EXTERNAL_TOOLS.filter(t => allowedTools.includes(t.value));
   return (
     <div className="max-w-2xl mx-auto space-y-8 animate-fade-in">
       <div className="text-center space-y-2">
