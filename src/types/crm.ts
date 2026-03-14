@@ -90,7 +90,7 @@ export const MOCK_LEADS: Lead[] = [
   },
   {
     id: "lead-4", name: "Juliana Pires", email: "juliana@logistica.com", phone: "(41) 96666-3456",
-    company: "LogísticaPro", position: "COO", stage: "proposta", source: "linkedin", temperature: "quente",
+    company: "LogísticaPro", position: "COO", stage: "agendado", source: "linkedin", temperature: "quente",
     value: 65000, assignee: "Pedro Rocha", tags: ["Logística", "Enterprise"], notes: "Proposta enviada, aguardando retorno",
     activities: [
       { id: "a5", type: "email", description: "Proposta comercial enviada - R$ 65.000", createdAt: "2026-03-09T16:00:00", createdBy: "Pedro Rocha" },
