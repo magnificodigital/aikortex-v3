@@ -66,6 +66,27 @@ const COMM_STYLES = [
   "Conversacional e natural",
 ];
 
+const ELEVENLABS_VOICES = [
+  { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah", style: "Feminina, suave e natural" },
+  { id: "FGY2WhTYpPnrIDTdsKH5", name: "Laura", style: "Feminina, profissional" },
+  { id: "Xb7hH8MSUJpSbSDYk0k2", name: "Alice", style: "Feminina, amigável" },
+  { id: "XrExE9yKIg1WjnnlVkGX", name: "Matilda", style: "Feminina, confiante" },
+  { id: "pFZP5JQG7iQjIQuC4Bku", name: "Lily", style: "Feminina, jovem" },
+  { id: "cgSgspJ2msm6clMCkdW9", name: "Jessica", style: "Feminina, calorosa" },
+  { id: "CwhRBWXzGAHq8TQ4Fs17", name: "Roger", style: "Masculina, profissional" },
+  { id: "IKne3meq5aSn9XLyUdCD", name: "Charlie", style: "Masculina, amigável" },
+  { id: "JBFqnCBsd6RMkjVDRZzb", name: "George", style: "Masculina, madura" },
+  { id: "TX3LPaxmHKxFdv7VOQHJ", name: "Liam", style: "Masculina, jovem" },
+  { id: "nPczCjzI2devNBz1zQrb", name: "Brian", style: "Masculina, grave" },
+  { id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel", style: "Masculina, confiante" },
+  { id: "cjVigY5qzO86Huf0OWal", name: "Eric", style: "Masculina, versátil" },
+  { id: "iP95p4xoKVk53GoZ742B", name: "Chris", style: "Masculina, casual" },
+  { id: "bIHbv24MWmeRgasZH58o", name: "Will", style: "Masculina, dinâmica" },
+  { id: "N2lVS1w4EtoT3dr4eOWO", name: "Callum", style: "Masculina, clara" },
+  { id: "SAz9YHcvj6GT2YYXdXww", name: "River", style: "Neutra, moderna" },
+  { id: "pqHfZKP75CvOlQylNhV4", name: "Bill", style: "Masculina, narradora" },
+];
+
 const INDUSTRIES = [
   "Tecnologia", "SaaS", "E-commerce", "Marketing Digital", "Consultoria",
   "Educação", "Saúde", "Financeiro", "Imobiliário", "Varejo", "Outro",
@@ -264,6 +285,25 @@ const StepContext = ({
                   {context.companyName} — {context.industry || "Sem indústria"} — {context.website || "Sem website"}
                 </p>
               )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Tipo de voz (ElevenLabs)</Label>
+              <Select value={context.businessHours} onValueChange={(v) => update("businessHours", v)}>
+                <SelectTrigger><SelectValue placeholder="Selecione uma voz" /></SelectTrigger>
+                <SelectContent>
+                  {ELEVENLABS_VOICES.map((v) => (
+                    <SelectItem key={v.id} value={v.id}>
+                      <div className="flex items-center gap-2">
+                        <Volume2 className="w-3.5 h-3.5 text-primary" />
+                        <span>{v.name}</span>
+                        <span className="text-[10px] text-muted-foreground">— {v.style}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-muted-foreground">Voz utilizada quando o agente responde em áudio.</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
