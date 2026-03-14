@@ -1,4 +1,5 @@
 import { BusinessContext, KnowledgeFile, ExternalTool, EXTERNAL_TOOLS } from "@/types/agent-builder";
+import { Client, MOCK_CLIENTS } from "@/types/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
