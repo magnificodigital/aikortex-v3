@@ -37,7 +37,7 @@ const SECTIONS: { key: Section; label: string; icon: typeof Building2 }[] = [
   { key: "tom", label: "Tom e estilo", icon: MessageCircle },
 ];
 
-const StepContext = ({ context, onChange, onNext, onBack, selectedTools, onToggleTool }: Props) => {
+const StepContext = ({ context, onChange, onNext, onBack }: Props) => {
   const [activeSection, setActiveSection] = useState<Section>("empresa");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
