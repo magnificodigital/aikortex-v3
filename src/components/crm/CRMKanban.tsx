@@ -148,12 +148,6 @@ const CRMKanban = ({ leads, onLeadClick, onStageChange }: Props) => {
           {FINAL_STAGES.map((stage) => renderColumn(stage, true))}
         </div>
 
-        {/* Show final stages statically if they have leads */}
-        {!isDragging && leads.some((l) => l.stage === "ganho" || l.stage === "perdido") && (
-          <div className="grid grid-cols-2 gap-3">
-            {FINAL_STAGES.map((stage) => renderColumn(stage, true))}
-          </div>
-        )}
       </div>
     </DragDropContext>
   );
