@@ -78,6 +78,19 @@ export const AGENT_TEMPLATES: AgentRecommendation[] = [
     ],
     selected: false,
   },
+  {
+    id: "custom-1",
+    type: "Custom",
+    name: "Agente Personalizado",
+    objective: "Configure um agente sob medida com objetivos, canais e integrações livres.",
+    targetAudience: "Definido por você",
+    benefits: ["100% configurável", "Todos os canais disponíveis", "Todas as integrações"],
+    exampleConversation: [
+      { role: "agent", message: "Olá! Como posso te ajudar hoje?" },
+      { role: "customer", message: "Preciso de uma solução específica para meu negócio." },
+    ],
+    selected: false,
+  },
 ];
 
 export interface KnowledgeFile {
