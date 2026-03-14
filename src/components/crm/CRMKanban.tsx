@@ -90,12 +90,81 @@ const CRMKanban = ({ leads, onLeadClick, onStageChange }: Props) => {
     }
   }, []);
 
+  const mourningLoss = useCallback(() => {
+    // 😢 Sad emoji bubbles floating up
+    const sadEmojis = ["😢", "😞", "😔", "💔", "😿", "😥"];
+    for (let i = 0; i < 8; i++) {
+      setTimeout(() => {
+        const el = document.createElement("div");
+        el.textContent = sadEmojis[Math.floor(Math.random() * sadEmojis.length)];
+        el.style.cssText = `
+          position: fixed;
+          bottom: 80px;
+          left: ${20 + Math.random() * 60}%;
+          font-size: ${24 + Math.random() * 16}px;
+          z-index: 9999;
+          pointer-events: none;
+          animation: floatUp ${2 + Math.random()}s ease-out forwards;
+          opacity: 0.9;
+        `;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 3500);
+      }, i * 150);
+    }
+
+    // Inject float animation if not present
+    if (!document.getElementById("sad-float-style")) {
+      const style = document.createElement("style");
+      style.id = "sad-float-style";
+      style.textContent = `
+        @keyframes floatUp {
+          0% { transform: translateY(0) scale(0.5); opacity: 0; }
+          15% { opacity: 0.9; transform: translateY(-30px) scale(1); }
+          100% { transform: translateY(-400px) scale(0.6) rotate(${Math.random() > 0.5 ? '' : '-'}15deg); opacity: 0; }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    // Sad/lament sound via Web Audio
+    try {
+      const ctx = new AudioContext();
+      const duration = 1.8;
+      const sr = ctx.sampleRate;
+      const osc = ctx.createOscillator();
+      osc.type = "sine";
+      // Descending pitch for sadness
+      osc.frequency.setValueAtTime(440, ctx.currentTime);
+      osc.frequency.linearRampToValueAtTime(220, ctx.currentTime + duration);
+
+      const osc2 = ctx.createOscillator();
+      osc2.type = "sine";
+      osc2.frequency.setValueAtTime(415, ctx.currentTime);
+      osc2.frequency.linearRampToValueAtTime(200, ctx.currentTime + duration);
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + duration);
+
+      osc.connect(gain).connect(ctx.destination);
+      osc2.connect(gain);
+      osc.start();
+      osc2.start();
+      osc.stop(ctx.currentTime + duration);
+      osc2.stop(ctx.currentTime + duration);
+    } catch (e) {
+      // Audio not supported
+    }
+  }, []);
+
   const handleDragEnd = (result: DropResult) => {
     setIsDragging(false);
     if (!result.destination) return;
     const newStage = result.destination.droppableId as PipelineStage;
     if (newStage === "ganho") {
       celebrateWin();
+    } else if (newStage === "perdido") {
+      mourningLoss();
     }
     onStageChange(result.draggableId, newStage);
   };
