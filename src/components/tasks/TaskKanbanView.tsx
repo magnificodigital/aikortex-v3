@@ -38,13 +38,13 @@ const TaskKanbanView = ({ tasks, onTaskClick, onStatusChange }: TaskKanbanViewPr
           const columnTasks = tasksByStatus[status];
 
           return (
-            <div key={status} className="flex flex-col">
-              <div className={`flex items-center justify-between mb-3 px-2 py-2 rounded-lg ${
+            <div key={status} className={`flex flex-col rounded-xl p-2 ${
                 status === "todo" ? "bg-muted" :
                 status === "in_progress" ? "bg-info/10" :
                 status === "review" ? "bg-warning/10" :
                 "bg-success/10"
               }`}>
+              <div className="flex items-center justify-between mb-3 px-1 py-1.5">
                 <div className="flex items-center gap-2">
                   <div className={`w-2.5 h-2.5 rounded-full ${
                     status === "todo" ? "bg-muted-foreground" :
