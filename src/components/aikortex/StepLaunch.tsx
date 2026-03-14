@@ -139,8 +139,11 @@ const StepLaunch = ({ context, agent, selectedChannels, onToggleChannel, selecte
         </div>
       </div>
 
-      {/* Activate */}
-      <div className="flex justify-center pt-2">
+      {/* Footer */}
+      <div className="flex justify-between pt-2">
+        <Button variant="outline" onClick={onBack} className="gap-1.5">
+          <ArrowLeft className="w-4 h-4" /> Voltar
+        </Button>
         <Button size="lg" className="gap-2 px-8">
           <Rocket className="w-4 h-4" /> Ativar agente em produção
         </Button>

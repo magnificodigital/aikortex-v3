@@ -69,7 +69,10 @@ const StepChannels = ({ selected, onToggle, onNext, onBack }: Props) => {
         })}
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={onBack} className="gap-1.5">
+          <ArrowLeft className="w-4 h-4" /> Voltar
+        </Button>
         <Button onClick={onNext} disabled={selected.length === 0} className="gap-2">
           Continuar <ArrowRight className="w-4 h-4" />
         </Button>

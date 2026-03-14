@@ -323,11 +323,16 @@ const StepContext = ({ context, onChange, onNext, onBack, selectedTools, onToggl
 
       {/* Footer */}
       <div className="flex items-center justify-between pt-2">
-        <p className="text-xs text-muted-foreground">
-          {!isValid && "Preencha os campos obrigatórios na aba Empresa"}
-        </p>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" onClick={onBack} className="gap-1.5">
+            <ArrowLeft className="w-4 h-4" /> Voltar
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            {!isValid && "Preencha os campos obrigatórios na aba Empresa"}
+          </p>
+        </div>
         <Button onClick={onNext} disabled={!isValid} className="gap-2">
-          Criar agente <ArrowRight className="w-4 h-4" />
+          Continuar <ArrowRight className="w-4 h-4" />
         </Button>
       </div>
     </div>
