@@ -9,12 +9,12 @@ interface Props {
   onNext: () => void;
 }
 
-const TYPE_META: Record<string, { icon: typeof Bot; accent: string; accentBg: string }> = {
-  SDR: { icon: Zap, accent: "text-warning", accentBg: "bg-warning/10" },
-  BDR: { icon: TrendingUp, accent: "text-info", accentBg: "bg-info/10" },
-  SAC: { icon: HeadphonesIcon, accent: "text-success", accentBg: "bg-success/10" },
-  CS: { icon: Users, accent: "text-primary", accentBg: "bg-primary/10" },
-  Custom: { icon: Settings2, accent: "text-accent-foreground", accentBg: "bg-accent" },
+const TYPE_META: Record<string, { icon: typeof Bot }> = {
+  SDR: { icon: Zap },
+  BDR: { icon: TrendingUp },
+  SAC: { icon: HeadphonesIcon },
+  CS: { icon: Users },
+  Custom: { icon: Settings2 },
 };
 
 const StepAgents = ({ selected, onSelect, onNext }: Props) => {
