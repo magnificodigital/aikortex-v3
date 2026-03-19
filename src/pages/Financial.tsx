@@ -2,11 +2,10 @@ import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { DollarSign, Plus, Search, Download, FileText, Receipt, Zap, ShoppingCart } from "lucide-react";
+import { DollarSign, Plus, Search, Download, FileText, Receipt, TrendingUp, TrendingDown, ShoppingCart, Tag, Users, QrCode, RefreshCw, Truck, BarChart3 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import FinancialMetrics from "@/components/financial/FinancialMetrics";
-import RevenueChart from "@/components/financial/RevenueChart";
+import FinancialOverview from "@/components/financial/FinancialOverview";
 import InvoiceTable from "@/components/financial/InvoiceTable";
 import InvoiceDetailDialog from "@/components/financial/InvoiceDetailDialog";
 import SubscriptionList from "@/components/financial/SubscriptionList";
@@ -39,81 +38,72 @@ const Financial = () => {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-7xl space-y-6">
-        <div className="flex items-center justify-between">
+        {/* Header */}
+        <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
               <DollarSign className="w-5 h-5 text-primary" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground">Financeiro</h1>
-              <p className="text-sm text-muted-foreground">Controle financeiro completo da operação</p>
+              <p className="text-sm text-muted-foreground">Controle suas receitas, despesas e contas</p>
             </div>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button variant="outline" size="sm" className="border-destructive/30 text-destructive hover:bg-destructive/10" onClick={() => setShowNewExpense(true)}>
-              <Zap className="w-4 h-4 mr-1" /> Lançar Despesa
-            </Button>
-            <Button variant="outline" size="sm" className="border-[hsl(var(--success))]/30 text-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/10" onClick={() => setShowQuickSale(true)}>
-              <ShoppingCart className="w-4 h-4 mr-1" /> Lançar Venda
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Download className="w-4 h-4 mr-1" /> Exportar
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => toast({ title: "Exportando PDF..." })}>
-                  <FileText className="w-4 h-4 mr-2" /> Relatório PDF
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => toast({ title: "Exportando CSV..." })}>
-                  <Download className="w-4 h-4 mr-2" /> Planilha CSV
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="sm">
-                  <Plus className="w-4 h-4 mr-1" /> Novo
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setShowNewInvoice(true)}>
-                  <FileText className="w-4 h-4 mr-2" /> Nova Fatura
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setShowNewExpense(true)}>
-                  <Receipt className="w-4 h-4 mr-2" /> Nova Despesa
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
 
-        <FinancialMetrics />
+        {/* Action Buttons - dgflow style */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <Button
+            onClick={() => setShowQuickSale(true)}
+            className="bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/90 text-white"
+          >
+            <TrendingUp className="w-4 h-4 mr-2" /> Venda Rápida
+          </Button>
+          <Button
+            onClick={() => setShowNewExpense(true)}
+            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+          >
+            <TrendingDown className="w-4 h-4 mr-2" /> Lançar Despesa
+          </Button>
+          <Button variant="outline" onClick={() => toast({ title: "Categorias em breve" })}>
+            <Tag className="w-4 h-4 mr-2" /> Categorias
+          </Button>
+        </div>
 
+        {/* Tabs - dgflow style */}
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList className="flex-wrap h-auto gap-1 p-1">
-            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-            <TabsTrigger value="cashflow">Fluxo de Caixa</TabsTrigger>
-            <TabsTrigger value="invoices">Faturas</TabsTrigger>
-            <TabsTrigger value="transactions">Transações</TabsTrigger>
-            <TabsTrigger value="accounts">Contas</TabsTrigger>
-            <TabsTrigger value="expenses">Despesas</TabsTrigger>
-            <TabsTrigger value="subscriptions">Assinaturas</TabsTrigger>
-            <TabsTrigger value="budget">Orçamento</TabsTrigger>
-            <TabsTrigger value="dre">DRE</TabsTrigger>
-            <TabsTrigger value="cost-centers">Centro de Custos</TabsTrigger>
+            <TabsTrigger value="overview">
+              <DollarSign className="w-3.5 h-3.5 mr-1.5" /> Visão Geral
+            </TabsTrigger>
+            <TabsTrigger value="receivable">
+              <TrendingUp className="w-3.5 h-3.5 mr-1.5" /> Receber
+            </TabsTrigger>
+            <TabsTrigger value="payable">
+              <TrendingDown className="w-3.5 h-3.5 mr-1.5" /> Pagar
+            </TabsTrigger>
+            <TabsTrigger value="clients">
+              <Users className="w-3.5 h-3.5 mr-1.5" /> Clientes
+            </TabsTrigger>
+            <TabsTrigger value="pix">
+              <QrCode className="w-3.5 h-3.5 mr-1.5" /> PIX
+            </TabsTrigger>
+            <TabsTrigger value="subscriptions">
+              <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Assinaturas
+            </TabsTrigger>
+            <TabsTrigger value="suppliers">
+              <Truck className="w-3.5 h-3.5 mr-1.5" /> Fornecedores
+            </TabsTrigger>
+            <TabsTrigger value="reports">
+              <BarChart3 className="w-3.5 h-3.5 mr-1.5" /> Relatórios
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
-            <RevenueChart />
+            <FinancialOverview />
           </TabsContent>
 
-          <TabsContent value="cashflow">
-            <CashFlowView />
-          </TabsContent>
-
-          <TabsContent value="invoices" className="space-y-4">
+          <TabsContent value="receivable" className="space-y-4">
             <div className="relative max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input placeholder="Buscar faturas..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-9" />
@@ -121,32 +111,36 @@ const Financial = () => {
             <InvoiceTable invoices={filteredInvoices} onView={setSelectedInvoice} />
           </TabsContent>
 
-          <TabsContent value="transactions">
-            <TransactionHistory />
+          <TabsContent value="payable">
+            <ExpenseTracker />
           </TabsContent>
 
-          <TabsContent value="accounts">
+          <TabsContent value="clients">
             <AccountsView />
           </TabsContent>
 
-          <TabsContent value="expenses">
-            <ExpenseTracker />
+          <TabsContent value="pix">
+            <TransactionHistory />
           </TabsContent>
 
           <TabsContent value="subscriptions">
             <SubscriptionList />
           </TabsContent>
 
-          <TabsContent value="budget">
-            <BudgetTracker />
-          </TabsContent>
-
-          <TabsContent value="dre">
-            <ProfitLossView />
-          </TabsContent>
-
-          <TabsContent value="cost-centers">
+          <TabsContent value="suppliers">
             <CostCenterView />
+          </TabsContent>
+
+          <TabsContent value="reports" className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="space-y-4">
+                <CashFlowView />
+              </div>
+              <div className="space-y-4">
+                <ProfitLossView />
+                <BudgetTracker />
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
 
