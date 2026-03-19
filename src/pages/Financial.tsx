@@ -18,6 +18,7 @@ import TransactionHistory from "@/components/financial/TransactionHistory";
 import ProfitLossView from "@/components/financial/ProfitLossView";
 import AccountsView from "@/components/financial/AccountsView";
 import CostCenterView from "@/components/financial/CostCenterView";
+import FinancialReportsView from "@/components/financial/FinancialReportsView";
 import QuickSaleDialog from "@/components/financial/QuickSaleDialog";
 import { mockInvoices, Invoice } from "@/types/financial";
 import { toast } from "@/hooks/use-toast";
@@ -131,16 +132,8 @@ const Financial = () => {
             <CostCenterView />
           </TabsContent>
 
-          <TabsContent value="reports" className="space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="space-y-4">
-                <CashFlowView />
-              </div>
-              <div className="space-y-4">
-                <ProfitLossView />
-                <BudgetTracker />
-              </div>
-            </div>
+          <TabsContent value="reports">
+            <FinancialReportsView />
           </TabsContent>
         </Tabs>
 
