@@ -132,16 +132,8 @@ const Financial = () => {
             <CostCenterView />
           </TabsContent>
 
-          <TabsContent value="reports" className="space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="space-y-4">
-                <CashFlowView />
-              </div>
-              <div className="space-y-4">
-                <ProfitLossView />
-                <BudgetTracker />
-              </div>
-            </div>
+          <TabsContent value="reports">
+            <FinancialReportsView />
           </TabsContent>
         </Tabs>
 
