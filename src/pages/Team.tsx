@@ -8,6 +8,9 @@ import TeamTable from "@/components/team/TeamTable";
 import TeamFilters from "@/components/team/TeamFilters";
 import TeamWorkload from "@/components/team/TeamWorkload";
 import TeamActivity from "@/components/team/TeamActivity";
+import TeamPerformance from "@/components/team/TeamPerformance";
+import TeamFeedback from "@/components/team/TeamFeedback";
+import TeamProductivity from "@/components/team/TeamProductivity";
 import InviteMemberDialog from "@/components/team/InviteMemberDialog";
 import EditMemberDialog from "@/components/team/EditMemberDialog";
 import MemberDetailDialog from "@/components/team/MemberDetailDialog";
@@ -40,7 +43,7 @@ const Team = () => {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">Equipe</h1>
-            <p className="text-sm text-muted-foreground">Permissões, cargos e produtividade</p>
+            <p className="text-sm text-muted-foreground">Gestão de colaboradores, desempenho e produtividade</p>
           </div>
         </div>
 
@@ -49,7 +52,10 @@ const Team = () => {
         <Tabs defaultValue="members">
           <TabsList>
             <TabsTrigger value="members" className="text-xs">Membros</TabsTrigger>
-            <TabsTrigger value="workload" className="text-xs">Carga de Trabalho</TabsTrigger>
+            <TabsTrigger value="performance" className="text-xs">Desempenho</TabsTrigger>
+            <TabsTrigger value="feedback" className="text-xs">Feedback</TabsTrigger>
+            <TabsTrigger value="productivity" className="text-xs">Produtividade</TabsTrigger>
+            <TabsTrigger value="workload" className="text-xs">Carga</TabsTrigger>
           </TabsList>
 
           <TabsContent value="members" className="space-y-4 mt-4">
@@ -61,6 +67,18 @@ const Team = () => {
               onInvite={() => setShowInvite(true)}
             />
             <TeamTable members={filtered} onView={setViewingMember} onEdit={setEditingMember} />
+          </TabsContent>
+
+          <TabsContent value="performance" className="mt-4">
+            <TeamPerformance members={mockTeamMembers} onMemberClick={setViewingMember} />
+          </TabsContent>
+
+          <TabsContent value="feedback" className="mt-4">
+            <TeamFeedback members={mockTeamMembers} />
+          </TabsContent>
+
+          <TabsContent value="productivity" className="mt-4">
+            <TeamProductivity members={mockTeamMembers} onMemberClick={setViewingMember} />
           </TabsContent>
 
           <TabsContent value="workload" className="mt-4">
