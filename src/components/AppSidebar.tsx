@@ -36,6 +36,7 @@ import {
 const gestaoItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/" },
   { label: "Clientes", icon: Users, path: "/clients" },
+  { label: "Equipe", icon: UserCheck, path: "/team" },
   { label: "Tarefas", icon: CheckSquare, path: "/tasks" },
   { label: "Vendas", icon: ShoppingCart, path: "/sales" },
   { label: "Financeiro", icon: DollarSign, path: "/financial" },
