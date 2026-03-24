@@ -155,7 +155,7 @@ const LandingPage = () => {
             </div>
             <Button
               size="icon"
-              className="h-9 w-9 rounded-full bg-blue-500 hover:bg-blue-600 text-white"
+              className="h-9 w-9 rounded-full bg-[#559caa] hover:bg-[#4a8a97] text-white"
               disabled={!prompt.trim()}
               onClick={() => setShowAuth(true)}
             >
