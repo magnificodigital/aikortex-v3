@@ -104,7 +104,7 @@ const LandingPage = () => {
           className="flex items-center gap-2 mb-10 px-5 py-2.5 rounded-full border border-white/10 bg-white/5 text-sm text-white/70 hover:bg-white/10 transition-colors"
         >
           <span className="text-[10px] font-bold uppercase bg-primary text-primary-foreground px-2 py-0.5 rounded-full">Novo</span>
-          Conheça os — Agentes IA que trabalham 24/7
+          Conheça os Agentes IA que trabalham 24/7
           <span className="text-white/40">→</span>
         </button>
 
