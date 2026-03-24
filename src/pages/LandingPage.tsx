@@ -165,16 +165,20 @@ const LandingPage = () => {
 
         {/* Suggestions */}
         <div className="flex items-center gap-3 flex-wrap justify-center">
-          {suggestions.map((s) => (
+          {currentSuggestions.map((label) => (
             <button
-              key={s.label}
+              key={label}
+              onClick={() => setPrompt(label)}
               className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-white/10 text-sm text-white/40 hover:text-white/60 hover:border-white/20 transition-colors"
             >
-              <s.icon className="w-4 h-4" />
-              {s.label}
+              <SuggestionIcon className="w-4 h-4" />
+              {label}
             </button>
           ))}
-          <button className="flex items-center justify-center w-10 h-10 rounded-full border border-white/10 text-white/30 hover:text-white/60 transition-colors">
+          <button
+            onClick={refreshSuggestions}
+            className="flex items-center justify-center w-10 h-10 rounded-full border border-white/10 text-white/30 hover:text-white/60 transition-colors"
+          >
             <RefreshCw className="w-4 h-4" />
           </button>
         </div>
