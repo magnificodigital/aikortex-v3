@@ -250,18 +250,17 @@ const AppSidebar = () => {
 
         <button
           onClick={async () => {
-            const { signOut } = await import("@/contexts/AuthContext").then(m => ({ signOut: m.useAuth }));
-            // Use direct supabase signout
-            const { supabase } = await import("@/integrations/supabase/client");
-            await supabase.auth.signOut();
+            await signOut();
+            navigate("/");
           }}
-          className={`${linkClasses(false)} w-full text-red-400 hover:text-red-300`}
+          className={`${linkClasses(false)} w-full`}
           title={collapsed ? "Sair" : undefined}
         >
-          <LogOut className="w-4 h-4 shrink-0" />
-          {!collapsed && <span>Sair</span>}
+          <LogOut className="w-4 h-4 shrink-0 text-destructive" />
+          {!collapsed && <span className="text-destructive">Sair</span>}
         </button>
 
+        <button
           onClick={() => setCollapsed(!collapsed)}
           className={`${linkClasses(false)} w-full`}
         >
