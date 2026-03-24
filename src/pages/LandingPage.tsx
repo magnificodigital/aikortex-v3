@@ -9,23 +9,70 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import AuthModal from "@/components/auth/AuthModal";
 
-const suggestionsByTab = {
-  app: [
-    ["Construtor de Formulários", "Dashboard de Vendas", "Landing Page"],
-    ["Sistema de Tarefas", "Painel Financeiro", "CRM Completo"],
-    ["E-commerce Simples", "Blog com IA", "Portal de Clientes"],
-  ],
-  agentes: [
-    ["Agente SDR para WhatsApp", "Agente de Suporte 24/7", "Agente de Qualificação"],
-    ["Agente BDR LinkedIn", "Agente CS Pós-Venda", "Agente de Pesquisa"],
-    ["Agente de Onboarding", "Agente Cobranças", "Agente Agendamento"],
-  ],
-  flows: [
-    ["Fluxo de Onboarding", "Automação de E-mail", "Pipeline de Vendas"],
-    ["Nutrição de Leads", "Fluxo Pós-Compra", "Workflow de Aprovação"],
-    ["Integração CRM + WhatsApp", "Fluxo de Cobrança", "Sequência Follow-up"],
-  ],
+const translations = {
+  pt: {
+    agents: "Agentes",
+    templates: "Templates",
+    pricing: "Preços",
+    signIn: "Entrar",
+    startFree: "Comece grátis",
+    newBadge: "Novo",
+    banner: "Conheça os Agentes IA que trabalham 24/7",
+    heroTitle1: "Infinitas ",
+    heroTitle2: "possibilidades",
+    heroSubtitle: "Crie Agentes, Fluxos inteligentes e apps em\nminutos conversando com IA.",
+    placeholder: "Crie um app que...",
+    suggestions: {
+      app: [
+        ["Construtor de Formulários", "Dashboard de Vendas", "Landing Page"],
+        ["Sistema de Tarefas", "Painel Financeiro", "CRM Completo"],
+        ["E-commerce Simples", "Blog com IA", "Portal de Clientes"],
+      ],
+      agentes: [
+        ["Agente SDR para WhatsApp", "Agente de Suporte 24/7", "Agente de Qualificação"],
+        ["Agente BDR LinkedIn", "Agente CS Pós-Venda", "Agente de Pesquisa"],
+        ["Agente de Onboarding", "Agente Cobranças", "Agente Agendamento"],
+      ],
+      flows: [
+        ["Fluxo de Onboarding", "Automação de E-mail", "Pipeline de Vendas"],
+        ["Nutrição de Leads", "Fluxo Pós-Compra", "Workflow de Aprovação"],
+        ["Integração CRM + WhatsApp", "Fluxo de Cobrança", "Sequência Follow-up"],
+      ],
+    },
+  },
+  en: {
+    agents: "Agents",
+    templates: "Templates",
+    pricing: "Pricing",
+    signIn: "Sign in",
+    startFree: "Start free",
+    newBadge: "New",
+    banner: "Meet the AI Agents that work 24/7",
+    heroTitle1: "Infinite ",
+    heroTitle2: "possibilities",
+    heroSubtitle: "Create Agents, smart Flows and apps in\nminutes by chatting with AI.",
+    placeholder: "Create an app that...",
+    suggestions: {
+      app: [
+        ["Form Builder", "Sales Dashboard", "Landing Page"],
+        ["Task System", "Financial Panel", "Full CRM"],
+        ["Simple E-commerce", "AI Blog", "Client Portal"],
+      ],
+      agentes: [
+        ["SDR Agent for WhatsApp", "24/7 Support Agent", "Qualification Agent"],
+        ["BDR LinkedIn Agent", "Post-Sale CS Agent", "Research Agent"],
+        ["Onboarding Agent", "Collections Agent", "Scheduling Agent"],
+      ],
+      flows: [
+        ["Onboarding Flow", "Email Automation", "Sales Pipeline"],
+        ["Lead Nurturing", "Post-Purchase Flow", "Approval Workflow"],
+        ["CRM + WhatsApp Integration", "Billing Flow", "Follow-up Sequence"],
+      ],
+    },
+  },
 };
+
+type Lang = "pt" | "en";
 
 const tabIcons = { app: Monitor, agentes: Sparkles, flows: Globe };
 
