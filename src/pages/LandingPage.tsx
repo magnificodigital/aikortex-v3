@@ -61,7 +61,7 @@ const LandingPage = () => {
           <nav className="hidden md:flex items-center gap-6 text-sm text-white/60">
             <button onClick={() => { setActiveCreationTab("agentes"); }} className="flex items-center gap-1.5 hover:text-white transition-colors">
               Agentes
-              <span className="text-[10px] font-bold uppercase bg-blue-500 text-white px-1.5 py-0.5 rounded-full">Novo</span>
+              <span className="text-[10px] font-bold uppercase bg-[#559caa] text-white px-1.5 py-0.5 rounded-full">Novo</span>
             </button>
             <button onClick={() => setShowAuth(true)} className="hover:text-white transition-colors">Templates</button>
             <button onClick={() => setShowAuth(true)} className="hover:text-white transition-colors">Preços</button>
