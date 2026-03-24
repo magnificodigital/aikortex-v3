@@ -92,6 +92,11 @@ const Home = () => {
               size="icon"
               className="h-9 w-9 rounded-full bg-primary hover:bg-primary/90"
               disabled={!prompt.trim()}
+              onClick={() => {
+                if (activeCreationTab === "app") {
+                  navigate("/app-builder", { state: { initialPrompt: prompt } });
+                }
+              }}
             >
               <ArrowUp className="w-4 h-4" />
             </Button>
