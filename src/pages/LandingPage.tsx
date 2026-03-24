@@ -68,7 +68,7 @@ const LandingPage = () => {
           <nav className="hidden md:flex items-center gap-6 text-sm text-white/60">
             <button onClick={() => { setActiveCreationTab("agentes"); }} className="flex items-center gap-1.5 hover:text-white transition-colors">
               Agentes
-              <span className="text-[10px] font-bold uppercase bg-[#559caa] text-white px-1.5 py-0.5 rounded-full">Novo</span>
+              <span className="text-[10px] font-bold uppercase bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">Novo</span>
             </button>
             <button onClick={() => openAuthModal("signup")} className="hover:text-white transition-colors">Templates</button>
             <button onClick={() => openAuthModal("signup")} className="hover:text-white transition-colors">Preços</button>
@@ -90,7 +90,7 @@ const LandingPage = () => {
           </button>
           <button
             onClick={() => openAuthModal("signup")}
-            className="px-4 py-1.5 rounded-full bg-[#559caa] hover:bg-[#4a8a97] text-white text-sm font-medium transition-colors"
+            className="px-4 py-1.5 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium transition-colors"
           >
             Comece grátis
           </button>
@@ -103,7 +103,7 @@ const LandingPage = () => {
         <button
           className="flex items-center gap-2 mb-10 px-5 py-2.5 rounded-full border border-white/10 bg-white/5 text-sm text-white/70 hover:bg-white/10 transition-colors"
         >
-          <span className="text-[10px] font-bold uppercase bg-[#559caa] text-white px-2 py-0.5 rounded-full">Novo</span>
+          <span className="text-[10px] font-bold uppercase bg-primary text-primary-foreground px-2 py-0.5 rounded-full">Novo</span>
           Conheça o Aikortex Claw — Agentes IA que trabalham 24/7
           <span className="text-white/40">→</span>
         </button>
@@ -128,7 +128,7 @@ const LandingPage = () => {
                 onClick={() => handleTabChange(tab)}
                 className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   activeCreationTab === tab
-                    ? "bg-[#559caa]/15 text-[#559caa]"
+                    ? "bg-primary/15 text-primary"
                     : "text-white/40 hover:text-white/60"
                 }`}
               >
@@ -162,7 +162,7 @@ const LandingPage = () => {
             </div>
             <Button
               size="icon"
-              className="h-9 w-9 rounded-full bg-[#559caa] hover:bg-[#4a8a97] text-white"
+              className="h-9 w-9 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground"
               disabled={!prompt.trim()}
               onClick={() => openAuthModal("signup")}
             >
