@@ -3,19 +3,17 @@ import { Link, useLocation } from "react-router-dom";
 import aikortexLogo from "@/assets/aikortex-logo.png";
 import {
   LayoutDashboard,
+  Home,
   Users,
-  FolderKanban,
   CheckSquare,
   Handshake,
   DollarSign,
   FileText,
-  BarChart3,
   Bot,
   Settings,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
-  
   Sun,
   Moon,
   Contact,
@@ -24,6 +22,13 @@ import {
   MessageSquare,
   Send,
   ShoppingCart,
+  User,
+  TrendingUp,
+  BookOpen,
+  Package,
+  Calendar,
+  MessageCircle,
+  AppWindow,
 } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import {
@@ -34,22 +39,35 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const gestaoItems = [
+type NavItem = { label: string; icon: typeof Home; path: string };
+
+const homeItems: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/" },
-  { label: "Clientes", icon: Users, path: "/clients" },
-  { label: "Equipe", icon: UserCheck, path: "/team" },
-  { label: "Tarefas", icon: CheckSquare, path: "/tasks" },
-  { label: "Vendas", icon: ShoppingCart, path: "/sales" },
-  { label: "Financeiro", icon: DollarSign, path: "/financial" },
-  { label: "Contratos", icon: FileText, path: "/contracts" },
-  { label: "Relatórios", icon: BarChart3, path: "/reports" },
-  { label: "Partners", icon: Handshake, path: "/partners" },
 ];
 
-const aikortexItems = [
-  { label: "Agentes", icon: Bot, path: "/aikortex/agents" },
-  { label: "Automações", icon: Workflow, path: "/aikortex/automations" },
+const gestaoItems: NavItem[] = [
+  { label: "Clientes", icon: Users, path: "/clients" },
+  { label: "Contratos", icon: FileText, path: "/contracts" },
+  { label: "Vendas", icon: ShoppingCart, path: "/sales" },
   { label: "CRM", icon: Contact, path: "/aikortex/crm" },
+  { label: "Financeiro", icon: DollarSign, path: "/financial" },
+  { label: "Equipe", icon: UserCheck, path: "/team" },
+  { label: "Tarefas", icon: CheckSquare, path: "/tasks" },
+];
+
+const partnersItems: NavItem[] = [
+  { label: "Perfil", icon: User, path: "/partners?tab=profile" },
+  { label: "Evolução", icon: TrendingUp, path: "/partners?tab=tiers" },
+  { label: "Treinamentos", icon: BookOpen, path: "/partners?tab=training" },
+  { label: "Store", icon: Package, path: "/partners?tab=marketplace" },
+  { label: "Eventos", icon: Calendar, path: "/partners?tab=events" },
+  { label: "Comunidade", icon: MessageCircle, path: "/partners?tab=community" },
+];
+
+const aikortexItems: NavItem[] = [
+  { label: "Agentes", icon: Bot, path: "/aikortex/agents" },
+  { label: "Flows", icon: Workflow, path: "/aikortex/automations" },
+  { label: "Apps", icon: AppWindow, path: "/aikortex/apps" },
   { label: "Mensagens", icon: MessageSquare, path: "/aikortex/messages" },
   { label: "Disparos", icon: Send, path: "/aikortex/broadcasts" },
 ];
@@ -57,12 +75,21 @@ const aikortexItems = [
 const AppSidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [gestaoOpen, setGestaoOpen] = useState(true);
+  const [partnersOpen, setPartnersOpen] = useState(true);
   const [aikortexOpen, setAikortexOpen] = useState(true);
   const location = useLocation();
   const { theme, toggle } = useTheme();
 
-  const renderItem = (item: { label: string; icon: typeof LayoutDashboard; path: string }) => {
-    const isActive = location.pathname === item.path;
+  const isItemActive = (path: string) => {
+    if (path.includes("?tab=")) {
+      const [base, query] = path.split("?");
+      return location.pathname === base && location.search === `?${query}`;
+    }
+    return location.pathname === path;
+  };
+
+  const renderItem = (item: NavItem) => {
+    const isActive = isItemActive(item.path);
     return (
       <Link
         key={item.path}
@@ -82,7 +109,7 @@ const AppSidebar = () => {
 
   const renderGroup = (
     label: string,
-    items: typeof gestaoItems,
+    items: NavItem[],
     open: boolean,
     setOpen: (v: boolean) => void
   ) => (
@@ -138,7 +165,13 @@ const AppSidebar = () => {
 
       {/* Nav */}
       <nav className="flex-1 py-1 px-2 space-y-0.5 overflow-y-auto scrollbar-thin">
+        {/* Home / Dashboard - standalone */}
+        <div className="space-y-0.5 mt-2">
+          {homeItems.map((item) => renderItem(item))}
+        </div>
+
         {renderGroup("Gestão", gestaoItems, gestaoOpen, setGestaoOpen)}
+        {renderGroup("Partners", partnersItems, partnersOpen, setPartnersOpen)}
         {renderGroup("Aikortex", aikortexItems, aikortexOpen, setAikortexOpen)}
       </nav>
 
@@ -147,8 +180,6 @@ const AppSidebar = () => {
         <Link
           to="/settings"
           className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-            collapsed ? "" : ""
-          } ${
             location.pathname === "/settings"
               ? "bg-sidebar-accent text-sidebar-accent-foreground"
               : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
