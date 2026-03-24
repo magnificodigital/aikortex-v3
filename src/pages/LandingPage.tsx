@@ -94,8 +94,8 @@ const LandingPage = () => {
   const currentSuggestions = t.suggestions[activeCreationTab][suggestionIndex];
   const SuggestionIcon = tabIcons[activeCreationTab];
 
-  const toggleLang = () => {
-    const next = lang === "pt" ? "en" : "pt";
+  const handleLangChange = (value: string) => {
+    const next = value as Lang;
     setLang(next);
     localStorage.setItem("app-lang", next);
     setSuggestionIndex(0);
