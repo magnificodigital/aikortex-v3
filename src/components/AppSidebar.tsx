@@ -183,14 +183,12 @@ const AppSidebar = () => {
       }`}
     >
       {/* Logo */}
-      <div className="flex items-center gap-2 px-4 h-14 border-b border-sidebar-border">
-        <img src={aikortexLogo} alt="Aikortex" className="w-7 h-7 shrink-0 object-contain" />
-        {!collapsed && (
-          <span className="font-bold text-base text-foreground tracking-tight">
-            Aikortex
-            <Sparkles className="inline w-3.5 h-3.5 ml-0.5 text-muted-foreground" />
-          </span>
-        )}
+      <div className="flex items-center px-4 h-14 border-b border-sidebar-border">
+        <img
+          src={theme === "dark" ? aikortexLogoWhite : aikortexLogoBlack}
+          alt="Aikortex"
+          className={collapsed ? "h-6 w-auto object-contain" : "h-7 w-auto object-contain"}
+        />
       </div>
 
       {/* Workspace selector */}
