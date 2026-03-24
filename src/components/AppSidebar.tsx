@@ -83,15 +83,31 @@ const aikortexItems: NavItem[] = [
   { label: "Disparos", icon: Send, path: "/aikortex/broadcasts" },
 ];
 
+const SIDEBAR_STATE_KEY = "sidebar-state";
+
+const loadSidebarState = () => {
+  try {
+    const saved = localStorage.getItem(SIDEBAR_STATE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch {}
+  return null;
+};
+
+const saveSidebarState = (state: Record<string, unknown>) => {
+  try {
+    localStorage.setItem(SIDEBAR_STATE_KEY, JSON.stringify(state));
+  } catch {}
+};
+
 const AppSidebar = () => {
-  const [collapsed, setCollapsed] = useState(false);
-  const [gestaoOpen, setGestaoOpen] = useState(true);
-  const [partnersOpen, setPartnersOpen] = useState(true);
-  const [aikortexOpen, setAikortexOpen] = useState(true);
-  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({
-    "/clients": true,
-    "/sales": true,
-  });
+  const saved = loadSidebarState();
+  const [collapsed, setCollapsed] = useState(saved?.collapsed ?? false);
+  const [gestaoOpen, setGestaoOpen] = useState(saved?.gestaoOpen ?? true);
+  const [partnersOpen, setPartnersOpen] = useState(saved?.partnersOpen ?? true);
+  const [aikortexOpen, setAikortexOpen] = useState(saved?.aikortexOpen ?? true);
+  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>(
+    saved?.expandedItems ?? { "/clients": true, "/sales": true }
+  );
   const location = useLocation();
   const { theme, toggle } = useTheme();
   const { signOut } = useAuth();
