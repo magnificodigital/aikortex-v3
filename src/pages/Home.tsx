@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Monitor, Sparkles, Globe, ArrowUp, Plus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ const Home = () => {
   const [activeCreationTab, setActiveCreationTab] = useState<"app" | "agentes" | "flows">("app");
   const [userName, setUserName] = useState("Usuário");
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!user) return;
@@ -90,6 +92,11 @@ const Home = () => {
               size="icon"
               className="h-9 w-9 rounded-full bg-primary hover:bg-primary/90"
               disabled={!prompt.trim()}
+              onClick={() => {
+                if (activeCreationTab === "app") {
+                  navigate("/app-builder", { state: { initialPrompt: prompt } });
+                }
+              }}
             >
               <ArrowUp className="w-4 h-4" />
             </Button>

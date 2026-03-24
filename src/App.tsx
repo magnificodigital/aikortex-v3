@@ -28,6 +28,7 @@ import IAgora from "./pages/IAgora";
 import SintonIA from "./pages/SintonIA";
 import SettingsPage from "./pages/SettingsPage";
 import ClientRegistration from "./pages/ClientRegistration";
+import AppBuilder from "./pages/AppBuilder";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/home" element={<P><Home /></P>} />
+            <Route path="/app-builder" element={<P><AppBuilder /></P>} />
             <Route path="/dashboard" element={<P><Index /></P>} />
             <Route path="/cadastro-cliente/:token" element={<ClientRegistration />} />
             <Route path="/clients" element={<P><Clients /></P>} />
