@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import aikortexLogoWhite from "@/assets/aikortex-logo-white.png";
 import { Monitor, Sparkles, Globe, ArrowUp, Plus, RefreshCw, Sun, ChevronDown } from "lucide-react";
@@ -6,11 +6,25 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import AuthModal from "@/components/auth/AuthModal";
 
-const suggestions = [
-  { icon: Sparkles, label: "Construtor de Formulários" },
-  { icon: Sparkles, label: "Dashboard de Vendas" },
-  { icon: Sparkles, label: "Landing Page" },
-];
+const suggestionsByTab = {
+  app: [
+    ["Construtor de Formulários", "Dashboard de Vendas", "Landing Page"],
+    ["Sistema de Tarefas", "Painel Financeiro", "CRM Completo"],
+    ["E-commerce Simples", "Blog com IA", "Portal de Clientes"],
+  ],
+  agentes: [
+    ["Agente SDR para WhatsApp", "Agente de Suporte 24/7", "Agente de Qualificação"],
+    ["Agente BDR LinkedIn", "Agente CS Pós-Venda", "Agente de Pesquisa"],
+    ["Agente de Onboarding", "Agente Cobranças", "Agente Agendamento"],
+  ],
+  flows: [
+    ["Fluxo de Onboarding", "Automação de E-mail", "Pipeline de Vendas"],
+    ["Nutrição de Leads", "Fluxo Pós-Compra", "Workflow de Aprovação"],
+    ["Integração CRM + WhatsApp", "Fluxo de Cobrança", "Sequência Follow-up"],
+  ],
+};
+
+const tabIcons = { app: Monitor, agentes: Sparkles, flows: Globe };
 
 const LandingPage = () => {
   const [prompt, setPrompt] = useState("");
