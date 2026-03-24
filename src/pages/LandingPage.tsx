@@ -128,7 +128,7 @@ const LandingPage = () => {
                 onClick={() => handleTabChange(tab)}
                 className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   activeCreationTab === tab
-                    ? "bg-[#559caa]/15 text-[#559caa]"
+                    ? "bg-primary/15 text-primary"
                     : "text-white/40 hover:text-white/60"
                 }`}
               >
