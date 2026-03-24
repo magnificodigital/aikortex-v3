@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Handshake, User, TrendingUp, BookOpen, Award, Package, Calendar, MessageCircle } from "lucide-react";
@@ -29,6 +30,14 @@ const DEFAULT_PROFILE: PartnerProfile = {
 };
 
 const Partners = () => {
+  const [searchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get("tab") || "profile";
+  const [activeTab, setActiveTab] = useState(tabFromUrl);
+
+  useEffect(() => {
+    setActiveTab(tabFromUrl);
+  }, [tabFromUrl]);
+
   const [profile, setProfile] = useState<PartnerProfile>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     return saved ? JSON.parse(saved) : DEFAULT_PROFILE;
@@ -51,7 +60,7 @@ const Partners = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="profile" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/50 p-1">
             <TabsTrigger value="profile" className="flex items-center gap-1.5 text-xs"><User className="w-3.5 h-3.5" />Perfil</TabsTrigger>
             <TabsTrigger value="tiers" className="flex items-center gap-1.5 text-xs"><TrendingUp className="w-3.5 h-3.5" />Evolução</TabsTrigger>
