@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import aikortexLogo from "@/assets/aikortex-logo.png";
 import {
   LayoutDashboard,
   Users,
