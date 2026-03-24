@@ -15,7 +15,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
-  Zap,
+  
   Sun,
   Moon,
   Contact,
