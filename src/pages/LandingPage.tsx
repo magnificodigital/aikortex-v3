@@ -154,10 +154,16 @@ const LandingPage = () => {
           <button onClick={toggleTheme} className={`${textHover} transition-colors`}>
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
-          <button onClick={toggleLang} className={`flex items-center gap-1 ${textHover} transition-colors`}>
-            <Languages className="w-4 h-4" />
-            {lang.toUpperCase()}
-          </button>
+          <Select value={lang} onValueChange={handleLangChange}>
+            <SelectTrigger className={`h-8 w-auto gap-1 border-none bg-transparent px-2 text-sm ${textMuted} ${textHover} focus:ring-0`}>
+              <Globe className="w-4 h-4" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pt">Português</SelectItem>
+              <SelectItem value="en">English</SelectItem>
+            </SelectContent>
+          </Select>
           <button onClick={() => openAuthModal("signin")} className={`${textHover} transition-colors`}>
             {t.signIn}
           </button>
