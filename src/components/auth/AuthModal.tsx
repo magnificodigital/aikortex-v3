@@ -1,21 +1,28 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 
 interface AuthModalProps {
   open: boolean;
+  mode?: "signin" | "signup";
   onClose: () => void;
 }
 
-const AuthModal = ({ open, onClose }: AuthModalProps) => {
-  const [isSignUp, setIsSignUp] = useState(true);
+const AuthModal = ({ open, mode = "signup", onClose }: AuthModalProps) => {
+  const [isSignUp, setIsSignUp] = useState(mode !== "signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { signUp, signIn } = useAuth();
+
+  useEffect(() => {
+    if (open) {
+      setIsSignUp(mode !== "signin");
+    }
+  }, [mode, open]);
 
   if (!open) return null;
 

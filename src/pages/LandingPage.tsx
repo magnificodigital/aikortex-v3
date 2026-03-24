@@ -31,6 +31,7 @@ const LandingPage = () => {
   const [prompt, setPrompt] = useState("");
   const [activeCreationTab, setActiveCreationTab] = useState<"app" | "agentes" | "flows">("app");
   const [showAuth, setShowAuth] = useState(false);
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signup");
   const [suggestionIndex, setSuggestionIndex] = useState(0);
   const navigate = useNavigate();
   const { user, loading } = useAuth();
@@ -46,6 +47,12 @@ const LandingPage = () => {
     setActiveCreationTab(tab);
     setSuggestionIndex(0);
   };
+
+  const openAuthModal = (mode: "signin" | "signup") => {
+    setAuthMode(mode);
+    setShowAuth(true);
+  };
+
   useEffect(() => {
     if (!loading && user) {
       navigate("/home");
@@ -63,8 +70,8 @@ const LandingPage = () => {
               Agentes
               <span className="text-[10px] font-bold uppercase bg-[#559caa] text-white px-1.5 py-0.5 rounded-full">Novo</span>
             </button>
-            <button onClick={() => setShowAuth(true)} className="hover:text-white transition-colors">Templates</button>
-            <button onClick={() => setShowAuth(true)} className="hover:text-white transition-colors">Preços</button>
+            <button onClick={() => openAuthModal("signup")} className="hover:text-white transition-colors">Templates</button>
+            <button onClick={() => openAuthModal("signup")} className="hover:text-white transition-colors">Preços</button>
           </nav>
         </div>
         <div className="flex items-center gap-4 text-sm text-white/60">
@@ -76,13 +83,13 @@ const LandingPage = () => {
             PT
           </button>
           <button
-            onClick={() => setShowAuth(true)}
+            onClick={() => openAuthModal("signin")}
             className="hover:text-white transition-colors"
           >
             Entrar
           </button>
           <button
-            onClick={() => setShowAuth(true)}
+            onClick={() => openAuthModal("signup")}
             className="px-4 py-1.5 rounded-full bg-[#559caa] hover:bg-[#4a8a97] text-white text-sm font-medium transition-colors"
           >
             Comece grátis
@@ -157,7 +164,7 @@ const LandingPage = () => {
               size="icon"
               className="h-9 w-9 rounded-full bg-[#559caa] hover:bg-[#4a8a97] text-white"
               disabled={!prompt.trim()}
-              onClick={() => setShowAuth(true)}
+              onClick={() => openAuthModal("signup")}
             >
               <ArrowUp className="w-4 h-4" />
             </Button>
@@ -186,7 +193,7 @@ const LandingPage = () => {
       </div>
 
       {/* Auth Modal */}
-      <AuthModal open={showAuth} onClose={() => setShowAuth(false)} />
+      <AuthModal open={showAuth} mode={authMode} onClose={() => setShowAuth(false)} />
     </div>
   );
 };
