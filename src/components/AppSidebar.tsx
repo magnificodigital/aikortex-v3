@@ -108,6 +108,12 @@ const AppSidebar = () => {
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>(
     saved?.expandedItems ?? { "/clients": true, "/sales": true }
   );
+
+  // Persist sidebar state to localStorage
+  useEffect(() => {
+    saveSidebarState({ collapsed, gestaoOpen, partnersOpen, aikortexOpen, expandedItems });
+  }, [collapsed, gestaoOpen, partnersOpen, aikortexOpen, expandedItems]);
+
   const location = useLocation();
   const { theme, toggle } = useTheme();
   const { signOut } = useAuth();
