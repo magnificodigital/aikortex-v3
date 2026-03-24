@@ -29,7 +29,6 @@ import {
   Calendar,
   MessageCircle,
   AppWindow,
-  Sparkles,
 } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import {
