@@ -30,6 +30,14 @@ const DEFAULT_PROFILE: PartnerProfile = {
 };
 
 const Partners = () => {
+  const [searchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get("tab") || "profile";
+  const [activeTab, setActiveTab] = useState(tabFromUrl);
+
+  useEffect(() => {
+    setActiveTab(tabFromUrl);
+  }, [tabFromUrl]);
+
   const [profile, setProfile] = useState<PartnerProfile>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     return saved ? JSON.parse(saved) : DEFAULT_PROFILE;
