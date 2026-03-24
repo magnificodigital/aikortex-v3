@@ -32,8 +32,8 @@ const Home = () => {
     <DashboardLayout>
       <div className="flex flex-col items-center justify-start min-h-[calc(100vh-3.5rem)] px-4 py-12 lg:py-20">
         {/* Greeting */}
-        <h1 className="text-3xl lg:text-5xl font-bold text-foreground mb-3 text-center">
-          {getGreeting()}, Usuário
+        <h1 className="text-3xl lg:text-5xl font-light text-foreground mb-3 text-center">
+          {getGreeting()}, <span className="italic">Usuário</span>
         </h1>
         <p className="text-sm lg:text-base text-muted-foreground mb-10 text-center max-w-lg">
           Crie websites, apps e mobile em minutos — banco de dados, hospedagem e IA inclusos.
