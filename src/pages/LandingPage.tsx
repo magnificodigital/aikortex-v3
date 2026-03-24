@@ -83,7 +83,7 @@ const LandingPage = () => {
           </button>
           <button
             onClick={() => setShowAuth(true)}
-            className="px-4 py-1.5 rounded-full bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium transition-colors"
+            className="px-4 py-1.5 rounded-full bg-[#559caa] hover:bg-[#4a8a97] text-white text-sm font-medium transition-colors"
           >
             Comece grátis
           </button>
