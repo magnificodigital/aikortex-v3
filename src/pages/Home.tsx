@@ -17,6 +17,7 @@ const Home = () => {
   const [activeCreationTab, setActiveCreationTab] = useState<"app" | "agentes" | "flows">("app");
   const [userName, setUserName] = useState("Usuário");
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!user) return;
