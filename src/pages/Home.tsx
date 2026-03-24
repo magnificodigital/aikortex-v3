@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Monitor, Sparkles, Globe, ArrowUp, Plus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
