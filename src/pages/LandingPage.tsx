@@ -30,9 +30,21 @@ const LandingPage = () => {
   const [prompt, setPrompt] = useState("");
   const [activeCreationTab, setActiveCreationTab] = useState<"app" | "agentes" | "flows">("app");
   const [showAuth, setShowAuth] = useState(false);
+  const [suggestionIndex, setSuggestionIndex] = useState(0);
   const navigate = useNavigate();
   const { user, loading } = useAuth();
 
+  const currentSuggestions = suggestionsByTab[activeCreationTab][suggestionIndex];
+  const SuggestionIcon = tabIcons[activeCreationTab];
+
+  const refreshSuggestions = useCallback(() => {
+    setSuggestionIndex((prev) => (prev + 1) % suggestionsByTab[activeCreationTab].length);
+  }, [activeCreationTab]);
+
+  const handleTabChange = (tab: "app" | "agentes" | "flows") => {
+    setActiveCreationTab(tab);
+    setSuggestionIndex(0);
+  };
   useEffect(() => {
     if (!loading && user) {
       navigate("/home");
