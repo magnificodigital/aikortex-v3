@@ -1,23 +1,50 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
-import { Monitor, Sparkles, Globe, ArrowUp, Plus, RefreshCw } from "lucide-react";
+import { Monitor, Sparkles, Globe, ArrowUp, Plus, RefreshCw, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
-const suggestions = [
-  { icon: Sparkles, label: "Construtor de Formulários" },
-  { icon: Sparkles, label: "Dashboard de Vendas" },
-  { icon: Sparkles, label: "Landing Page" },
-];
+const suggestionsByTab = {
+  app: [
+    ["Construtor de Formulários", "Dashboard de Vendas", "Landing Page"],
+    ["Sistema de Tarefas", "Painel Financeiro", "CRM Completo"],
+    ["E-commerce Simples", "Blog com IA", "Portal de Clientes"],
+  ],
+  agentes: [
+    ["Agente SDR para WhatsApp", "Agente de Suporte 24/7", "Agente de Qualificação"],
+    ["Agente BDR LinkedIn", "Agente CS Pós-Venda", "Agente de Pesquisa"],
+    ["Agente de Onboarding", "Agente Cobranças", "Agente Agendamento"],
+  ],
+  flows: [
+    ["Fluxo de Onboarding", "Automação de E-mail", "Pipeline de Vendas"],
+    ["Nutrição de Leads", "Fluxo Pós-Compra", "Workflow de Aprovação"],
+    ["Integração CRM + WhatsApp", "Fluxo de Cobrança", "Sequência Follow-up"],
+  ],
+};
+
+const tabIcons = { app: Monitor, agentes: Sparkles, flows: Globe };
 
 const Home = () => {
   const [prompt, setPrompt] = useState("");
   const [activeCreationTab, setActiveCreationTab] = useState<"app" | "agentes" | "flows">("app");
+  const [suggestionIndex, setSuggestionIndex] = useState(0);
   const [userName, setUserName] = useState("Usuário");
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  const currentSuggestions = suggestionsByTab[activeCreationTab][suggestionIndex];
+  const SuggestionIcon = tabIcons[activeCreationTab];
+
+  const refreshSuggestions = useCallback(() => {
+    setSuggestionIndex((prev) => (prev + 1) % suggestionsByTab[activeCreationTab].length);
+  }, [activeCreationTab]);
+
+  const handleTabChange = (tab: "app" | "agentes" | "flows") => {
+    setActiveCreationTab(tab);
+    setSuggestionIndex(0);
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -51,15 +78,16 @@ const Home = () => {
         </p>
 
         {/* Prompt Box */}
-        <div className="w-full max-w-2xl rounded-xl border border-border bg-card p-1 mb-6">
+        <div className="w-full max-w-2xl rounded-xl border border-border bg-card p-1 mb-8">
+          {/* Creation tabs */}
           <div className="flex items-center gap-1 px-3 pt-2 pb-1">
             {(["app", "agentes", "flows"] as const).map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveCreationTab(tab)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                onClick={() => handleTabChange(tab)}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   activeCreationTab === tab
-                    ? "bg-primary text-primary-foreground"
+                    ? "bg-primary/15 text-primary"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -71,6 +99,7 @@ const Home = () => {
             ))}
           </div>
 
+          {/* Text area */}
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
@@ -78,15 +107,17 @@ const Home = () => {
             className="w-full bg-transparent border-none outline-none resize-none text-sm text-foreground placeholder:text-muted-foreground px-4 py-3 min-h-[80px]"
           />
 
+          {/* Bottom bar */}
           <div className="flex items-center justify-between px-3 pb-2">
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                 <Plus className="w-4 h-4" />
               </Button>
-              <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 text-muted-foreground">
+              <button className="flex items-center gap-1.5 h-8 px-3 text-xs text-muted-foreground border border-border rounded-lg hover:bg-accent transition-colors">
                 <Monitor className="w-3.5 h-3.5" />
                 GPT-5
-              </Button>
+                <ChevronDown className="w-3 h-3" />
+              </button>
             </div>
             <Button
               size="icon"
@@ -105,16 +136,20 @@ const Home = () => {
 
         {/* Suggestions */}
         <div className="flex items-center gap-3 flex-wrap justify-center">
-          {suggestions.map((s) => (
+          {currentSuggestions.map((label) => (
             <button
-              key={s.label}
-              className="flex items-center gap-2 px-4 py-2 rounded-full border border-border text-sm text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors"
+              key={label}
+              onClick={() => setPrompt(label)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-border text-sm text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors"
             >
-              <s.icon className="w-4 h-4" />
-              {s.label}
+              <SuggestionIcon className="w-4 h-4" />
+              {label}
             </button>
           ))}
-          <button className="flex items-center justify-center w-9 h-9 rounded-full border border-border text-muted-foreground hover:text-foreground transition-colors">
+          <button
+            onClick={refreshSuggestions}
+            className="flex items-center justify-center w-10 h-10 rounded-full border border-border text-muted-foreground hover:text-foreground transition-colors"
+          >
             <RefreshCw className="w-4 h-4" />
           </button>
         </div>
