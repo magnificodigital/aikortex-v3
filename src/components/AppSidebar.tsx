@@ -78,7 +78,7 @@ const partnersItems: NavItem[] = [
 const aikortexItems: NavItem[] = [
   { label: "Agentes", icon: Bot, path: "/aikortex/agents" },
   { label: "Flows", icon: Workflow, path: "/aikortex/automations" },
-  { label: "Apps", icon: AppWindow, path: "/aikortex/apps" },
+  { label: "Apps", icon: AppWindow, path: "/app-builder" },
   { label: "Mensagens", icon: MessageSquare, path: "/aikortex/messages" },
   { label: "Disparos", icon: Send, path: "/aikortex/broadcasts" },
 ];
