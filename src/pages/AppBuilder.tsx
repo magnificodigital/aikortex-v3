@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { useLocation } from "react-router-dom";
-import DashboardLayout from "@/components/DashboardLayout";
-import { ArrowUp, Bot, User } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { ArrowUp, Bot, User, RefreshCw, Code2, Eye, Database, ChevronLeft, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
@@ -61,37 +60,20 @@ async function streamChat({
 
 const AppBuilder = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const initialPrompt = (location.state as any)?.initialPrompt || "";
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<"preview" | "code" | "database">("preview");
+  const [toolsUsed, setToolsUsed] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const sentInitial = useRef(false);
 
-  // Auto-send initial prompt from Home
   useEffect(() => {
     if (initialPrompt && !sentInitial.current) {
       sentInitial.current = true;
-      setInput(initialPrompt);
-      setTimeout(() => {
-        const userMsg: Msg = { role: "user", content: initialPrompt };
-        setMessages([userMsg]);
-        setInput("");
-        setIsLoading(true);
-        let assistantSoFar = "";
-        const upsert = (chunk: string) => {
-          assistantSoFar += chunk;
-          setMessages((prev) => {
-            const last = prev[prev.length - 1];
-            if (last?.role === "assistant") {
-              return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: assistantSoFar } : m));
-            }
-            return [...prev, { role: "assistant", content: assistantSoFar }];
-          });
-        };
-        streamChat({ messages: [userMsg], onDelta: upsert, onDone: () => setIsLoading(false) })
-          .catch(() => { toast.error("Erro ao se comunicar com a IA"); setIsLoading(false); });
-      }, 100);
+      sendMessage(initialPrompt);
     }
   }, [initialPrompt]);
 
@@ -99,13 +81,13 @@ const AppBuilder = () => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
-  const send = async () => {
-    const text = input.trim();
-    if (!text || isLoading) return;
-    const userMsg: Msg = { role: "user", content: text };
+  const sendMessage = async (text: string) => {
+    if (!text.trim() || isLoading) return;
+    const userMsg: Msg = { role: "user", content: text.trim() };
     setMessages((p) => [...p, userMsg]);
     setInput("");
     setIsLoading(true);
+    setToolsUsed((p) => p + 1);
 
     let assistantSoFar = "";
     const upsert = (chunk: string) => {
@@ -125,104 +107,183 @@ const AppBuilder = () => {
         onDelta: upsert,
         onDone: () => setIsLoading(false),
       });
-    } catch (e) {
-      console.error(e);
+    } catch {
       toast.error("Erro ao se comunicar com a IA");
       setIsLoading(false);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); }
   };
 
+  const tabs = [
+    { id: "preview" as const, label: "Preview", icon: Eye },
+    { id: "code" as const, label: "Code", icon: Code2 },
+    { id: "database" as const, label: "Database", icon: Database },
+  ];
+
   return (
-    <DashboardLayout>
-      <div className="flex flex-col h-[calc(100vh-3.5rem)]">
+    <div className="flex h-screen bg-background text-foreground">
+      {/* Left Panel - Chat */}
+      <div className="w-[520px] min-w-[400px] border-r border-border flex flex-col">
+        {/* Chat Header */}
+        <div className="h-12 border-b border-border flex items-center px-3 gap-2 shrink-0">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate("/home")}>
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded bg-primary/20 flex items-center justify-center">
+              <Bot className="w-3.5 h-3.5 text-primary" />
+            </div>
+            <span className="text-sm font-medium">App Builder</span>
+          </div>
+        </div>
+
         {/* Messages */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6">
-          {messages.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
-                <Bot className="w-7 h-7 text-primary" />
+        <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+          {messages.map((m, i) => (
+            <div key={i} className={`flex gap-3 ${m.role === "user" ? "justify-end" : ""}`}>
+              {m.role === "assistant" && (
+                <div className="w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <Bot className="w-3.5 h-3.5 text-primary" />
+                </div>
+              )}
+              <div
+                className={`rounded-xl px-3.5 py-2.5 max-w-[85%] text-sm leading-relaxed ${
+                  m.role === "user"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted/50 text-foreground"
+                }`}
+              >
+                {m.role === "assistant" ? (
+                  <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_code]:bg-background/50 [&_code]:px-1 [&_code]:rounded [&_pre]:bg-background/80 [&_pre]:rounded-lg [&_pre]:p-3">
+                    <ReactMarkdown>{m.content}</ReactMarkdown>
+                  </div>
+                ) : (
+                  <p className="whitespace-pre-wrap">{m.content}</p>
+                )}
               </div>
-              <div>
-                <h2 className="text-xl font-semibold text-foreground mb-1">Crie seu app com IA</h2>
-                <p className="text-sm text-muted-foreground max-w-md">
-                  Descreva o aplicativo que deseja criar e eu vou te ajudar a planejar e construir.
+              {m.role === "user" && (
+                <div className="w-7 h-7 rounded-md bg-accent flex items-center justify-center shrink-0 mt-0.5">
+                  <User className="w-3.5 h-3.5 text-accent-foreground" />
+                </div>
+              )}
+            </div>
+          ))}
+          {isLoading && messages[messages.length - 1]?.role === "user" && (
+            <div className="flex gap-3">
+              <div className="w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+                <Bot className="w-3.5 h-3.5 text-primary animate-pulse" />
+              </div>
+              <div className="bg-muted/50 rounded-xl px-3.5 py-2.5">
+                <span className="text-sm text-muted-foreground animate-pulse">Pensando...</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Tools used indicator */}
+        {toolsUsed > 0 && (
+          <div className="px-4 py-1.5">
+            <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+              <Wrench className="w-3 h-3" />
+              <span>Used tools {toolsUsed} times</span>
+            </button>
+          </div>
+        )}
+
+        {/* Input Area */}
+        <div className="border-t border-border p-3">
+          <div className="rounded-xl border border-border bg-card/50 p-1">
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Ask App Builder to build..."
+              rows={1}
+              className="w-full bg-transparent border-none outline-none resize-none text-sm text-foreground placeholder:text-muted-foreground px-3 py-2 min-h-[38px] max-h-[140px]"
+            />
+            <div className="flex items-center justify-between px-2 pb-1">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>⚡ Studio AI</span>
+              </div>
+              <Button
+                size="icon"
+                onClick={() => sendMessage(input)}
+                disabled={!input.trim() || isLoading}
+                className="h-8 w-8 rounded-full bg-primary hover:bg-primary/90 shrink-0"
+              >
+                <ArrowUp className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Panel - Preview */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Top Bar */}
+        <div className="h-12 border-b border-border flex items-center justify-between px-4 shrink-0">
+          <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-0.5">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                  activeTab === tab.id
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <tab.icon className="w-3.5 h-3.5" />
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <RefreshCw className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Preview Content */}
+        <div className="flex-1 flex items-center justify-center bg-muted/20">
+          {messages.length === 0 ? (
+            <div className="text-center space-y-4 max-w-lg px-6">
+              <h2 className="text-4xl lg:text-5xl font-bold text-foreground leading-tight">
+                Build software<br />with AI
+              </h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Descreva seu app em linguagem natural e a IA constrói para você.<br />
+                React, TypeScript e Tailwind prontos para produção em segundos.
+              </p>
+              <div className="flex items-center gap-2 max-w-md mx-auto mt-6">
+                <div className="flex-1 flex items-center gap-2 rounded-lg border border-border bg-card/50 px-3 py-2.5">
+                  <Code2 className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <span className="text-sm text-muted-foreground">Build a modern CRM dashboard with analytics...</span>
+                </div>
+                <Button className="shrink-0 h-10 px-4 bg-foreground text-background hover:bg-foreground/90 rounded-lg text-sm font-medium">
+                  Start Building
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <div className="text-center space-y-3">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto">
+                  <Eye className="w-6 h-6 text-primary" />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  O preview do app será exibido aqui
                 </p>
               </div>
             </div>
           )}
-
-          <div className="max-w-3xl mx-auto space-y-6">
-            {messages.map((m, i) => (
-              <div key={i} className={`flex gap-3 ${m.role === "user" ? "justify-end" : ""}`}>
-                {m.role === "assistant" && (
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-1">
-                    <Bot className="w-4 h-4 text-primary" />
-                  </div>
-                )}
-                <div
-                  className={`rounded-xl px-4 py-3 max-w-[80%] text-sm ${
-                    m.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-foreground"
-                  }`}
-                >
-                  {m.role === "assistant" ? (
-                    <div className="prose prose-sm dark:prose-invert max-w-none">
-                      <ReactMarkdown>{m.content}</ReactMarkdown>
-                    </div>
-                  ) : (
-                    <p className="whitespace-pre-wrap">{m.content}</p>
-                  )}
-                </div>
-                {m.role === "user" && (
-                  <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center shrink-0 mt-1">
-                    <User className="w-4 h-4 text-accent-foreground" />
-                  </div>
-                )}
-              </div>
-            ))}
-            {isLoading && messages[messages.length - 1]?.role === "user" && (
-              <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <Bot className="w-4 h-4 text-primary animate-pulse" />
-                </div>
-                <div className="bg-muted rounded-xl px-4 py-3">
-                  <span className="text-sm text-muted-foreground animate-pulse">Pensando...</span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Input */}
-        <div className="border-t border-border p-4">
-          <div className="max-w-3xl mx-auto flex items-end gap-3">
-            <div className="flex-1 rounded-xl border border-border bg-card p-1">
-              <textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Descreva o app que deseja criar..."
-                rows={1}
-                className="w-full bg-transparent border-none outline-none resize-none text-sm text-foreground placeholder:text-muted-foreground px-3 py-2 min-h-[40px] max-h-[160px]"
-              />
-            </div>
-            <Button
-              size="icon"
-              onClick={send}
-              disabled={!input.trim() || isLoading}
-              className="h-10 w-10 rounded-full bg-primary hover:bg-primary/90 shrink-0"
-            >
-              <ArrowUp className="w-4 h-4" />
-            </Button>
-          </div>
         </div>
       </div>
-    </DashboardLayout>
+    </div>
   );
 };
 
