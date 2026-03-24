@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import aikortexLogo from "@/assets/aikortex-logo.png";
 import {
   LayoutDashboard,
   Users,
@@ -14,7 +15,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
-  Zap,
+  
   Sun,
   Moon,
   Contact,
@@ -113,11 +114,9 @@ const AppSidebar = () => {
     >
       {/* Logo */}
       <div className="flex items-center gap-2 px-4 h-14 border-b border-sidebar-border">
-        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center glow-primary shrink-0">
-          <Zap className="w-4 h-4 text-primary-foreground" />
-        </div>
+        <img src={aikortexLogo} alt="Aikortex" className="w-8 h-8 shrink-0 object-contain" />
         {!collapsed && (
-          <span className="font-bold text-lg text-foreground tracking-tight">AIHUB</span>
+          <span className="font-bold text-lg text-foreground tracking-tight">Aikortex</span>
         )}
       </div>
 
