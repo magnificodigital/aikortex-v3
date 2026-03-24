@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import aikortexLogoWhite from "@/assets/aikortex-logo-white.png";
 import { Monitor, Sparkles, Globe, ArrowUp, Plus, RefreshCw, Sun, ChevronDown } from "lucide-react";
@@ -6,19 +6,45 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import AuthModal from "@/components/auth/AuthModal";
 
-const suggestions = [
-  { icon: Sparkles, label: "Construtor de Formulários" },
-  { icon: Sparkles, label: "Dashboard de Vendas" },
-  { icon: Sparkles, label: "Landing Page" },
-];
+const suggestionsByTab = {
+  app: [
+    ["Construtor de Formulários", "Dashboard de Vendas", "Landing Page"],
+    ["Sistema de Tarefas", "Painel Financeiro", "CRM Completo"],
+    ["E-commerce Simples", "Blog com IA", "Portal de Clientes"],
+  ],
+  agentes: [
+    ["Agente SDR para WhatsApp", "Agente de Suporte 24/7", "Agente de Qualificação"],
+    ["Agente BDR LinkedIn", "Agente CS Pós-Venda", "Agente de Pesquisa"],
+    ["Agente de Onboarding", "Agente Cobranças", "Agente Agendamento"],
+  ],
+  flows: [
+    ["Fluxo de Onboarding", "Automação de E-mail", "Pipeline de Vendas"],
+    ["Nutrição de Leads", "Fluxo Pós-Compra", "Workflow de Aprovação"],
+    ["Integração CRM + WhatsApp", "Fluxo de Cobrança", "Sequência Follow-up"],
+  ],
+};
+
+const tabIcons = { app: Monitor, agentes: Sparkles, flows: Globe };
 
 const LandingPage = () => {
   const [prompt, setPrompt] = useState("");
   const [activeCreationTab, setActiveCreationTab] = useState<"app" | "agentes" | "flows">("app");
   const [showAuth, setShowAuth] = useState(false);
+  const [suggestionIndex, setSuggestionIndex] = useState(0);
   const navigate = useNavigate();
   const { user, loading } = useAuth();
 
+  const currentSuggestions = suggestionsByTab[activeCreationTab][suggestionIndex];
+  const SuggestionIcon = tabIcons[activeCreationTab];
+
+  const refreshSuggestions = useCallback(() => {
+    setSuggestionIndex((prev) => (prev + 1) % suggestionsByTab[activeCreationTab].length);
+  }, [activeCreationTab]);
+
+  const handleTabChange = (tab: "app" | "agentes" | "flows") => {
+    setActiveCreationTab(tab);
+    setSuggestionIndex(0);
+  };
   useEffect(() => {
     if (!loading && user) {
       navigate("/home");
@@ -91,7 +117,7 @@ const LandingPage = () => {
             {(["app", "agentes", "flows"] as const).map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveCreationTab(tab)}
+                onClick={() => handleTabChange(tab)}
                 className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   activeCreationTab === tab
                     ? "bg-blue-500/20 text-blue-400"
@@ -139,16 +165,20 @@ const LandingPage = () => {
 
         {/* Suggestions */}
         <div className="flex items-center gap-3 flex-wrap justify-center">
-          {suggestions.map((s) => (
+          {currentSuggestions.map((label) => (
             <button
-              key={s.label}
+              key={label}
+              onClick={() => setPrompt(label)}
               className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-white/10 text-sm text-white/40 hover:text-white/60 hover:border-white/20 transition-colors"
             >
-              <s.icon className="w-4 h-4" />
-              {s.label}
+              <SuggestionIcon className="w-4 h-4" />
+              {label}
             </button>
           ))}
-          <button className="flex items-center justify-center w-10 h-10 rounded-full border border-white/10 text-white/30 hover:text-white/60 transition-colors">
+          <button
+            onClick={refreshSuggestions}
+            className="flex items-center justify-center w-10 h-10 rounded-full border border-white/10 text-white/30 hover:text-white/60 transition-colors"
+          >
             <RefreshCw className="w-4 h-4" />
           </button>
         </div>
