@@ -94,7 +94,8 @@ const AppSidebar = () => {
   });
   const location = useLocation();
   const { theme, toggle } = useTheme();
-
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
   const isItemActive = (path: string) => {
     if (path.includes("?tab=")) {
       const [base, query] = path.split("?");
