@@ -65,9 +65,9 @@ const LandingPage = () => {
         </button>
 
         {/* Hero */}
-        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-center mb-5 tracking-tight">
+        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-light text-center mb-5 tracking-tight">
           <span className="text-white/90">Infinitas </span>
-          <span className="italic font-serif text-white/80">possibilidades</span>
+          <span className="italic font-serif font-light text-white/80">possibilidades</span>
         </h1>
         <p className="text-base lg:text-lg text-white/40 text-center max-w-lg mb-12 leading-relaxed">
           Crie Agentes, Fluxos inteligentes e apps em<br />
