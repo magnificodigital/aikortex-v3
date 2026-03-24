@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { ArrowUp, Bot, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
