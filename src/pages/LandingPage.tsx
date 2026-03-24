@@ -3,7 +3,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import aikortexLogoWhite from "@/assets/aikortex-logo-white.png";
 import aikortexLogoBlack from "@/assets/aikortex-logo-black.png";
-import { Monitor, Sparkles, Globe, ArrowUp, Plus, RefreshCw, Sun, Moon, ChevronDown, Languages } from "lucide-react";
+import { Monitor, Sparkles, Globe, ArrowUp, Plus, RefreshCw, Sun, Moon, ChevronDown } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTheme } from "@/hooks/use-theme";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -93,8 +94,8 @@ const LandingPage = () => {
   const currentSuggestions = t.suggestions[activeCreationTab][suggestionIndex];
   const SuggestionIcon = tabIcons[activeCreationTab];
 
-  const toggleLang = () => {
-    const next = lang === "pt" ? "en" : "pt";
+  const handleLangChange = (value: string) => {
+    const next = value as Lang;
     setLang(next);
     localStorage.setItem("app-lang", next);
     setSuggestionIndex(0);
@@ -153,10 +154,16 @@ const LandingPage = () => {
           <button onClick={toggleTheme} className={`${textHover} transition-colors`}>
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
-          <button onClick={toggleLang} className={`flex items-center gap-1 ${textHover} transition-colors`}>
-            <Languages className="w-4 h-4" />
-            {lang.toUpperCase()}
-          </button>
+          <Select value={lang} onValueChange={handleLangChange}>
+            <SelectTrigger className={`h-8 w-auto gap-1 border-none bg-transparent px-2 text-sm ${textMuted} ${textHover} focus:ring-0`}>
+              <Globe className="w-4 h-4" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pt">Português</SelectItem>
+              <SelectItem value="en">English</SelectItem>
+            </SelectContent>
+          </Select>
           <button onClick={() => openAuthModal("signin")} className={`${textHover} transition-colors`}>
             {t.signIn}
           </button>
