@@ -1,7 +1,16 @@
-import { AgentRecommendation, AGENT_TEMPLATES } from "@/types/agent-builder";
+import { AgentRecommendation } from "@/types/agent-builder";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Check, Bot, Users, Zap, HeadphonesIcon, TrendingUp, Settings2, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+
+import avatar1 from "@/assets/avatars/avatar-1.png";
+import avatar2 from "@/assets/avatars/avatar-2.png";
+import avatar3 from "@/assets/avatars/avatar-3.png";
+import avatar4 from "@/assets/avatars/avatar-4.png";
+import avatar5 from "@/assets/avatars/avatar-5.png";
+import avatar6 from "@/assets/avatars/avatar-6.png";
+import avatar7 from "@/assets/avatars/avatar-7.png";
+import avatar8 from "@/assets/avatars/avatar-8.png";
+import avatar9 from "@/assets/avatars/avatar-9.png";
 
 interface Props {
   selected: AgentRecommendation | null;
@@ -9,128 +18,136 @@ interface Props {
   onNext: () => void;
 }
 
-const TYPE_META: Record<string, { icon: typeof Bot }> = {
-  SDR: { icon: Zap },
-  BDR: { icon: TrendingUp },
-  SAC: { icon: HeadphonesIcon },
-  CS: { icon: Users },
-  Custom: { icon: Settings2 },
-};
+const AGENT_CARDS = [
+  {
+    id: "sdr-1",
+    name: "Assistente Pessoal Executivo",
+    description: "Organiza sua rotina, captura tarefas e redige e-mails antes que você peça.",
+    avatar: avatar1,
+    type: "SDR" as const,
+  },
+  {
+    id: "bdr-1",
+    name: "Sales Development Rep",
+    description: "Pesquisa prospects reais, escreve abordagens personalizadas e faz follow-up até...",
+    avatar: avatar2,
+    type: "BDR" as const,
+  },
+  {
+    id: "sac-1",
+    name: "Inbox Manager",
+    description: "Triagem da sua inbox, redige respostas na sua voz e mostra só o que realmente...",
+    avatar: avatar3,
+    type: "SAC" as const,
+  },
+  {
+    id: "cs-1",
+    name: "Growth & Competitive Intelligence",
+    description: "Monitora concorrentes semanalmente, acompanha mudanças de mercado e entrega briefings acionáveis.",
+    avatar: avatar4,
+    type: "CS" as const,
+  },
+  {
+    id: "custom-5",
+    name: "Software Engineer",
+    description: "Revisa PRs, detecta bugs cedo e envia correções limpas sem precisar pedir.",
+    avatar: avatar5,
+    type: "Custom" as const,
+  },
+  {
+    id: "custom-6",
+    name: "Finance & Business Analyst",
+    description: "Acompanha métricas-chave diariamente, sinaliza anomalias e entrega um snapshot semanal limpo.",
+    avatar: avatar6,
+    type: "Custom" as const,
+  },
+  {
+    id: "custom-7",
+    name: "Research Analyst",
+    description: "Pesquisa rigorosamente, cruza referências e entrega insights claros com citações.",
+    avatar: avatar7,
+    type: "Custom" as const,
+  },
+  {
+    id: "custom-8",
+    name: "Social Media Manager",
+    description: "Planeja conteúdo semanal, escreve na sua voz e acompanha o que funciona.",
+    avatar: avatar8,
+    type: "Custom" as const,
+  },
+  {
+    id: "custom-9",
+    name: "Customer Success Manager",
+    description: "Detecta sinais de churn cedo, redige respostas empáticas e mantém cada cliente...",
+    avatar: avatar9,
+    type: "Custom" as const,
+  },
+];
 
 const StepAgents = ({ selected, onSelect, onNext }: Props) => {
-  const toggle = (agent: AgentRecommendation) => {
-    onSelect(selected?.id === agent.id ? null : { ...agent, selected: true });
+  const handleSelect = (card: typeof AGENT_CARDS[0]) => {
+    if (selected?.id === card.id) {
+      onSelect(null);
+    } else {
+      onSelect({
+        id: card.id,
+        type: card.type,
+        name: card.name,
+        objective: card.description,
+        targetAudience: "",
+        benefits: [],
+        exampleConversation: [],
+        selected: true,
+      });
+    }
   };
 
-  const predefined = AGENT_TEMPLATES.filter((a) => a.type !== "Custom");
-  const custom = AGENT_TEMPLATES.find((a) => a.type === "Custom");
-
   return (
-    <div className="space-y-8 animate-fade-in max-w-4xl mx-auto">
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-foreground">Escolha o tipo de agente</h2>
-        <p className="text-sm text-muted-foreground">
-          Selecione um agente pré-configurado ou crie um personalizado do zero
-        </p>
+    <div className="space-y-6 animate-fade-in max-w-5xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-semibold text-foreground bg-muted px-3 py-1.5 rounded-lg">Templates</span>
+        <button className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+          Browse all <ArrowRight className="w-3.5 h-3.5" />
+        </button>
       </div>
 
-      {/* Pre-configured agents */}
-      <div className="space-y-3">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
-          Agentes pré-configurados
-        </p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {predefined.map((agent) => {
-            const meta = TYPE_META[agent.type];
-            const Icon = meta.icon;
-            const active = selected?.id === agent.id;
-            return (
-              <button
-                key={agent.id}
-                onClick={() => toggle(agent)}
-                className={`relative text-left rounded-xl border p-4 transition-all duration-200 space-y-3 ${
-                  active
-                    ? "border-primary bg-primary/5 shadow-md"
-                    : "border-border bg-card hover:border-primary/40 hover:shadow-sm"
-                }`}
-              >
-                {active && (
-                  <div className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                    <Check className="w-3 h-3 text-primary-foreground" />
-                  </div>
-                )}
-                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Icon className="w-4.5 h-4.5 text-primary" />
-                </div>
-                <div className="space-y-1">
-                  <Badge variant={active ? "default" : "secondary"} className="text-[10px] font-bold">
-                    {agent.type}
-                  </Badge>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">
-                    {agent.objective}
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {agent.benefits.slice(0, 2).map((b) => (
-                    <span key={b} className="text-[9px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full">
-                      {b}
-                    </span>
-                  ))}
-                </div>
-              </button>
-            );
-          })}
-        </div>
+      {/* Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {AGENT_CARDS.map((card) => {
+          const active = selected?.id === card.id;
+          return (
+            <button
+              key={card.id}
+              onClick={() => handleSelect(card)}
+              className={`text-left rounded-xl border p-5 transition-all duration-200 space-y-4 ${
+                active
+                  ? "border-primary bg-primary/5 ring-1 ring-primary"
+                  : "border-border bg-card hover:border-primary/40"
+              }`}
+            >
+              <img
+                src={card.avatar}
+                alt={card.name}
+                loading="lazy"
+                width={48}
+                height={48}
+                className="w-12 h-12 rounded-full object-cover"
+              />
+              <div className="space-y-2">
+                <h3 className="text-sm font-bold text-foreground">{card.name}</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                  {card.description}
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5 pt-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
+                <span className="text-xs text-muted-foreground">Template</span>
+              </div>
+            </button>
+          );
+        })}
       </div>
-
-      {/* Custom agent */}
-      {custom && (
-        <div className="space-y-3">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">
-            Personalizado
-          </p>
-          {(() => {
-            const active = selected?.id === custom.id;
-            return (
-              <button
-                onClick={() => toggle(custom)}
-                className={`relative w-full text-left rounded-xl border p-5 transition-all duration-200 ${
-                  active
-                    ? "border-primary bg-primary/5 shadow-md"
-                    : "border-dashed border-border bg-card hover:border-primary/40 hover:shadow-sm"
-                }`}
-              >
-                {active && (
-                  <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                    <Check className="w-3 h-3 text-primary-foreground" />
-                  </div>
-                )}
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center shrink-0">
-                    <Settings2 className="w-5 h-5 text-accent-foreground" />
-                  </div>
-                  <div className="space-y-1.5 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-foreground">Agente Personalizado</span>
-                      <Sparkles className="w-3.5 h-3.5 text-warning" />
-                    </div>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Configure um agente sob medida com total liberdade: defina objetivos, canais, integrações e comportamento sem restrições.
-                    </p>
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {["Todos os canais", "Todas as integrações", "Objetivos livres", "100% configurável"].map((tag) => (
-                        <span key={tag} className="text-[9px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </button>
-            );
-          })()}
-        </div>
-      )}
 
       {/* Footer */}
       <div className="flex items-center justify-between pt-2">
