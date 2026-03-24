@@ -59,12 +59,12 @@ const LandingPage = () => {
         <div className="flex items-center gap-8">
           <img src={aikortexLogoWhite} alt="Aikortex" className="h-7 w-auto object-contain" />
           <nav className="hidden md:flex items-center gap-6 text-sm text-white/60">
-            <button className="flex items-center gap-1.5 hover:text-white transition-colors">
+            <button onClick={() => { setActiveCreationTab("agentes"); }} className="flex items-center gap-1.5 hover:text-white transition-colors">
               Agentes
               <span className="text-[10px] font-bold uppercase bg-blue-500 text-white px-1.5 py-0.5 rounded-full">Novo</span>
             </button>
-            <button className="hover:text-white transition-colors">Templates</button>
-            <button className="hover:text-white transition-colors">Preços</button>
+            <button onClick={() => setShowAuth(true)} className="hover:text-white transition-colors">Templates</button>
+            <button onClick={() => setShowAuth(true)} className="hover:text-white transition-colors">Preços</button>
           </nav>
         </div>
         <div className="flex items-center gap-4 text-sm text-white/60">

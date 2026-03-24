@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import aikortexLogoWhite from "@/assets/aikortex-logo-white.png";
 import aikortexLogoBlack from "@/assets/aikortex-logo-black.png";
+import { LogOut } from "lucide-react";
 import {
   LayoutDashboard,
   Home,
@@ -93,7 +94,8 @@ const AppSidebar = () => {
   });
   const location = useLocation();
   const { theme, toggle } = useTheme();
-
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
   const isItemActive = (path: string) => {
     if (path.includes("?tab=")) {
       const [base, query] = path.split("?");
@@ -244,6 +246,18 @@ const AppSidebar = () => {
         >
           {theme === "dark" ? <Sun className="w-4 h-4 shrink-0" /> : <Moon className="w-4 h-4 shrink-0" />}
           {!collapsed && <span>{theme === "dark" ? "Modo claro" : "Modo escuro"}</span>}
+        </button>
+
+        <button
+          onClick={async () => {
+            await signOut();
+            navigate("/");
+          }}
+          className={`${linkClasses(false)} w-full`}
+          title={collapsed ? "Sair" : undefined}
+        >
+          <LogOut className="w-4 h-4 shrink-0 text-destructive" />
+          {!collapsed && <span className="text-destructive">Sair</span>}
         </button>
 
         <button
