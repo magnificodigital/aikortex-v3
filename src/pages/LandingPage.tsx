@@ -117,7 +117,7 @@ const LandingPage = () => {
             {(["app", "agentes", "flows"] as const).map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveCreationTab(tab)}
+                onClick={() => handleTabChange(tab)}
                 className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   activeCreationTab === tab
                     ? "bg-blue-500/20 text-blue-400"
