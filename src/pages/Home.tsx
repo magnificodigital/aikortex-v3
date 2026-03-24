@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Monitor, Sparkles, Globe, ArrowUp, Plus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const suggestions = [
   { icon: Sparkles, label: "Construtor de Formulários" },
@@ -12,6 +14,20 @@ const suggestions = [
 const Home = () => {
   const [prompt, setPrompt] = useState("");
   const [activeCreationTab, setActiveCreationTab] = useState<"app" | "agentes" | "flows">("app");
+  const [userName, setUserName] = useState("Usuário");
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.full_name) setUserName(data.full_name);
+      });
+  }, [user]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -25,10 +41,11 @@ const Home = () => {
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-3.5rem)] px-4">
         {/* Greeting */}
         <h1 className="text-3xl lg:text-5xl font-light text-foreground mb-3 text-center">
-          {getGreeting()}, <span className="italic">Usuário</span>
+          {getGreeting()}, <span className="italic">{userName}</span>
         </h1>
         <p className="text-sm lg:text-base text-muted-foreground mb-10 text-center max-w-lg">
-          Crie websites, apps e mobile em minutos — banco de dados, hospedagem e IA inclusos.
+          Crie Agentes, Fluxos inteligentes e apps em<br />
+          minutos conversando com IA.
         </p>
 
         {/* Prompt Box */}
