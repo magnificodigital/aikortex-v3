@@ -1,12 +1,11 @@
 import { AgentRecommendation } from "@/types/agent-builder";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Settings2, Sparkles } from "lucide-react";
 
 import avatar1 from "@/assets/avatars/avatar-1.png";
 import avatar2 from "@/assets/avatars/avatar-2.png";
 import avatar3 from "@/assets/avatars/avatar-3.png";
 import avatar8 from "@/assets/avatars/avatar-8.png";
-import avatar9 from "@/assets/avatars/avatar-9.png";
 
 interface Props {
   selected: AgentRecommendation | null;
@@ -14,14 +13,13 @@ interface Props {
   onNext: () => void;
 }
 
-const AGENT_CARDS = [
+const TEMPLATE_CARDS = [
   {
     id: "sdr-1",
     name: "Agente SDR",
     description: "Qualifica leads inbound, responde em segundos e agenda reuniões com o time comercial 24/7.",
     avatar: avatar1,
     type: "SDR" as const,
-    highlight: true,
   },
   {
     id: "bdr-1",
@@ -29,7 +27,6 @@ const AGENT_CARDS = [
     description: "Prospecta leads outbound, pesquisa empresas-alvo e gera oportunidades via abordagem personalizada.",
     avatar: avatar2,
     type: "BDR" as const,
-    highlight: true,
   },
   {
     id: "sac-1",
@@ -37,7 +34,6 @@ const AGENT_CARDS = [
     description: "Atende clientes automaticamente, resolve dúvidas e reduz tickets com suporte inteligente.",
     avatar: avatar3,
     type: "SAC" as const,
-    highlight: true,
   },
   {
     id: "social-1",
@@ -45,28 +41,19 @@ const AGENT_CARDS = [
     description: "Planeja conteúdo semanal, escreve na sua voz, responde DMs e acompanha o que funciona.",
     avatar: avatar8,
     type: "Custom" as const,
-    highlight: true,
-  },
-  {
-    id: "custom-1",
-    name: "Agente Personalizado",
-    description: "Configure um agente sob medida com total liberdade: objetivos, canais, integrações e comportamento.",
-    avatar: avatar9,
-    type: "Custom" as const,
-    highlight: true,
   },
 ];
 
 const StepAgents = ({ selected, onSelect, onNext }: Props) => {
-  const handleSelect = (card: typeof AGENT_CARDS[0]) => {
-    if (selected?.id === card.id) {
+  const handleSelect = (id: string, type: string, name: string, description: string) => {
+    if (selected?.id === id) {
       onSelect(null);
     } else {
       onSelect({
-        id: card.id,
-        type: card.type,
-        name: card.name,
-        objective: card.description,
+        id,
+        type: type as any,
+        name,
+        objective: description,
         targetAudience: "",
         benefits: [],
         exampleConversation: [],
@@ -75,57 +62,109 @@ const StepAgents = ({ selected, onSelect, onNext }: Props) => {
     }
   };
 
+  const isCustomSelected = selected?.id === "custom-1";
+
   return (
-    <div className="space-y-6 animate-fade-in max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold text-foreground bg-muted px-3 py-1.5 rounded-lg">Templates</span>
-        <button className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-          Browse all <ArrowRight className="w-3.5 h-3.5" />
-        </button>
+    <div className="space-y-8 animate-fade-in max-w-5xl mx-auto">
+      {/* Templates Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-foreground bg-muted px-3 py-1.5 rounded-lg">Templates</span>
+            <span className="text-xs text-muted-foreground">Comece com um agente pré-configurado</span>
+          </div>
+          <button className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+            Ver todos <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {TEMPLATE_CARDS.map((card) => {
+            const active = selected?.id === card.id;
+            return (
+              <button
+                key={card.id}
+                onClick={() => handleSelect(card.id, card.type, card.name, card.description)}
+                className={`text-left rounded-xl border p-5 transition-all duration-200 space-y-4 ${
+                  active
+                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    : "border-border bg-card hover:border-primary/40"
+                }`}
+              >
+                <img
+                  src={card.avatar}
+                  alt={card.name}
+                  loading="lazy"
+                  width={48}
+                  height={48}
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+                <div className="space-y-2">
+                  <h3 className="text-sm font-bold text-foreground">{card.name}</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                    {card.description}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 pt-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
+                  <span className="text-xs text-muted-foreground">Template</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {AGENT_CARDS.map((card) => {
-          const active = selected?.id === card.id;
-          return (
-            <button
-              key={card.id}
-              onClick={() => handleSelect(card)}
-              className={`text-left rounded-xl border p-5 transition-all duration-200 space-y-4 ${
-                active
-                  ? "border-primary bg-primary/5 ring-1 ring-primary"
-                  : "border-border bg-card hover:border-primary/40"
-              }`}
-            >
-              <img
-                src={card.avatar}
-                alt={card.name}
-                loading="lazy"
-                width={48}
-                height={48}
-                className="w-12 h-12 rounded-full object-cover"
-              />
-              <div className="space-y-2">
-                <h3 className="text-sm font-bold text-foreground">{card.name}</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
-                  {card.description}
-                </p>
+      {/* Divider */}
+      <div className="flex items-center gap-4">
+        <div className="flex-1 h-px bg-border" />
+        <span className="text-xs text-muted-foreground font-medium">ou</span>
+        <div className="flex-1 h-px bg-border" />
+      </div>
+
+      {/* Custom Agent Section */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-foreground bg-muted px-3 py-1.5 rounded-lg">Personalizado</span>
+          <span className="text-xs text-muted-foreground">Crie do zero com total liberdade</span>
+        </div>
+
+        <button
+          onClick={() => handleSelect("custom-1", "Custom", "Agente Personalizado", "Configure um agente sob medida com total liberdade: objetivos, canais, integrações e comportamento.")}
+          className={`relative w-full text-left rounded-xl border p-6 transition-all duration-200 ${
+            isCustomSelected
+              ? "border-primary bg-primary/5 ring-1 ring-primary"
+              : "border-dashed border-border bg-card hover:border-primary/40"
+          }`}
+        >
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center shrink-0">
+              <Settings2 className="w-5 h-5 text-accent-foreground" />
+            </div>
+            <div className="space-y-2 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-foreground">Agente Personalizado</span>
+                <Sparkles className="w-3.5 h-3.5 text-primary" />
               </div>
-              <div className="flex items-center gap-1.5 pt-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
-                <span className="text-xs text-muted-foreground">Template</span>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Configure um agente sob medida com total liberdade: defina objetivos, canais, integrações e comportamento sem restrições.
+              </p>
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {["Todos os canais", "Todas as integrações", "Objetivos livres", "100% configurável"].map((tag) => (
+                  <span key={tag} className="text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
+                    {tag}
+                  </span>
+                ))}
               </div>
-            </button>
-          );
-        })}
+            </div>
+          </div>
+        </button>
       </div>
 
       {/* Footer */}
       <div className="flex items-center justify-between pt-2">
         <p className="text-xs text-muted-foreground">
-          {!selected ? "Selecione um agente para continuar" : `${selected.name} selecionado`}
+          {!selected ? "Selecione um template ou crie um personalizado" : `${selected.name} selecionado`}
         </p>
         <Button onClick={onNext} disabled={!selected} className="gap-2">
           Continuar <ArrowRight className="w-4 h-4" />
