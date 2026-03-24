@@ -3,6 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import LandingPage from "./pages/LandingPage";
 import Home from "./pages/Home";
 import Index from "./pages/Index";
@@ -30,41 +32,47 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+const P = ({ children }: { children: React.ReactNode }) => (
+  <ProtectedRoute>{children}</ProtectedRoute>
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/home" element={<Home />} />
-          <Route path="/dashboard" element={<Index />} />
-          <Route path="/cadastro-cliente/:token" element={<ClientRegistration />} />
-          <Route path="/clients" element={<Clients />} />
-          <Route path="/projects" element={<Projects />} />
-          <Route path="/tasks" element={<Tasks />} />
-          <Route path="/team" element={<Team />} />
-          <Route path="/financial" element={<Financial />} />
-          <Route path="/contracts" element={<Contracts />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/partners" element={<Partners />} />
-          <Route path="/sales" element={<Sales />} />
-          <Route path="/aikortex" element={<AikortexCRM />} />
-          <Route path="/aikortex/crm" element={<AikortexCRM />} />
-          <Route path="/aikortex/agents" element={<Aikortex />} />
-          <Route path="/aikortex/automations" element={<AikortexAutomations />} />
-          <Route path="/aikortex/messages" element={<AikortexMessages />} />
-          <Route path="/aikortex/broadcasts" element={<AikortexBroadcasts />} />
-          <Route path="/webedit" element={<WebEdit />} />
-          <Route path="/alowdigital" element={<AlowDigital />} />
-          <Route path="/iagora" element={<IAgora />} />
-          <Route path="/sintonia" element={<SintonIA />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/home" element={<P><Home /></P>} />
+            <Route path="/dashboard" element={<P><Index /></P>} />
+            <Route path="/cadastro-cliente/:token" element={<ClientRegistration />} />
+            <Route path="/clients" element={<P><Clients /></P>} />
+            <Route path="/projects" element={<P><Projects /></P>} />
+            <Route path="/tasks" element={<P><Tasks /></P>} />
+            <Route path="/team" element={<P><Team /></P>} />
+            <Route path="/financial" element={<P><Financial /></P>} />
+            <Route path="/contracts" element={<P><Contracts /></P>} />
+            <Route path="/reports" element={<P><Reports /></P>} />
+            <Route path="/partners" element={<P><Partners /></P>} />
+            <Route path="/sales" element={<P><Sales /></P>} />
+            <Route path="/aikortex" element={<P><AikortexCRM /></P>} />
+            <Route path="/aikortex/crm" element={<P><AikortexCRM /></P>} />
+            <Route path="/aikortex/agents" element={<P><Aikortex /></P>} />
+            <Route path="/aikortex/automations" element={<P><AikortexAutomations /></P>} />
+            <Route path="/aikortex/messages" element={<P><AikortexMessages /></P>} />
+            <Route path="/aikortex/broadcasts" element={<P><AikortexBroadcasts /></P>} />
+            <Route path="/webedit" element={<P><WebEdit /></P>} />
+            <Route path="/alowdigital" element={<P><AlowDigital /></P>} />
+            <Route path="/iagora" element={<P><IAgora /></P>} />
+            <Route path="/sintonia" element={<P><SintonIA /></P>} />
+            <Route path="/settings" element={<P><SettingsPage /></P>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 

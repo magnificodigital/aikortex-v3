@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import aikortexLogoWhite from "@/assets/aikortex-logo-white.png";
-import { Monitor, Sparkles, Globe, ArrowUp, Plus, RefreshCw, Sun, User, LogOut, ChevronDown } from "lucide-react";
+import { Monitor, Sparkles, Globe, ArrowUp, Plus, RefreshCw, Sun, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import AuthModal from "@/components/auth/AuthModal";
 
 const suggestions = [
   { icon: Sparkles, label: "Construtor de Formulários" },
@@ -13,11 +15,15 @@ const suggestions = [
 const LandingPage = () => {
   const [prompt, setPrompt] = useState("");
   const [activeCreationTab, setActiveCreationTab] = useState<"app" | "agentes" | "flows">("app");
+  const [showAuth, setShowAuth] = useState(false);
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
 
-  const handleEnter = () => {
-    navigate("/home");
-  };
+  useEffect(() => {
+    if (!loading && user) {
+      navigate("/home");
+    }
+  }, [user, loading, navigate]);
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white flex flex-col">
@@ -42,12 +48,17 @@ const LandingPage = () => {
             <Globe className="w-4 h-4" />
             PT
           </button>
-          <button onClick={handleEnter} className="flex items-center gap-1.5 hover:text-white transition-colors">
-            <User className="w-4 h-4" />
-            Usuário Teste
+          <button
+            onClick={() => setShowAuth(true)}
+            className="hover:text-white transition-colors"
+          >
+            Entrar
           </button>
-          <button className="hover:text-white transition-colors">
-            <LogOut className="w-4 h-4" />
+          <button
+            onClick={() => setShowAuth(true)}
+            className="px-4 py-1.5 rounded-full bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium transition-colors"
+          >
+            Comece grátis
           </button>
         </div>
       </header>
@@ -56,7 +67,6 @@ const LandingPage = () => {
       <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-10">
         {/* Announcement Banner */}
         <button
-          onClick={handleEnter}
           className="flex items-center gap-2 mb-10 px-5 py-2.5 rounded-full border border-white/10 bg-white/5 text-sm text-white/70 hover:bg-white/10 transition-colors"
         >
           <span className="text-[10px] font-bold uppercase bg-blue-500 text-white px-2 py-0.5 rounded-full">Novo</span>
@@ -78,39 +88,22 @@ const LandingPage = () => {
         <div className="w-full max-w-2xl rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-1 mb-8">
           {/* Creation tabs */}
           <div className="flex items-center gap-1 px-3 pt-2 pb-1">
-            <button
-              onClick={() => setActiveCreationTab("app")}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                activeCreationTab === "app"
-                  ? "bg-blue-500/20 text-blue-400"
-                  : "text-white/40 hover:text-white/60"
-              }`}
-            >
-              <Monitor className="w-4 h-4" />
-              App
-            </button>
-            <button
-              onClick={() => setActiveCreationTab("agentes")}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                activeCreationTab === "agentes"
-                  ? "bg-blue-500/20 text-blue-400"
-                  : "text-white/40 hover:text-white/60"
-              }`}
-            >
-              <Sparkles className="w-4 h-4" />
-              Agentes
-            </button>
-            <button
-              onClick={() => setActiveCreationTab("flows")}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                activeCreationTab === "flows"
-                  ? "bg-blue-500/20 text-blue-400"
-                  : "text-white/40 hover:text-white/60"
-              }`}
-            >
-              <Globe className="w-4 h-4" />
-              Flows
-            </button>
+            {(["app", "agentes", "flows"] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveCreationTab(tab)}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  activeCreationTab === tab
+                    ? "bg-blue-500/20 text-blue-400"
+                    : "text-white/40 hover:text-white/60"
+                }`}
+              >
+                {tab === "app" && <Monitor className="w-4 h-4" />}
+                {tab === "agentes" && <Sparkles className="w-4 h-4" />}
+                {tab === "flows" && <Globe className="w-4 h-4" />}
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
           </div>
 
           {/* Text area */}
@@ -137,7 +130,7 @@ const LandingPage = () => {
               size="icon"
               className="h-9 w-9 rounded-full bg-blue-500 hover:bg-blue-600 text-white"
               disabled={!prompt.trim()}
-              onClick={handleEnter}
+              onClick={() => setShowAuth(true)}
             >
               <ArrowUp className="w-4 h-4" />
             </Button>
@@ -160,6 +153,9 @@ const LandingPage = () => {
           </button>
         </div>
       </div>
+
+      {/* Auth Modal */}
+      <AuthModal open={showAuth} onClose={() => setShowAuth(false)} />
     </div>
   );
 };
