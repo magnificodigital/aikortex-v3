@@ -210,8 +210,8 @@ const AppSidebar = () => {
       <nav className="flex-1 py-1 px-2 space-y-0.5 overflow-y-auto scrollbar-thin">
         {/* Home & Dashboard */}
         <div className="space-y-0.5 mt-2">
-          <Link to="/" className={linkClasses(isItemActive("/"))} title={collapsed ? "Home" : undefined}>
-            <Home className={`w-4 h-4 shrink-0 ${isItemActive("/") ? "text-primary" : ""}`} />
+          <Link to="/home" className={linkClasses(isItemActive("/home"))} title={collapsed ? "Home" : undefined}>
+            <Home className={`w-4 h-4 shrink-0 ${isItemActive("/home") ? "text-primary" : ""}`} />
             {!collapsed && <span>Home</span>}
           </Link>
           <Link to="/dashboard" className={linkClasses(isItemActive("/dashboard"))} title={collapsed ? "Dashboard" : undefined}>
