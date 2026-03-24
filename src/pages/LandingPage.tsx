@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+
 import { useNavigate } from "react-router-dom";
 import aikortexLogoWhite from "@/assets/aikortex-logo-white.png";
 import { Monitor, Sparkles, Globe, ArrowUp, Plus, RefreshCw, Sun, ChevronDown } from "lucide-react";
