@@ -14,6 +14,20 @@ const suggestions = [
 const Home = () => {
   const [prompt, setPrompt] = useState("");
   const [activeCreationTab, setActiveCreationTab] = useState<"app" | "agentes" | "flows">("app");
+  const [userName, setUserName] = useState("Usuário");
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.full_name) setUserName(data.full_name);
+      });
+  }, [user]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
