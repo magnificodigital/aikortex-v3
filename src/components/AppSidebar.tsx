@@ -46,7 +46,7 @@ const gestaoItems = [
 ];
 
 const aikortexItems = [
-  { label: "Agentes", icon: UserCheck, path: "/aikortex/agents" },
+  { label: "Agentes", icon: Bot, path: "/aikortex/agents" },
   { label: "Automações", icon: Workflow, path: "/aikortex/automations" },
   { label: "CRM", icon: Contact, path: "/aikortex/crm" },
   { label: "Mensagens", icon: MessageSquare, path: "/aikortex/messages" },
@@ -67,8 +67,6 @@ const AppSidebar = () => {
         key={item.path}
         to={item.path}
         className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-          collapsed ? "" : "pl-9"
-        } ${
           isActive
             ? "bg-sidebar-accent text-sidebar-accent-foreground"
             : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
