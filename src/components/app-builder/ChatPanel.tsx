@@ -1,30 +1,11 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
-  ArrowUp, ChevronDown, ChevronLeft, Wrench,
+  ArrowUp, Bot, ChevronDown, ChevronLeft, Mic, Wrench,
   CheckCircle2, AlertCircle, ChevronUp,
-  Monitor, Sparkles, Globe, Plus, RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
-
-const suggestionsByTab = {
-  app: [
-    ["Construtor de Formulários", "Dashboard de Vendas", "Landing Page"],
-    ["Sistema de Tarefas", "Painel Financeiro", "CRM Completo"],
-    ["E-commerce Simples", "Blog com IA", "Portal de Clientes"],
-  ],
-  agentes: [
-    ["Agente SDR para WhatsApp", "Agente de Suporte 24/7", "Agente de Qualificação"],
-    ["Agente BDR LinkedIn", "Agente CS Pós-Venda", "Agente de Pesquisa"],
-    ["Agente de Onboarding", "Agente Cobranças", "Agente Agendamento"],
-  ],
-  flows: [
-    ["Fluxo de Onboarding", "Automação de E-mail", "Pipeline de Vendas"],
-    ["Nutrição de Leads", "Fluxo Pós-Compra", "Workflow de Aprovação"],
-    ["Integração CRM + WhatsApp", "Fluxo de Cobrança", "Sequência Follow-up"],
-  ],
-};
 
 type Msg = { role: "user" | "assistant"; content: string };
 
