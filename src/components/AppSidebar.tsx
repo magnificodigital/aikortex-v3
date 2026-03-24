@@ -42,7 +42,8 @@ import {
 type NavItem = { label: string; icon: typeof Home; path: string };
 
 const homeItems: NavItem[] = [
-  { label: "Dashboard", icon: LayoutDashboard, path: "/" },
+  { label: "Home", icon: Home, path: "/" },
+  { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
 ];
 
 const gestaoItems: NavItem[] = [
