@@ -60,10 +60,40 @@ async function streamChat({
 }
 
 const AppBuilder = () => {
+  const location = useLocation();
+  const initialPrompt = (location.state as any)?.initialPrompt || "";
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const sentInitial = useRef(false);
+
+  // Auto-send initial prompt from Home
+  useEffect(() => {
+    if (initialPrompt && !sentInitial.current) {
+      sentInitial.current = true;
+      setInput(initialPrompt);
+      setTimeout(() => {
+        const userMsg: Msg = { role: "user", content: initialPrompt };
+        setMessages([userMsg]);
+        setInput("");
+        setIsLoading(true);
+        let assistantSoFar = "";
+        const upsert = (chunk: string) => {
+          assistantSoFar += chunk;
+          setMessages((prev) => {
+            const last = prev[prev.length - 1];
+            if (last?.role === "assistant") {
+              return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: assistantSoFar } : m));
+            }
+            return [...prev, { role: "assistant", content: assistantSoFar }];
+          });
+        };
+        streamChat({ messages: [userMsg], onDelta: upsert, onDone: () => setIsLoading(false) })
+          .catch(() => { toast.error("Erro ao se comunicar com a IA"); setIsLoading(false); });
+      }, 100);
+    }
+  }, [initialPrompt]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
