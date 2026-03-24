@@ -141,7 +141,7 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onBack}>
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <span className="text-sm font-semibold tracking-tight">Studio AI</span>
+          <span className="text-sm font-semibold tracking-tight">Webedit</span>
         </div>
       </div>
 
