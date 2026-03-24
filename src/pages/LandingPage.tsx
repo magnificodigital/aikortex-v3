@@ -90,7 +90,7 @@ const LandingPage = () => {
           </button>
           <button
             onClick={() => openAuthModal("signup")}
-            className="px-4 py-1.5 rounded-full bg-[#559caa] hover:bg-[#4a8a97] text-white text-sm font-medium transition-colors"
+            className="px-4 py-1.5 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium transition-colors"
           >
             Comece grátis
           </button>
