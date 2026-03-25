@@ -69,6 +69,10 @@ interface KnowledgeFileLocal {
 
 const AgentRightPanel = ({ agent, agentModel, onModelChange, activeTab, onTabChange }: Props) => {
   const [rightTab, setRightTab] = useState(activeTab || "agent");
+  const [connectorDialog, setConnectorDialog] = useState<null | typeof INTEGRATIONS[0]>(null);
+  const [connectorKeys, setConnectorKeys] = useState<Record<string, { key: string; configured: boolean }>>({});
+  const [keyInput, setKeyInput] = useState("");
+  const [showKey, setShowKey] = useState(false);
 
   const handleTabChange = (tab: string) => {
     setRightTab(tab);
@@ -90,6 +94,41 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange, activeTab, onTabCha
   const fileInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+
+  const handleConnectIntegration = (integration: typeof INTEGRATIONS[0]) => {
+    const existing = connectorKeys[integration.label];
+    if (existing?.configured) {
+      // Already configured, open to manage
+      setKeyInput(existing.key);
+    } else {
+      setKeyInput("");
+    }
+    setShowKey(false);
+    setConnectorDialog(integration);
+  };
+
+  const handleSaveKey = () => {
+    if (!connectorDialog || !keyInput.trim()) return;
+    setConnectorKeys(prev => ({
+      ...prev,
+      [connectorDialog.label]: { key: keyInput.trim(), configured: true },
+    }));
+    setConnectorDialog(null);
+    setKeyInput("");
+    toast.success(`${connectorDialog.label} conectado com sucesso!`);
+  };
+
+  const handleDisconnect = () => {
+    if (!connectorDialog) return;
+    setConnectorKeys(prev => {
+      const next = { ...prev };
+      delete next[connectorDialog.label];
+      return next;
+    });
+    setConnectorDialog(null);
+    setKeyInput("");
+    toast.success(`${connectorDialog.label} desconectado.`);
+  };
 
   const handleFiles = (files: FileList) => {
     const newFiles: KnowledgeFileLocal[] = Array.from(files)
