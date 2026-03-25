@@ -156,14 +156,11 @@ const StepAgents = ({ selected, onSelect }: Props) => {
         </button>
       </div>
 
-      {/* Footer */}
-      <div className="flex items-center justify-between pt-2">
-        <p className="text-xs text-muted-foreground">
-          {!selected ? "Selecione um template ou crie um personalizado" : `${selected.name} selecionado`}
+      {/* Footer hint */}
+      <div className="pt-2">
+        <p className="text-xs text-muted-foreground text-center">
+          Selecione um template ou crie um personalizado para continuar
         </p>
-        <Button onClick={onNext} disabled={!selected} className="gap-2">
-          Continuar <ArrowRight className="w-4 h-4" />
-        </Button>
       </div>
     </div>
   );
