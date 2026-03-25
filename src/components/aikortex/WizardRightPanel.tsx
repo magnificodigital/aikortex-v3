@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -95,6 +95,8 @@ interface Props {
   onStagesChange: (stages: ConversationStage[]) => void;
   advancedConfig: AgentAdvancedConfig;
   onAdvancedConfigChange: (cfg: AgentAdvancedConfig) => void;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
 }
 
 const WizardRightPanel = ({
@@ -105,8 +107,20 @@ const WizardRightPanel = ({
   intents, onIntentsChange,
   stages, onStagesChange,
   advancedConfig, onAdvancedConfigChange,
+  activeTab, onTabChange,
 }: Props) => {
-  const [rightTab, setRightTab] = useState("agent");
+  const [rightTab, setRightTab] = useState(activeTab || "agent");
+
+  const handleTabChange = (tab: string) => {
+    setRightTab(tab);
+    onTabChange?.(tab);
+  };
+
+  useEffect(() => {
+    if (activeTab && activeTab !== rightTab) {
+      setRightTab(activeTab);
+    }
+  }, [activeTab]);
   const [settingsNav, setSettingsNav] = useState<SettingsNavKey>("identidade");
   const [urlInput, setUrlInput] = useState("");
   const [urls, setUrls] = useState<string[]>([]);
@@ -195,7 +209,7 @@ const WizardRightPanel = ({
 
   return (
     <div className="flex-1 flex flex-col min-w-0">
-      <Tabs value={rightTab} onValueChange={setRightTab} className="flex flex-col h-full">
+      <Tabs value={rightTab} onValueChange={handleTabChange} className="flex flex-col h-full">
         <div className="border-b border-border px-4">
           <TabsList className="bg-transparent h-11 gap-0 p-0">
             {[

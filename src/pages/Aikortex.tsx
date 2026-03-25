@@ -69,6 +69,7 @@ const Aikortex = () => {
   const [input, setInput] = useState("");
   const [agentModel, setAgentModel] = useState("gemini-2.5-flash");
   const [llmConfigured, setLlmConfigured] = useState(false);
+  const [rightPanelTab, setRightPanelTab] = useState("agent");
   const [didAutoRoute, setDidAutoRoute] = useState(false);
 
   // Auto-route from Home prompt
@@ -217,7 +218,7 @@ const Aikortex = () => {
                   </select>
                 ) : (
                   <button
-                    onClick={() => setLlmConfigured(true)}
+                    onClick={() => setRightPanelTab("connectors")}
                     className="flex items-center gap-1 text-xs text-yellow-500 hover:text-yellow-400 transition-colors font-medium"
                   >
                     ⚙️ Configurar LLM
@@ -254,6 +255,8 @@ const Aikortex = () => {
         onStagesChange={setStages}
         advancedConfig={advancedConfig}
         onAdvancedConfigChange={setAdvancedConfig}
+        activeTab={rightPanelTab}
+        onTabChange={setRightPanelTab}
       />
     </div>
   );

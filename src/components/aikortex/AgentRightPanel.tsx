@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -54,6 +54,8 @@ interface Props {
   agent: { name: string; avatar: string };
   agentModel: string;
   onModelChange: (model: string) => void;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
 }
 
 interface KnowledgeFileLocal {
@@ -63,8 +65,19 @@ interface KnowledgeFileLocal {
   type: string;
 }
 
-const AgentRightPanel = ({ agent, agentModel, onModelChange }: Props) => {
-  const [rightTab, setRightTab] = useState("agent");
+const AgentRightPanel = ({ agent, agentModel, onModelChange, activeTab, onTabChange }: Props) => {
+  const [rightTab, setRightTab] = useState(activeTab || "agent");
+
+  const handleTabChange = (tab: string) => {
+    setRightTab(tab);
+    onTabChange?.(tab);
+  };
+
+  useEffect(() => {
+    if (activeTab && activeTab !== rightTab) {
+      setRightTab(activeTab);
+    }
+  }, [activeTab]);
   const [settingsNav, setSettingsNav] = useState("general");
   const [agentName, setAgentName] = useState(agent.name);
   const [agentDesc, setAgentDesc] = useState("");
@@ -119,7 +132,7 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange }: Props) => {
 
   return (
     <div className="flex-1 flex flex-col min-w-0">
-      <Tabs value={rightTab} onValueChange={setRightTab} className="flex flex-col h-full">
+      <Tabs value={rightTab} onValueChange={handleTabChange} className="flex flex-col h-full">
         <div className="border-b border-border px-4">
           <TabsList className="bg-transparent h-11 gap-0 p-0">
             {[

@@ -44,8 +44,9 @@ const AgentDetail = () => {
   ]);
   const [input, setInput] = useState("");
   const [agentModel, setAgentModel] = useState(agent.model);
-  const [llmConfigured, setLlmConfigured] = useState(true); // AgentDetail = already configured
-  const [isFullyConfigured, setIsFullyConfigured] = useState(true); // already deployed agent
+  const [llmConfigured, setLlmConfigured] = useState(true);
+  const [isFullyConfigured, setIsFullyConfigured] = useState(true);
+  const [rightPanelTab, setRightPanelTab] = useState("agent");
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -130,7 +131,7 @@ const AgentDetail = () => {
                   </select>
                 ) : (
                   <button
-                    onClick={() => setLlmConfigured(true)}
+                    onClick={() => setRightPanelTab("connectors")}
                     className="flex items-center gap-1 text-xs text-yellow-500 hover:text-yellow-400 transition-colors font-medium"
                   >
                     ⚙️ Configurar LLM
@@ -151,7 +152,7 @@ const AgentDetail = () => {
       </div>
 
       {/* RIGHT — Panel */}
-      <AgentRightPanel agent={agent} agentModel={agentModel} onModelChange={setAgentModel} />
+      <AgentRightPanel agent={agent} agentModel={agentModel} onModelChange={setAgentModel} activeTab={rightPanelTab} onTabChange={setRightPanelTab} />
     </div>
   );
 };
