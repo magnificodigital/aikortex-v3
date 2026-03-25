@@ -44,10 +44,21 @@ const defaultStartNode: Node = {
 
 let nodeIdCounter = 1;
 
-export default function FlowCanvas() {
+interface FlowCanvasProps {
+  initialNodes?: unknown[];
+  initialEdges?: unknown[];
+  flowName?: string;
+  flowId?: string;
+  onSave?: (name: string, nodes: unknown[], edges: unknown[], flowId?: string) => void;
+}
+
+export default function FlowCanvas({ initialNodes, initialEdges, flowName, flowId, onSave }: FlowCanvasProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const [nodes, setNodes, onNodesChange] = useNodesState([defaultStartNode]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const startNodes = initialNodes && (initialNodes as Node[]).length > 0
+    ? (initialNodes as Node[])
+    : [defaultStartNode];
+  const [nodes, setNodes, onNodesChange] = useNodesState(startNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState((initialEdges as Edge[]) || []);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
 
