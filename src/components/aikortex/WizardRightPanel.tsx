@@ -95,6 +95,8 @@ interface Props {
   onStagesChange: (stages: ConversationStage[]) => void;
   advancedConfig: AgentAdvancedConfig;
   onAdvancedConfigChange: (cfg: AgentAdvancedConfig) => void;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
 }
 
 const WizardRightPanel = ({
@@ -105,8 +107,18 @@ const WizardRightPanel = ({
   intents, onIntentsChange,
   stages, onStagesChange,
   advancedConfig, onAdvancedConfigChange,
+  activeTab, onTabChange,
 }: Props) => {
-  const [rightTab, setRightTab] = useState("agent");
+  const [rightTab, setRightTab] = useState(activeTab || "agent");
+
+  const handleTabChange = (tab: string) => {
+    setRightTab(tab);
+    onTabChange?.(tab);
+  };
+
+  if (activeTab && activeTab !== rightTab) {
+    setRightTab(activeTab);
+  }
   const [settingsNav, setSettingsNav] = useState<SettingsNavKey>("identidade");
   const [urlInput, setUrlInput] = useState("");
   const [urls, setUrls] = useState<string[]>([]);
