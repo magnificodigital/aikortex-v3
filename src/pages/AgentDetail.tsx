@@ -80,27 +80,6 @@ const AgentDetail = () => {
           </span>
         </div>
 
-        {/* Channel bar */}
-        {showChannels && (
-          <div className="px-4 py-2 border-b border-border">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Chat from an app you already use</span>
-              <button className="ml-auto text-muted-foreground hover:text-foreground" onClick={() => setShowChannels(false)}>
-                <span className="text-xs">✕</span>
-              </button>
-            </div>
-            <div className="flex gap-2 mt-2">
-              {CHANNELS.map((ch) => (
-                <button
-                  key={ch.label}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-border text-xs font-medium hover:border-primary/40 transition-colors"
-                >
-                  <span>{ch.icon}</span> {ch.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Messages */}
         <ScrollArea className="flex-1 p-4">
