@@ -51,13 +51,19 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange }: Props) => {
       <Tabs value={rightTab} onValueChange={setRightTab} className="flex flex-col h-full">
         <div className="border-b border-border px-4">
           <TabsList className="bg-transparent h-11 gap-0 p-0">
-            {["connectors", "secrets", "files", "terminal", "settings"].map((tab) => (
+            {[
+              { value: "agent", label: "Agente" },
+              { value: "connectors", label: "Integrações" },
+              { value: "secrets", label: "Secrets" },
+              { value: "files", label: "Arquivos" },
+              { value: "settings", label: "Configurações" },
+            ].map((tab) => (
               <TabsTrigger
-                key={tab}
-                value={tab}
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 text-sm capitalize"
+                key={tab.value}
+                value={tab.value}
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 text-sm"
               >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                {tab.label}
               </TabsTrigger>
             ))}
           </TabsList>
