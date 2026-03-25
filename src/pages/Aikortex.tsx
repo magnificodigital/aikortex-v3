@@ -1,10 +1,8 @@
 import { useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Send, Paperclip, HelpCircle, ChevronDown, ArrowRight } from "lucide-react";
+import { ArrowLeft, Send, Paperclip, HelpCircle, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import DashboardLayout from "@/components/DashboardLayout";
 import {
@@ -18,17 +16,13 @@ import {
   type ConversationStage,
   type AgentAdvancedConfig,
   INITIAL_CONTEXT,
-  WIZARD_STEPS,
   MANDATORY_INTENTS,
   DEFAULT_CONVERSATION_STAGES,
   DEFAULT_ADVANCED_CONFIG,
 } from "@/types/agent-builder";
 import { AGENT_PRESETS } from "@/types/agent-presets";
 import StepAgents from "@/components/aikortex/StepAgents";
-import StepContext from "@/components/aikortex/StepContext";
-import StepChannels from "@/components/aikortex/StepChannels";
-import StepIntegrations from "@/components/aikortex/StepIntegrations";
-import StepLaunch from "@/components/aikortex/StepLaunch";
+import WizardRightPanel from "@/components/aikortex/WizardRightPanel";
 
 import avatar1 from "@/assets/avatars/avatar-1.png";
 import avatar2 from "@/assets/avatars/avatar-2.png";
@@ -57,16 +51,8 @@ const MOCK_RESPONSES: Record<string, string> = {
   funciona: "Nosso sistema é super intuitivo! Quer que eu te mostre como?",
 };
 
-const STEP_TABS: { key: WizardStep; label: string }[] = [
-  { key: "context", label: "Empresa" },
-  { key: "channels", label: "Canais" },
-  { key: "integrations", label: "Integrações" },
-  { key: "launch", label: "Ativar" },
-];
-
 const Aikortex = () => {
-  const navigate = useNavigate();
-  const [step, setStep] = useState<WizardStep>("agent");
+  const [step, setStep] = useState<"agent" | "configure">("agent");
   const [context, setContext] = useState<BusinessContext>(INITIAL_CONTEXT);
   const [selectedAgent, setSelectedAgent] = useState<AgentRecommendation | null>(null);
   const [selectedChannels, setSelectedChannels] = useState<DeployChannel[]>([]);
@@ -76,13 +62,12 @@ const Aikortex = () => {
   const [stages, setStages] = useState<ConversationStage[]>([...DEFAULT_CONVERSATION_STAGES]);
   const [advancedConfig, setAdvancedConfig] = useState<AgentAdvancedConfig>({ ...DEFAULT_ADVANCED_CONFIG });
 
-  // Chat state
   const [messages, setMessages] = useState<{ role: "user" | "agent"; text: string }[]>([]);
   const [input, setInput] = useState("");
   const [showChannels, setShowChannels] = useState(true);
   const agentModel = "gemini-2.5-flash";
 
-  const applyPresetAndGoToContext = useCallback(() => {
+  const applyPresetAndConfigure = useCallback(() => {
     if (selectedAgent) {
       const preset = AGENT_PRESETS[selectedAgent.type];
       setContext((prev) => ({ ...prev, ...preset.context }));
@@ -91,20 +76,14 @@ const Aikortex = () => {
       setAdvancedConfig({ ...preset.advancedConfig });
       setMessages([{ role: "agent", text: `Olá! Sou ${selectedAgent.name}. Como posso ajudar?` }]);
     }
-    setStep("context");
+    setStep("configure");
   }, [selectedAgent]);
 
-  const toggleChannel = (ch: DeployChannel) => {
-    setSelectedChannels((prev) =>
-      prev.includes(ch) ? prev.filter((c) => c !== ch) : [...prev, ch]
-    );
-  };
+  const toggleChannel = (ch: DeployChannel) =>
+    setSelectedChannels((prev) => prev.includes(ch) ? prev.filter((c) => c !== ch) : [...prev, ch]);
 
-  const toggleTool = (tool: ExternalTool) => {
-    setSelectedTools((prev) =>
-      prev.includes(tool) ? prev.filter((t) => t !== tool) : [...prev, tool]
-    );
-  };
+  const toggleTool = (tool: ExternalTool) =>
+    setSelectedTools((prev) => prev.includes(tool) ? prev.filter((t) => t !== tool) : [...prev, tool]);
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -118,36 +97,28 @@ const Aikortex = () => {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
-  // Step 1: Agent selection (full-width inside DashboardLayout)
+  // Step 1: Agent selection
   if (step === "agent") {
     return (
       <DashboardLayout>
         <div className="p-4 lg:p-8 max-w-5xl mx-auto space-y-6">
-          <StepAgents
-            selected={selectedAgent}
-            onSelect={setSelectedAgent}
-            onNext={applyPresetAndGoToContext}
-          />
+          <StepAgents selected={selectedAgent} onSelect={setSelectedAgent} onNext={applyPresetAndConfigure} />
         </div>
       </DashboardLayout>
     );
   }
 
-  // Steps 2-5: Split-screen layout (chat left, steps right)
+  // Step 2: Configure — split layout matching AgentDetail
   const agentAvatar = AVATARS_MAP[selectedAgent?.id || "sdr-1"] || avatar1;
   const agentName = selectedAgent?.name || "Agente IA";
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
       {/* LEFT — Chat */}
-      <div className="w-full max-w-[50%] flex flex-col border-r border-border">
-        {/* Header */}
+      <div className="w-full max-w-[55%] flex flex-col border-r border-border">
         <div className="h-12 border-b border-border flex items-center gap-3 px-4 shrink-0">
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setStep("agent")}>
             <ArrowLeft className="w-4 h-4" />
@@ -161,7 +132,6 @@ const Aikortex = () => {
           <span className="text-xs text-muted-foreground ml-1">{agentModel}</span>
         </div>
 
-        {/* Channel bar */}
         {showChannels && (
           <div className="px-4 py-2 border-b border-border">
             <div className="flex items-center gap-2">
@@ -172,10 +142,7 @@ const Aikortex = () => {
             </div>
             <div className="flex gap-2 mt-2">
               {CHANNELS.map((ch) => (
-                <button
-                  key={ch.label}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-border text-xs font-medium hover:border-primary/40 transition-colors"
-                >
+                <button key={ch.label} className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-border text-xs font-medium hover:border-primary/40 transition-colors">
                   <span>{ch.icon}</span> {ch.label}
                 </button>
               ))}
@@ -183,19 +150,12 @@ const Aikortex = () => {
           </div>
         )}
 
-        {/* Messages */}
         <ScrollArea className="flex-1 p-4">
           <div className="space-y-4">
             {messages.map((msg, i) => (
               <div key={i} className={`flex gap-2.5 items-start ${msg.role === "user" ? "justify-end" : ""}`}>
-                {msg.role === "agent" && (
-                  <img src={agentAvatar} alt="" className="w-6 h-6 rounded-full object-cover mt-0.5" />
-                )}
-                <div className={`rounded-xl px-3.5 py-2.5 text-sm max-w-[75%] ${
-                  msg.role === "agent"
-                    ? "bg-muted/60 text-foreground"
-                    : "bg-primary text-primary-foreground ml-auto"
-                }`}>
+                {msg.role === "agent" && <img src={agentAvatar} alt="" className="w-6 h-6 rounded-full object-cover mt-0.5" />}
+                <div className={`rounded-xl px-3.5 py-2.5 text-sm max-w-[75%] ${msg.role === "agent" ? "bg-muted/60 text-foreground" : "bg-primary text-primary-foreground ml-auto"}`}>
                   {msg.text}
                 </div>
               </div>
@@ -203,7 +163,6 @@ const Aikortex = () => {
           </div>
         </ScrollArea>
 
-        {/* Input */}
         <div className="px-4 pb-4 pt-2">
           <div className="border border-border rounded-xl bg-muted/30 flex flex-col">
             <Textarea
@@ -235,87 +194,24 @@ const Aikortex = () => {
         </div>
       </div>
 
-      {/* RIGHT — Wizard Steps as Tabs */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <Tabs value={step} onValueChange={(v) => setStep(v as WizardStep)} className="flex flex-col h-full">
-          <div className="border-b border-border px-4">
-            <TabsList className="bg-transparent h-11 gap-0 p-0">
-              {STEP_TABS.map((tab) => (
-                <TabsTrigger
-                  key={tab.key}
-                  value={tab.key}
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 text-sm"
-                >
-                  {tab.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </div>
-
-          <TabsContent value="context" className="flex-1 mt-0 overflow-hidden">
-            <ScrollArea className="h-full">
-              <div className="p-6">
-                <StepContext
-                  context={context}
-                  onChange={setContext}
-                  onNext={() => setStep("channels")}
-                  onBack={() => setStep("agent")}
-                  advancedConfig={advancedConfig}
-                  onAdvancedConfigChange={setAdvancedConfig}
-                  intents={intents}
-                  onIntentsChange={setIntents}
-                  stages={stages}
-                  onStagesChange={setStages}
-                />
-              </div>
-            </ScrollArea>
-          </TabsContent>
-
-          <TabsContent value="channels" className="flex-1 mt-0 overflow-hidden">
-            <ScrollArea className="h-full">
-              <div className="p-6">
-                <StepChannels
-                  selected={selectedChannels}
-                  onToggle={toggleChannel}
-                  onNext={() => setStep("integrations")}
-                  onBack={() => setStep("context")}
-                  agentType={selectedAgent?.type || null}
-                />
-              </div>
-            </ScrollArea>
-          </TabsContent>
-
-          <TabsContent value="integrations" className="flex-1 mt-0 overflow-hidden">
-            <ScrollArea className="h-full">
-              <div className="p-6">
-                <StepIntegrations
-                  selected={selectedTools}
-                  onToggle={toggleTool}
-                  onNext={() => setStep("launch")}
-                  onBack={() => setStep("channels")}
-                  agentType={selectedAgent?.type || null}
-                />
-              </div>
-            </ScrollArea>
-          </TabsContent>
-
-          <TabsContent value="launch" className="flex-1 mt-0 overflow-hidden">
-            <ScrollArea className="h-full">
-              <div className="p-6">
-                <StepLaunch
-                  context={context}
-                  agent={selectedAgent}
-                  selectedChannels={selectedChannels}
-                  onToggleChannel={toggleChannel}
-                  selectedCRM={selectedCRM}
-                  onSelectCRM={setSelectedCRM}
-                  onBack={() => setStep("integrations")}
-                />
-              </div>
-            </ScrollArea>
-          </TabsContent>
-        </Tabs>
-      </div>
+      {/* RIGHT — Wizard Panel */}
+      <WizardRightPanel
+        context={context}
+        onContextChange={setContext}
+        selectedAgent={selectedAgent}
+        selectedChannels={selectedChannels}
+        onToggleChannel={toggleChannel}
+        selectedTools={selectedTools}
+        onToggleTool={toggleTool}
+        selectedCRM={selectedCRM}
+        onSelectCRM={setSelectedCRM}
+        intents={intents}
+        onIntentsChange={setIntents}
+        stages={stages}
+        onStagesChange={setStages}
+        advancedConfig={advancedConfig}
+        onAdvancedConfigChange={setAdvancedConfig}
+      />
     </div>
   );
 };
