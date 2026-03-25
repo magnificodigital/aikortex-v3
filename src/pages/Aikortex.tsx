@@ -53,6 +53,7 @@ const MOCK_RESPONSES: Record<string, string> = {
 };
 
 const Aikortex = () => {
+  const location = useLocation();
   const [step, setStep] = useState<"agent" | "configure">("agent");
   const [context, setContext] = useState<BusinessContext>(INITIAL_CONTEXT);
   const [selectedAgent, setSelectedAgent] = useState<AgentRecommendation | null>(null);
@@ -67,6 +68,49 @@ const Aikortex = () => {
   const [input, setInput] = useState("");
   const [showChannels, setShowChannels] = useState(true);
   const agentModel = "gemini-2.5-flash";
+  const [didAutoRoute, setDidAutoRoute] = useState(false);
+
+  // Auto-route from Home prompt
+  useEffect(() => {
+    if (didAutoRoute) return;
+    const state = location.state as any;
+    if (!state?.initialPrompt) return;
+    setDidAutoRoute(true);
+
+    const text = state.initialPrompt.toLowerCase();
+    const SDR_KW = ["sdr", "qualificação", "qualificacao", "inbound"];
+    const BDR_KW = ["bdr", "prospecção", "prospeccao", "outbound"];
+    const SAC_KW = ["sac", "suporte", "atendimento", "customer"];
+
+    let agentId = "custom-1";
+    let agentType: "SDR" | "BDR" | "SAC" | "Custom" = "Custom";
+    let agentName = "Agente Personalizado";
+
+    if (SDR_KW.some((k) => text.includes(k))) {
+      agentId = "sdr-1"; agentType = "SDR"; agentName = "Agente SDR";
+    } else if (BDR_KW.some((k) => text.includes(k))) {
+      agentId = "bdr-1"; agentType = "BDR"; agentName = "Agente BDR";
+    } else if (SAC_KW.some((k) => text.includes(k))) {
+      agentId = "sac-1"; agentType = "SAC"; agentName = "Agente SAC";
+    }
+
+    const agent: AgentRecommendation = {
+      id: agentId, type: agentType, name: agentName,
+      objective: state.initialPrompt, targetAudience: "", benefits: [],
+      exampleConversation: [], selected: true,
+    };
+    setSelectedAgent(agent);
+
+    const preset = AGENT_PRESETS[agentType];
+    setContext((prev) => ({ ...prev, ...preset.context }));
+    setIntents([...preset.intents]);
+    setStages([...preset.stages]);
+    setAdvancedConfig({ ...preset.advancedConfig });
+    setMessages([
+      { role: "agent", text: `Olá! Sou ${agentName}. Recebi seu pedido: "${state.initialPrompt}". Vamos configurar!` },
+    ]);
+    setStep("configure");
+  }, [location.state, didAutoRoute]);
 
   const applyPresetAndConfigure = useCallback(() => {
     if (selectedAgent) {
