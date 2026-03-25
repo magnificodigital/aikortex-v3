@@ -87,8 +87,48 @@ const PROVIDER_MAP: Record<string, string> = {
   "RD Station": "rdstation",
 };
 
-const AgentRightPanel = ({ agent, agentModel, onModelChange, activeTab, onTabChange }: Props) => {
+const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTab, onTabChange }: Props) => {
   const [rightTab, setRightTab] = useState(activeTab || "agent");
+
+  // Filter integrations and channels by agent type
+  const relevantToolKeys = TOOLS_BY_AGENT_TYPE[agentType] || TOOLS_BY_AGENT_TYPE["Custom"];
+  const relevantChannelKeys = CHANNELS_BY_AGENT_TYPE[agentType] || CHANNELS_BY_AGENT_TYPE["Custom"];
+
+  const filteredIntegrations = useMemo(() => {
+    // Map EXTERNAL_TOOLS values to INTEGRATIONS labels
+    const toolLabelMap: Record<string, string[]> = {
+      openai: ["OpenAI"],
+      anthropic: ["Anthropic"],
+      gemini: ["Gemini"],
+      elevenlabs: ["ElevenLabs"],
+      google_calendar: ["Google Calendar"],
+      outlook: ["Outlook Calendar"],
+      piperun: ["Piperun"],
+      rd_station: ["RD Station"],
+      crm_generic: ["HubSpot"],
+      deepseek: [],
+    };
+    const allowedLabels = new Set<string>();
+    // Always include OpenRouter
+    allowedLabels.add("OpenRouter");
+    relevantToolKeys.forEach(key => {
+      (toolLabelMap[key] || []).forEach(label => allowedLabels.add(label));
+    });
+    // For tools that also have calendar/productivity, add related ones
+    if (relevantToolKeys.includes("google_calendar")) {
+      allowedLabels.add("Google Sheets");
+      allowedLabels.add("Google Drive");
+      allowedLabels.add("Calendly");
+    }
+    if (relevantToolKeys.includes("outlook")) {
+      allowedLabels.add("Gmail");
+    }
+    return INTEGRATIONS.filter(i => allowedLabels.has(i.label));
+  }, [relevantToolKeys]);
+
+  const filteredChannels = useMemo(() => {
+    return CHANNELS.filter(ch => relevantChannelKeys.includes(ch.value as any));
+  }, [relevantChannelKeys]);
   const [connectorDialog, setConnectorDialog] = useState<null | typeof INTEGRATIONS[0]>(null);
   const [connectorKeys, setConnectorKeys] = useState<Record<string, { key: string; configured: boolean }>>({});
   const [keyInput, setKeyInput] = useState("");
