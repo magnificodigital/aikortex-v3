@@ -223,6 +223,60 @@
   height: 500px;
 }
 
+/* Ambient top light animation */
+@keyframes ambient-drift {
+  0%, 100% { transform: translateX(-10%) scaleX(1); opacity: 0.5; }
+  25% { transform: translateX(15%) scaleX(1.2); opacity: 0.7; }
+  50% { transform: translateX(-5%) scaleX(0.9); opacity: 0.4; }
+  75% { transform: translateX(10%) scaleX(1.1); opacity: 0.6; }
+}
+
+@keyframes ambient-drift-alt {
+  0%, 100% { transform: translateX(10%) scaleX(1.1); opacity: 0.3; }
+  33% { transform: translateX(-15%) scaleX(0.85); opacity: 0.5; }
+  66% { transform: translateX(5%) scaleX(1.15); opacity: 0.35; }
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: -80px;
+  left: -10%;
+  width: 120%;
+  height: 200px;
+  background: radial-gradient(ellipse 60% 100% at 50% 0%, hsl(var(--primary) / 0.07), transparent 70%);
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: 0;
+  animation: ambient-drift 18s ease-in-out infinite;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  top: -60px;
+  left: 0%;
+  width: 100%;
+  height: 160px;
+  background: radial-gradient(ellipse 40% 100% at 40% 0%, hsl(var(--info) / 0.05), transparent 70%);
+  filter: blur(50px);
+  pointer-events: none;
+  z-index: 0;
+  animation: ambient-drift-alt 24s ease-in-out infinite;
+}
+
+.dark body::before {
+  background: radial-gradient(ellipse 60% 100% at 50% 0%, hsl(224 64% 57% / 0.12), transparent 70%);
+  height: 250px;
+  filter: blur(50px);
+}
+
+.dark body::after {
+  background: radial-gradient(ellipse 40% 100% at 40% 0%, hsl(199 70% 50% / 0.08), transparent 70%);
+  height: 200px;
+  filter: blur(60px);
+}
+
 /* Dark mode - deep gradient background */
 .dark body {
   background: 
