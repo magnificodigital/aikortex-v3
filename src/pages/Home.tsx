@@ -43,7 +43,7 @@ const Home = () => {
 
     // Check active tab first, then detect intent from text
     if (activeCreationTab === "agentes" || AGENT_KEYWORDS.some((k) => text.includes(k))) {
-      navigate("/aikortex", { state: { initialPrompt: prompt.trim() } });
+      navigate("/aikortex/agents", { state: { initialPrompt: prompt.trim() } });
     } else if (activeCreationTab === "flows" || FLOW_KEYWORDS.some((k) => text.includes(k))) {
       navigate("/aikortex", { state: { initialPrompt: prompt.trim(), tab: "flows" } });
     } else {
