@@ -113,23 +113,11 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange }: Props) => {
           </div>
         </TabsContent>
 
-        {/* Terminal */}
-        <TabsContent value="terminal" className="flex-1 mt-0">
-          <div className="h-full bg-muted p-4 font-mono text-xs text-primary">
-            <p>$ agent status</p>
-            <p className="text-muted-foreground">Agent "{agent.name}" is running.</p>
-            <p className="text-muted-foreground">Model: {agentModel}</p>
-            <p className="text-muted-foreground">Uptime: 2h 34m</p>
-            <p className="mt-2">$ _</p>
-          </div>
-        </TabsContent>
-
-        {/* Settings */}
-        <TabsContent value="settings" className="flex-1 mt-0 overflow-hidden">
+        {/* Agent — Settings with sidebar */}
+        <TabsContent value="agent" className="flex-1 mt-0 overflow-hidden">
           <div className="flex h-full">
             {/* Settings sidebar */}
             <div className="w-48 border-r border-border p-4 space-y-4 shrink-0">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Settings</p>
               {SETTINGS_NAV.map((section) => (
                 <div key={section.section}>
                   <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">{section.section}</p>
