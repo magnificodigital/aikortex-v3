@@ -24,6 +24,7 @@ const MOCK_RESPONSES: Record<string, string> = {
 };
 
 const StepLaunch = ({ context, agent, selectedChannels, onToggleChannel, selectedCRM, onSelectCRM, onBack }: Props) => {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<{ role: "user" | "agent"; text: string }[]>([
     { role: "agent", text: `Olá! Sou o assistente da ${context.companyName || "sua empresa"}. Como posso ajudar?` },
   ]);
