@@ -41,7 +41,7 @@ interface Props {
 }
 
 const AgentRightPanel = ({ agent, agentModel, onModelChange }: Props) => {
-  const [rightTab, setRightTab] = useState("settings");
+  const [rightTab, setRightTab] = useState("agent");
   const [settingsNav, setSettingsNav] = useState("general");
   const [agentName, setAgentName] = useState(agent.name);
   const [agentDesc, setAgentDesc] = useState("");
