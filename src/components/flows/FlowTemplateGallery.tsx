@@ -120,8 +120,8 @@ export default function FlowTemplateGallery({ onSelect }: Props) {
                 key={tpl.id}
                 onClick={() => onSelect(tpl)}
                 className={cn(
-                  "text-left rounded-xl border bg-gradient-to-br p-5 hover:scale-[1.02] hover:shadow-lg transition-all group cursor-pointer relative overflow-hidden",
-                  categoryColors[tpl.category] || "from-card to-card border-border"
+                  "text-left rounded-xl border bg-transparent p-5 hover:scale-[1.02] hover:shadow-lg transition-all group cursor-pointer relative overflow-hidden",
+                  categoryColors[tpl.category] || "border-border"
                 )}
               >
                 {/* Subtle glow */}
