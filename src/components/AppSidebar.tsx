@@ -33,6 +33,7 @@ import {
   Calendar,
   MessageCircle,
   AppWindow,
+  LayoutTemplate,
 } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import {
@@ -81,6 +82,7 @@ const aikortexItems: NavItem[] = [
   { label: "Agentes", icon: Bot, path: "/aikortex/agents" },
   { label: "Flows", icon: Workflow, path: "/aikortex/automations" },
   { label: "Apps", icon: AppWindow, path: "/app-builder" },
+  { label: "Templates", icon: LayoutTemplate, path: "/templates" },
   { label: "Mensagens", icon: MessageSquare, path: "/aikortex/messages" },
   { label: "Disparos", icon: Send, path: "/aikortex/broadcasts" },
 ];
