@@ -346,9 +346,8 @@ const StepContextInline = ({
   const SECTION_TITLES: Record<string, { title: string; desc: string }> = {
     identidade: { title: "Identidade", desc: "Identidade, propósito e modelo de IA do agente." },
     objetivo: { title: "Objetivo", desc: "O que este agente faz e qual o resultado esperado." },
-    intencoes: { title: "Intenções", desc: "Ações que o agente pode realizar durante a conversa." },
+    intencoes: { title: "Ações", desc: "Ações que o agente pode realizar durante a conversa." },
     estagios: { title: "Estágios", desc: "Fluxo de conversa que o agente segue." },
-    conhecimento: { title: "Conhecimento", desc: "Fontes de dados para alimentar o agente." },
     avancado: { title: "Avançado", desc: "Configurações de comportamento e limites." },
   };
 
