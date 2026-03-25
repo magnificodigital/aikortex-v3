@@ -18,11 +18,11 @@ const categoryIcons: Record<string, string> = {
 };
 
 const categoryColors: Record<string, string> = {
-  Vendas: "border-green-500/30",
-  Suporte: "border-blue-500/30",
-  "Sucesso do Cliente": "border-purple-500/30",
-  "E-commerce": "border-orange-500/30",
-  Produtividade: "border-cyan-500/30",
+  Vendas: "border-primary/30",
+  Suporte: "border-primary/30",
+  "Sucesso do Cliente": "border-primary/30",
+  "E-commerce": "border-primary/30",
+  Produtividade: "border-primary/30",
 };
 
 export default function FlowTemplateGallery({ onSelect }: Props) {
