@@ -3,6 +3,8 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import aikortexLogoWhite from "@/assets/aikortex-logo-white.png";
 import aikortexLogoBlack from "@/assets/aikortex-logo-black.png";
+import aikortexIconWhite from "@/assets/aikortex-icon-white.png";
+import aikortexIconBlack from "@/assets/aikortex-icon-black.png";
 import { LogOut } from "lucide-react";
 import {
   LayoutDashboard,
@@ -207,11 +209,14 @@ const AppSidebar = () => {
       }`}
     >
       {/* Logo */}
-      <div className="flex items-center px-4 h-14 border-b border-sidebar-border">
+      <div className="flex items-center justify-center px-4 h-14 border-b border-sidebar-border">
         <img
-          src={theme === "dark" ? aikortexLogoWhite : aikortexLogoBlack}
+          src={collapsed
+            ? (theme === "dark" ? aikortexIconWhite : aikortexIconBlack)
+            : (theme === "dark" ? aikortexLogoWhite : aikortexLogoBlack)
+          }
           alt="Aikortex"
-          className={collapsed ? "h-6 w-auto object-contain" : "h-7 w-auto object-contain"}
+          className={collapsed ? "h-7 w-7 object-contain" : "h-7 w-auto object-contain"}
         />
       </div>
 
