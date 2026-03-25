@@ -22,14 +22,14 @@ const CONNECTORS = [
 ];
 
 const SETTINGS_NAV = [
-  { section: "AGENT", items: [
-    { key: "general", icon: User, label: "General" },
+  { section: "AGENTE", items: [
+    { key: "general", icon: User, label: "Identidade" },
     { key: "status", icon: Zap, label: "Status" },
     { key: "machine", icon: Monitor, label: "Machine" },
   ]},
-  { section: "CONFIGURATION", items: [
-    { key: "channels", icon: MonitorSmartphone, label: "Channels" },
-    { key: "advanced", icon: Settings2, label: "Advanced" },
+  { section: "CONFIGURAÇÃO", items: [
+    { key: "channels", icon: MonitorSmartphone, label: "Canais" },
+    { key: "advanced", icon: Settings2, label: "Avançado" },
     { key: "danger", icon: AlertTriangle, label: "Danger Zone" },
   ]},
 ];
@@ -41,7 +41,7 @@ interface Props {
 }
 
 const AgentRightPanel = ({ agent, agentModel, onModelChange }: Props) => {
-  const [rightTab, setRightTab] = useState("settings");
+  const [rightTab, setRightTab] = useState("agent");
   const [settingsNav, setSettingsNav] = useState("general");
   const [agentName, setAgentName] = useState(agent.name);
   const [agentDesc, setAgentDesc] = useState("");
@@ -51,13 +51,19 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange }: Props) => {
       <Tabs value={rightTab} onValueChange={setRightTab} className="flex flex-col h-full">
         <div className="border-b border-border px-4">
           <TabsList className="bg-transparent h-11 gap-0 p-0">
-            {["connectors", "secrets", "files", "terminal", "settings"].map((tab) => (
+            {[
+              { value: "agent", label: "Agente" },
+              { value: "connectors", label: "Integrações" },
+              { value: "secrets", label: "Secrets" },
+              { value: "files", label: "Arquivos" },
+              { value: "settings", label: "Configurações" },
+            ].map((tab) => (
               <TabsTrigger
-                key={tab}
-                value={tab}
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 text-sm capitalize"
+                key={tab.value}
+                value={tab.value}
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 text-sm"
               >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                {tab.label}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -67,9 +73,9 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange }: Props) => {
         <TabsContent value="connectors" className="flex-1 mt-0 overflow-hidden">
           <ScrollArea className="h-full">
             <div className="p-6">
-              <h2 className="text-lg font-bold text-foreground">Connectors</h2>
+              <h2 className="text-lg font-bold text-foreground">Integrações</h2>
               <p className="text-sm text-muted-foreground mt-1 mb-6">
-                Link workspace OAuth connectors so your agent can use them in tasks.
+                Conecte integrações OAuth do workspace para que seu agente possa usá-las.
               </p>
               <div className="space-y-1">
                 {CONNECTORS.map((c) => (
@@ -107,23 +113,11 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange }: Props) => {
           </div>
         </TabsContent>
 
-        {/* Terminal */}
-        <TabsContent value="terminal" className="flex-1 mt-0">
-          <div className="h-full bg-muted p-4 font-mono text-xs text-primary">
-            <p>$ agent status</p>
-            <p className="text-muted-foreground">Agent "{agent.name}" is running.</p>
-            <p className="text-muted-foreground">Model: {agentModel}</p>
-            <p className="text-muted-foreground">Uptime: 2h 34m</p>
-            <p className="mt-2">$ _</p>
-          </div>
-        </TabsContent>
-
-        {/* Settings */}
-        <TabsContent value="settings" className="flex-1 mt-0 overflow-hidden">
+        {/* Agent — Settings with sidebar */}
+        <TabsContent value="agent" className="flex-1 mt-0 overflow-hidden">
           <div className="flex h-full">
             {/* Settings sidebar */}
             <div className="w-48 border-r border-border p-4 space-y-4 shrink-0">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Settings</p>
               {SETTINGS_NAV.map((section) => (
                 <div key={section.section}>
                   <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">{section.section}</p>
@@ -233,6 +227,23 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange }: Props) => {
               </div>
             </ScrollArea>
           </div>
+        </TabsContent>
+
+        {/* Configurações */}
+        <TabsContent value="settings" className="flex-1 mt-0 overflow-hidden">
+          <ScrollArea className="h-full">
+            <div className="p-6 max-w-lg space-y-8">
+              <div>
+                <h2 className="text-lg font-bold text-foreground">Configurações</h2>
+                <p className="text-sm text-muted-foreground mt-1">Configurações gerais do agente.</p>
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-destructive">Danger Zone</h2>
+                <p className="text-sm text-muted-foreground mt-1">Ações irreversíveis para este agente.</p>
+                <Button variant="destructive" size="sm" className="mt-4">Excluir Agente</Button>
+              </div>
+            </div>
+          </ScrollArea>
         </TabsContent>
       </Tabs>
     </div>

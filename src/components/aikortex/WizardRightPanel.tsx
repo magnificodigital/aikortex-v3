@@ -32,26 +32,16 @@ const CONNECTORS = [
   { icon: "📄", label: "Google Docs", desc: "Create and edit documents." },
 ];
 
-type SettingsNavKey = "identidade" | "objetivo" | "intencoes" | "estagios" | "conhecimento" | "avancado" | "channels" | "integrations" | "launch";
+type SettingsNavKey = "identidade" | "objetivo" | "intencoes" | "estagios" | "avancado" | "channels" | "integrations";
 
 const SETTINGS_NAV = [
   {
-    section: "AGENTE",
     items: [
       { key: "identidade" as SettingsNavKey, icon: User, label: "Identidade" },
       { key: "objetivo" as SettingsNavKey, icon: Target, label: "Objetivo" },
-      { key: "intencoes" as SettingsNavKey, icon: MessageSquare, label: "Intenções" },
+      { key: "intencoes" as SettingsNavKey, icon: MessageSquare, label: "Ações" },
       { key: "estagios" as SettingsNavKey, icon: Layers, label: "Estágios" },
-      { key: "conhecimento" as SettingsNavKey, icon: BookOpen, label: "Conhecimento" },
       { key: "avancado" as SettingsNavKey, icon: Settings2, label: "Avançado" },
-    ],
-  },
-  {
-    section: "CONFIGURAÇÃO",
-    items: [
-      { key: "channels" as SettingsNavKey, icon: MonitorSmartphone, label: "Canais" },
-      { key: "integrations" as SettingsNavKey, icon: Puzzle, label: "Integrações" },
-      { key: "launch" as SettingsNavKey, icon: Rocket, label: "Ativar" },
     ],
   },
 ];
@@ -83,23 +73,29 @@ const WizardRightPanel = ({
   stages, onStagesChange,
   advancedConfig, onAdvancedConfigChange,
 }: Props) => {
-  const [rightTab, setRightTab] = useState("settings");
+  const [rightTab, setRightTab] = useState("agent");
   const [settingsNav, setSettingsNav] = useState<SettingsNavKey>("identidade");
 
-  const isContextSection = ["identidade", "objetivo", "intencoes", "estagios", "conhecimento", "avancado"].includes(settingsNav);
+  const isContextSection = ["identidade", "objetivo", "intencoes", "estagios", "avancado"].includes(settingsNav);
 
   return (
     <div className="flex-1 flex flex-col min-w-0">
       <Tabs value={rightTab} onValueChange={setRightTab} className="flex flex-col h-full">
         <div className="border-b border-border px-4">
           <TabsList className="bg-transparent h-11 gap-0 p-0">
-            {["connectors", "secrets", "files", "terminal", "settings"].map((tab) => (
+            {[
+              { value: "agent", label: "Agente" },
+              { value: "connectors", label: "Integrações" },
+              { value: "secrets", label: "Secrets" },
+              { value: "files", label: "Arquivos" },
+              { value: "settings", label: "Configurações" },
+            ].map((tab) => (
               <TabsTrigger
-                key={tab}
-                value={tab}
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 text-sm capitalize"
+                key={tab.value}
+                value={tab.value}
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 text-sm"
               >
-                {tab === "connectors" ? "Connectors" : tab === "secrets" ? "Secrets" : tab === "files" ? "Files" : tab === "terminal" ? "Terminal" : "Settings"}
+                {tab.label}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -149,25 +145,13 @@ const WizardRightPanel = ({
           </div>
         </TabsContent>
 
-        {/* Terminal */}
-        <TabsContent value="terminal" className="flex-1 mt-0">
-          <div className="h-full bg-muted p-4 font-mono text-xs text-primary">
-            <p>$ agent status</p>
-            <p className="text-muted-foreground">Agent "{selectedAgent?.name || "Agent"}" is configuring.</p>
-            <p className="text-muted-foreground">Step: {settingsNav}</p>
-            <p className="mt-2">$ _</p>
-          </div>
-        </TabsContent>
-
-        {/* Settings — with sidebar navigation */}
-        <TabsContent value="settings" className="flex-1 mt-0 overflow-hidden">
+        {/* Agent — with sidebar navigation */}
+        <TabsContent value="agent" className="flex-1 mt-0 overflow-hidden">
           <div className="flex h-full">
             {/* Sidebar */}
             <div className="w-48 border-r border-border p-4 space-y-4 shrink-0">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Settings</p>
-              {SETTINGS_NAV.map((section) => (
-                <div key={section.section}>
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">{section.section}</p>
+              {SETTINGS_NAV.map((section, sIdx) => (
+                <div key={sIdx}>
                   <div className="space-y-0.5">
                     {section.items.map((item) => {
                       const Icon = item.icon;
@@ -196,7 +180,7 @@ const WizardRightPanel = ({
               <div className="p-6">
                 {isContextSection && (
                   <StepContextInline
-                    activeSection={settingsNav as "identidade" | "objetivo" | "intencoes" | "estagios" | "conhecimento" | "avancado"}
+                    activeSection={settingsNav as "identidade" | "objetivo" | "intencoes" | "estagios" | "avancado"}
                     context={context}
                     onChange={onContextChange}
                     advancedConfig={advancedConfig}
@@ -207,51 +191,39 @@ const WizardRightPanel = ({
                     onStagesChange={onStagesChange}
                   />
                 )}
-
-                {settingsNav === "channels" && (
-                  <div className="max-w-lg">
-                    <h2 className="text-lg font-bold text-foreground">Canais</h2>
-                    <p className="text-sm text-muted-foreground mt-1 mb-6">Onde seu agente vai operar?</p>
-                    <StepChannels
-                      selected={selectedChannels}
-                      onToggle={onToggleChannel}
-                      onNext={() => setSettingsNav("integrations")}
-                      onBack={() => setSettingsNav("avancado")}
-                      agentType={selectedAgent?.type || null}
-                    />
-                  </div>
-                )}
-
-                {settingsNav === "integrations" && (
-                  <div className="max-w-lg">
-                    <h2 className="text-lg font-bold text-foreground">Integrações</h2>
-                    <p className="text-sm text-muted-foreground mt-1 mb-6">Conecte ferramentas externas.</p>
-                    <StepIntegrations
-                      selected={selectedTools}
-                      onToggle={onToggleTool}
-                      onNext={() => setSettingsNav("launch")}
-                      onBack={() => setSettingsNav("channels")}
-                      agentType={selectedAgent?.type || null}
-                    />
-                  </div>
-                )}
-
-                {settingsNav === "launch" && (
-                  <div className="max-w-lg">
-                    <StepLaunch
-                      context={context}
-                      agent={selectedAgent}
-                      selectedChannels={selectedChannels}
-                      onToggleChannel={onToggleChannel}
-                      selectedCRM={selectedCRM}
-                      onSelectCRM={onSelectCRM}
-                      onBack={() => setSettingsNav("integrations")}
-                    />
-                  </div>
-                )}
               </div>
             </ScrollArea>
           </div>
+        </TabsContent>
+
+        {/* Configurações */}
+        <TabsContent value="settings" className="flex-1 mt-0 overflow-hidden">
+          <ScrollArea className="h-full">
+            <div className="p-6 max-w-lg space-y-6">
+              <div>
+                <h2 className="text-lg font-bold text-foreground">Canais</h2>
+                <p className="text-sm text-muted-foreground mt-1 mb-4">Onde seu agente vai operar?</p>
+                <StepChannels
+                  selected={selectedChannels}
+                  onToggle={onToggleChannel}
+                  onNext={() => {}}
+                  onBack={() => {}}
+                  agentType={selectedAgent?.type || null}
+                />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-foreground mt-8">Ferramentas</h2>
+                <p className="text-sm text-muted-foreground mt-1 mb-4">Conecte ferramentas externas.</p>
+                <StepIntegrations
+                  selected={selectedTools}
+                  onToggle={onToggleTool}
+                  onNext={() => {}}
+                  onBack={() => {}}
+                  agentType={selectedAgent?.type || null}
+                />
+              </div>
+            </div>
+          </ScrollArea>
         </TabsContent>
       </Tabs>
     </div>
@@ -298,7 +270,7 @@ const INTENT_ICONS: Record<string, typeof Shield> = {
 };
 
 interface InlineProps {
-  activeSection: "identidade" | "objetivo" | "intencoes" | "estagios" | "conhecimento" | "avancado";
+  activeSection: "identidade" | "objetivo" | "intencoes" | "estagios" | "avancado";
   context: BusinessContext;
   onChange: (ctx: BusinessContext) => void;
   advancedConfig: AgentAdvancedConfig;
@@ -374,9 +346,8 @@ const StepContextInline = ({
   const SECTION_TITLES: Record<string, { title: string; desc: string }> = {
     identidade: { title: "Identidade", desc: "Identidade, propósito e modelo de IA do agente." },
     objetivo: { title: "Objetivo", desc: "O que este agente faz e qual o resultado esperado." },
-    intencoes: { title: "Intenções", desc: "Ações que o agente pode realizar durante a conversa." },
+    intencoes: { title: "Ações", desc: "Ações que o agente pode realizar durante a conversa." },
     estagios: { title: "Estágios", desc: "Fluxo de conversa que o agente segue." },
-    conhecimento: { title: "Conhecimento", desc: "Fontes de dados para alimentar o agente." },
     avancado: { title: "Avançado", desc: "Configurações de comportamento e limites." },
   };
 
@@ -553,36 +524,6 @@ const StepContextInline = ({
         </div>
       )}
 
-      {activeSection === "conhecimento" && (
-        <div className="space-y-4">
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            onDragOver={(e) => { e.preventDefault(); }}
-            onDrop={(e) => { e.preventDefault(); if (e.dataTransfer.files) handleFiles(e.dataTransfer.files); }}
-            className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors"
-          >
-            <Upload className="w-10 h-10 mx-auto text-muted-foreground/50 mb-3" />
-            <p className="text-sm font-medium text-foreground">Arraste arquivos ou clique para enviar</p>
-            <p className="text-[11px] text-muted-foreground mt-1">PDFs, documentos, FAQ, Notion, Google Drive</p>
-          </div>
-          <input ref={fileInputRef} type="file" multiple accept=".pdf,.txt,.md,.doc,.docx,.png,.jpg,.jpeg,.webp" className="hidden" onChange={(e) => { if (e.target.files) handleFiles(e.target.files); e.target.value = ""; }} />
-          {context.knowledgeFiles.length > 0 && (
-            <div className="space-y-1.5">
-              {context.knowledgeFiles.map((file) => (
-                <div key={file.id} className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm">
-                  {getFileIcon(file.type)}<span className="flex-1 truncate text-foreground">{file.name}</span>
-                  <span className="text-[10px] text-muted-foreground">{formatSize(file.size)}</span>
-                  <button onClick={() => removeFile(file.id)} className="text-muted-foreground hover:text-destructive"><X className="w-3.5 h-3.5" /></button>
-                </div>
-              ))}
-            </div>
-          )}
-          <div className="space-y-1.5">
-            <Label>URL do FAQ</Label>
-            <Input value={context.faqUrl} onChange={(e) => update("faqUrl", e.target.value)} placeholder="https://suaempresa.com/faq" />
-          </div>
-        </div>
-      )}
 
       {activeSection === "avancado" && (
         <div className="space-y-5">
