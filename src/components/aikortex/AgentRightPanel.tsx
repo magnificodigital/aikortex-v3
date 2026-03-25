@@ -709,7 +709,7 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange, activeTab, onTabCha
                 <Button variant="outline" size="sm" onClick={() => { setConnectorDialog(null); setKeyInput(""); }}>
                   Cancelar
                 </Button>
-                <Button size="sm" onClick={handleSaveKey} disabled={!keyInput.trim()}>
+                <Button size="sm" onClick={handleSaveKey} disabled={!keyInput.trim() || savingKey}>
                   {connectorKeys[connectorDialog?.label || ""]?.configured ? "Atualizar" : "Conectar"}
                 </Button>
               </div>
