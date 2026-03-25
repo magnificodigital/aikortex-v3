@@ -14,6 +14,10 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
             <div className="absolute -bottom-[5%] -left-[5%] w-[400px] h-[400px] rounded-full opacity-[0.06] dark:opacity-[0.12] blur-[100px] bg-[radial-gradient(circle,hsl(var(--info)/0.3),transparent_70%)] animate-[mesh-move-alt_25s_ease-in-out_infinite]" />
             <div className="absolute top-[40%] left-[50%] -ml-[150px] w-[300px] h-[300px] rounded-full opacity-[0.05] dark:opacity-[0.10] blur-[100px] bg-[radial-gradient(circle,hsl(var(--primary)/0.2),transparent_70%)] animate-[mesh-move-slow_30s_ease-in-out_infinite]" />
           </div>
+          {/* Space stars */}
+          <div className="space-stars" />
+          <div className="space-stars-layer2" />
+          <div className="space-stars-layer3" />
           <div className="relative z-10">
             {children}
           </div>
