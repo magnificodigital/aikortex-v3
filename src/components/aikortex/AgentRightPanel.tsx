@@ -228,6 +228,23 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange }: Props) => {
             </ScrollArea>
           </div>
         </TabsContent>
+
+        {/* Configurações */}
+        <TabsContent value="settings" className="flex-1 mt-0 overflow-hidden">
+          <ScrollArea className="h-full">
+            <div className="p-6 max-w-lg space-y-8">
+              <div>
+                <h2 className="text-lg font-bold text-foreground">Configurações</h2>
+                <p className="text-sm text-muted-foreground mt-1">Configurações gerais do agente.</p>
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-destructive">Danger Zone</h2>
+                <p className="text-sm text-muted-foreground mt-1">Ações irreversíveis para este agente.</p>
+                <Button variant="destructive" size="sm" className="mt-4">Excluir Agente</Button>
+              </div>
+            </div>
+          </ScrollArea>
+        </TabsContent>
       </Tabs>
     </div>
   );
