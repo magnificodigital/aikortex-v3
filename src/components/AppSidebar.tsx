@@ -285,8 +285,8 @@ const AppSidebar = () => {
           className={`${linkClasses(false)} w-full`}
           title={collapsed ? "Sair" : undefined}
         >
-          <LogOut className="w-4 h-4 shrink-0 text-pink-500" />
-          {!collapsed && <span className="text-pink-500">Sair</span>}
+          <LogOut className="w-4 h-4 shrink-0 text-blue-400 drop-shadow-[0_0_6px_rgba(96,165,250,0.7)]" />
+          {!collapsed && <span className="text-blue-400 drop-shadow-[0_0_6px_rgba(96,165,250,0.7)]">Sair</span>}
         </button>
 
         <button
