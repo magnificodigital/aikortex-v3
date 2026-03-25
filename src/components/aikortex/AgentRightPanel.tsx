@@ -73,9 +73,9 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange }: Props) => {
         <TabsContent value="connectors" className="flex-1 mt-0 overflow-hidden">
           <ScrollArea className="h-full">
             <div className="p-6">
-              <h2 className="text-lg font-bold text-foreground">Connectors</h2>
+              <h2 className="text-lg font-bold text-foreground">Integrações</h2>
               <p className="text-sm text-muted-foreground mt-1 mb-6">
-                Link workspace OAuth connectors so your agent can use them in tasks.
+                Conecte integrações OAuth do workspace para que seu agente possa usá-las.
               </p>
               <div className="space-y-1">
                 {CONNECTORS.map((c) => (
