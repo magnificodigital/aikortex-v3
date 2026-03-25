@@ -13,7 +13,7 @@ import {
   User, Target, MessageSquare, Layers, Settings2,
   Upload, X, FileText, Image, File, Plus, Check, GripVertical, Trash2,
   ChevronDown, ChevronUp, Shield, ArrowRightLeft, Ban, Clock, Mic, Sparkles,
-  AlertTriangle, Globe, Link2, Camera,
+  AlertTriangle, Globe, Link2, Camera, Webhook, KeyRound, Blocks,
 } from "lucide-react";
 import type {
   BusinessContext, AgentRecommendation, DeployChannel, ExternalTool,
