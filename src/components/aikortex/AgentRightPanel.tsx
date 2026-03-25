@@ -338,7 +338,7 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
                 </div>
                 <p className="text-xs text-muted-foreground">Conecte APIs externas via chave de acesso.</p>
                 <div className="space-y-1">
-                  {INTEGRATIONS.map((c) => {
+                  {filteredIntegrations.map((c) => {
                     const isConnected = connectorKeys[c.label]?.configured;
                     return (
                       <div key={c.label} className="flex items-center justify-between py-3 px-3 rounded-lg hover:bg-muted/50 transition-colors">
