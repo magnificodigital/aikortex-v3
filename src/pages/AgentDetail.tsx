@@ -44,7 +44,6 @@ const AgentDetail = () => {
   ]);
   const [input, setInput] = useState("");
   const [agentModel, setAgentModel] = useState(agent.model);
-  const [showChannels, setShowChannels] = useState(true);
 
   const handleSend = () => {
     if (!input.trim()) return;
