@@ -218,7 +218,7 @@ const Aikortex = () => {
                 ) : (
                   <button
                     onClick={() => setRightPanelTab("connectors")}
-                    className="flex items-center gap-1 text-xs text-yellow-500 hover:text-yellow-400 transition-colors font-medium"
+                    className="flex items-center gap-1 text-xs transition-colors font-medium text-muted-foreground"
                   >
                     ⚙️ Configurar LLM
                   </button>
