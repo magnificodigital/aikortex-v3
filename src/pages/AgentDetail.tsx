@@ -19,11 +19,12 @@ const AGENTS_MAP: Record<string, { name: string; avatar: string; model: string }
   "custom-1": { name: "Agente Personalizado", avatar: avatar1, model: "gemini-2.5-flash" },
 };
 
-const CHANNELS = [
-  { icon: "💬", label: "Telegram" },
-  { icon: "📱", label: "WhatsApp" },
-  { icon: "🎮", label: "Discord" },
-  { icon: "💼", label: "Slack" },
+const LLM_MODELS = [
+  { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+  { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+  { value: "gemini-3-flash-preview", label: "Gemini 3 Flash" },
+  { value: "gpt-5", label: "GPT-5" },
+  { value: "gpt-5-mini", label: "GPT-5 Mini" },
 ];
 
 const MOCK_RESPONSES: Record<string, string> = {
