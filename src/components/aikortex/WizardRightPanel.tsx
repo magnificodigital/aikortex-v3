@@ -116,9 +116,11 @@ const WizardRightPanel = ({
     onTabChange?.(tab);
   };
 
-  if (activeTab && activeTab !== rightTab) {
-    setRightTab(activeTab);
-  }
+  useEffect(() => {
+    if (activeTab && activeTab !== rightTab) {
+      setRightTab(activeTab);
+    }
+  }, [activeTab]);
   const [settingsNav, setSettingsNav] = useState<SettingsNavKey>("identidade");
   const [urlInput, setUrlInput] = useState("");
   const [urls, setUrls] = useState<string[]>([]);
