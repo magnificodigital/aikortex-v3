@@ -270,7 +270,7 @@ const INTENT_ICONS: Record<string, typeof Shield> = {
 };
 
 interface InlineProps {
-  activeSection: "identidade" | "objetivo" | "intencoes" | "estagios" | "conhecimento" | "avancado";
+  activeSection: "identidade" | "objetivo" | "intencoes" | "estagios" | "avancado";
   context: BusinessContext;
   onChange: (ctx: BusinessContext) => void;
   advancedConfig: AgentAdvancedConfig;
