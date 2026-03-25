@@ -255,6 +255,8 @@ const Aikortex = () => {
         onStagesChange={setStages}
         advancedConfig={advancedConfig}
         onAdvancedConfigChange={setAdvancedConfig}
+        activeTab={rightPanelTab}
+        onTabChange={setRightPanelTab}
       />
     </div>
   );
