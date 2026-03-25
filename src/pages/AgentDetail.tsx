@@ -334,7 +334,7 @@ const AgentDetail = () => {
                       <h2 className="text-lg font-bold text-foreground">Status</h2>
                       <p className="text-sm text-muted-foreground mt-1">Agent is currently running.</p>
                       <div className="mt-4 flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-green-500" />
+                        <span className="w-2 h-2 rounded-full bg-[hsl(var(--success,142_71%_45%))]" />
                         <span className="text-sm text-foreground font-medium">Online</span>
                       </div>
                     </div>
