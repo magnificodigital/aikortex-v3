@@ -18,6 +18,7 @@ import Reports from "./pages/Reports";
 import Partners from "./pages/Partners";
 import Sales from "./pages/Sales";
 import Aikortex from "./pages/Aikortex";
+import AgentDetail from "./pages/AgentDetail";
 import AikortexCRM from "./pages/AikortexCRM";
 import AikortexAutomations from "./pages/AikortexAutomations";
 import AikortexMessages from "./pages/AikortexMessages";
@@ -62,6 +63,7 @@ const App = () => (
             <Route path="/aikortex" element={<P><AikortexCRM /></P>} />
             <Route path="/aikortex/crm" element={<P><AikortexCRM /></P>} />
             <Route path="/aikortex/agents" element={<P><Aikortex /></P>} />
+            <Route path="/aikortex/agents/:agentId" element={<P><AgentDetail /></P>} />
             <Route path="/aikortex/automations" element={<P><AikortexAutomations /></P>} />
             <Route path="/aikortex/messages" element={<P><AikortexMessages /></P>} />
             <Route path="/aikortex/broadcasts" element={<P><AikortexBroadcasts /></P>} />

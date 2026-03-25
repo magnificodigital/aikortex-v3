@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { BusinessContext, AgentRecommendation, DeployChannel, DEPLOY_CHANNELS, CRMProvider, CRM_PROVIDERS } from "@/types/agent-builder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,7 @@ const MOCK_RESPONSES: Record<string, string> = {
 };
 
 const StepLaunch = ({ context, agent, selectedChannels, onToggleChannel, selectedCRM, onSelectCRM, onBack }: Props) => {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<{ role: "user" | "agent"; text: string }[]>([
     { role: "agent", text: `Olá! Sou o assistente da ${context.companyName || "sua empresa"}. Como posso ajudar?` },
   ]);
@@ -144,7 +146,7 @@ const StepLaunch = ({ context, agent, selectedChannels, onToggleChannel, selecte
         <Button variant="outline" onClick={onBack} className="gap-1.5">
           <ArrowLeft className="w-4 h-4" /> Voltar
         </Button>
-        <Button size="lg" className="gap-2 px-8">
+        <Button size="lg" className="gap-2 px-8" onClick={() => navigate(`/aikortex/agents/${agent?.id || "sdr-1"}`)}>
           <Rocket className="w-4 h-4" /> Ativar agente em produção
         </Button>
       </div>
