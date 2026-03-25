@@ -237,7 +237,7 @@ const AgentDetail = () => {
 
           {/* Terminal Tab */}
           <TabsContent value="terminal" className="flex-1 mt-0">
-            <div className="h-full bg-black/90 p-4 font-mono text-xs text-green-400">
+            <div className="h-full bg-muted p-4 font-mono text-xs text-primary">
               <p>$ agent status</p>
               <p className="text-muted-foreground">Agent "{agent.name}" is running.</p>
               <p className="text-muted-foreground">Model: {agentModel}</p>
