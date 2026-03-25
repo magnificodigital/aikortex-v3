@@ -684,55 +684,12 @@ const SettingsPage = () => {
 
           {/* ── INTEGRAÇÕES ─────────────────────────── */}
           <TabsContent value="integrations" className="space-y-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-foreground">Conexão com Plataformas Externas</h3>
-                <Badge variant="outline" className="text-xs">
-                  {integrations.filter(i => i.connected).length} conectadas
-                </Badge>
-              </div>
+            <IntegrationsPanel />
+          </TabsContent>
 
-              <div className="flex gap-2 flex-wrap">
-                {categories.map(cat => (
-                  <Button
-                    key={cat}
-                    variant={integrationFilter === cat ? "default" : "outline"}
-                    size="sm"
-                    className="text-xs h-7"
-                    onClick={() => setIntegrationFilter(cat)}
-                  >
-                    {cat}
-                  </Button>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredIntegrations.map(integration => (
-                  <div key={integration.id} className="glass-card rounded-xl p-5 space-y-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white" style={{ backgroundColor: integration.color }}>
-                          {integration.icon}
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-semibold text-foreground">{integration.name}</h4>
-                          <p className="text-[10px] text-muted-foreground">{integration.description}</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <Badge variant={integration.connected ? "default" : "outline"} className="text-[10px]">
-                        {integration.connected ? "Conectado" : "Desconectado"}
-                      </Badge>
-                      <Switch
-                        checked={integration.connected}
-                        onCheckedChange={() => toggleIntegration(integration.id)}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+          {/* ── CANAIS ─────────────────────────── */}
+          <TabsContent value="channels" className="space-y-6">
+            <ChannelsPanel />
           </TabsContent>
 
           {/* ── PERMISSÕES ─────────────────────────── */}
