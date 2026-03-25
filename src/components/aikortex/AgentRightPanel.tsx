@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   User, Zap, Monitor, MonitorSmartphone, Settings2, AlertTriangle,
   Upload, X, FileText, Image, File, Plus, Globe, Link2, Check, Camera,
+  Webhook, KeyRound, Blocks,
 } from "lucide-react";
 
 const INTEGRATIONS = [
