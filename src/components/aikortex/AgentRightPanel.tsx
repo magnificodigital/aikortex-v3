@@ -139,45 +139,72 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange }: Props) => {
           </TabsList>
         </div>
 
-        {/* Integrações */}
+        {/* Integrações — com sub-seções MCP, API, Webhook */}
         <TabsContent value="connectors" className="flex-1 mt-0 overflow-hidden">
           <ScrollArea className="h-full">
-            <div className="p-6">
-              <h2 className="text-lg font-bold text-foreground">Integrações</h2>
-              <p className="text-sm text-muted-foreground mt-1 mb-6">
-                Conecte integrações para expandir as capacidades do seu agente.
-              </p>
-              <div className="space-y-1">
-                {INTEGRATIONS.map((c) => (
-                  <div key={c.label} className="flex items-center justify-between py-3 px-3 rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={c.logo}
-                        alt={c.label}
-                        className="w-7 h-7 rounded object-contain shrink-0"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                      />
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{c.label}</p>
-                        <p className="text-xs text-muted-foreground">{c.desc}</p>
+            <div className="p-6 space-y-6">
+              <div>
+                <h2 className="text-lg font-bold text-foreground">Integrações</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Conecte integrações para expandir as capacidades do seu agente.
+                </p>
+              </div>
+
+              {/* MCPs */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Blocks className="w-4 h-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">MCPs</h3>
+                </div>
+                <p className="text-xs text-muted-foreground">Conecte servidores MCP para estender o contexto do agente.</p>
+                <Button variant="outline" size="sm" className="text-xs gap-1.5">
+                  <Plus className="w-3 h-3" /> Adicionar MCP
+                </Button>
+              </div>
+
+              {/* APIs */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <KeyRound className="w-4 h-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">APIs</h3>
+                </div>
+                <p className="text-xs text-muted-foreground">Conecte APIs externas via chave de acesso.</p>
+                <div className="space-y-1">
+                  {INTEGRATIONS.map((c) => (
+                    <div key={c.label} className="flex items-center justify-between py-3 px-3 rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={c.logo}
+                          alt={c.label}
+                          className="w-7 h-7 rounded object-contain shrink-0"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                        />
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{c.label}</p>
+                          <p className="text-xs text-muted-foreground">{c.desc}</p>
+                        </div>
                       </div>
+                      <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground gap-1">
+                        + Conectar
+                      </Button>
                     </div>
-                    <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground gap-1">
-                      + Conectar
-                    </Button>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              </div>
+
+              {/* Webhooks */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Webhook className="w-4 h-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">Webhooks</h3>
+                </div>
+                <p className="text-xs text-muted-foreground">Configure webhooks para receber e enviar eventos em tempo real.</p>
+                <Button variant="outline" size="sm" className="text-xs gap-1.5">
+                  <Plus className="w-3 h-3" /> Adicionar Webhook
+                </Button>
               </div>
             </div>
           </ScrollArea>
-        </TabsContent>
-
-        {/* Secrets */}
-        <TabsContent value="secrets" className="flex-1 mt-0">
-          <div className="p-6 text-center text-muted-foreground">
-            <p className="text-sm">Nenhum secret configurado ainda.</p>
-            <Button variant="outline" size="sm" className="mt-4">Adicionar Secret</Button>
-          </div>
         </TabsContent>
 
         {/* Arquivos - Knowledge */}
