@@ -135,7 +135,7 @@ const AgentDetail = () => {
       </div>
 
       {/* RIGHT — Panel */}
-      <AgentRightPanel agent={agent} agentModel={agentModel} onModelChange={setAgentModel} activeTab={rightPanelTab} onTabChange={setRightPanelTab} />
+      <AgentRightPanel agent={agent} agentType={agent.agentType} agentModel={agentModel} onModelChange={setAgentModel} activeTab={rightPanelTab} onTabChange={setRightPanelTab} />
     </div>
   );
 };
