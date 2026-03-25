@@ -33,6 +33,7 @@ import {
   Calendar,
   MessageCircle,
   AppWindow,
+  LayoutTemplate,
 } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import {

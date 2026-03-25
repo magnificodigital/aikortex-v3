@@ -30,6 +30,7 @@ import SintonIA from "./pages/SintonIA";
 import SettingsPage from "./pages/SettingsPage";
 import ClientRegistration from "./pages/ClientRegistration";
 import AppBuilder from "./pages/AppBuilder";
+import Templates from "./pages/Templates";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
