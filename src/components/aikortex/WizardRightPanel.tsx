@@ -25,20 +25,20 @@ import { MANDATORY_INTENTS, CUSTOM_INTENT_SUGGESTIONS } from "@/types/agent-buil
 import { MOCK_CLIENTS } from "@/types/client";
 
 const INTEGRATIONS = [
-  { label: "OpenAI", desc: "Modelos GPT para geração de texto e análise.", logo: "https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg" },
-  { label: "Anthropic", desc: "Modelos Claude para raciocínio avançado.", logo: "https://cdn.worldvectorlogo.com/logos/anthropic-2.svg" },
-  { label: "Gemini", desc: "IA multimodal do Google.", logo: "https://upload.wikimedia.org/wikipedia/commons/8/8a/Google_Gemini_logo.svg" },
-  { label: "ElevenLabs", desc: "Geração de voz e text-to-speech.", logo: "https://images.seeklogo.com/logo-png/52/1/elevenlabs-logo-png_seeklogo-527765.png" },
+  { label: "OpenAI", desc: "Modelos GPT para geração de texto e análise.", logo: "https://cdn.simpleicons.org/openai" },
+  { label: "Anthropic", desc: "Modelos Claude para raciocínio avançado.", logo: "https://cdn.simpleicons.org/anthropic" },
+  { label: "Gemini", desc: "IA multimodal do Google.", logo: "https://cdn.simpleicons.org/googlegemini" },
+  { label: "ElevenLabs", desc: "Geração de voz e text-to-speech.", logo: "https://cdn.simpleicons.org/elevenlabs" },
   { label: "OpenRouter", desc: "Acesso unificado a múltiplos LLMs.", logo: "https://openrouter.ai/favicon.ico" },
-  { label: "Gmail", desc: "Ler, enviar e compor e-mails.", logo: "https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg" },
-  { label: "Google Calendar", desc: "Ler e gerenciar eventos.", logo: "https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg" },
-  { label: "Outlook Calendar", desc: "Gerenciar calendário Microsoft.", logo: "https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg" },
-  { label: "Calendly", desc: "Agendamento automático de reuniões.", logo: "https://images.seeklogo.com/logo-png/43/2/calendly-logo-png_seeklogo-437498.png" },
-  { label: "Google Sheets", desc: "Ler e escrever planilhas.", logo: "https://upload.wikimedia.org/wikipedia/commons/3/30/Google_Sheets_logo_%282014-2020%29.svg" },
-  { label: "Google Drive", desc: "Ler, enviar e gerenciar arquivos.", logo: "https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg" },
+  { label: "Gmail", desc: "Ler, enviar e compor e-mails.", logo: "https://cdn.simpleicons.org/gmail" },
+  { label: "Google Calendar", desc: "Ler e gerenciar eventos.", logo: "https://cdn.simpleicons.org/googlecalendar" },
+  { label: "Outlook Calendar", desc: "Gerenciar calendário Microsoft.", logo: "https://cdn.simpleicons.org/microsoftoutlook" },
+  { label: "Calendly", desc: "Agendamento automático de reuniões.", logo: "https://cdn.simpleicons.org/calendly" },
+  { label: "Google Sheets", desc: "Ler e escrever planilhas.", logo: "https://cdn.simpleicons.org/googlesheets" },
+  { label: "Google Drive", desc: "Ler, enviar e gerenciar arquivos.", logo: "https://cdn.simpleicons.org/googledrive" },
   { label: "Piperun", desc: "CRM de vendas e automação.", logo: "https://www.piperun.com/wp-content/uploads/2023/07/favicon-piperun-crm.png" },
-  { label: "HubSpot", desc: "CRM, marketing e vendas.", logo: "https://upload.wikimedia.org/wikipedia/commons/3/3f/HubSpot_Logo.svg" },
-  { label: "RD Station", desc: "Automação de marketing e CRM.", logo: "https://images.seeklogo.com/logo-png/52/1/rd-station-logo-png_seeklogo-522484.png" },
+  { label: "HubSpot", desc: "CRM, marketing e vendas.", logo: "https://cdn.simpleicons.org/hubspot" },
+  { label: "RD Station", desc: "Automação de marketing e CRM.", logo: "https://cdn.simpleicons.org/rdstation" },
 ];
 
 const CHANNELS = [
