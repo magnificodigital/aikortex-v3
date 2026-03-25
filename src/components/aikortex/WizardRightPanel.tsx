@@ -145,25 +145,13 @@ const WizardRightPanel = ({
           </div>
         </TabsContent>
 
-        {/* Terminal */}
-        <TabsContent value="terminal" className="flex-1 mt-0">
-          <div className="h-full bg-muted p-4 font-mono text-xs text-primary">
-            <p>$ agent status</p>
-            <p className="text-muted-foreground">Agent "{selectedAgent?.name || "Agent"}" is configuring.</p>
-            <p className="text-muted-foreground">Step: {settingsNav}</p>
-            <p className="mt-2">$ _</p>
-          </div>
-        </TabsContent>
-
-        {/* Settings — with sidebar navigation */}
-        <TabsContent value="settings" className="flex-1 mt-0 overflow-hidden">
+        {/* Agent — with sidebar navigation */}
+        <TabsContent value="agent" className="flex-1 mt-0 overflow-hidden">
           <div className="flex h-full">
             {/* Sidebar */}
             <div className="w-48 border-r border-border p-4 space-y-4 shrink-0">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Settings</p>
-              {SETTINGS_NAV.map((section) => (
-                <div key={section.section}>
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">{section.section}</p>
+              {SETTINGS_NAV.map((section, sIdx) => (
+                <div key={sIdx}>
                   <div className="space-y-0.5">
                     {section.items.map((item) => {
                       const Icon = item.icon;
@@ -192,7 +180,7 @@ const WizardRightPanel = ({
               <div className="p-6">
                 {isContextSection && (
                   <StepContextInline
-                    activeSection={settingsNav as "identidade" | "objetivo" | "intencoes" | "estagios" | "conhecimento" | "avancado"}
+                    activeSection={settingsNav as "identidade" | "objetivo" | "intencoes" | "estagios" | "avancado"}
                     context={context}
                     onChange={onContextChange}
                     advancedConfig={advancedConfig}
@@ -203,51 +191,39 @@ const WizardRightPanel = ({
                     onStagesChange={onStagesChange}
                   />
                 )}
-
-                {settingsNav === "channels" && (
-                  <div className="max-w-lg">
-                    <h2 className="text-lg font-bold text-foreground">Canais</h2>
-                    <p className="text-sm text-muted-foreground mt-1 mb-6">Onde seu agente vai operar?</p>
-                    <StepChannels
-                      selected={selectedChannels}
-                      onToggle={onToggleChannel}
-                      onNext={() => setSettingsNav("integrations")}
-                      onBack={() => setSettingsNav("avancado")}
-                      agentType={selectedAgent?.type || null}
-                    />
-                  </div>
-                )}
-
-                {settingsNav === "integrations" && (
-                  <div className="max-w-lg">
-                    <h2 className="text-lg font-bold text-foreground">Integrações</h2>
-                    <p className="text-sm text-muted-foreground mt-1 mb-6">Conecte ferramentas externas.</p>
-                    <StepIntegrations
-                      selected={selectedTools}
-                      onToggle={onToggleTool}
-                      onNext={() => setSettingsNav("launch")}
-                      onBack={() => setSettingsNav("channels")}
-                      agentType={selectedAgent?.type || null}
-                    />
-                  </div>
-                )}
-
-                {settingsNav === "launch" && (
-                  <div className="max-w-lg">
-                    <StepLaunch
-                      context={context}
-                      agent={selectedAgent}
-                      selectedChannels={selectedChannels}
-                      onToggleChannel={onToggleChannel}
-                      selectedCRM={selectedCRM}
-                      onSelectCRM={onSelectCRM}
-                      onBack={() => setSettingsNav("integrations")}
-                    />
-                  </div>
-                )}
               </div>
             </ScrollArea>
           </div>
+        </TabsContent>
+
+        {/* Configurações */}
+        <TabsContent value="settings" className="flex-1 mt-0 overflow-hidden">
+          <ScrollArea className="h-full">
+            <div className="p-6 max-w-lg space-y-6">
+              <div>
+                <h2 className="text-lg font-bold text-foreground">Canais</h2>
+                <p className="text-sm text-muted-foreground mt-1 mb-4">Onde seu agente vai operar?</p>
+                <StepChannels
+                  selected={selectedChannels}
+                  onToggle={onToggleChannel}
+                  onNext={() => {}}
+                  onBack={() => {}}
+                  agentType={selectedAgent?.type || null}
+                />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-foreground mt-8">Ferramentas</h2>
+                <p className="text-sm text-muted-foreground mt-1 mb-4">Conecte ferramentas externas.</p>
+                <StepIntegrations
+                  selected={selectedTools}
+                  onToggle={onToggleTool}
+                  onNext={() => {}}
+                  onBack={() => {}}
+                  agentType={selectedAgent?.type || null}
+                />
+              </div>
+            </div>
+          </ScrollArea>
         </TabsContent>
       </Tabs>
     </div>
