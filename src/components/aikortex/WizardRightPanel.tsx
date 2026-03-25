@@ -136,7 +136,82 @@ const WizardRightPanel = ({
   const [expandedStage, setExpandedStage] = useState<string | null>(null);
   const [newStageName, setNewStageName] = useState("");
 
-  const update = (field: keyof BusinessContext, value: string) =>
+  // Connector dialog state
+  const PROVIDER_MAP: Record<string, string> = {
+    "OpenAI": "openai", "Anthropic": "anthropic", "Gemini": "gemini",
+    "ElevenLabs": "elevenlabs", "OpenRouter": "openrouter", "Gmail": "gmail",
+    "Google Calendar": "google_calendar", "Outlook Calendar": "outlook_calendar",
+    "Calendly": "calendly", "Google Sheets": "google_sheets",
+    "Google Drive": "google_drive", "Piperun": "piperun",
+    "HubSpot": "hubspot", "RD Station": "rdstation",
+  };
+  const [connectorDialog, setConnectorDialog] = useState<null | typeof INTEGRATIONS[0]>(null);
+  const [connectorKeys, setConnectorKeys] = useState<Record<string, { key: string; configured: boolean }>>({});
+  const [keyInput, setKeyInput] = useState("");
+  const [showKey, setShowKey] = useState(false);
+  const [savingKey, setSavingKey] = useState(false);
+
+  useEffect(() => {
+    const loadKeys = async () => {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase.from("user_api_keys").select("provider, api_key").eq("user_id", user.id);
+      if (data) {
+        const map: Record<string, { key: string; configured: boolean }> = {};
+        data.forEach((row: any) => {
+          const label = Object.entries(PROVIDER_MAP).find(([, v]) => v === row.provider)?.[0] || row.provider;
+          map[label] = { key: row.api_key, configured: true };
+        });
+        setConnectorKeys(map);
+      }
+    };
+    loadKeys();
+  }, []);
+
+  const handleConnectIntegration = (integration: typeof INTEGRATIONS[0]) => {
+    const existing = connectorKeys[integration.label];
+    setKeyInput(existing?.configured ? existing.key : "");
+    setShowKey(false);
+    setConnectorDialog(integration);
+  };
+
+  const handleSaveKey = async () => {
+    if (!connectorDialog || !keyInput.trim()) return;
+    setSavingKey(true);
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error("Faça login para salvar chaves."); return; }
+      const provider = PROVIDER_MAP[connectorDialog.label] || connectorDialog.label.toLowerCase();
+      const { error } = await supabase.from("user_api_keys").upsert(
+        { user_id: user.id, provider, api_key: keyInput.trim() },
+        { onConflict: "user_id,provider" }
+      );
+      if (error) { toast.error("Erro ao salvar chave."); console.error(error); return; }
+      setConnectorKeys(prev => ({ ...prev, [connectorDialog.label]: { key: keyInput.trim(), configured: true } }));
+      setConnectorDialog(null);
+      setKeyInput("");
+      toast.success(`${connectorDialog.label} conectado com sucesso!`);
+    } finally { setSavingKey(false); }
+  };
+
+  const handleDisconnect = async () => {
+    if (!connectorDialog) return;
+    setSavingKey(true);
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const provider = PROVIDER_MAP[connectorDialog.label] || connectorDialog.label.toLowerCase();
+      await supabase.from("user_api_keys").delete().eq("user_id", user.id).eq("provider", provider);
+      setConnectorKeys(prev => { const next = { ...prev }; delete next[connectorDialog.label]; return next; });
+      setConnectorDialog(null);
+      setKeyInput("");
+      toast.success(`${connectorDialog.label} desconectado.`);
+    } finally { setSavingKey(false); }
+  };
+
     onContextChange({ ...context, [field]: value });
 
   const handleFiles = (files: FileList) => {
