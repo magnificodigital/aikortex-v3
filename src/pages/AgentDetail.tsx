@@ -131,7 +131,7 @@ const AgentDetail = () => {
                   </select>
                 ) : (
                   <button
-                    onClick={() => setLlmConfigured(true)}
+                    onClick={() => setRightPanelTab("connectors")}
                     className="flex items-center gap-1 text-xs text-yellow-500 hover:text-yellow-400 transition-colors font-medium"
                   >
                     ⚙️ Configurar LLM
