@@ -1,5 +1,4 @@
 import { AgentRecommendation } from "@/types/agent-builder";
-import { Button } from "@/components/ui/button";
 import { ArrowRight, Settings2, Sparkles } from "lucide-react";
 
 import avatar1 from "@/assets/avatars/avatar-1.png";
