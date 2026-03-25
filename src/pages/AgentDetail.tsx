@@ -119,24 +119,15 @@ const AgentDetail = () => {
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                   <Paperclip className="w-4 h-4" />
                 </Button>
-                {llmConfigured ? (
-                  <select
-                    value={agentModel}
-                    onChange={(e) => setAgentModel(e.target.value)}
-                    className="text-xs text-muted-foreground hover:text-foreground bg-transparent border border-border rounded-md px-2 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary/40"
-                  >
-                    {LLM_MODELS.map((m) => (
-                      <option key={m.value} value={m.value}>{m.label}</option>
-                    ))}
-                  </select>
-                ) : (
-                  <button
-                    onClick={() => setRightPanelTab("connectors")}
-                    className="flex items-center gap-1 text-xs text-yellow-500 hover:text-yellow-400 transition-colors font-medium"
-                  >
-                    ⚙️ Configurar LLM
-                  </button>
-                )}
+                <select
+                  value={agentModel}
+                  onChange={(e) => setAgentModel(e.target.value)}
+                  className="text-xs text-muted-foreground hover:text-foreground bg-transparent border border-border rounded-md px-2 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary/40"
+                >
+                  {LLM_MODELS.map((m) => (
+                    <option key={m.value} value={m.value}>{m.label}</option>
+                  ))}
+                </select>
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
