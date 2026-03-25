@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { BusinessContext, AgentRecommendation, DeployChannel, DEPLOY_CHANNELS, CRMProvider, CRM_PROVIDERS } from "@/types/agent-builder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
