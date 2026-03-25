@@ -190,7 +190,17 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange, activeTab, onTabCha
     }
   };
 
-  const handleFiles = (files: FileList) => {
+  const [settingsNav, setSettingsNav] = useState("general");
+  const [agentName, setAgentName] = useState(agent.name);
+  const [agentDesc, setAgentDesc] = useState("");
+  const [knowledgeFiles, setKnowledgeFiles] = useState<KnowledgeFileLocal[]>([]);
+  const [urlInput, setUrlInput] = useState("");
+  const [urls, setUrls] = useState<string[]>([]);
+  const [connectedChannels, setConnectedChannels] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+
     const newFiles: KnowledgeFileLocal[] = Array.from(files)
       .filter((f) => f.size <= 10 * 1024 * 1024)
       .map((f) => ({ id: crypto.randomUUID(), name: f.name, size: f.size, type: f.type }));
