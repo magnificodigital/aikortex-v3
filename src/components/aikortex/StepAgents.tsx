@@ -59,7 +59,7 @@ const StepAgents = ({ selected, onSelect }: Props) => {
   const isCustomSelected = selected?.id === "custom-1";
 
   return (
-    <div className="space-y-8 animate-fade-in max-w-5xl mx-auto">
+    <div className="space-y-8 animate-fade-in max-w-5xl mx-auto flex flex-col items-center justify-center min-h-[calc(100vh-12rem)]">
       {/* Templates Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
