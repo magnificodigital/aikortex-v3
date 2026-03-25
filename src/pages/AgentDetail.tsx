@@ -6,18 +6,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import AgentRightPanel from "@/components/aikortex/AgentRightPanel";
 import { useAgentChat } from "@/hooks/use-agent-chat";
+import type { AgentType } from "@/types/agent-builder";
 
 import avatar1 from "@/assets/avatars/avatar-1.png";
 import avatar2 from "@/assets/avatars/avatar-2.png";
 import avatar3 from "@/assets/avatars/avatar-3.png";
 import avatar8 from "@/assets/avatars/avatar-8.png";
 
-const AGENTS_MAP: Record<string, { name: string; avatar: string; model: string }> = {
-  "sdr-1": { name: "Agente SDR", avatar: avatar1, model: "gemini-2.5-flash" },
-  "bdr-1": { name: "Agente BDR", avatar: avatar2, model: "gemini-2.5-flash" },
-  "sac-1": { name: "Agente SAC", avatar: avatar3, model: "gemini-2.5-flash" },
-  "social-1": { name: "Social Media Manager", avatar: avatar8, model: "gemini-2.5-flash" },
-  "custom-1": { name: "Agente Personalizado", avatar: avatar1, model: "gemini-2.5-flash" },
+const AGENTS_MAP: Record<string, { name: string; avatar: string; model: string; agentType: AgentType }> = {
+  "sdr-1": { name: "Agente SDR", avatar: avatar1, model: "gemini-2.5-flash", agentType: "SDR" },
+  "bdr-1": { name: "Agente BDR", avatar: avatar2, model: "gemini-2.5-flash", agentType: "BDR" },
+  "sac-1": { name: "Agente SAC", avatar: avatar3, model: "gemini-2.5-flash", agentType: "SAC" },
+  "social-1": { name: "Social Media Manager", avatar: avatar8, model: "gemini-2.5-flash", agentType: "Custom" },
+  "custom-1": { name: "Agente Personalizado", avatar: avatar1, model: "gemini-2.5-flash", agentType: "Custom" },
 };
 
 const LLM_MODELS = [
