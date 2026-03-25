@@ -151,7 +151,7 @@ const Aikortex = () => {
     return (
       <DashboardLayout>
         <div className="p-4 lg:p-8 max-w-5xl mx-auto space-y-6">
-          <StepAgents selected={selectedAgent} onSelect={setSelectedAgent} onNext={applyPresetAndConfigure} />
+          <StepAgents selected={selectedAgent} onSelect={handleAgentSelect} />
         </div>
       </DashboardLayout>
     );
