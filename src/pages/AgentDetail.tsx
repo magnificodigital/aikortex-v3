@@ -44,8 +44,9 @@ const AgentDetail = () => {
   ]);
   const [input, setInput] = useState("");
   const [agentModel, setAgentModel] = useState(agent.model);
-  const [llmConfigured, setLlmConfigured] = useState(true); // AgentDetail = already configured
-  const [isFullyConfigured, setIsFullyConfigured] = useState(true); // already deployed agent
+  const [llmConfigured, setLlmConfigured] = useState(true);
+  const [isFullyConfigured, setIsFullyConfigured] = useState(true);
+  const [rightPanelTab, setRightPanelTab] = useState("agent");
 
   const handleSend = () => {
     if (!input.trim()) return;
