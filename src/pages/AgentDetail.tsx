@@ -124,7 +124,7 @@ const AgentDetail = () => {
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                   <HelpCircle className="w-4 h-4" />
                 </Button>
-                <Button size="icon" className="h-8 w-8 rounded-full" onClick={handleSend} disabled={!input.trim()}>
+                <Button size="icon" className="h-8 w-8 rounded-full" onClick={handleSend} disabled={!input.trim() || isStreaming}>
                   <Send className="w-4 h-4" />
                 </Button>
               </div>
