@@ -68,6 +68,7 @@ const Aikortex = () => {
   const [messages, setMessages] = useState<{ role: "user" | "agent"; text: string }[]>([]);
   const [input, setInput] = useState("");
   const [agentModel, setAgentModel] = useState("gemini-2.5-flash");
+  const [llmConfigured, setLlmConfigured] = useState(false);
   const [didAutoRoute, setDidAutoRoute] = useState(false);
 
   // Auto-route from Home prompt
@@ -171,8 +172,8 @@ const Aikortex = () => {
           <img src={agentAvatar} alt={agentName} className="w-7 h-7 rounded-full object-cover" />
           <span className="text-sm font-semibold">{agentName}</span>
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            Online
+            <span className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
+            Configurando
           </span>
         </div>
 
@@ -196,7 +197,7 @@ const Aikortex = () => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Message your agent..."
+              placeholder="Envie uma mensagem ao agente..."
               className="border-0 bg-transparent text-sm min-h-[80px] max-h-[160px] resize-none focus-visible:ring-0 focus-visible:ring-offset-0 p-4"
             />
             <div className="flex items-center justify-between px-3 pb-3">
@@ -204,15 +205,24 @@ const Aikortex = () => {
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                   <Paperclip className="w-4 h-4" />
                 </Button>
-                <select
-                  value={agentModel}
-                  onChange={(e) => setAgentModel(e.target.value)}
-                  className="text-xs text-muted-foreground hover:text-foreground bg-transparent border border-border rounded-md px-2 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary/40"
-                >
-                  {LLM_MODELS.map((m) => (
-                    <option key={m.value} value={m.value}>{m.label}</option>
-                  ))}
-                </select>
+                {llmConfigured ? (
+                  <select
+                    value={agentModel}
+                    onChange={(e) => setAgentModel(e.target.value)}
+                    className="text-xs text-muted-foreground hover:text-foreground bg-transparent border border-border rounded-md px-2 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary/40"
+                  >
+                    {LLM_MODELS.map((m) => (
+                      <option key={m.value} value={m.value}>{m.label}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <button
+                    onClick={() => setLlmConfigured(true)}
+                    className="flex items-center gap-1 text-xs text-yellow-500 hover:text-yellow-400 transition-colors font-medium"
+                  >
+                    ⚙️ Configurar LLM
+                  </button>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
