@@ -453,19 +453,40 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange }: Props) => {
           </div>
         </TabsContent>
 
-        {/* Configurações */}
+        {/* Canais */}
         <TabsContent value="settings" className="flex-1 mt-0 overflow-hidden">
           <ScrollArea className="h-full">
-            <div className="p-6 max-w-lg space-y-8">
+            <div className="p-6 max-w-lg space-y-6">
               <div>
-                <h2 className="text-lg font-bold text-foreground">Configurações</h2>
-                <p className="text-sm text-muted-foreground mt-1">Configurações gerais do agente.</p>
+                <h2 className="text-lg font-bold text-foreground">Canais</h2>
+                <p className="text-sm text-muted-foreground mt-1">Onde seu agente será publicado e poderá interagir.</p>
               </div>
-              <div>
-                <h2 className="text-lg font-bold text-destructive">Danger Zone</h2>
-                <p className="text-sm text-muted-foreground mt-1">Ações irreversíveis para este agente.</p>
-                <Button variant="destructive" size="sm" className="mt-4">Excluir Agente</Button>
-              </div>
+              {CHANNELS.map((ch) => {
+                const isSelected = connectedChannels.includes(ch.value);
+                return (
+                  <div
+                    key={ch.value}
+                    className={`flex items-center gap-4 rounded-xl border-2 p-4 transition-all ${
+                      isSelected ? "border-primary bg-primary/5 shadow-md" : "border-border bg-card"
+                    }`}
+                  >
+                    {ch.logo ? (
+                      <img src={ch.logo} alt={ch.label} className="w-8 h-8 rounded-lg object-contain shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                    ) : (
+                      <Globe className="w-8 h-8 text-primary shrink-0" />
+                    )}
+                    <span className="text-sm font-semibold text-foreground flex-1">{ch.label}</span>
+                    <Button
+                      size="sm"
+                      variant={isSelected ? "default" : "outline"}
+                      onClick={() => toggleChannel(ch.value)}
+                      className="shrink-0 text-xs h-8 gap-1.5"
+                    >
+                      {isSelected ? <><Check className="w-3 h-3" /> Conectado</> : "Conectar"}
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
           </ScrollArea>
         </TabsContent>
