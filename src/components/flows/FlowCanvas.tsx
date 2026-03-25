@@ -147,7 +147,11 @@ export default function FlowCanvas({ initialNodes, initialEdges, flowName, flowI
   );
 
   const handleSave = () => {
-    toast.success("Fluxo salvo com sucesso!");
+    if (onSave) {
+      onSave(flowName || "Novo Fluxo", nodes, edges, flowId);
+    } else {
+      toast.success("Fluxo salvo com sucesso!");
+    }
   };
 
   const handleTest = () => {
