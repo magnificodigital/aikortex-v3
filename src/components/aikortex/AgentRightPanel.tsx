@@ -8,8 +8,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   User, Zap, Monitor, MonitorSmartphone, Settings2, AlertTriangle,
   Upload, X, FileText, Image, File, Plus, Globe, Link2, Check, Camera,
-  Webhook, KeyRound, Blocks,
+  Webhook, KeyRound, Blocks, Eye, EyeOff, ExternalLink, Trash2, Settings,
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 const INTEGRATIONS = [
   { label: "OpenAI", desc: "Modelos GPT para geração de texto e análise.", logo: "https://cdn.simpleicons.org/openai" },
