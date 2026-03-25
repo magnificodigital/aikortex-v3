@@ -136,7 +136,8 @@ const LandingPage = () => {
   const heroText2 = isDark ? "text-white/80" : "text-foreground/80";
 
   return (
-    <div className={`min-h-screen ${bg} flex flex-col`}>
+    <div className={`min-h-screen ${bg} flex flex-col landing-bg`}>
+      <div className="landing-bg-orb" />
       {/* Top Navbar */}
       <header className={`flex items-center justify-between px-6 lg:px-10 h-16 border-b ${borderColor}`}>
         <div className="flex items-center gap-8">
