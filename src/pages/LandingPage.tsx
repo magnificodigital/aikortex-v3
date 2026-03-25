@@ -178,7 +178,7 @@ const LandingPage = () => {
       </header>
 
       {/* Content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4">
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4">
         {/* Announcement Banner */}
         <button className={`flex items-center gap-2 mb-10 px-5 py-2.5 rounded-full border text-sm ${bannerBg} transition-colors`}>
           <span className="text-[10px] font-bold uppercase bg-primary text-primary-foreground px-2 py-0.5 rounded-full">{t.newBadge}</span>
