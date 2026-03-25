@@ -65,8 +65,18 @@ interface KnowledgeFileLocal {
   type: string;
 }
 
-const AgentRightPanel = ({ agent, agentModel, onModelChange }: Props) => {
-  const [rightTab, setRightTab] = useState("agent");
+const AgentRightPanel = ({ agent, agentModel, onModelChange, activeTab, onTabChange }: Props) => {
+  const [rightTab, setRightTab] = useState(activeTab || "agent");
+
+  const handleTabChange = (tab: string) => {
+    setRightTab(tab);
+    onTabChange?.(tab);
+  };
+
+  // Sync from parent
+  if (activeTab && activeTab !== rightTab) {
+    setRightTab(activeTab);
+  }
   const [settingsNav, setSettingsNav] = useState("general");
   const [agentName, setAgentName] = useState(agent.name);
   const [agentDesc, setAgentDesc] = useState("");
