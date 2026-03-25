@@ -54,6 +54,8 @@ interface Props {
   agent: { name: string; avatar: string };
   agentModel: string;
   onModelChange: (model: string) => void;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
 }
 
 interface KnowledgeFileLocal {
