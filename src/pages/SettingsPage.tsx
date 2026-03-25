@@ -44,7 +44,9 @@ import {
   CreditCard,
   Zap,
   Shield,
+  Radio,
 } from "lucide-react";
+import { IntegrationsPanel, ChannelsPanel } from "@/components/settings/IntegrationsPanel";
 import PermissionsManager from "@/components/settings/PermissionsManager";
 
 // ─── TYPES ──────────────────────────────────────────
