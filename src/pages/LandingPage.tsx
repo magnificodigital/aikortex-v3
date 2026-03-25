@@ -139,7 +139,7 @@ const LandingPage = () => {
     <div className={`min-h-screen ${bg} flex flex-col landing-bg`}>
       <div className="landing-bg-orb" />
       {/* Top Navbar */}
-      <header className={`flex items-center justify-between px-6 lg:px-10 h-16 border-b ${borderColor}`}>
+      <header className={`relative z-10 flex items-center justify-between px-6 lg:px-10 h-16 border-b ${borderColor}`}>
         <div className="flex items-center gap-8">
           <img src={isDark ? aikortexLogoWhite : aikortexLogoBlack} alt="Aikortex" className="h-7 w-auto object-contain" />
           <nav className={`hidden md:flex items-center gap-6 text-sm ${textMuted}`}>
