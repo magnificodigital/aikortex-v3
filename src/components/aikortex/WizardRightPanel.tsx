@@ -32,26 +32,16 @@ const CONNECTORS = [
   { icon: "📄", label: "Google Docs", desc: "Create and edit documents." },
 ];
 
-type SettingsNavKey = "identidade" | "objetivo" | "intencoes" | "estagios" | "conhecimento" | "avancado" | "channels" | "integrations" | "launch";
+type SettingsNavKey = "identidade" | "objetivo" | "intencoes" | "estagios" | "avancado" | "channels" | "integrations";
 
 const SETTINGS_NAV = [
   {
-    section: "AGENTE",
     items: [
       { key: "identidade" as SettingsNavKey, icon: User, label: "Identidade" },
       { key: "objetivo" as SettingsNavKey, icon: Target, label: "Objetivo" },
-      { key: "intencoes" as SettingsNavKey, icon: MessageSquare, label: "Intenções" },
+      { key: "intencoes" as SettingsNavKey, icon: MessageSquare, label: "Ações" },
       { key: "estagios" as SettingsNavKey, icon: Layers, label: "Estágios" },
-      { key: "conhecimento" as SettingsNavKey, icon: BookOpen, label: "Conhecimento" },
       { key: "avancado" as SettingsNavKey, icon: Settings2, label: "Avançado" },
-    ],
-  },
-  {
-    section: "CONFIGURAÇÃO",
-    items: [
-      { key: "channels" as SettingsNavKey, icon: MonitorSmartphone, label: "Canais" },
-      { key: "integrations" as SettingsNavKey, icon: Puzzle, label: "Integrações" },
-      { key: "launch" as SettingsNavKey, icon: Rocket, label: "Ativar" },
     ],
   },
 ];
