@@ -125,9 +125,8 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange }: Props) => {
             {[
               { value: "agent", label: "Agente" },
               { value: "connectors", label: "Integrações" },
-              { value: "secrets", label: "Secrets" },
               { value: "files", label: "Arquivos" },
-              { value: "settings", label: "Configurações" },
+              { value: "settings", label: "Canais" },
             ].map((tab) => (
               <TabsTrigger
                 key={tab.value}
