@@ -43,22 +43,18 @@ const TEMPLATE_CARDS = [
   },
 ];
 
-const StepAgents = ({ selected, onSelect, onNext }: Props) => {
+const StepAgents = ({ selected, onSelect }: Props) => {
   const handleSelect = (id: string, type: string, name: string, description: string) => {
-    if (selected?.id === id) {
-      onSelect(null);
-    } else {
-      onSelect({
-        id,
-        type: type as any,
-        name,
-        objective: description,
-        targetAudience: "",
-        benefits: [],
-        exampleConversation: [],
-        selected: true,
-      });
-    }
+    onSelect({
+      id,
+      type: type as any,
+      name,
+      objective: description,
+      targetAudience: "",
+      benefits: [],
+      exampleConversation: [],
+      selected: true,
+    });
   };
 
   const isCustomSelected = selected?.id === "custom-1";
