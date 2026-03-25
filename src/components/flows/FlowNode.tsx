@@ -35,10 +35,11 @@ function FlowNode({ data, selected }: NodeProps) {
         selected && "ring-2 ring-primary ring-offset-2 ring-offset-background scale-105"
       )}
     >
+      {/* Input handle on the left (except triggers) */}
       {d.category !== "trigger" && (
         <Handle
           type="target"
-          position={Position.Top}
+          position={Position.Left}
           className={cn("!w-3 !h-3 !border-2 !border-background", handleColors[d.category])}
         />
       )}
@@ -51,21 +52,22 @@ function FlowNode({ data, selected }: NodeProps) {
         </div>
       </div>
 
+      {/* Output handles on the right */}
       {isCondition ? (
         <>
           <Handle
             type="source"
-            position={Position.Bottom}
+            position={Position.Right}
             id="yes"
-            className={cn("!w-3 !h-3 !border-2 !border-background !left-[30%]", handleColors[d.category])}
+            className={cn("!w-3 !h-3 !border-2 !border-background !top-[30%]", handleColors[d.category])}
           />
           <Handle
             type="source"
-            position={Position.Bottom}
+            position={Position.Right}
             id="no"
-            className={cn("!w-3 !h-3 !border-2 !border-background !left-[70%]", handleColors[d.category])}
+            className={cn("!w-3 !h-3 !border-2 !border-background !top-[70%]", handleColors[d.category])}
           />
-          <div className="flex justify-between mt-1.5 px-1">
+          <div className="absolute right-[-28px] flex flex-col justify-between h-full top-0 py-2">
             <span className="text-[9px] text-green-400 font-medium">Sim</span>
             <span className="text-[9px] text-red-400 font-medium">Não</span>
           </div>
@@ -73,7 +75,7 @@ function FlowNode({ data, selected }: NodeProps) {
       ) : (
         <Handle
           type="source"
-          position={Position.Bottom}
+          position={Position.Right}
           className={cn("!w-3 !h-3 !border-2 !border-background", handleColors[d.category])}
         />
       )}

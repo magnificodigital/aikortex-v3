@@ -31,7 +31,7 @@ const nodeTypes: NodeTypes = {
 const defaultStartNode: Node = {
   id: "start-1",
   type: "flowNode",
-  position: { x: 400, y: 50 },
+  position: { x: 50, y: 200 },
   data: {
     label: "Início",
     category: "trigger",
