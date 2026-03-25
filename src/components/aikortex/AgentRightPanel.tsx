@@ -1,5 +1,7 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import type { AgentType } from "@/types/agent-builder";
+import { CHANNELS_BY_AGENT_TYPE, TOOLS_BY_AGENT_TYPE, EXTERNAL_TOOLS, DEPLOY_CHANNELS } from "@/types/agent-builder";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -54,6 +56,7 @@ const SETTINGS_NAV = [
 
 interface Props {
   agent: { name: string; avatar: string };
+  agentType: AgentType;
   agentModel: string;
   onModelChange: (model: string) => void;
   activeTab?: string;
@@ -84,8 +87,48 @@ const PROVIDER_MAP: Record<string, string> = {
   "RD Station": "rdstation",
 };
 
-const AgentRightPanel = ({ agent, agentModel, onModelChange, activeTab, onTabChange }: Props) => {
+const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTab, onTabChange }: Props) => {
   const [rightTab, setRightTab] = useState(activeTab || "agent");
+
+  // Filter integrations and channels by agent type
+  const relevantToolKeys = TOOLS_BY_AGENT_TYPE[agentType] || TOOLS_BY_AGENT_TYPE["Custom"];
+  const relevantChannelKeys = CHANNELS_BY_AGENT_TYPE[agentType] || CHANNELS_BY_AGENT_TYPE["Custom"];
+
+  const filteredIntegrations = useMemo(() => {
+    // Map EXTERNAL_TOOLS values to INTEGRATIONS labels
+    const toolLabelMap: Record<string, string[]> = {
+      openai: ["OpenAI"],
+      anthropic: ["Anthropic"],
+      gemini: ["Gemini"],
+      elevenlabs: ["ElevenLabs"],
+      google_calendar: ["Google Calendar"],
+      outlook: ["Outlook Calendar"],
+      piperun: ["Piperun"],
+      rd_station: ["RD Station"],
+      crm_generic: ["HubSpot"],
+      deepseek: [],
+    };
+    const allowedLabels = new Set<string>();
+    // Always include OpenRouter
+    allowedLabels.add("OpenRouter");
+    relevantToolKeys.forEach(key => {
+      (toolLabelMap[key] || []).forEach(label => allowedLabels.add(label));
+    });
+    // For tools that also have calendar/productivity, add related ones
+    if (relevantToolKeys.includes("google_calendar")) {
+      allowedLabels.add("Google Sheets");
+      allowedLabels.add("Google Drive");
+      allowedLabels.add("Calendly");
+    }
+    if (relevantToolKeys.includes("outlook")) {
+      allowedLabels.add("Gmail");
+    }
+    return INTEGRATIONS.filter(i => allowedLabels.has(i.label));
+  }, [relevantToolKeys]);
+
+  const filteredChannels = useMemo(() => {
+    return CHANNELS.filter(ch => relevantChannelKeys.includes(ch.value as any));
+  }, [relevantChannelKeys]);
   const [connectorDialog, setConnectorDialog] = useState<null | typeof INTEGRATIONS[0]>(null);
   const [connectorKeys, setConnectorKeys] = useState<Record<string, { key: string; configured: boolean }>>({});
   const [keyInput, setKeyInput] = useState("");
@@ -295,7 +338,7 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange, activeTab, onTabCha
                 </div>
                 <p className="text-xs text-muted-foreground">Conecte APIs externas via chave de acesso.</p>
                 <div className="space-y-1">
-                  {INTEGRATIONS.map((c) => {
+                  {filteredIntegrations.map((c) => {
                     const isConnected = connectorKeys[c.label]?.configured;
                     return (
                       <div key={c.label} className="flex items-center justify-between py-3 px-3 rounded-lg hover:bg-muted/50 transition-colors">
@@ -549,7 +592,7 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange, activeTab, onTabCha
                       <h2 className="text-lg font-bold text-foreground">Canais</h2>
                       <p className="text-sm text-muted-foreground mt-1">Onde seu agente opera.</p>
                     </div>
-                    {CHANNELS.map((ch) => {
+                    {filteredChannels.map((ch) => {
                       const isSelected = connectedChannels.includes(ch.value);
                       return (
                         <div
@@ -605,7 +648,7 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange, activeTab, onTabCha
                 <h2 className="text-lg font-bold text-foreground">Canais</h2>
                 <p className="text-sm text-muted-foreground mt-1">Onde seu agente será publicado e poderá interagir.</p>
               </div>
-              {CHANNELS.map((ch) => {
+              {filteredChannels.map((ch) => {
                 const isSelected = connectedChannels.includes(ch.value);
                 return (
                   <div
