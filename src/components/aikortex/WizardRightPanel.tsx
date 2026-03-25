@@ -524,36 +524,6 @@ const StepContextInline = ({
         </div>
       )}
 
-      {activeSection === "conhecimento" && (
-        <div className="space-y-4">
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            onDragOver={(e) => { e.preventDefault(); }}
-            onDrop={(e) => { e.preventDefault(); if (e.dataTransfer.files) handleFiles(e.dataTransfer.files); }}
-            className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors"
-          >
-            <Upload className="w-10 h-10 mx-auto text-muted-foreground/50 mb-3" />
-            <p className="text-sm font-medium text-foreground">Arraste arquivos ou clique para enviar</p>
-            <p className="text-[11px] text-muted-foreground mt-1">PDFs, documentos, FAQ, Notion, Google Drive</p>
-          </div>
-          <input ref={fileInputRef} type="file" multiple accept=".pdf,.txt,.md,.doc,.docx,.png,.jpg,.jpeg,.webp" className="hidden" onChange={(e) => { if (e.target.files) handleFiles(e.target.files); e.target.value = ""; }} />
-          {context.knowledgeFiles.length > 0 && (
-            <div className="space-y-1.5">
-              {context.knowledgeFiles.map((file) => (
-                <div key={file.id} className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm">
-                  {getFileIcon(file.type)}<span className="flex-1 truncate text-foreground">{file.name}</span>
-                  <span className="text-[10px] text-muted-foreground">{formatSize(file.size)}</span>
-                  <button onClick={() => removeFile(file.id)} className="text-muted-foreground hover:text-destructive"><X className="w-3.5 h-3.5" /></button>
-                </div>
-              ))}
-            </div>
-          )}
-          <div className="space-y-1.5">
-            <Label>URL do FAQ</Label>
-            <Input value={context.faqUrl} onChange={(e) => update("faqUrl", e.target.value)} placeholder="https://suaempresa.com/faq" />
-          </div>
-        </div>
-      )}
 
       {activeSection === "avancado" && (
         <div className="space-y-5">
