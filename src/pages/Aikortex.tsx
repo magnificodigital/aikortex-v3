@@ -172,9 +172,8 @@ const Aikortex = () => {
           <span className="text-sm font-semibold">{agentName}</span>
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            Configurando
+            Online
           </span>
-          <span className="text-xs text-muted-foreground ml-1">{agentModel}</span>
         </div>
 
         {showChannels && (
