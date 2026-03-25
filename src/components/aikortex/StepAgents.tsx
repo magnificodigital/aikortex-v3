@@ -9,8 +9,7 @@ import avatar8 from "@/assets/avatars/avatar-8.png";
 
 interface Props {
   selected: AgentRecommendation | null;
-  onSelect: (agent: AgentRecommendation | null) => void;
-  onNext: () => void;
+  onSelect: (agent: AgentRecommendation) => void;
 }
 
 const TEMPLATE_CARDS = [
