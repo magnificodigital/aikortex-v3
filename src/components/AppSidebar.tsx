@@ -209,11 +209,14 @@ const AppSidebar = () => {
       }`}
     >
       {/* Logo */}
-      <div className="flex items-center px-4 h-14 border-b border-sidebar-border">
+      <div className="flex items-center justify-center px-4 h-14 border-b border-sidebar-border">
         <img
-          src={theme === "dark" ? aikortexLogoWhite : aikortexLogoBlack}
+          src={collapsed
+            ? (theme === "dark" ? aikortexIconWhite : aikortexIconBlack)
+            : (theme === "dark" ? aikortexLogoWhite : aikortexLogoBlack)
+          }
           alt="Aikortex"
-          className={collapsed ? "h-6 w-auto object-contain" : "h-7 w-auto object-contain"}
+          className={collapsed ? "h-7 w-7 object-contain" : "h-7 w-auto object-contain"}
         />
       </div>
 
