@@ -14,7 +14,10 @@ import {
   Upload, X, FileText, Image, File, Plus, Check, GripVertical, Trash2,
   ChevronDown, ChevronUp, Shield, ArrowRightLeft, Ban, Clock, Mic, Sparkles,
   AlertTriangle, Globe, Link2, Camera, Webhook, KeyRound, Blocks,
+  Eye, EyeOff, ExternalLink, Settings,
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { toast } from "sonner";
 import type {
   BusinessContext, AgentRecommendation, DeployChannel, ExternalTool,
   AgentIntent, ConversationStage, AgentAdvancedConfig, CRMProvider,
