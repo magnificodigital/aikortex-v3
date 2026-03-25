@@ -34,6 +34,23 @@ const Home = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  const AGENT_KEYWORDS = ["agente", "agent", "sdr", "bdr", "sac", "suporte", "atendimento", "qualificação", "prospecção", "cobranças", "onboarding"];
+  const FLOW_KEYWORDS = ["fluxo", "flow", "automação", "automation", "pipeline", "workflow", "nutrição", "sequência"];
+
+  const handleSubmit = () => {
+    const text = prompt.trim().toLowerCase();
+    if (!text) return;
+
+    // Check active tab first, then detect intent from text
+    if (activeCreationTab === "agentes" || AGENT_KEYWORDS.some((k) => text.includes(k))) {
+      navigate("/aikortex", { state: { initialPrompt: prompt.trim() } });
+    } else if (activeCreationTab === "flows" || FLOW_KEYWORDS.some((k) => text.includes(k))) {
+      navigate("/aikortex", { state: { initialPrompt: prompt.trim(), tab: "flows" } });
+    } else {
+      navigate("/app-builder", { state: { initialPrompt: prompt.trim() } });
+    }
+  };
+
   const currentSuggestions = suggestionsByTab[activeCreationTab][suggestionIndex];
   const SuggestionIcon = tabIcons[activeCreationTab];
 
