@@ -131,7 +131,7 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange, activeTab, onTabCha
 
   return (
     <div className="flex-1 flex flex-col min-w-0">
-      <Tabs value={rightTab} onValueChange={setRightTab} className="flex flex-col h-full">
+      <Tabs value={rightTab} onValueChange={handleTabChange} className="flex flex-col h-full">
         <div className="border-b border-border px-4">
           <TabsList className="bg-transparent h-11 gap-0 p-0">
             {[
