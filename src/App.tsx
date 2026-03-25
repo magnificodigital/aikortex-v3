@@ -50,6 +50,7 @@ const App = () => (
             <Route path="/" element={<LandingPage />} />
             <Route path="/home" element={<P><Home /></P>} />
             <Route path="/app-builder" element={<P><AppBuilder /></P>} />
+            <Route path="/templates" element={<P><Templates /></P>} />
             <Route path="/dashboard" element={<P><Index /></P>} />
             <Route path="/cadastro-cliente/:token" element={<ClientRegistration />} />
             <Route path="/clients" element={<P><Clients /></P>} />
