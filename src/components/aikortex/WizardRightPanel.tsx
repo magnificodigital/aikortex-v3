@@ -14,7 +14,10 @@ import {
   Upload, X, FileText, Image, File, Plus, Check, GripVertical, Trash2,
   ChevronDown, ChevronUp, Shield, ArrowRightLeft, Ban, Clock, Mic, Sparkles,
   AlertTriangle, Globe, Link2, Camera, Webhook, KeyRound, Blocks,
+  Eye, EyeOff, ExternalLink, Settings,
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { toast } from "sonner";
 import type {
   BusinessContext, AgentRecommendation, DeployChannel, ExternalTool,
   AgentIntent, ConversationStage, AgentAdvancedConfig, CRMProvider,
@@ -132,6 +135,82 @@ const WizardRightPanel = ({
   const [newIntentAction, setNewIntentAction] = useState("");
   const [expandedStage, setExpandedStage] = useState<string | null>(null);
   const [newStageName, setNewStageName] = useState("");
+
+  // Connector dialog state
+  const PROVIDER_MAP: Record<string, string> = {
+    "OpenAI": "openai", "Anthropic": "anthropic", "Gemini": "gemini",
+    "ElevenLabs": "elevenlabs", "OpenRouter": "openrouter", "Gmail": "gmail",
+    "Google Calendar": "google_calendar", "Outlook Calendar": "outlook_calendar",
+    "Calendly": "calendly", "Google Sheets": "google_sheets",
+    "Google Drive": "google_drive", "Piperun": "piperun",
+    "HubSpot": "hubspot", "RD Station": "rdstation",
+  };
+  const [connectorDialog, setConnectorDialog] = useState<null | typeof INTEGRATIONS[0]>(null);
+  const [connectorKeys, setConnectorKeys] = useState<Record<string, { key: string; configured: boolean }>>({});
+  const [keyInput, setKeyInput] = useState("");
+  const [showKey, setShowKey] = useState(false);
+  const [savingKey, setSavingKey] = useState(false);
+
+  useEffect(() => {
+    const loadKeys = async () => {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase.from("user_api_keys").select("provider, api_key").eq("user_id", user.id);
+      if (data) {
+        const map: Record<string, { key: string; configured: boolean }> = {};
+        data.forEach((row: any) => {
+          const label = Object.entries(PROVIDER_MAP).find(([, v]) => v === row.provider)?.[0] || row.provider;
+          map[label] = { key: row.api_key, configured: true };
+        });
+        setConnectorKeys(map);
+      }
+    };
+    loadKeys();
+  }, []);
+
+  const handleConnectIntegration = (integration: typeof INTEGRATIONS[0]) => {
+    const existing = connectorKeys[integration.label];
+    setKeyInput(existing?.configured ? existing.key : "");
+    setShowKey(false);
+    setConnectorDialog(integration);
+  };
+
+  const handleSaveKey = async () => {
+    if (!connectorDialog || !keyInput.trim()) return;
+    setSavingKey(true);
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error("Faça login para salvar chaves."); return; }
+      const provider = PROVIDER_MAP[connectorDialog.label] || connectorDialog.label.toLowerCase();
+      const { error } = await supabase.from("user_api_keys").upsert(
+        { user_id: user.id, provider, api_key: keyInput.trim() },
+        { onConflict: "user_id,provider" }
+      );
+      if (error) { toast.error("Erro ao salvar chave."); console.error(error); return; }
+      setConnectorKeys(prev => ({ ...prev, [connectorDialog.label]: { key: keyInput.trim(), configured: true } }));
+      setConnectorDialog(null);
+      setKeyInput("");
+      toast.success(`${connectorDialog.label} conectado com sucesso!`);
+    } finally { setSavingKey(false); }
+  };
+
+  const handleDisconnect = async () => {
+    if (!connectorDialog) return;
+    setSavingKey(true);
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const provider = PROVIDER_MAP[connectorDialog.label] || connectorDialog.label.toLowerCase();
+      await supabase.from("user_api_keys").delete().eq("user_id", user.id).eq("provider", provider);
+      setConnectorKeys(prev => { const next = { ...prev }; delete next[connectorDialog.label]; return next; });
+      setConnectorDialog(null);
+      setKeyInput("");
+      toast.success(`${connectorDialog.label} desconectado.`);
+    } finally { setSavingKey(false); }
+  };
 
   const update = (field: keyof BusinessContext, value: string) =>
     onContextChange({ ...context, [field]: value });
@@ -260,25 +339,44 @@ const WizardRightPanel = ({
                 </div>
                 <p className="text-xs text-muted-foreground">Conecte APIs externas via chave de acesso.</p>
                 <div className="space-y-1">
-                  {INTEGRATIONS.map((c) => (
-                    <div key={c.label} className="flex items-center justify-between py-3 px-3 rounded-lg hover:bg-muted/50 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={c.logo}
-                          alt={c.label}
-                          className="w-7 h-7 rounded object-contain shrink-0"
-                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                        />
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{c.label}</p>
-                          <p className="text-xs text-muted-foreground">{c.desc}</p>
+                  {INTEGRATIONS.map((c) => {
+                    const isConnected = connectorKeys[c.label]?.configured;
+                    return (
+                      <div key={c.label} className="flex items-center justify-between py-3 px-3 rounded-lg hover:bg-muted/50 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={c.logo}
+                            alt={c.label}
+                            className="w-7 h-7 rounded object-contain shrink-0"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                          />
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-medium text-foreground">{c.label}</p>
+                              {isConnected && (
+                                <span className="flex items-center gap-1 text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
+                                  <Check className="w-2.5 h-2.5" /> Conectado
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground">{c.desc}</p>
+                          </div>
                         </div>
+                        <Button
+                          variant={isConnected ? "outline" : "ghost"}
+                          size="sm"
+                          className={`text-xs gap-1 ${isConnected ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                          onClick={() => handleConnectIntegration(c)}
+                        >
+                          {isConnected ? (
+                            <><Settings className="w-3 h-3" /> Gerenciar</>
+                          ) : (
+                            "+ Conectar"
+                          )}
+                        </Button>
                       </div>
-                      <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground gap-1">
-                        + Conectar
-                      </Button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -695,6 +793,61 @@ const WizardRightPanel = ({
           </ScrollArea>
         </TabsContent>
       </Tabs>
+      {/* API Key Dialog */}
+      <Dialog open={!!connectorDialog} onOpenChange={(open) => { if (!open) { setConnectorDialog(null); setKeyInput(""); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              {connectorDialog && (
+                <img src={connectorDialog.logo} alt={connectorDialog.label} className="w-8 h-8 rounded object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              )}
+              <div>
+                <DialogTitle className="text-base">
+                  {connectorKeys[connectorDialog?.label || ""]?.configured ? "Gerenciar" : "Conectar"} {connectorDialog?.label}
+                </DialogTitle>
+                <DialogDescription className="text-xs mt-0.5">{connectorDialog?.desc}</DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">API Key</label>
+              <div className="relative">
+                <Input
+                  type={showKey ? "text" : "password"}
+                  value={keyInput}
+                  onChange={(e) => setKeyInput(e.target.value)}
+                  placeholder={`Cole sua ${connectorDialog?.label} API Key aqui`}
+                  className="pr-10 text-sm font-mono"
+                />
+                <button type="button" onClick={() => setShowKey(!showKey)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                {connectorDialog?.label === "OpenAI" && (<>Encontre sua API Key em <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-0.5">platform.openai.com <ExternalLink className="w-3 h-3" /></a></>)}
+                {connectorDialog?.label === "Anthropic" && (<>Encontre sua API Key em <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-0.5">console.anthropic.com <ExternalLink className="w-3 h-3" /></a></>)}
+                {connectorDialog?.label === "Gemini" && (<>Encontre sua API Key em <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-0.5">aistudio.google.com <ExternalLink className="w-3 h-3" /></a></>)}
+                {connectorDialog?.label === "ElevenLabs" && (<>Encontre sua API Key em <a href="https://elevenlabs.io/settings/api-keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-0.5">elevenlabs.io <ExternalLink className="w-3 h-3" /></a></>)}
+                {!["OpenAI", "Anthropic", "Gemini", "ElevenLabs"].includes(connectorDialog?.label || "") && (<>Cole a chave de API fornecida pelo serviço.</>)}
+              </p>
+            </div>
+            <div className="flex items-center justify-between pt-2">
+              {connectorKeys[connectorDialog?.label || ""]?.configured ? (
+                <Button variant="destructive" size="sm" className="text-xs gap-1.5" onClick={handleDisconnect}>
+                  <Trash2 className="w-3 h-3" /> Desconectar
+                </Button>
+              ) : <div />}
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => { setConnectorDialog(null); setKeyInput(""); }}>Cancelar</Button>
+                <Button size="sm" onClick={handleSaveKey} disabled={!keyInput.trim() || savingKey}>
+                  {connectorKeys[connectorDialog?.label || ""]?.configured ? "Atualizar" : "Conectar"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
