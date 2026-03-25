@@ -19,11 +19,12 @@ const AGENTS_MAP: Record<string, { name: string; avatar: string; model: string }
   "custom-1": { name: "Agente Personalizado", avatar: avatar1, model: "gemini-2.5-flash" },
 };
 
-const CHANNELS = [
-  { icon: "💬", label: "Telegram" },
-  { icon: "📱", label: "WhatsApp" },
-  { icon: "🎮", label: "Discord" },
-  { icon: "💼", label: "Slack" },
+const LLM_MODELS = [
+  { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+  { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+  { value: "gemini-3-flash-preview", label: "Gemini 3 Flash" },
+  { value: "gpt-5", label: "GPT-5" },
+  { value: "gpt-5-mini", label: "GPT-5 Mini" },
 ];
 
 const MOCK_RESPONSES: Record<string, string> = {
@@ -43,7 +44,6 @@ const AgentDetail = () => {
   ]);
   const [input, setInput] = useState("");
   const [agentModel, setAgentModel] = useState(agent.model);
-  const [showChannels, setShowChannels] = useState(true);
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -76,32 +76,10 @@ const AgentDetail = () => {
           <span className="text-sm font-semibold">{agent.name}</span>
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            Running
+            Online
           </span>
-          <span className="text-xs text-muted-foreground ml-1">{agentModel}</span>
         </div>
 
-        {/* Channel bar */}
-        {showChannels && (
-          <div className="px-4 py-2 border-b border-border">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Chat from an app you already use</span>
-              <button className="ml-auto text-muted-foreground hover:text-foreground" onClick={() => setShowChannels(false)}>
-                <span className="text-xs">✕</span>
-              </button>
-            </div>
-            <div className="flex gap-2 mt-2">
-              {CHANNELS.map((ch) => (
-                <button
-                  key={ch.label}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-border text-xs font-medium hover:border-primary/40 transition-colors"
-                >
-                  <span>{ch.icon}</span> {ch.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Messages */}
         <ScrollArea className="flex-1 p-4">
@@ -138,9 +116,15 @@ const AgentDetail = () => {
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                   <Paperclip className="w-4 h-4" />
                 </Button>
-                <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                  🤖 {agentModel} <ChevronDown className="w-3 h-3" />
-                </button>
+                <select
+                  value={agentModel}
+                  onChange={(e) => setAgentModel(e.target.value)}
+                  className="text-xs text-muted-foreground hover:text-foreground bg-transparent border border-border rounded-md px-2 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary/40"
+                >
+                  {LLM_MODELS.map((m) => (
+                    <option key={m.value} value={m.value}>{m.label}</option>
+                  ))}
+                </select>
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
