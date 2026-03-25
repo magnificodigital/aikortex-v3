@@ -1,38 +1,56 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
 import {
-  User, Target, MessageSquare, Layers, BookOpen, Settings2,
-  MonitorSmartphone, Puzzle, Rocket, AlertTriangle,
+  User, Target, MessageSquare, Layers, Settings2,
+  Upload, X, FileText, Image, File, Plus, Check, GripVertical, Trash2,
+  ChevronDown, ChevronUp, Shield, ArrowRightLeft, Ban, Clock, Mic, Sparkles,
+  AlertTriangle, Globe, Link2, Camera,
 } from "lucide-react";
 import type {
   BusinessContext, AgentRecommendation, DeployChannel, ExternalTool,
   AgentIntent, ConversationStage, AgentAdvancedConfig, CRMProvider,
+  KnowledgeFile, MessageSize, CreativityLevel,
+  AgentIntent as AgentIntentType, ConversationStage as ConversationStageType,
 } from "@/types/agent-builder";
-import StepContext from "./StepContext";
-import StepChannels from "./StepChannels";
-import StepIntegrations from "./StepIntegrations";
-import StepLaunch from "./StepLaunch";
+import { MANDATORY_INTENTS, CUSTOM_INTENT_SUGGESTIONS } from "@/types/agent-builder";
+import { MOCK_CLIENTS } from "@/types/client";
 
-const CONNECTORS = [
-  { icon: "📝", label: "Notion", desc: "Read/write Notion pages and databases." },
-  { icon: "💬", label: "Slack", desc: "Send messages to Slack channels." },
-  { icon: "🎮", label: "Discord", desc: "Post to Discord servers." },
-  { icon: "🔶", label: "HubSpot", desc: "Access CRM and contacts." },
-  { icon: "📊", label: "Airtable", desc: "Read/write bases, tables, and records." },
-  { icon: "🔗", label: "LinkedIn", desc: "Access profile and create posts." },
-  { icon: "☁️", label: "Salesforce", desc: "Access CRM contacts and opportunities." },
-  { icon: "📧", label: "Gmail", desc: "Read, send and compose emails." },
-  { icon: "📁", label: "Google Drive", desc: "Read, upload and manage files." },
-  { icon: "📅", label: "Google Calendar", desc: "Read and manage calendar events." },
-  { icon: "📄", label: "Google Docs", desc: "Create and edit documents." },
+const INTEGRATIONS = [
+  { label: "OpenAI", desc: "Modelos GPT para geração de texto e análise.", logo: "https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg" },
+  { label: "Anthropic", desc: "Modelos Claude para raciocínio avançado.", logo: "https://cdn.worldvectorlogo.com/logos/anthropic-2.svg" },
+  { label: "Gemini", desc: "IA multimodal do Google.", logo: "https://upload.wikimedia.org/wikipedia/commons/8/8a/Google_Gemini_logo.svg" },
+  { label: "ElevenLabs", desc: "Geração de voz e text-to-speech.", logo: "https://images.seeklogo.com/logo-png/52/1/elevenlabs-logo-png_seeklogo-527765.png" },
+  { label: "OpenRouter", desc: "Acesso unificado a múltiplos LLMs.", logo: "https://openrouter.ai/favicon.ico" },
+  { label: "Gmail", desc: "Ler, enviar e compor e-mails.", logo: "https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg" },
+  { label: "Google Calendar", desc: "Ler e gerenciar eventos.", logo: "https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg" },
+  { label: "Outlook Calendar", desc: "Gerenciar calendário Microsoft.", logo: "https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg" },
+  { label: "Calendly", desc: "Agendamento automático de reuniões.", logo: "https://images.seeklogo.com/logo-png/43/2/calendly-logo-png_seeklogo-437498.png" },
+  { label: "Google Sheets", desc: "Ler e escrever planilhas.", logo: "https://upload.wikimedia.org/wikipedia/commons/3/30/Google_Sheets_logo_%282014-2020%29.svg" },
+  { label: "Google Drive", desc: "Ler, enviar e gerenciar arquivos.", logo: "https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg" },
+  { label: "Piperun", desc: "CRM de vendas e automação.", logo: "https://www.piperun.com/wp-content/uploads/2023/07/favicon-piperun-crm.png" },
+  { label: "HubSpot", desc: "CRM, marketing e vendas.", logo: "https://upload.wikimedia.org/wikipedia/commons/3/3f/HubSpot_Logo.svg" },
+  { label: "RD Station", desc: "Automação de marketing e CRM.", logo: "https://images.seeklogo.com/logo-png/52/1/rd-station-logo-png_seeklogo-522484.png" },
 ];
 
-type SettingsNavKey = "identidade" | "objetivo" | "intencoes" | "estagios" | "avancado" | "channels" | "integrations";
+const CHANNELS = [
+  { value: "whatsapp", label: "WhatsApp", logo: "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" },
+  { value: "instagram", label: "Instagram", logo: "https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" },
+  { value: "facebook", label: "Facebook", logo: "https://upload.wikimedia.org/wikipedia/commons/0/05/Facebook_Logo_%282019%29.png" },
+  { value: "linkedin", label: "LinkedIn", logo: "https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" },
+  { value: "tiktok", label: "TikTok", logo: "https://sf-tb-sg.ibytedtos.com/obj/eden-sg/uhtyvueh7nulogpoguhm/tiktok-icon2.png" },
+  { value: "website", label: "WebSite", logo: "" },
+];
+
+type SettingsNavKey = "identidade" | "objetivo" | "intencoes" | "estagios" | "avancado";
 
 const SETTINGS_NAV = [
   {
@@ -45,6 +63,21 @@ const SETTINGS_NAV = [
     ],
   },
 ];
+
+const TONES = [
+  "Profissional e amigável", "Formal e corporativo", "Casual e descontraído",
+  "Consultivo e técnico", "Empático e acolhedor",
+];
+
+const INDUSTRIES = [
+  "Tecnologia", "SaaS", "E-commerce", "Marketing Digital", "Consultoria",
+  "Educação", "Saúde", "Financeiro", "Imobiliário", "Varejo", "Outro",
+];
+
+const INTENT_ICONS: Record<string, typeof Shield> = {
+  end_conversation: Ban, transfer_human: ArrowRightLeft,
+  invalid_content: AlertTriangle, response_limit: Clock,
+};
 
 interface Props {
   context: BusinessContext;
@@ -75,219 +108,11 @@ const WizardRightPanel = ({
 }: Props) => {
   const [rightTab, setRightTab] = useState("agent");
   const [settingsNav, setSettingsNav] = useState<SettingsNavKey>("identidade");
-
-  const isContextSection = ["identidade", "objetivo", "intencoes", "estagios", "avancado"].includes(settingsNav);
-
-  return (
-    <div className="flex-1 flex flex-col min-w-0">
-      <Tabs value={rightTab} onValueChange={setRightTab} className="flex flex-col h-full">
-        <div className="border-b border-border px-4">
-          <TabsList className="bg-transparent h-11 gap-0 p-0">
-            {[
-              { value: "agent", label: "Agente" },
-              { value: "connectors", label: "Integrações" },
-              { value: "secrets", label: "Secrets" },
-              { value: "files", label: "Arquivos" },
-              { value: "settings", label: "Configurações" },
-            ].map((tab) => (
-              <TabsTrigger
-                key={tab.value}
-                value={tab.value}
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 text-sm"
-              >
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </div>
-
-        {/* Connectors */}
-        <TabsContent value="connectors" className="flex-1 mt-0 overflow-hidden">
-          <ScrollArea className="h-full">
-            <div className="p-6">
-              <h2 className="text-lg font-bold text-foreground">Connectors</h2>
-              <p className="text-sm text-muted-foreground mt-1 mb-6">
-                Link workspace OAuth connectors so your agent can use them in tasks.
-              </p>
-              <div className="space-y-1">
-                {CONNECTORS.map((c) => (
-                  <div key={c.label} className="flex items-center justify-between py-3 px-3 rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl">{c.icon}</span>
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{c.label}</p>
-                        <p className="text-xs text-muted-foreground">{c.desc}</p>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground gap-1">
-                      + Connect
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </ScrollArea>
-        </TabsContent>
-
-        {/* Secrets */}
-        <TabsContent value="secrets" className="flex-1 mt-0">
-          <div className="p-6 text-center text-muted-foreground">
-            <p className="text-sm">No secrets configured yet.</p>
-            <Button variant="outline" size="sm" className="mt-4">Add Secret</Button>
-          </div>
-        </TabsContent>
-
-        {/* Files */}
-        <TabsContent value="files" className="flex-1 mt-0">
-          <div className="p-6 text-center text-muted-foreground">
-            <p className="text-sm">No files uploaded yet.</p>
-            <Button variant="outline" size="sm" className="mt-4">Upload File</Button>
-          </div>
-        </TabsContent>
-
-        {/* Agent — with sidebar navigation */}
-        <TabsContent value="agent" className="flex-1 mt-0 overflow-hidden">
-          <div className="flex h-full">
-            {/* Sidebar */}
-            <div className="w-48 border-r border-border p-4 space-y-4 shrink-0">
-              {SETTINGS_NAV.map((section, sIdx) => (
-                <div key={sIdx}>
-                  <div className="space-y-0.5">
-                    {section.items.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <button
-                          key={item.key}
-                          onClick={() => setSettingsNav(item.key)}
-                          className={`w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-                            settingsNav === item.key
-                              ? "bg-primary/10 text-primary font-medium"
-                              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                          }`}
-                        >
-                          <Icon className="w-4 h-4" />
-                          {item.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Content */}
-            <ScrollArea className="flex-1">
-              <div className="p-6">
-                {isContextSection && (
-                  <StepContextInline
-                    activeSection={settingsNav as "identidade" | "objetivo" | "intencoes" | "estagios" | "avancado"}
-                    context={context}
-                    onChange={onContextChange}
-                    advancedConfig={advancedConfig}
-                    onAdvancedConfigChange={onAdvancedConfigChange}
-                    intents={intents}
-                    onIntentsChange={onIntentsChange}
-                    stages={stages}
-                    onStagesChange={onStagesChange}
-                  />
-                )}
-              </div>
-            </ScrollArea>
-          </div>
-        </TabsContent>
-
-        {/* Configurações */}
-        <TabsContent value="settings" className="flex-1 mt-0 overflow-hidden">
-          <ScrollArea className="h-full">
-            <div className="p-6 max-w-lg space-y-6">
-              <div>
-                <h2 className="text-lg font-bold text-foreground">Canais</h2>
-                <p className="text-sm text-muted-foreground mt-1 mb-4">Onde seu agente vai operar?</p>
-                <StepChannels
-                  selected={selectedChannels}
-                  onToggle={onToggleChannel}
-                  onNext={() => {}}
-                  onBack={() => {}}
-                  agentType={selectedAgent?.type || null}
-                />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-foreground mt-8">Ferramentas</h2>
-                <p className="text-sm text-muted-foreground mt-1 mb-4">Conecte ferramentas externas.</p>
-                <StepIntegrations
-                  selected={selectedTools}
-                  onToggle={onToggleTool}
-                  onNext={() => {}}
-                  onBack={() => {}}
-                  agentType={selectedAgent?.type || null}
-                />
-              </div>
-            </div>
-          </ScrollArea>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-};
-
-/* Inline version of StepContext that renders only the active section without header/footer */
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Slider } from "@/components/ui/slider";
-import { Label } from "@/components/ui/label";
-import {
-  Upload, X, FileText, Image, File, Plus, Check, GripVertical, Trash2,
-  ChevronDown, ChevronUp, Shield, ArrowRightLeft, Ban, Clock, Volume2, Sparkles, Mic,
-} from "lucide-react";
-import { useRef } from "react";
-import {
-  KnowledgeFile, MANDATORY_INTENTS, CUSTOM_INTENT_SUGGESTIONS,
-  MessageSize, CreativityLevel, AgentIntent as AgentIntentType, ConversationStage as ConversationStageType,
-} from "@/types/agent-builder";
-import { MOCK_CLIENTS } from "@/types/client";
-
-const TONES = [
-  "Profissional e amigável", "Formal e corporativo", "Casual e descontraído",
-  "Consultivo e técnico", "Empático e acolhedor",
-];
-const COMM_STYLES = [
-  "Respostas curtas e diretas", "Respostas detalhadas e explicativas",
-  "Tom consultivo com perguntas", "Conversacional e natural",
-];
-const ELEVENLABS_VOICES = [
-  { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah", style: "Feminina, suave e natural" },
-  { id: "CwhRBWXzGAHq8TQ4Fs17", name: "Roger", style: "Masculina, profissional" },
-  { id: "IKne3meq5aSn9XLyUdCD", name: "Charlie", style: "Masculina, amigável" },
-  { id: "SAz9YHcvj6GT2YYXdXww", name: "River", style: "Neutra, moderna" },
-];
-const INDUSTRIES = [
-  "Tecnologia", "SaaS", "E-commerce", "Marketing Digital", "Consultoria",
-  "Educação", "Saúde", "Financeiro", "Imobiliário", "Varejo", "Outro",
-];
-const INTENT_ICONS: Record<string, typeof Shield> = {
-  end_conversation: Ban, transfer_human: ArrowRightLeft,
-  invalid_content: AlertTriangle, response_limit: Clock,
-};
-
-interface InlineProps {
-  activeSection: "identidade" | "objetivo" | "intencoes" | "estagios" | "avancado";
-  context: BusinessContext;
-  onChange: (ctx: BusinessContext) => void;
-  advancedConfig: AgentAdvancedConfig;
-  onAdvancedConfigChange: (cfg: AgentAdvancedConfig) => void;
-  intents: AgentIntentType[];
-  onIntentsChange: (intents: AgentIntentType[]) => void;
-  stages: ConversationStageType[];
-  onStagesChange: (stages: ConversationStageType[]) => void;
-}
-
-const StepContextInline = ({
-  activeSection, context, onChange,
-  advancedConfig, onAdvancedConfigChange,
-  intents, onIntentsChange,
-  stages, onStagesChange,
-}: InlineProps) => {
+  const [urlInput, setUrlInput] = useState("");
+  const [urls, setUrls] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [expandedIntent, setExpandedIntent] = useState<string | null>(null);
   const [newIntentName, setNewIntentName] = useState("");
   const [newIntentAction, setNewIntentAction] = useState("");
@@ -295,15 +120,15 @@ const StepContextInline = ({
   const [newStageName, setNewStageName] = useState("");
 
   const update = (field: keyof BusinessContext, value: string) =>
-    onChange({ ...context, [field]: value });
+    onContextChange({ ...context, [field]: value });
 
   const handleFiles = (files: FileList) => {
     const newFiles: KnowledgeFile[] = Array.from(files)
       .filter((f) => f.size <= 10 * 1024 * 1024)
       .map((f) => ({ id: crypto.randomUUID(), name: f.name, size: f.size, type: f.type }));
-    onChange({ ...context, knowledgeFiles: [...context.knowledgeFiles, ...newFiles] });
+    onContextChange({ ...context, knowledgeFiles: [...context.knowledgeFiles, ...newFiles] });
   };
-  const removeFile = (id: string) => onChange({ ...context, knowledgeFiles: context.knowledgeFiles.filter((f) => f.id !== id) });
+  const removeFile = (id: string) => onContextChange({ ...context, knowledgeFiles: context.knowledgeFiles.filter((f) => f.id !== id) });
   const getFileIcon = (type: string) => {
     if (type.startsWith("image/")) return <Image className="w-4 h-4 text-primary shrink-0" />;
     if (type === "application/pdf") return <FileText className="w-4 h-4 text-destructive shrink-0" />;
@@ -314,6 +139,23 @@ const StepContextInline = ({
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
+
+  const addUrl = () => {
+    if (urlInput.trim() && !urls.includes(urlInput.trim())) {
+      setUrls([...urls, urlInput.trim()]);
+      setUrlInput("");
+    }
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => setAvatarPreview(ev.target?.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
   const customIntents = intents.filter((i) => !i.isMandatory);
   const canAddIntent = customIntents.length < 10;
   const addCustomIntent = () => {
@@ -351,206 +193,468 @@ const StepContextInline = ({
     avancado: { title: "Avançado", desc: "Configurações de comportamento e limites." },
   };
 
-  const info = SECTION_TITLES[activeSection];
-
   return (
-    <div className="max-w-lg space-y-6">
-      <div>
-        <h2 className="text-lg font-bold text-foreground">{info.title}</h2>
-        <p className="text-sm text-muted-foreground mt-1">{info.desc}</p>
-      </div>
-
-      {activeSection === "identidade" && (
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-foreground">Nome do agente</h3>
-            <Input value={context.agentName} onChange={(e) => update("agentName", e.target.value)} placeholder="Ex: Ivy, Sofia, Max..." />
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-foreground">Cargo / Função</h3>
-            <Input value={context.mainProduct} onChange={(e) => update("mainProduct", e.target.value)} placeholder="Ex: SDR, Atendente, Consultor..." />
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-foreground">Empresa</h3>
-            <Select
-              value={context.companyName ? MOCK_CLIENTS.find(c => c.companyName === context.companyName)?.id || "" : ""}
-              onValueChange={(clientId) => {
-                const client = MOCK_CLIENTS.find(c => c.id === clientId);
-                if (client) {
-                  onChange({ ...context, companyName: client.companyName, website: client.website ? `https://${client.website}` : "", industry: client.industry || "" });
-                }
-              }}
-            >
-              <SelectTrigger><SelectValue placeholder="Escolha um cliente cadastrado" /></SelectTrigger>
-              <SelectContent>
-                {MOCK_CLIENTS.filter(c => c.status === "active" || c.status === "onboarding").map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.companyName}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-foreground">Tom de voz</h3>
-            <Select value={context.toneOfVoice} onValueChange={(v) => update("toneOfVoice", v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{TONES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-foreground">Mensagem de saudação</h3>
-            <Textarea
-              value={context.greetingMessage}
-              onChange={(e) => update("greetingMessage", e.target.value)}
-              placeholder="Ex: Olá! 👋 Sou a Ivy, assistente virtual..."
-              className="min-h-[80px]"
-            />
-          </div>
+    <div className="flex-1 flex flex-col min-w-0">
+      <Tabs value={rightTab} onValueChange={setRightTab} className="flex flex-col h-full">
+        <div className="border-b border-border px-4">
+          <TabsList className="bg-transparent h-11 gap-0 p-0">
+            {[
+              { value: "agent", label: "Agente" },
+              { value: "connectors", label: "Integrações" },
+              { value: "secrets", label: "Secrets" },
+              { value: "files", label: "Arquivos" },
+              { value: "settings", label: "Configurações" },
+            ].map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 text-sm"
+              >
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
         </div>
-      )}
 
-      {activeSection === "objetivo" && (
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-foreground">O que este agente faz?</h3>
-            <p className="text-xs text-muted-foreground">Define o propósito principal. Carregado no system prompt.</p>
-            <Textarea value={context.targetAudienceDescription} onChange={(e) => update("targetAudienceDescription", e.target.value)} placeholder="Ex: Este agente conversa com visitantes do site para entender seu interesse..." className="min-h-[100px]" />
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-foreground">Resultado esperado</h3>
-            <Textarea value={context.painPoints} onChange={(e) => update("painPoints", e.target.value)} placeholder="Ex: Lead qualificado com reunião agendada..." className="min-h-[80px]" />
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-foreground">Público atendido</h3>
-            <Textarea value={context.knowledgeSources} onChange={(e) => update("knowledgeSources", e.target.value)} placeholder="Ex: PMEs de tecnologia, decisores C-level..." className="min-h-[80px]" />
-          </div>
-        </div>
-      )}
-
-      {activeSection === "intencoes" && (
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Intenções obrigatórias</p>
-            {MANDATORY_INTENTS.map((intent) => {
-              const Icon = INTENT_ICONS[intent.id] || Shield;
-              const isExpanded = expandedIntent === intent.id;
-              return (
-                <div key={intent.id} className="rounded-lg border border-border bg-muted/20">
-                  <button onClick={() => setExpandedIntent(isExpanded ? null : intent.id)} className="w-full flex items-center gap-3 px-4 py-3 text-left">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0"><Icon className="w-4 h-4 text-primary" /></div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-foreground">{intent.name}</span>
-                        <Badge variant="outline" className="text-[9px]">Obrigatória</Badge>
+        {/* Integrações */}
+        <TabsContent value="connectors" className="flex-1 mt-0 overflow-hidden">
+          <ScrollArea className="h-full">
+            <div className="p-6">
+              <h2 className="text-lg font-bold text-foreground">Integrações</h2>
+              <p className="text-sm text-muted-foreground mt-1 mb-6">
+                Conecte integrações para expandir as capacidades do seu agente.
+              </p>
+              <div className="space-y-1">
+                {INTEGRATIONS.map((c) => (
+                  <div key={c.label} className="flex items-center justify-between py-3 px-3 rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={c.logo}
+                        alt={c.label}
+                        className="w-7 h-7 rounded object-contain shrink-0"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                      />
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{c.label}</p>
+                        <p className="text-xs text-muted-foreground">{c.desc}</p>
                       </div>
-                      <p className="text-[11px] text-muted-foreground truncate">{intent.description}</p>
                     </div>
-                    {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-                  </button>
-                  {isExpanded && (
-                    <div className="px-4 pb-3 space-y-2 border-t border-border pt-3">
-                      <div className="space-y-1"><Label className="text-[11px]">Quando ativar:</Label><div className="flex flex-wrap gap-1">{intent.triggers.map((t) => <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>)}</div></div>
-                      <div className="space-y-1"><Label className="text-[11px]">Ação:</Label><p className="text-xs text-foreground">{intent.action}</p></div>
+                    <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground gap-1">
+                      + Conectar
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </ScrollArea>
+        </TabsContent>
+
+        {/* Secrets */}
+        <TabsContent value="secrets" className="flex-1 mt-0">
+          <div className="p-6 text-center text-muted-foreground">
+            <p className="text-sm">Nenhum secret configurado ainda.</p>
+            <Button variant="outline" size="sm" className="mt-4">Adicionar Secret</Button>
+          </div>
+        </TabsContent>
+
+        {/* Arquivos - Knowledge */}
+        <TabsContent value="files" className="flex-1 mt-0 overflow-hidden">
+          <ScrollArea className="h-full">
+            <div className="p-6 space-y-6">
+              <div>
+                <h2 className="text-lg font-bold text-foreground">Conhecimento</h2>
+                <p className="text-sm text-muted-foreground mt-1">Fontes de dados para alimentar o agente.</p>
+              </div>
+
+              {/* Drop zone */}
+              <div
+                className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                onDrop={(e) => { e.preventDefault(); e.stopPropagation(); if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); }}
+              >
+                <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+                <p className="text-sm font-medium text-foreground">Arraste arquivos ou clique para enviar</p>
+                <p className="text-xs text-muted-foreground mt-1">PDFs, documentos, FAQ, Notion, Google Drive</p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept=".pdf,.doc,.docx,.txt,.md,.csv,.json,.xlsx"
+                  className="hidden"
+                  onChange={(e) => e.target.files && handleFiles(e.target.files)}
+                />
+              </div>
+
+              {/* File list */}
+              {context.knowledgeFiles.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Arquivos enviados</p>
+                  {context.knowledgeFiles.map((f) => (
+                    <div key={f.id} className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2">
+                      {getFileIcon(f.type)}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-foreground truncate">{f.name}</p>
+                        <p className="text-[11px] text-muted-foreground">{formatSize(f.size)}</p>
+                      </div>
+                      <button onClick={() => removeFile(f.id)} className="text-muted-foreground hover:text-destructive">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* URL input */}
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">URLs</p>
+                <div className="flex gap-2">
+                  <div className="flex-1 relative">
+                    <Link2 className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={urlInput}
+                      onChange={(e) => setUrlInput(e.target.value)}
+                      placeholder="https://exemplo.com/faq"
+                      className="pl-9"
+                      onKeyDown={(e) => e.key === "Enter" && addUrl()}
+                    />
+                  </div>
+                  <Button size="sm" onClick={addUrl} disabled={!urlInput.trim()} className="gap-1 shrink-0">
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+                {urls.map((url, i) => (
+                  <div key={i} className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2">
+                    <Globe className="w-4 h-4 text-primary shrink-0" />
+                    <p className="text-sm text-foreground truncate flex-1">{url}</p>
+                    <button onClick={() => setUrls(urls.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </ScrollArea>
+        </TabsContent>
+
+        {/* Agent — with sidebar navigation */}
+        <TabsContent value="agent" className="flex-1 mt-0 overflow-hidden">
+          <div className="flex h-full">
+            <div className="w-48 border-r border-border p-4 space-y-4 shrink-0">
+              {SETTINGS_NAV.map((section, sIdx) => (
+                <div key={sIdx}>
+                  <div className="space-y-0.5">
+                    {section.items.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <button
+                          key={item.key}
+                          onClick={() => setSettingsNav(item.key)}
+                          className={`w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                            settingsNav === item.key
+                              ? "bg-primary/10 text-primary font-medium"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                          }`}
+                        >
+                          <Icon className="w-4 h-4" />
+                          {item.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <ScrollArea className="flex-1">
+              <div className="p-6">
+                <div className="max-w-lg space-y-6">
+                  <div>
+                    <h2 className="text-lg font-bold text-foreground">{SECTION_TITLES[settingsNav]?.title}</h2>
+                    <p className="text-sm text-muted-foreground mt-1">{SECTION_TITLES[settingsNav]?.desc}</p>
+                  </div>
+
+                  {settingsNav === "identidade" && (
+                    <div className="space-y-6">
+                      {/* Avatar upload */}
+                      <div className="space-y-2">
+                        <h3 className="text-sm font-semibold text-foreground">Avatar</h3>
+                        <div className="flex items-center gap-4">
+                          <div
+                            className="w-16 h-16 rounded-full bg-muted border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors overflow-hidden"
+                            onClick={() => avatarInputRef.current?.click()}
+                          >
+                            {avatarPreview ? (
+                              <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
+                            ) : (
+                              <Camera className="w-6 h-6 text-muted-foreground" />
+                            )}
+                          </div>
+                          <div>
+                            <Button variant="outline" size="sm" onClick={() => avatarInputRef.current?.click()} className="text-xs">
+                              Enviar foto
+                            </Button>
+                            <p className="text-[11px] text-muted-foreground mt-1">JPEG, PNG ou WebP · até 5 MB</p>
+                          </div>
+                          <input
+                            ref={avatarInputRef}
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            className="hidden"
+                            onChange={handleAvatarChange}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <h3 className="text-sm font-semibold text-foreground">Nome do agente</h3>
+                        <Input value={context.agentName} onChange={(e) => update("agentName", e.target.value)} placeholder="Ex: Ivy, Sofia, Max..." />
+                      </div>
+                      <div className="space-y-2">
+                        <h3 className="text-sm font-semibold text-foreground">Cargo / Função</h3>
+                        <Input value={context.mainProduct} onChange={(e) => update("mainProduct", e.target.value)} placeholder="Ex: SDR, Atendente, Consultor..." />
+                      </div>
+                      <div className="space-y-2">
+                        <h3 className="text-sm font-semibold text-foreground">Empresa</h3>
+                        <Select
+                          value={context.companyName ? MOCK_CLIENTS.find(c => c.companyName === context.companyName)?.id || "" : ""}
+                          onValueChange={(clientId) => {
+                            const client = MOCK_CLIENTS.find(c => c.id === clientId);
+                            if (client) {
+                              onContextChange({ ...context, companyName: client.companyName, website: client.website ? `https://${client.website}` : "", industry: client.industry || "" });
+                            }
+                          }}
+                        >
+                          <SelectTrigger><SelectValue placeholder="Escolha um cliente cadastrado" /></SelectTrigger>
+                          <SelectContent>
+                            {MOCK_CLIENTS.filter(c => c.status === "active" || c.status === "onboarding").map((c) => (
+                              <SelectItem key={c.id} value={c.id}>{c.companyName}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <h3 className="text-sm font-semibold text-foreground">Tom de voz</h3>
+                        <Select value={context.toneOfVoice} onValueChange={(v) => update("toneOfVoice", v)}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>{TONES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <h3 className="text-sm font-semibold text-foreground">Mensagem de saudação</h3>
+                        <Textarea
+                          value={context.greetingMessage}
+                          onChange={(e) => update("greetingMessage", e.target.value)}
+                          placeholder="Ex: Olá! 👋 Sou a Ivy, assistente virtual..."
+                          className="min-h-[80px]"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {settingsNav === "objetivo" && (
+                    <div className="space-y-6">
+                      <div className="space-y-2">
+                        <h3 className="text-sm font-semibold text-foreground">O que este agente faz?</h3>
+                        <p className="text-xs text-muted-foreground">Define o propósito principal. Carregado no system prompt.</p>
+                        <Textarea value={context.targetAudienceDescription} onChange={(e) => update("targetAudienceDescription", e.target.value)} placeholder="Ex: Este agente conversa com visitantes do site para entender seu interesse..." className="min-h-[100px]" />
+                      </div>
+                      <div className="space-y-2">
+                        <h3 className="text-sm font-semibold text-foreground">Resultado esperado</h3>
+                        <Textarea value={context.painPoints} onChange={(e) => update("painPoints", e.target.value)} placeholder="Ex: Lead qualificado com reunião agendada..." className="min-h-[80px]" />
+                      </div>
+                      <div className="space-y-2">
+                        <h3 className="text-sm font-semibold text-foreground">Público atendido</h3>
+                        <Textarea value={context.knowledgeSources} onChange={(e) => update("knowledgeSources", e.target.value)} placeholder="Ex: PMEs de tecnologia, decisores C-level..." className="min-h-[80px]" />
+                      </div>
+                    </div>
+                  )}
+
+                  {settingsNav === "intencoes" && (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Intenções obrigatórias</p>
+                        {MANDATORY_INTENTS.map((intent) => {
+                          const Icon = INTENT_ICONS[intent.id] || Shield;
+                          const isExpanded = expandedIntent === intent.id;
+                          return (
+                            <div key={intent.id} className="rounded-lg border border-border bg-muted/20">
+                              <button onClick={() => setExpandedIntent(isExpanded ? null : intent.id)} className="w-full flex items-center gap-3 px-4 py-3 text-left">
+                                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0"><Icon className="w-4 h-4 text-primary" /></div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-medium text-foreground">{intent.name}</span>
+                                    <Badge variant="outline" className="text-[9px]">Obrigatória</Badge>
+                                  </div>
+                                  <p className="text-[11px] text-muted-foreground truncate">{intent.description}</p>
+                                </div>
+                                {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                              </button>
+                              {isExpanded && (
+                                <div className="px-4 pb-3 space-y-2 border-t border-border pt-3">
+                                  <div className="space-y-1"><Label className="text-[11px]">Quando ativar:</Label><div className="flex flex-wrap gap-1">{intent.triggers.map((t) => <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>)}</div></div>
+                                  <div className="space-y-1"><Label className="text-[11px]">Ação:</Label><p className="text-xs text-foreground">{intent.action}</p></div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Personalizadas</p>
+                          <span className="text-[10px] text-muted-foreground">{customIntents.length}/10</span>
+                        </div>
+                        {customIntents.map((intent) => (
+                          <div key={intent.id} className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-3">
+                            <Sparkles className="w-4 h-4 text-primary shrink-0" />
+                            <div className="flex-1 min-w-0"><p className="text-sm font-medium text-foreground">{intent.name}</p><p className="text-[11px] text-muted-foreground">{intent.action}</p></div>
+                            <button onClick={() => removeIntent(intent.id)} className="text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
+                          </div>
+                        ))}
+                        <div className="flex flex-wrap gap-1.5">
+                          {CUSTOM_INTENT_SUGGESTIONS.filter((s) => !intents.some((i) => i.name === s.name)).map((s) => (
+                            <button key={s.name} onClick={() => addSuggestedIntent(s)} disabled={!canAddIntent} className="text-[11px] px-2.5 py-1 rounded-full border border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground transition-all disabled:opacity-50">+ {s.name}</button>
+                          ))}
+                        </div>
+                        {canAddIntent && (
+                          <div className="flex gap-2 pt-1">
+                            <Input placeholder="Nome" value={newIntentName} onChange={(e) => setNewIntentName(e.target.value)} className="flex-1" />
+                            <Input placeholder="Ação" value={newIntentAction} onChange={(e) => setNewIntentAction(e.target.value)} className="flex-1" />
+                            <Button size="sm" onClick={addCustomIntent} disabled={!newIntentName.trim()} className="gap-1 shrink-0"><Plus className="w-4 h-4" /></Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {settingsNav === "estagios" && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground">Ordem da conversa.</p>
+                        <span className="text-[10px] text-muted-foreground">{stages.length}/10</span>
+                      </div>
+                      {stages.map((stage, idx) => {
+                        const isExp = expandedStage === stage.id;
+                        return (
+                          <div key={stage.id} className="rounded-lg border border-border bg-card">
+                            <div className="flex items-center gap-2 px-3 py-2.5">
+                              <GripVertical className="w-4 h-4 text-muted-foreground/50 shrink-0" />
+                              <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-[11px] font-bold flex items-center justify-center shrink-0">{idx + 1}</span>
+                              <button onClick={() => setExpandedStage(isExp ? null : stage.id)} className="flex-1 text-left">
+                                <span className="text-sm font-medium text-foreground">{stage.name}</span>
+                              </button>
+                              <div className="flex items-center gap-1">
+                                <button onClick={() => moveStage(stage.id, "up")} disabled={idx === 0} className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30"><ChevronUp className="w-3.5 h-3.5" /></button>
+                                <button onClick={() => moveStage(stage.id, "down")} disabled={idx === stages.length - 1} className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30"><ChevronDown className="w-3.5 h-3.5" /></button>
+                                <button onClick={() => removeStage(stage.id)} className="p-1 text-muted-foreground hover:text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
+                              </div>
+                            </div>
+                            {isExp && (
+                              <div className="px-4 pb-3 space-y-2 border-t border-border pt-3">
+                                <Input value={stage.description} onChange={(e) => updateStage(stage.id, "description", e.target.value)} placeholder="Descrição..." />
+                                <Textarea value={stage.example} onChange={(e) => updateStage(stage.id, "example", e.target.value)} placeholder="Exemplo..." rows={2} />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                      {canAddStage && (
+                        <div className="flex gap-2">
+                          <Input placeholder="Novo estágio..." value={newStageName} onChange={(e) => setNewStageName(e.target.value)} />
+                          <Button size="sm" onClick={addStage} disabled={!newStageName.trim()} className="gap-1 shrink-0"><Plus className="w-4 h-4" /></Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {settingsNav === "avancado" && (
+                    <div className="space-y-5">
+                      <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
+                        <div className="flex items-center justify-between"><div><Label className="text-sm font-medium">Max respostas</Label><p className="text-[11px] text-muted-foreground">Evita loops.</p></div><Badge variant="outline" className="text-sm font-mono">{advancedConfig.maxResponses}</Badge></div>
+                        <Slider value={[advancedConfig.maxResponses]} onValueChange={([v]) => onAdvancedConfigChange({ ...advancedConfig, maxResponses: v })} min={10} max={100} step={5} />
+                      </div>
+                      <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
+                        <Label className="text-sm font-medium">Tamanho das mensagens</Label>
+                        <div className="grid grid-cols-3 gap-2">
+                          {([{ value: "short" as MessageSize, label: "Curtas" }, { value: "medium" as MessageSize, label: "Médias" }, { value: "long" as MessageSize, label: "Longas" }]).map((opt) => (
+                            <button key={opt.value} onClick={() => onAdvancedConfigChange({ ...advancedConfig, messageSize: opt.value })} className={`rounded-lg border p-3 text-center transition-all ${advancedConfig.messageSize === opt.value ? "border-primary bg-primary/5 text-foreground" : "border-border bg-card text-muted-foreground hover:border-primary/40"}`}>
+                              <p className="text-xs font-medium">{opt.label}</p>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between rounded-lg border border-border bg-muted/20 px-4 py-3">
+                        <div><Label className="text-sm font-medium">Responder na transferência</Label></div>
+                        <Switch checked={advancedConfig.respondOnTransfer} onCheckedChange={(v) => onAdvancedConfigChange({ ...advancedConfig, respondOnTransfer: v })} />
+                      </div>
+                      <div className="flex items-center justify-between rounded-lg border border-border bg-muted/20 px-4 py-3">
+                        <div className="flex items-center gap-2"><Mic className="w-4 h-4 text-primary" /><Label className="text-sm font-medium">Responder em áudio</Label></div>
+                        <Switch checked={advancedConfig.respondInAudio} onCheckedChange={(v) => onAdvancedConfigChange({ ...advancedConfig, respondInAudio: v })} />
+                      </div>
                     </div>
                   )}
                 </div>
-              );
-            })}
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Personalizadas</p>
-              <span className="text-[10px] text-muted-foreground">{customIntents.length}/10</span>
-            </div>
-            {customIntents.map((intent) => (
-              <div key={intent.id} className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-3">
-                <Sparkles className="w-4 h-4 text-primary shrink-0" />
-                <div className="flex-1 min-w-0"><p className="text-sm font-medium text-foreground">{intent.name}</p><p className="text-[11px] text-muted-foreground">{intent.action}</p></div>
-                <button onClick={() => removeIntent(intent.id)} className="text-muted-foreground hover:text-destructive"><Trash2 className="w-4 h-4" /></button>
               </div>
-            ))}
-            <div className="flex flex-wrap gap-1.5">
-              {CUSTOM_INTENT_SUGGESTIONS.filter((s) => !intents.some((i) => i.name === s.name)).map((s) => (
-                <button key={s.name} onClick={() => addSuggestedIntent(s)} disabled={!canAddIntent} className="text-[11px] px-2.5 py-1 rounded-full border border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground transition-all disabled:opacity-50">+ {s.name}</button>
-              ))}
-            </div>
-            {canAddIntent && (
-              <div className="flex gap-2 pt-1">
-                <Input placeholder="Nome" value={newIntentName} onChange={(e) => setNewIntentName(e.target.value)} className="flex-1" />
-                <Input placeholder="Ação" value={newIntentAction} onChange={(e) => setNewIntentAction(e.target.value)} className="flex-1" />
-                <Button size="sm" onClick={addCustomIntent} disabled={!newIntentName.trim()} className="gap-1 shrink-0"><Plus className="w-4 h-4" /></Button>
+            </ScrollArea>
+          </div>
+        </TabsContent>
+
+        {/* Configurações - Canais */}
+        <TabsContent value="settings" className="flex-1 mt-0 overflow-hidden">
+          <ScrollArea className="h-full">
+            <div className="p-6 max-w-lg space-y-6">
+              <div>
+                <h2 className="text-lg font-bold text-foreground">Canais</h2>
+                <p className="text-sm text-muted-foreground mt-1 mb-4">Onde seu agente vai operar?</p>
               </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {activeSection === "estagios" && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">Ordem da conversa.</p>
-            <span className="text-[10px] text-muted-foreground">{stages.length}/10</span>
-          </div>
-          {stages.map((stage, idx) => {
-            const isExp = expandedStage === stage.id;
-            return (
-              <div key={stage.id} className="rounded-lg border border-border bg-card">
-                <div className="flex items-center gap-2 px-3 py-2.5">
-                  <GripVertical className="w-4 h-4 text-muted-foreground/50 shrink-0" />
-                  <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-[11px] font-bold flex items-center justify-center shrink-0">{idx + 1}</span>
-                  <button onClick={() => setExpandedStage(isExp ? null : stage.id)} className="flex-1 text-left">
-                    <span className="text-sm font-medium text-foreground">{stage.name}</span>
-                  </button>
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => moveStage(stage.id, "up")} disabled={idx === 0} className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30"><ChevronUp className="w-3.5 h-3.5" /></button>
-                    <button onClick={() => moveStage(stage.id, "down")} disabled={idx === stages.length - 1} className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30"><ChevronDown className="w-3.5 h-3.5" /></button>
-                    <button onClick={() => removeStage(stage.id)} className="p-1 text-muted-foreground hover:text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
-                  </div>
-                </div>
-                {isExp && (
-                  <div className="px-4 pb-3 space-y-2 border-t border-border pt-3">
-                    <Input value={stage.description} onChange={(e) => updateStage(stage.id, "description", e.target.value)} placeholder="Descrição..." />
-                    <Textarea value={stage.example} onChange={(e) => updateStage(stage.id, "example", e.target.value)} placeholder="Exemplo..." rows={2} />
-                  </div>
-                )}
+              <div className="space-y-2">
+                {CHANNELS.map((ch) => {
+                  const isSelected = selectedChannels.includes(ch.value as DeployChannel);
+                  return (
+                    <div
+                      key={ch.value}
+                      className={`flex items-center gap-4 rounded-xl border-2 p-4 transition-all ${
+                        isSelected ? "border-primary bg-primary/5 shadow-md" : "border-border bg-card"
+                      }`}
+                    >
+                      {ch.logo ? (
+                        <img
+                          src={ch.logo}
+                          alt={ch.label}
+                          className="w-8 h-8 rounded-lg object-contain shrink-0"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                        />
+                      ) : (
+                        <Globe className="w-8 h-8 text-primary shrink-0" />
+                      )}
+                      <span className="text-sm font-semibold text-foreground flex-1">{ch.label}</span>
+                      <Button
+                        size="sm"
+                        variant={isSelected ? "default" : "outline"}
+                        onClick={() => onToggleChannel(ch.value as DeployChannel)}
+                        className="shrink-0 text-xs h-8 gap-1.5"
+                      >
+                        {isSelected ? (
+                          <><Check className="w-3 h-3" /> Conectado</>
+                        ) : (
+                          "Conectar"
+                        )}
+                      </Button>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
-          {canAddStage && (
-            <div className="flex gap-2">
-              <Input placeholder="Novo estágio..." value={newStageName} onChange={(e) => setNewStageName(e.target.value)} />
-              <Button size="sm" onClick={addStage} disabled={!newStageName.trim()} className="gap-1 shrink-0"><Plus className="w-4 h-4" /></Button>
-            </div>
-          )}
-        </div>
-      )}
 
-
-      {activeSection === "avancado" && (
-        <div className="space-y-5">
-          <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
-            <div className="flex items-center justify-between"><div><Label className="text-sm font-medium">Max respostas</Label><p className="text-[11px] text-muted-foreground">Evita loops.</p></div><Badge variant="outline" className="text-sm font-mono">{advancedConfig.maxResponses}</Badge></div>
-            <Slider value={[advancedConfig.maxResponses]} onValueChange={([v]) => onAdvancedConfigChange({ ...advancedConfig, maxResponses: v })} min={10} max={100} step={5} />
-          </div>
-          <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
-            <Label className="text-sm font-medium">Tamanho das mensagens</Label>
-            <div className="grid grid-cols-3 gap-2">
-              {([{ value: "short" as MessageSize, label: "Curtas" }, { value: "medium" as MessageSize, label: "Médias" }, { value: "long" as MessageSize, label: "Longas" }]).map((opt) => (
-                <button key={opt.value} onClick={() => onAdvancedConfigChange({ ...advancedConfig, messageSize: opt.value })} className={`rounded-lg border p-3 text-center transition-all ${advancedConfig.messageSize === opt.value ? "border-primary bg-primary/5 text-foreground" : "border-border bg-card text-muted-foreground hover:border-primary/40"}`}>
-                  <p className="text-xs font-medium">{opt.label}</p>
-                </button>
-              ))}
+              <div className="pt-4 border-t border-border">
+                <h2 className="text-lg font-bold text-destructive">Danger Zone</h2>
+                <p className="text-sm text-muted-foreground mt-1">Ações irreversíveis para este agente.</p>
+                <Button variant="destructive" size="sm" className="mt-4">Excluir Agente</Button>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center justify-between rounded-lg border border-border bg-muted/20 px-4 py-3">
-            <div><Label className="text-sm font-medium">Responder na transferência</Label></div>
-            <Switch checked={advancedConfig.respondOnTransfer} onCheckedChange={(v) => onAdvancedConfigChange({ ...advancedConfig, respondOnTransfer: v })} />
-          </div>
-          <div className="flex items-center justify-between rounded-lg border border-border bg-muted/20 px-4 py-3">
-            <div className="flex items-center gap-2"><Mic className="w-4 h-4 text-primary" /><Label className="text-sm font-medium">Responder em áudio</Label></div>
-            <Switch checked={advancedConfig.respondInAudio} onCheckedChange={(v) => onAdvancedConfigChange({ ...advancedConfig, respondInAudio: v })} />
-          </div>
-        </div>
-      )}
+          </ScrollArea>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
