@@ -592,7 +592,7 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
                       <h2 className="text-lg font-bold text-foreground">Canais</h2>
                       <p className="text-sm text-muted-foreground mt-1">Onde seu agente opera.</p>
                     </div>
-                    {CHANNELS.map((ch) => {
+                    {filteredChannels.map((ch) => {
                       const isSelected = connectedChannels.includes(ch.value);
                       return (
                         <div
