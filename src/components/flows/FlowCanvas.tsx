@@ -204,7 +204,7 @@ export default function FlowCanvas() {
           <MiniMap
             className="!bg-card/90 !border-border !rounded-xl !shadow-lg"
             nodeColor={(n) => {
-              const d = n.data as FlowNodeData;
+              const d = n.data as unknown as FlowNodeData;
               return d.color || "hsl(var(--muted))";
             }}
             maskColor="hsl(var(--background) / 0.7)"

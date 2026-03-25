@@ -24,7 +24,7 @@ const handleColors: Record<string, string> = {
 };
 
 function FlowNode({ data, selected }: NodeProps) {
-  const d = data as FlowNodeData;
+  const d = data as unknown as FlowNodeData;
   const isCondition = d.category === "condition";
 
   return (

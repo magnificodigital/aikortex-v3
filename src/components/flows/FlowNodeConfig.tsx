@@ -15,7 +15,7 @@ interface Props {
 }
 
 export default function FlowNodeConfig({ node, onClose, onUpdate, onDelete }: Props) {
-  const data = node.data as FlowNodeData;
+  const data = node.data as unknown as FlowNodeData;
   const config = data.config || {};
 
   const updateConfig = (key: string, value: unknown) => {
