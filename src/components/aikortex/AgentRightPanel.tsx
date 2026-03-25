@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   User, Zap, Monitor, MonitorSmartphone, Settings2, AlertTriangle,
   Upload, X, FileText, Image, File, Plus, Globe, Link2, Check, Camera,
+  Webhook, KeyRound, Blocks,
 } from "lucide-react";
 
 const INTEGRATIONS = [
@@ -124,9 +125,8 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange }: Props) => {
             {[
               { value: "agent", label: "Agente" },
               { value: "connectors", label: "Integrações" },
-              { value: "secrets", label: "Secrets" },
               { value: "files", label: "Arquivos" },
-              { value: "settings", label: "Configurações" },
+              { value: "settings", label: "Canais" },
             ].map((tab) => (
               <TabsTrigger
                 key={tab.value}
@@ -139,45 +139,72 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange }: Props) => {
           </TabsList>
         </div>
 
-        {/* Integrações */}
+        {/* Integrações — com sub-seções MCP, API, Webhook */}
         <TabsContent value="connectors" className="flex-1 mt-0 overflow-hidden">
           <ScrollArea className="h-full">
-            <div className="p-6">
-              <h2 className="text-lg font-bold text-foreground">Integrações</h2>
-              <p className="text-sm text-muted-foreground mt-1 mb-6">
-                Conecte integrações para expandir as capacidades do seu agente.
-              </p>
-              <div className="space-y-1">
-                {INTEGRATIONS.map((c) => (
-                  <div key={c.label} className="flex items-center justify-between py-3 px-3 rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={c.logo}
-                        alt={c.label}
-                        className="w-7 h-7 rounded object-contain shrink-0"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                      />
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{c.label}</p>
-                        <p className="text-xs text-muted-foreground">{c.desc}</p>
+            <div className="p-6 space-y-6">
+              <div>
+                <h2 className="text-lg font-bold text-foreground">Integrações</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Conecte integrações para expandir as capacidades do seu agente.
+                </p>
+              </div>
+
+              {/* MCPs */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Blocks className="w-4 h-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">MCPs</h3>
+                </div>
+                <p className="text-xs text-muted-foreground">Conecte servidores MCP para estender o contexto do agente.</p>
+                <Button variant="outline" size="sm" className="text-xs gap-1.5">
+                  <Plus className="w-3 h-3" /> Adicionar MCP
+                </Button>
+              </div>
+
+              {/* APIs */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <KeyRound className="w-4 h-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">APIs</h3>
+                </div>
+                <p className="text-xs text-muted-foreground">Conecte APIs externas via chave de acesso.</p>
+                <div className="space-y-1">
+                  {INTEGRATIONS.map((c) => (
+                    <div key={c.label} className="flex items-center justify-between py-3 px-3 rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={c.logo}
+                          alt={c.label}
+                          className="w-7 h-7 rounded object-contain shrink-0"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                        />
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{c.label}</p>
+                          <p className="text-xs text-muted-foreground">{c.desc}</p>
+                        </div>
                       </div>
+                      <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground gap-1">
+                        + Conectar
+                      </Button>
                     </div>
-                    <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground gap-1">
-                      + Conectar
-                    </Button>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              </div>
+
+              {/* Webhooks */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Webhook className="w-4 h-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">Webhooks</h3>
+                </div>
+                <p className="text-xs text-muted-foreground">Configure webhooks para receber e enviar eventos em tempo real.</p>
+                <Button variant="outline" size="sm" className="text-xs gap-1.5">
+                  <Plus className="w-3 h-3" /> Adicionar Webhook
+                </Button>
               </div>
             </div>
           </ScrollArea>
-        </TabsContent>
-
-        {/* Secrets */}
-        <TabsContent value="secrets" className="flex-1 mt-0">
-          <div className="p-6 text-center text-muted-foreground">
-            <p className="text-sm">Nenhum secret configurado ainda.</p>
-            <Button variant="outline" size="sm" className="mt-4">Adicionar Secret</Button>
-          </div>
         </TabsContent>
 
         {/* Arquivos - Knowledge */}
@@ -426,19 +453,40 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange }: Props) => {
           </div>
         </TabsContent>
 
-        {/* Configurações */}
+        {/* Canais */}
         <TabsContent value="settings" className="flex-1 mt-0 overflow-hidden">
           <ScrollArea className="h-full">
-            <div className="p-6 max-w-lg space-y-8">
+            <div className="p-6 max-w-lg space-y-6">
               <div>
-                <h2 className="text-lg font-bold text-foreground">Configurações</h2>
-                <p className="text-sm text-muted-foreground mt-1">Configurações gerais do agente.</p>
+                <h2 className="text-lg font-bold text-foreground">Canais</h2>
+                <p className="text-sm text-muted-foreground mt-1">Onde seu agente será publicado e poderá interagir.</p>
               </div>
-              <div>
-                <h2 className="text-lg font-bold text-destructive">Danger Zone</h2>
-                <p className="text-sm text-muted-foreground mt-1">Ações irreversíveis para este agente.</p>
-                <Button variant="destructive" size="sm" className="mt-4">Excluir Agente</Button>
-              </div>
+              {CHANNELS.map((ch) => {
+                const isSelected = connectedChannels.includes(ch.value);
+                return (
+                  <div
+                    key={ch.value}
+                    className={`flex items-center gap-4 rounded-xl border-2 p-4 transition-all ${
+                      isSelected ? "border-primary bg-primary/5 shadow-md" : "border-border bg-card"
+                    }`}
+                  >
+                    {ch.logo ? (
+                      <img src={ch.logo} alt={ch.label} className="w-8 h-8 rounded-lg object-contain shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                    ) : (
+                      <Globe className="w-8 h-8 text-primary shrink-0" />
+                    )}
+                    <span className="text-sm font-semibold text-foreground flex-1">{ch.label}</span>
+                    <Button
+                      size="sm"
+                      variant={isSelected ? "default" : "outline"}
+                      onClick={() => toggleChannel(ch.value)}
+                      className="shrink-0 text-xs h-8 gap-1.5"
+                    >
+                      {isSelected ? <><Check className="w-3 h-3" /> Conectado</> : "Conectar"}
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
           </ScrollArea>
         </TabsContent>
