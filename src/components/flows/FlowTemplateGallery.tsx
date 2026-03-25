@@ -18,11 +18,11 @@ const categoryIcons: Record<string, string> = {
 };
 
 const categoryColors: Record<string, string> = {
-  Vendas: "from-green-500/20 to-emerald-500/10 border-green-500/30",
-  Suporte: "from-blue-500/20 to-cyan-500/10 border-blue-500/30",
-  "Sucesso do Cliente": "from-purple-500/20 to-pink-500/10 border-purple-500/30",
-  "E-commerce": "from-orange-500/20 to-yellow-500/10 border-orange-500/30",
-  Produtividade: "from-cyan-500/20 to-blue-500/10 border-cyan-500/30",
+  Vendas: "border-green-500/30",
+  Suporte: "border-blue-500/30",
+  "Sucesso do Cliente": "border-purple-500/30",
+  "E-commerce": "border-orange-500/30",
+  Produtividade: "border-cyan-500/30",
 };
 
 export default function FlowTemplateGallery({ onSelect }: Props) {
@@ -120,8 +120,8 @@ export default function FlowTemplateGallery({ onSelect }: Props) {
                 key={tpl.id}
                 onClick={() => onSelect(tpl)}
                 className={cn(
-                  "text-left rounded-xl border bg-gradient-to-br p-5 hover:scale-[1.02] hover:shadow-lg transition-all group cursor-pointer relative overflow-hidden",
-                  categoryColors[tpl.category] || "from-card to-card border-border"
+                  "text-left rounded-xl border bg-transparent p-5 hover:scale-[1.02] hover:shadow-lg transition-all group cursor-pointer relative overflow-hidden",
+                  categoryColors[tpl.category] || "border-border"
                 )}
               >
                 {/* Subtle glow */}
