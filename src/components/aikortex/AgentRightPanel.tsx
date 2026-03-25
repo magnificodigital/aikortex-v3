@@ -56,6 +56,7 @@ const SETTINGS_NAV = [
 
 interface Props {
   agent: { name: string; avatar: string };
+  agentType: AgentType;
   agentModel: string;
   onModelChange: (model: string) => void;
   activeTab?: string;
