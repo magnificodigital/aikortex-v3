@@ -146,7 +146,7 @@ const StepLaunch = ({ context, agent, selectedChannels, onToggleChannel, selecte
         <Button variant="outline" onClick={onBack} className="gap-1.5">
           <ArrowLeft className="w-4 h-4" /> Voltar
         </Button>
-        <Button size="lg" className="gap-2 px-8">
+        <Button size="lg" className="gap-2 px-8" onClick={() => navigate(`/aikortex/agents/${agent?.id || "sdr-1"}`)}>
           <Rocket className="w-4 h-4" /> Ativar agente em produção
         </Button>
       </div>
