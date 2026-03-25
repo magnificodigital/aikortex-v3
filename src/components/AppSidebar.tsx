@@ -252,9 +252,9 @@ const AppSidebar = () => {
           </Link>
         </div>
 
+        {renderGroup("Aikortex", aikortexItems, aikortexOpen, setAikortexOpen)}
         {renderGroup("Gestão", gestaoItems, gestaoOpen, setGestaoOpen)}
         {renderGroup("Partners", partnersItems, partnersOpen, setPartnersOpen)}
-        {renderGroup("Aikortex", aikortexItems, aikortexOpen, setAikortexOpen)}
       </nav>
 
       {/* Bottom */}
