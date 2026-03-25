@@ -1,24 +1,39 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Zap, Monitor, MonitorSmartphone, Settings2, AlertTriangle } from "lucide-react";
+import {
+  User, Zap, Monitor, MonitorSmartphone, Settings2, AlertTriangle,
+  Upload, X, FileText, Image, File, Plus, Globe, Link2, Check, Camera,
+} from "lucide-react";
 
-const CONNECTORS = [
-  { icon: "📝", label: "Notion", desc: "Read/write Notion pages and databases." },
-  { icon: "💬", label: "Slack", desc: "Send messages to Slack channels." },
-  { icon: "🎮", label: "Discord", desc: "Post to Discord servers." },
-  { icon: "🔶", label: "HubSpot", desc: "Access CRM and contacts." },
-  { icon: "📊", label: "Airtable", desc: "Read/write bases, tables, and records." },
-  { icon: "🔗", label: "LinkedIn", desc: "Access profile and create posts." },
-  { icon: "☁️", label: "Salesforce", desc: "Access CRM contacts and opportunities." },
-  { icon: "📧", label: "Gmail", desc: "Read, send and compose emails." },
-  { icon: "📁", label: "Google Drive", desc: "Read, upload and manage files." },
-  { icon: "📅", label: "Google Calendar", desc: "Read and manage calendar events." },
-  { icon: "📄", label: "Google Docs", desc: "Create and edit documents." },
+const INTEGRATIONS = [
+  { label: "OpenAI", desc: "Modelos GPT para geração de texto e análise.", logo: "https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg" },
+  { label: "Anthropic", desc: "Modelos Claude para raciocínio avançado.", logo: "https://cdn.worldvectorlogo.com/logos/anthropic-2.svg" },
+  { label: "Gemini", desc: "IA multimodal do Google.", logo: "https://upload.wikimedia.org/wikipedia/commons/8/8a/Google_Gemini_logo.svg" },
+  { label: "ElevenLabs", desc: "Geração de voz e text-to-speech.", logo: "https://images.seeklogo.com/logo-png/52/1/elevenlabs-logo-png_seeklogo-527765.png" },
+  { label: "OpenRouter", desc: "Acesso unificado a múltiplos LLMs.", logo: "https://openrouter.ai/favicon.ico" },
+  { label: "Gmail", desc: "Ler, enviar e compor e-mails.", logo: "https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg" },
+  { label: "Google Calendar", desc: "Ler e gerenciar eventos.", logo: "https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg" },
+  { label: "Outlook Calendar", desc: "Gerenciar calendário Microsoft.", logo: "https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg" },
+  { label: "Calendly", desc: "Agendamento automático de reuniões.", logo: "https://images.seeklogo.com/logo-png/43/2/calendly-logo-png_seeklogo-437498.png" },
+  { label: "Google Sheets", desc: "Ler e escrever planilhas.", logo: "https://upload.wikimedia.org/wikipedia/commons/3/30/Google_Sheets_logo_%282014-2020%29.svg" },
+  { label: "Google Drive", desc: "Ler, enviar e gerenciar arquivos.", logo: "https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg" },
+  { label: "Piperun", desc: "CRM de vendas e automação.", logo: "https://www.piperun.com/wp-content/uploads/2023/07/favicon-piperun-crm.png" },
+  { label: "HubSpot", desc: "CRM, marketing e vendas.", logo: "https://upload.wikimedia.org/wikipedia/commons/3/3f/HubSpot_Logo.svg" },
+  { label: "RD Station", desc: "Automação de marketing e CRM.", logo: "https://images.seeklogo.com/logo-png/52/1/rd-station-logo-png_seeklogo-522484.png" },
+];
+
+const CHANNELS = [
+  { value: "whatsapp", label: "WhatsApp", logo: "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" },
+  { value: "instagram", label: "Instagram", logo: "https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" },
+  { value: "facebook", label: "Facebook", logo: "https://upload.wikimedia.org/wikipedia/commons/0/05/Facebook_Logo_%282019%29.png" },
+  { value: "linkedin", label: "LinkedIn", logo: "https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" },
+  { value: "tiktok", label: "TikTok", logo: "https://sf-tb-sg.ibytedtos.com/obj/eden-sg/uhtyvueh7nulogpoguhm/tiktok-icon2.png" },
+  { value: "website", label: "WebSite", logo: "" },
 ];
 
 const SETTINGS_NAV = [
@@ -40,11 +55,66 @@ interface Props {
   onModelChange: (model: string) => void;
 }
 
+interface KnowledgeFileLocal {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+}
+
 const AgentRightPanel = ({ agent, agentModel, onModelChange }: Props) => {
   const [rightTab, setRightTab] = useState("agent");
   const [settingsNav, setSettingsNav] = useState("general");
   const [agentName, setAgentName] = useState(agent.name);
   const [agentDesc, setAgentDesc] = useState("");
+  const [knowledgeFiles, setKnowledgeFiles] = useState<KnowledgeFileLocal[]>([]);
+  const [urlInput, setUrlInput] = useState("");
+  const [urls, setUrls] = useState<string[]>([]);
+  const [connectedChannels, setConnectedChannels] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+
+  const handleFiles = (files: FileList) => {
+    const newFiles: KnowledgeFileLocal[] = Array.from(files)
+      .filter((f) => f.size <= 10 * 1024 * 1024)
+      .map((f) => ({ id: crypto.randomUUID(), name: f.name, size: f.size, type: f.type }));
+    setKnowledgeFiles(prev => [...prev, ...newFiles]);
+  };
+
+  const getFileIcon = (type: string) => {
+    if (type.startsWith("image/")) return <Image className="w-4 h-4 text-primary shrink-0" />;
+    if (type === "application/pdf") return <FileText className="w-4 h-4 text-destructive shrink-0" />;
+    return <File className="w-4 h-4 text-muted-foreground shrink-0" />;
+  };
+
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const addUrl = () => {
+    if (urlInput.trim() && !urls.includes(urlInput.trim())) {
+      setUrls([...urls, urlInput.trim()]);
+      setUrlInput("");
+    }
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => setAvatarPreview(ev.target?.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const toggleChannel = (value: string) => {
+    setConnectedChannels(prev =>
+      prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
+    );
+  };
 
   return (
     <div className="flex-1 flex flex-col min-w-0">
@@ -69,26 +139,31 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange }: Props) => {
           </TabsList>
         </div>
 
-        {/* Connectors */}
+        {/* Integrações */}
         <TabsContent value="connectors" className="flex-1 mt-0 overflow-hidden">
           <ScrollArea className="h-full">
             <div className="p-6">
               <h2 className="text-lg font-bold text-foreground">Integrações</h2>
               <p className="text-sm text-muted-foreground mt-1 mb-6">
-                Conecte integrações OAuth do workspace para que seu agente possa usá-las.
+                Conecte integrações para expandir as capacidades do seu agente.
               </p>
               <div className="space-y-1">
-                {CONNECTORS.map((c) => (
+                {INTEGRATIONS.map((c) => (
                   <div key={c.label} className="flex items-center justify-between py-3 px-3 rounded-lg hover:bg-muted/50 transition-colors">
                     <div className="flex items-center gap-3">
-                      <span className="text-xl">{c.icon}</span>
+                      <img
+                        src={c.logo}
+                        alt={c.label}
+                        className="w-7 h-7 rounded object-contain shrink-0"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                      />
                       <div>
                         <p className="text-sm font-medium text-foreground">{c.label}</p>
                         <p className="text-xs text-muted-foreground">{c.desc}</p>
                       </div>
                     </div>
                     <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground gap-1">
-                      + Connect
+                      + Conectar
                     </Button>
                   </div>
                 ))}
@@ -100,23 +175,91 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange }: Props) => {
         {/* Secrets */}
         <TabsContent value="secrets" className="flex-1 mt-0">
           <div className="p-6 text-center text-muted-foreground">
-            <p className="text-sm">No secrets configured yet.</p>
-            <Button variant="outline" size="sm" className="mt-4">Add Secret</Button>
+            <p className="text-sm">Nenhum secret configurado ainda.</p>
+            <Button variant="outline" size="sm" className="mt-4">Adicionar Secret</Button>
           </div>
         </TabsContent>
 
-        {/* Files */}
-        <TabsContent value="files" className="flex-1 mt-0">
-          <div className="p-6 text-center text-muted-foreground">
-            <p className="text-sm">No files uploaded yet.</p>
-            <Button variant="outline" size="sm" className="mt-4">Upload File</Button>
-          </div>
+        {/* Arquivos - Knowledge */}
+        <TabsContent value="files" className="flex-1 mt-0 overflow-hidden">
+          <ScrollArea className="h-full">
+            <div className="p-6 space-y-6">
+              <div>
+                <h2 className="text-lg font-bold text-foreground">Conhecimento</h2>
+                <p className="text-sm text-muted-foreground mt-1">Fontes de dados para alimentar o agente.</p>
+              </div>
+
+              <div
+                className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                onDrop={(e) => { e.preventDefault(); e.stopPropagation(); if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); }}
+              >
+                <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+                <p className="text-sm font-medium text-foreground">Arraste arquivos ou clique para enviar</p>
+                <p className="text-xs text-muted-foreground mt-1">PDFs, documentos, FAQ, Notion, Google Drive</p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept=".pdf,.doc,.docx,.txt,.md,.csv,.json,.xlsx"
+                  className="hidden"
+                  onChange={(e) => e.target.files && handleFiles(e.target.files)}
+                />
+              </div>
+
+              {knowledgeFiles.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Arquivos enviados</p>
+                  {knowledgeFiles.map((f) => (
+                    <div key={f.id} className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2">
+                      {getFileIcon(f.type)}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-foreground truncate">{f.name}</p>
+                        <p className="text-[11px] text-muted-foreground">{formatSize(f.size)}</p>
+                      </div>
+                      <button onClick={() => setKnowledgeFiles(prev => prev.filter(x => x.id !== f.id))} className="text-muted-foreground hover:text-destructive">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">URLs</p>
+                <div className="flex gap-2">
+                  <div className="flex-1 relative">
+                    <Link2 className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={urlInput}
+                      onChange={(e) => setUrlInput(e.target.value)}
+                      placeholder="https://exemplo.com/faq"
+                      className="pl-9"
+                      onKeyDown={(e) => e.key === "Enter" && addUrl()}
+                    />
+                  </div>
+                  <Button size="sm" onClick={addUrl} disabled={!urlInput.trim()} className="gap-1 shrink-0">
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+                {urls.map((url, i) => (
+                  <div key={i} className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2">
+                    <Globe className="w-4 h-4 text-primary shrink-0" />
+                    <p className="text-sm text-foreground truncate flex-1">{url}</p>
+                    <button onClick={() => setUrls(urls.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </ScrollArea>
         </TabsContent>
 
         {/* Agent — Settings with sidebar */}
         <TabsContent value="agent" className="flex-1 mt-0 overflow-hidden">
           <div className="flex h-full">
-            {/* Settings sidebar */}
             <div className="w-48 border-r border-border p-4 space-y-4 shrink-0">
               {SETTINGS_NAV.map((section) => (
                 <div key={section.section}>
@@ -144,46 +287,65 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange }: Props) => {
               ))}
             </div>
 
-            {/* Settings content */}
             <ScrollArea className="flex-1">
               <div className="p-6 max-w-lg space-y-8">
                 {settingsNav === "general" && (
                   <>
                     <div>
-                      <h2 className="text-lg font-bold text-foreground">General</h2>
-                      <p className="text-sm text-muted-foreground mt-1">Agent identity, purpose, and AI model.</p>
+                      <h2 className="text-lg font-bold text-foreground">Identidade</h2>
+                      <p className="text-sm text-muted-foreground mt-1">Identidade, propósito e modelo de IA do agente.</p>
                     </div>
 
                     <div className="space-y-2">
                       <h3 className="text-sm font-semibold text-foreground">Avatar</h3>
                       <div className="flex items-center gap-4">
-                        <img src={agent.avatar} alt="" className="w-12 h-12 rounded-full object-cover" />
-                        <div className="text-xs text-muted-foreground">
-                          <p>JPEG, PNG, or WebP · up to 5 MB.</p>
-                          <p>Shown in cards and chat across your workspace.</p>
+                        <div
+                          className="w-16 h-16 rounded-full bg-muted border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors overflow-hidden"
+                          onClick={() => avatarInputRef.current?.click()}
+                        >
+                          {avatarPreview ? (
+                            <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
+                          ) : agent.avatar ? (
+                            <img src={agent.avatar} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <Camera className="w-6 h-6 text-muted-foreground" />
+                          )}
                         </div>
+                        <div>
+                          <Button variant="outline" size="sm" onClick={() => avatarInputRef.current?.click()} className="text-xs">
+                            Enviar foto
+                          </Button>
+                          <p className="text-[11px] text-muted-foreground mt-1">JPEG, PNG ou WebP · até 5 MB</p>
+                        </div>
+                        <input
+                          ref={avatarInputRef}
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          className="hidden"
+                          onChange={handleAvatarChange}
+                        />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <h3 className="text-sm font-semibold text-foreground">Name</h3>
+                      <h3 className="text-sm font-semibold text-foreground">Nome</h3>
                       <Input value={agentName} onChange={(e) => setAgentName(e.target.value)} className="text-sm" />
                     </div>
 
                     <div className="space-y-2">
-                      <h3 className="text-sm font-semibold text-foreground">Description</h3>
-                      <p className="text-xs text-muted-foreground">Defines your agent's role and personality. Loaded into the system prompt on every startup.</p>
+                      <h3 className="text-sm font-semibold text-foreground">Descrição</h3>
+                      <p className="text-xs text-muted-foreground">Define o papel e personalidade do agente. Carregado no system prompt.</p>
                       <Textarea
                         value={agentDesc}
                         onChange={(e) => setAgentDesc(e.target.value)}
-                        placeholder="e.g. A research assistant who monitors competitors, summarises news, and sends a daily briefing via Telegram."
+                        placeholder="Ex: Um assistente de pesquisa que monitora concorrentes e envia briefings diários."
                         className="text-sm min-h-[100px]"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <h3 className="text-sm font-semibold text-foreground">Model</h3>
-                      <p className="text-xs text-muted-foreground">The AI model used for all agent conversations.</p>
+                      <h3 className="text-sm font-semibold text-foreground">Modelo</h3>
+                      <p className="text-xs text-muted-foreground">O modelo de IA usado pelo agente.</p>
                       <Select value={agentModel} onValueChange={onModelChange}>
                         <SelectTrigger className="text-sm">
                           <SelectValue />
@@ -202,7 +364,7 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange }: Props) => {
                 {settingsNav === "status" && (
                   <div>
                     <h2 className="text-lg font-bold text-foreground">Status</h2>
-                    <p className="text-sm text-muted-foreground mt-1">Agent is currently running.</p>
+                    <p className="text-sm text-muted-foreground mt-1">O agente está em execução.</p>
                     <div className="mt-4 flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-emerald-500" />
                       <span className="text-sm text-foreground font-medium">Online</span>
@@ -210,18 +372,53 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange }: Props) => {
                   </div>
                 )}
 
-                {settingsNav === "danger" && (
-                  <div>
-                    <h2 className="text-lg font-bold text-destructive">Danger Zone</h2>
-                    <p className="text-sm text-muted-foreground mt-1">Irreversible actions for this agent.</p>
-                    <Button variant="destructive" size="sm" className="mt-4">Delete Agent</Button>
+                {settingsNav === "channels" && (
+                  <div className="space-y-4">
+                    <div>
+                      <h2 className="text-lg font-bold text-foreground">Canais</h2>
+                      <p className="text-sm text-muted-foreground mt-1">Onde seu agente opera.</p>
+                    </div>
+                    {CHANNELS.map((ch) => {
+                      const isSelected = connectedChannels.includes(ch.value);
+                      return (
+                        <div
+                          key={ch.value}
+                          className={`flex items-center gap-4 rounded-xl border-2 p-4 transition-all ${
+                            isSelected ? "border-primary bg-primary/5 shadow-md" : "border-border bg-card"
+                          }`}
+                        >
+                          {ch.logo ? (
+                            <img src={ch.logo} alt={ch.label} className="w-8 h-8 rounded-lg object-contain shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                          ) : (
+                            <Globe className="w-8 h-8 text-primary shrink-0" />
+                          )}
+                          <span className="text-sm font-semibold text-foreground flex-1">{ch.label}</span>
+                          <Button
+                            size="sm"
+                            variant={isSelected ? "default" : "outline"}
+                            onClick={() => toggleChannel(ch.value)}
+                            className="shrink-0 text-xs h-8 gap-1.5"
+                          >
+                            {isSelected ? <><Check className="w-3 h-3" /> Conectado</> : "Conectar"}
+                          </Button>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 
-                {!["general", "status", "danger"].includes(settingsNav) && (
+                {settingsNav === "danger" && (
+                  <div>
+                    <h2 className="text-lg font-bold text-destructive">Danger Zone</h2>
+                    <p className="text-sm text-muted-foreground mt-1">Ações irreversíveis para este agente.</p>
+                    <Button variant="destructive" size="sm" className="mt-4">Excluir Agente</Button>
+                  </div>
+                )}
+
+                {!["general", "status", "channels", "danger"].includes(settingsNav) && (
                   <div>
                     <h2 className="text-lg font-bold text-foreground capitalize">{settingsNav}</h2>
-                    <p className="text-sm text-muted-foreground mt-1">Configuration coming soon.</p>
+                    <p className="text-sm text-muted-foreground mt-1">Configuração em breve.</p>
                   </div>
                 )}
               </div>
