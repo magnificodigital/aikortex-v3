@@ -67,8 +67,7 @@ const Aikortex = () => {
 
   const [messages, setMessages] = useState<{ role: "user" | "agent"; text: string }[]>([]);
   const [input, setInput] = useState("");
-  const [showChannels, setShowChannels] = useState(true);
-  const agentModel = "gemini-2.5-flash";
+  const [agentModel, setAgentModel] = useState("gemini-2.5-flash");
   const [didAutoRoute, setDidAutoRoute] = useState(false);
 
   // Auto-route from Home prompt
