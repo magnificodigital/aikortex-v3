@@ -67,12 +67,52 @@ interface KnowledgeFileLocal {
   type: string;
 }
 
+const PROVIDER_MAP: Record<string, string> = {
+  "OpenAI": "openai",
+  "Anthropic": "anthropic",
+  "Gemini": "gemini",
+  "ElevenLabs": "elevenlabs",
+  "OpenRouter": "openrouter",
+  "Gmail": "gmail",
+  "Google Calendar": "google_calendar",
+  "Outlook Calendar": "outlook_calendar",
+  "Calendly": "calendly",
+  "Google Sheets": "google_sheets",
+  "Google Drive": "google_drive",
+  "Piperun": "piperun",
+  "HubSpot": "hubspot",
+  "RD Station": "rdstation",
+};
+
 const AgentRightPanel = ({ agent, agentModel, onModelChange, activeTab, onTabChange }: Props) => {
   const [rightTab, setRightTab] = useState(activeTab || "agent");
   const [connectorDialog, setConnectorDialog] = useState<null | typeof INTEGRATIONS[0]>(null);
   const [connectorKeys, setConnectorKeys] = useState<Record<string, { key: string; configured: boolean }>>({});
   const [keyInput, setKeyInput] = useState("");
   const [showKey, setShowKey] = useState(false);
+  const [savingKey, setSavingKey] = useState(false);
+
+  // Load existing keys from DB on mount
+  useEffect(() => {
+    const loadKeys = async () => {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("user_api_keys")
+        .select("provider, api_key")
+        .eq("user_id", user.id);
+      if (data) {
+        const map: Record<string, { key: string; configured: boolean }> = {};
+        data.forEach((row: any) => {
+          const label = Object.entries(PROVIDER_MAP).find(([, v]) => v === row.provider)?.[0] || row.provider;
+          map[label] = { key: row.api_key, configured: true };
+        });
+        setConnectorKeys(map);
+      }
+    };
+    loadKeys();
+  }, []);
 
   const handleTabChange = (tab: string) => {
     setRightTab(tab);
@@ -84,6 +124,72 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange, activeTab, onTabCha
       setRightTab(activeTab);
     }
   }, [activeTab]);
+
+  const handleConnectIntegration = (integration: typeof INTEGRATIONS[0]) => {
+    const existing = connectorKeys[integration.label];
+    if (existing?.configured) {
+      setKeyInput(existing.key);
+    } else {
+      setKeyInput("");
+    }
+    setShowKey(false);
+    setConnectorDialog(integration);
+  };
+
+  const handleSaveKey = async () => {
+    if (!connectorDialog || !keyInput.trim()) return;
+    setSavingKey(true);
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error("Faça login para salvar chaves."); return; }
+
+      const provider = PROVIDER_MAP[connectorDialog.label] || connectorDialog.label.toLowerCase();
+      const { error } = await supabase
+        .from("user_api_keys")
+        .upsert(
+          { user_id: user.id, provider, api_key: keyInput.trim() },
+          { onConflict: "user_id,provider" }
+        );
+
+      if (error) { toast.error("Erro ao salvar chave."); console.error(error); return; }
+
+      setConnectorKeys(prev => ({
+        ...prev,
+        [connectorDialog.label]: { key: keyInput.trim(), configured: true },
+      }));
+      setConnectorDialog(null);
+      setKeyInput("");
+      toast.success(`${connectorDialog.label} conectado com sucesso!`);
+    } finally {
+      setSavingKey(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    if (!connectorDialog) return;
+    setSavingKey(true);
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const provider = PROVIDER_MAP[connectorDialog.label] || connectorDialog.label.toLowerCase();
+      await supabase.from("user_api_keys").delete().eq("user_id", user.id).eq("provider", provider);
+
+      setConnectorKeys(prev => {
+        const next = { ...prev };
+        delete next[connectorDialog.label];
+        return next;
+      });
+      setConnectorDialog(null);
+      setKeyInput("");
+      toast.success(`${connectorDialog.label} desconectado.`);
+    } finally {
+      setSavingKey(false);
+    }
+  };
+
   const [settingsNav, setSettingsNav] = useState("general");
   const [agentName, setAgentName] = useState(agent.name);
   const [agentDesc, setAgentDesc] = useState("");
@@ -95,42 +201,6 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange, activeTab, onTabCha
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
-  const handleConnectIntegration = (integration: typeof INTEGRATIONS[0]) => {
-    const existing = connectorKeys[integration.label];
-    if (existing?.configured) {
-      // Already configured, open to manage
-      setKeyInput(existing.key);
-    } else {
-      setKeyInput("");
-    }
-    setShowKey(false);
-    setConnectorDialog(integration);
-  };
-
-  const handleSaveKey = () => {
-    if (!connectorDialog || !keyInput.trim()) return;
-    setConnectorKeys(prev => ({
-      ...prev,
-      [connectorDialog.label]: { key: keyInput.trim(), configured: true },
-    }));
-    setConnectorDialog(null);
-    setKeyInput("");
-    toast.success(`${connectorDialog.label} conectado com sucesso!`);
-  };
-
-  const handleDisconnect = () => {
-    if (!connectorDialog) return;
-    setConnectorKeys(prev => {
-      const next = { ...prev };
-      delete next[connectorDialog.label];
-      return next;
-    });
-    setConnectorDialog(null);
-    setKeyInput("");
-    toast.success(`${connectorDialog.label} desconectado.`);
-  };
-
-  const handleFiles = (files: FileList) => {
     const newFiles: KnowledgeFileLocal[] = Array.from(files)
       .filter((f) => f.size <= 10 * 1024 * 1024)
       .map((f) => ({ id: crypto.randomUUID(), name: f.name, size: f.size, type: f.type }));
@@ -639,7 +709,7 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange, activeTab, onTabCha
                 <Button variant="outline" size="sm" onClick={() => { setConnectorDialog(null); setKeyInput(""); }}>
                   Cancelar
                 </Button>
-                <Button size="sm" onClick={handleSaveKey} disabled={!keyInput.trim()}>
+                <Button size="sm" onClick={handleSaveKey} disabled={!keyInput.trim() || savingKey}>
                   {connectorKeys[connectorDialog?.label || ""]?.configured ? "Atualizar" : "Conectar"}
                 </Button>
               </div>

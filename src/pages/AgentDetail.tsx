@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Send, Paperclip, HelpCircle, ChevronDown } from "lucide-react";
+import { ArrowLeft, Send, Paperclip, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import AgentRightPanel from "@/components/aikortex/AgentRightPanel";
+import { useAgentChat } from "@/hooks/use-agent-chat";
 
 import avatar1 from "@/assets/avatars/avatar-1.png";
 import avatar2 from "@/assets/avatars/avatar-2.png";
@@ -27,36 +28,26 @@ const LLM_MODELS = [
   { value: "gpt-5-mini", label: "GPT-5 Mini" },
 ];
 
-const MOCK_RESPONSES: Record<string, string> = {
-  default: "Olá! Como posso ajudar você hoje?",
-  oi: "Olá! Que bom te ver por aqui. Como posso ajudar?",
-  preço: "Nossos planos são flexíveis. Posso agendar uma conversa com nosso especialista?",
-  funciona: "Nosso sistema é super intuitivo! Quer que eu te mostre como?",
-};
-
 const AgentDetail = () => {
   const navigate = useNavigate();
   const { agentId } = useParams();
   const agent = AGENTS_MAP[agentId || "sdr-1"] || AGENTS_MAP["sdr-1"];
 
-  const [messages, setMessages] = useState<{ role: "user" | "agent"; text: string }[]>([
-    { role: "agent", text: `Olá! Sou ${agent.name}. Como posso ajudar?` },
-  ]);
   const [input, setInput] = useState("");
   const [agentModel, setAgentModel] = useState(agent.model);
-  const [llmConfigured, setLlmConfigured] = useState(true);
   const [isFullyConfigured, setIsFullyConfigured] = useState(true);
   const [rightPanelTab, setRightPanelTab] = useState("agent");
 
+  const { messages, sendMessage, isStreaming } = useAgentChat(
+    [{ role: "agent", text: `Olá! Sou ${agent.name}. Como posso ajudar?` }],
+    { model: agentModel }
+  );
+
   const handleSend = () => {
-    if (!input.trim()) return;
-    const userMsg = input.trim();
-    setMessages((prev) => [...prev, { role: "user", text: userMsg }]);
+    if (!input.trim() || isStreaming) return;
+    const text = input.trim();
     setInput("");
-    setTimeout(() => {
-      const key = Object.keys(MOCK_RESPONSES).find((k) => userMsg.toLowerCase().includes(k));
-      setMessages((prev) => [...prev, { role: "agent", text: MOCK_RESPONSES[key || "default"] }]);
-    }, 600);
+    sendMessage(text);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -133,7 +124,7 @@ const AgentDetail = () => {
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                   <HelpCircle className="w-4 h-4" />
                 </Button>
-                <Button size="icon" className="h-8 w-8 rounded-full" onClick={handleSend} disabled={!input.trim()}>
+                <Button size="icon" className="h-8 w-8 rounded-full" onClick={handleSend} disabled={!input.trim() || isStreaming}>
                   <Send className="w-4 h-4" />
                 </Button>
               </div>
