@@ -212,6 +212,7 @@ const WizardRightPanel = ({
     } finally { setSavingKey(false); }
   };
 
+  const update = (field: keyof BusinessContext, value: string) =>
     onContextChange({ ...context, [field]: value });
 
   const handleFiles = (files: FileList) => {
