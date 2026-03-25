@@ -204,7 +204,13 @@ export default function FlowCanvas({ initialNodes, initialEdges, flowName, flowI
           snapToGrid
           snapGrid={[16, 16]}
           deleteKeyCode="Delete"
-          className="bg-background"
+          multiSelectionKeyCode="Shift"
+          selectionOnDrag
+          panOnScroll
+          zoomOnDoubleClick
+          connectionLineStyle={{ stroke: "hsl(var(--primary))", strokeWidth: 2 }}
+          proOptions={{ hideAttribution: true }}
+          className="bg-background [&_.react-flow__attribution]:!hidden"
           defaultEdgeOptions={{
             animated: true,
             style: { stroke: "hsl(var(--primary))", strokeWidth: 2 },
