@@ -100,7 +100,7 @@ const AgentDetail = () => {
           <img src={agent.avatar} alt={agent.name} className="w-7 h-7 rounded-full object-cover" />
           <span className="text-sm font-semibold">{agent.name}</span>
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--success,142_71%_45%))]" />
             Running
           </span>
           <span className="text-xs text-muted-foreground ml-1">{agentModel}</span>
