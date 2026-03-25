@@ -204,9 +204,15 @@ const Aikortex = () => {
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                   <Paperclip className="w-4 h-4" />
                 </Button>
-                <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                  🤖 {agentModel} <ChevronDown className="w-3 h-3" />
-                </button>
+                <select
+                  value={agentModel}
+                  onChange={(e) => setAgentModel(e.target.value)}
+                  className="text-xs text-muted-foreground hover:text-foreground bg-transparent border border-border rounded-md px-2 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary/40"
+                >
+                  {LLM_MODELS.map((m) => (
+                    <option key={m.value} value={m.value}>{m.label}</option>
+                  ))}
+                </select>
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
