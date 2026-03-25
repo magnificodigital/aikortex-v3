@@ -114,17 +114,16 @@ const Aikortex = () => {
     setStep("configure");
   }, [location.state, didAutoRoute]);
 
-  const applyPresetAndConfigure = useCallback(() => {
-    if (selectedAgent) {
-      const preset = AGENT_PRESETS[selectedAgent.type];
-      setContext((prev) => ({ ...prev, ...preset.context }));
-      setIntents([...preset.intents]);
-      setStages([...preset.stages]);
-      setAdvancedConfig({ ...preset.advancedConfig });
-      setMessages([{ role: "agent", text: `Olá! Sou ${selectedAgent.name}. Como posso ajudar?` }]);
-    }
+  const handleAgentSelect = useCallback((agent: AgentRecommendation) => {
+    setSelectedAgent(agent);
+    const preset = AGENT_PRESETS[agent.type];
+    setContext((prev) => ({ ...prev, ...preset.context }));
+    setIntents([...preset.intents]);
+    setStages([...preset.stages]);
+    setAdvancedConfig({ ...preset.advancedConfig });
+    setMessages([{ role: "agent", text: `Olá! Sou ${agent.name}. Como posso ajudar?` }]);
     setStep("configure");
-  }, [selectedAgent]);
+  }, []);
 
   const toggleChannel = (ch: DeployChannel) =>
     setSelectedChannels((prev) => prev.includes(ch) ? prev.filter((c) => c !== ch) : [...prev, ch]);
