@@ -73,10 +73,11 @@ const AgentRightPanel = ({ agent, agentModel, onModelChange, activeTab, onTabCha
     onTabChange?.(tab);
   };
 
-  // Sync from parent
-  if (activeTab && activeTab !== rightTab) {
-    setRightTab(activeTab);
-  }
+  useEffect(() => {
+    if (activeTab && activeTab !== rightTab) {
+      setRightTab(activeTab);
+    }
+  }, [activeTab]);
   const [settingsNav, setSettingsNav] = useState("general");
   const [agentName, setAgentName] = useState(agent.name);
   const [agentDesc, setAgentDesc] = useState("");
