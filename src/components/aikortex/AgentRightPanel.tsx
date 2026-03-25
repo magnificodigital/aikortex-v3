@@ -28,11 +28,11 @@ const INTEGRATIONS = [
 ];
 
 const CHANNELS = [
-  { value: "whatsapp", label: "WhatsApp", logo: "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" },
-  { value: "instagram", label: "Instagram", logo: "https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" },
-  { value: "facebook", label: "Facebook", logo: "https://upload.wikimedia.org/wikipedia/commons/0/05/Facebook_Logo_%282019%29.png" },
-  { value: "linkedin", label: "LinkedIn", logo: "https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png" },
-  { value: "tiktok", label: "TikTok", logo: "https://sf-tb-sg.ibytedtos.com/obj/eden-sg/uhtyvueh7nulogpoguhm/tiktok-icon2.png" },
+  { value: "whatsapp", label: "WhatsApp", logo: "https://cdn.simpleicons.org/whatsapp" },
+  { value: "instagram", label: "Instagram", logo: "https://cdn.simpleicons.org/instagram" },
+  { value: "facebook", label: "Facebook", logo: "https://cdn.simpleicons.org/facebook" },
+  { value: "linkedin", label: "LinkedIn", logo: "https://cdn.simpleicons.org/linkedin" },
+  { value: "tiktok", label: "TikTok", logo: "https://cdn.simpleicons.org/tiktok" },
   { value: "website", label: "WebSite", logo: "" },
 ];
 
