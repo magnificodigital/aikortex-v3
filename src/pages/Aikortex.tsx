@@ -68,6 +68,7 @@ const Aikortex = () => {
   const [messages, setMessages] = useState<{ role: "user" | "agent"; text: string }[]>([]);
   const [input, setInput] = useState("");
   const [agentModel, setAgentModel] = useState("gemini-2.5-flash");
+  const [llmConfigured, setLlmConfigured] = useState(false);
   const [didAutoRoute, setDidAutoRoute] = useState(false);
 
   // Auto-route from Home prompt
