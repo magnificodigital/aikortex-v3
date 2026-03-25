@@ -793,6 +793,61 @@ const WizardRightPanel = ({
           </ScrollArea>
         </TabsContent>
       </Tabs>
+      {/* API Key Dialog */}
+      <Dialog open={!!connectorDialog} onOpenChange={(open) => { if (!open) { setConnectorDialog(null); setKeyInput(""); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              {connectorDialog && (
+                <img src={connectorDialog.logo} alt={connectorDialog.label} className="w-8 h-8 rounded object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              )}
+              <div>
+                <DialogTitle className="text-base">
+                  {connectorKeys[connectorDialog?.label || ""]?.configured ? "Gerenciar" : "Conectar"} {connectorDialog?.label}
+                </DialogTitle>
+                <DialogDescription className="text-xs mt-0.5">{connectorDialog?.desc}</DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">API Key</label>
+              <div className="relative">
+                <Input
+                  type={showKey ? "text" : "password"}
+                  value={keyInput}
+                  onChange={(e) => setKeyInput(e.target.value)}
+                  placeholder={`Cole sua ${connectorDialog?.label} API Key aqui`}
+                  className="pr-10 text-sm font-mono"
+                />
+                <button type="button" onClick={() => setShowKey(!showKey)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                {connectorDialog?.label === "OpenAI" && (<>Encontre sua API Key em <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-0.5">platform.openai.com <ExternalLink className="w-3 h-3" /></a></>)}
+                {connectorDialog?.label === "Anthropic" && (<>Encontre sua API Key em <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-0.5">console.anthropic.com <ExternalLink className="w-3 h-3" /></a></>)}
+                {connectorDialog?.label === "Gemini" && (<>Encontre sua API Key em <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-0.5">aistudio.google.com <ExternalLink className="w-3 h-3" /></a></>)}
+                {connectorDialog?.label === "ElevenLabs" && (<>Encontre sua API Key em <a href="https://elevenlabs.io/settings/api-keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-0.5">elevenlabs.io <ExternalLink className="w-3 h-3" /></a></>)}
+                {!["OpenAI", "Anthropic", "Gemini", "ElevenLabs"].includes(connectorDialog?.label || "") && (<>Cole a chave de API fornecida pelo serviço.</>)}
+              </p>
+            </div>
+            <div className="flex items-center justify-between pt-2">
+              {connectorKeys[connectorDialog?.label || ""]?.configured ? (
+                <Button variant="destructive" size="sm" className="text-xs gap-1.5" onClick={handleDisconnect}>
+                  <Trash2 className="w-3 h-3" /> Desconectar
+                </Button>
+              ) : <div />}
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => { setConnectorDialog(null); setKeyInput(""); }}>Cancelar</Button>
+                <Button size="sm" onClick={handleSaveKey} disabled={!keyInput.trim() || savingKey}>
+                  {connectorKeys[connectorDialog?.label || ""]?.configured ? "Atualizar" : "Conectar"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
