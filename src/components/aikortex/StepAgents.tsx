@@ -1,5 +1,4 @@
 import { AgentRecommendation } from "@/types/agent-builder";
-import { Button } from "@/components/ui/button";
 import { ArrowRight, Settings2, Sparkles } from "lucide-react";
 
 import avatar1 from "@/assets/avatars/avatar-1.png";
@@ -9,8 +8,7 @@ import avatar8 from "@/assets/avatars/avatar-8.png";
 
 interface Props {
   selected: AgentRecommendation | null;
-  onSelect: (agent: AgentRecommendation | null) => void;
-  onNext: () => void;
+  onSelect: (agent: AgentRecommendation) => void;
 }
 
 const TEMPLATE_CARDS = [
@@ -44,22 +42,18 @@ const TEMPLATE_CARDS = [
   },
 ];
 
-const StepAgents = ({ selected, onSelect, onNext }: Props) => {
+const StepAgents = ({ selected, onSelect }: Props) => {
   const handleSelect = (id: string, type: string, name: string, description: string) => {
-    if (selected?.id === id) {
-      onSelect(null);
-    } else {
-      onSelect({
-        id,
-        type: type as any,
-        name,
-        objective: description,
-        targetAudience: "",
-        benefits: [],
-        exampleConversation: [],
-        selected: true,
-      });
-    }
+    onSelect({
+      id,
+      type: type as any,
+      name,
+      objective: description,
+      targetAudience: "",
+      benefits: [],
+      exampleConversation: [],
+      selected: true,
+    });
   };
 
   const isCustomSelected = selected?.id === "custom-1";
@@ -161,14 +155,11 @@ const StepAgents = ({ selected, onSelect, onNext }: Props) => {
         </button>
       </div>
 
-      {/* Footer */}
-      <div className="flex items-center justify-between pt-2">
-        <p className="text-xs text-muted-foreground">
-          {!selected ? "Selecione um template ou crie um personalizado" : `${selected.name} selecionado`}
+      {/* Footer hint */}
+      <div className="pt-2">
+        <p className="text-xs text-muted-foreground text-center">
+          Selecione um template ou crie um personalizado para continuar
         </p>
-        <Button onClick={onNext} disabled={!selected} className="gap-2">
-          Continuar <ArrowRight className="w-4 h-4" />
-        </Button>
       </div>
     </div>
   );
