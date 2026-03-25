@@ -73,10 +73,10 @@ const WizardRightPanel = ({
   stages, onStagesChange,
   advancedConfig, onAdvancedConfigChange,
 }: Props) => {
-  const [rightTab, setRightTab] = useState("settings");
+  const [rightTab, setRightTab] = useState("agent");
   const [settingsNav, setSettingsNav] = useState<SettingsNavKey>("identidade");
 
-  const isContextSection = ["identidade", "objetivo", "intencoes", "estagios", "conhecimento", "avancado"].includes(settingsNav);
+  const isContextSection = ["identidade", "objetivo", "intencoes", "estagios", "avancado"].includes(settingsNav);
 
   return (
     <div className="flex-1 flex flex-col min-w-0">
