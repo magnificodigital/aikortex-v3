@@ -22,14 +22,14 @@ const CONNECTORS = [
 ];
 
 const SETTINGS_NAV = [
-  { section: "AGENT", items: [
-    { key: "general", icon: User, label: "General" },
+  { section: "AGENTE", items: [
+    { key: "general", icon: User, label: "Identidade" },
     { key: "status", icon: Zap, label: "Status" },
     { key: "machine", icon: Monitor, label: "Machine" },
   ]},
-  { section: "CONFIGURATION", items: [
-    { key: "channels", icon: MonitorSmartphone, label: "Channels" },
-    { key: "advanced", icon: Settings2, label: "Advanced" },
+  { section: "CONFIGURAÇÃO", items: [
+    { key: "channels", icon: MonitorSmartphone, label: "Canais" },
+    { key: "advanced", icon: Settings2, label: "Avançado" },
     { key: "danger", icon: AlertTriangle, label: "Danger Zone" },
   ]},
 ];
