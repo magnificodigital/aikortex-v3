@@ -291,3 +291,82 @@ body::after {
   background: hsl(var(--sidebar-background));
   border-right-color: hsl(228 8% 14%);
 }
+
+/* Space stars background */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes twinkle-alt {
+  0%, 100% { opacity: 0.1; }
+  30% { opacity: 0.5; }
+  70% { opacity: 0.2; }
+}
+
+@keyframes drift-stars {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-100%); }
+}
+
+.space-stars,
+.space-stars-layer2,
+.space-stars-layer3 {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.space-stars {
+  background-image:
+    radial-gradient(1px 1px at 10% 15%, hsl(var(--primary) / 0.35), transparent),
+    radial-gradient(1px 1px at 25% 45%, hsl(var(--info) / 0.3), transparent),
+    radial-gradient(1.5px 1.5px at 40% 80%, hsl(var(--primary) / 0.25), transparent),
+    radial-gradient(1px 1px at 55% 20%, hsl(var(--info) / 0.3), transparent),
+    radial-gradient(1px 1px at 70% 60%, hsl(var(--primary) / 0.2), transparent),
+    radial-gradient(1.5px 1.5px at 85% 35%, hsl(var(--info) / 0.25), transparent),
+    radial-gradient(1px 1px at 95% 75%, hsl(var(--primary) / 0.3), transparent),
+    radial-gradient(1px 1px at 15% 90%, hsl(var(--info) / 0.2), transparent),
+    radial-gradient(1px 1px at 50% 50%, hsl(var(--primary) / 0.15), transparent),
+    radial-gradient(1.5px 1.5px at 65% 10%, hsl(var(--info) / 0.2), transparent),
+    radial-gradient(1px 1px at 30% 70%, hsl(var(--primary) / 0.25), transparent),
+    radial-gradient(1px 1px at 80% 90%, hsl(var(--info) / 0.2), transparent);
+  background-size: 100% 100%;
+  animation: twinkle 8s ease-in-out infinite;
+}
+
+.space-stars-layer2 {
+  background-image:
+    radial-gradient(1px 1px at 5% 30%, hsl(var(--primary) / 0.2), transparent),
+    radial-gradient(1px 1px at 20% 65%, hsl(var(--info) / 0.25), transparent),
+    radial-gradient(1px 1px at 35% 10%, hsl(var(--primary) / 0.3), transparent),
+    radial-gradient(1.5px 1.5px at 48% 85%, hsl(var(--info) / 0.2), transparent),
+    radial-gradient(1px 1px at 62% 40%, hsl(var(--primary) / 0.2), transparent),
+    radial-gradient(1px 1px at 78% 15%, hsl(var(--info) / 0.3), transparent),
+    radial-gradient(1px 1px at 90% 55%, hsl(var(--primary) / 0.25), transparent),
+    radial-gradient(1px 1px at 42% 25%, hsl(var(--info) / 0.15), transparent);
+  background-size: 100% 100%;
+  animation: twinkle-alt 12s ease-in-out infinite;
+}
+
+.space-stars-layer3 {
+  background-image:
+    radial-gradient(2px 2px at 18% 50%, hsl(var(--primary) / 0.12), transparent),
+    radial-gradient(2px 2px at 72% 28%, hsl(var(--info) / 0.1), transparent),
+    radial-gradient(1.5px 1.5px at 45% 72%, hsl(var(--primary) / 0.15), transparent),
+    radial-gradient(2px 2px at 88% 65%, hsl(var(--info) / 0.12), transparent),
+    radial-gradient(1.5px 1.5px at 32% 38%, hsl(var(--primary) / 0.1), transparent);
+  background-size: 100% 100%;
+  animation: twinkle 15s ease-in-out infinite reverse;
+}
+
+/* Brighter in dark mode */
+.dark .space-stars { opacity: 0.9; }
+.dark .space-stars-layer2 { opacity: 0.7; }
+.dark .space-stars-layer3 { opacity: 0.6; }
+
+/* Subtle in light mode */
+.space-stars { opacity: 0.3; }
+.space-stars-layer2 { opacity: 0.2; }
+.space-stars-layer3 { opacity: 0.15; }
