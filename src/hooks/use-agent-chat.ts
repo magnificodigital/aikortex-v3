@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 
-const CHAT_URL = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/agent-chat`;
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-chat`;
 
 export interface ChatMessage {
   role: "user" | "agent" | "assistant";
