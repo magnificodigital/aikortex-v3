@@ -1,9 +1,8 @@
-import { Mail, Phone, MapPin, Globe, Clock, Calendar, Tag, Building, Copy, MessageSquare, Pencil } from "lucide-react";
+import { Mail, Phone, MapPin, Globe, Clock, Calendar, Building, Copy, MessageSquare, Pencil } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
@@ -33,17 +32,11 @@ const ContactPanel = ({ contact }: ContactPanelProps) => {
 
   return (
     <div className="w-[300px] min-w-[260px] border-l border-border bg-card flex flex-col h-full overflow-hidden">
-      <Tabs defaultValue="contact" className="flex flex-col h-full">
-        <div className="border-b border-border px-2">
-          <TabsList className="w-full h-9 bg-transparent">
-            <TabsTrigger value="contact" className="flex-1 text-xs h-7">Contato</TabsTrigger>
-            <TabsTrigger value="copilot" className="flex-1 text-xs h-7">Copilot</TabsTrigger>
-          </TabsList>
-        </div>
-
-        <TabsContent value="contact" className="flex-1 mt-0 overflow-hidden">
-          <ScrollArea className="h-full">
-            <div className="p-4 space-y-4">
+      <div className="border-b border-border px-3 py-2">
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contato</span>
+      </div>
+      <ScrollArea className="flex-1">
+        <div className="p-4 space-y-4">
               {/* Profile Header */}
               <div className="flex flex-col items-center text-center space-y-2">
                 <Avatar className="h-14 w-14">
@@ -129,38 +122,8 @@ const ContactPanel = ({ contact }: ContactPanelProps) => {
                 </>
               )}
 
-              {/* Custom Attributes */}
-              {contact.customAttributes && contact.customAttributes.length > 0 && (
-                <>
-                  <Separator />
-                  <div>
-                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Atributos</p>
-                    <div className="space-y-2">
-                      {contact.customAttributes.map((attr) => (
-                        <div key={attr.label} className="flex items-start justify-between gap-2">
-                          <span className="text-[11px] text-muted-foreground">{attr.label}</span>
-                          <span className="text-[11px] text-foreground text-right">{attr.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
             </div>
           </ScrollArea>
-        </TabsContent>
-
-        <TabsContent value="copilot" className="flex-1 mt-0 overflow-hidden">
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center space-y-2 p-4">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                <Tag className="w-5 h-5 text-primary" />
-              </div>
-              <p className="text-xs text-muted-foreground">AI Copilot estará disponível em breve</p>
-            </div>
-          </div>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 };
