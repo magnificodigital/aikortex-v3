@@ -57,6 +57,24 @@ const SalesMentorPanel = ({ meetingTitle, liveTranscript }: Props) => {
     }
   }, [isOpen]);
 
+  // Auto-send transcript context to mentor periodically
+  const lastTranscriptRef = useRef("");
+  useEffect(() => {
+    if (!isOpen || !liveTranscript || isLoading) return;
+    // Only send if there's new substantial content
+    const newContent = liveTranscript.slice(lastTranscriptRef.current.length).trim();
+    if (newContent.length < 30) return; // wait for enough new content
+
+    const timer = setTimeout(() => {
+      lastTranscriptRef.current = liveTranscript;
+      sendMessage(
+        `[CONTEXTO DA CONVERSA EM ANDAMENTO - não responda diretamente, use como contexto para dar a próxima dica de vendas]\n\n"${newContent}"\n\nCom base no que está sendo dito, me dê a próxima orientação estratégica.`
+      );
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [liveTranscript, isOpen, isLoading]);
+
   const sendMessage = useCallback(
     async (text: string) => {
       const userMsg: Message = { role: "user", content: text };
