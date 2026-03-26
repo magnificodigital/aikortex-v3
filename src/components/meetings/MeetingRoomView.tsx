@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import FloatingParticipants from "./FloatingParticipants";
+import WaitingRoomNotifications from "./WaitingRoomNotifications";
 
 interface Props {
   token: string;
@@ -29,6 +30,7 @@ interface Props {
   meetingTitle: string;
   isHost: boolean;
   roomId: string;
+  meetingId: string;
   onLeave: () => void;
 }
 
@@ -56,7 +58,7 @@ const shouldLeaveOnDisconnect = (reason?: DisconnectReason) => {
 };
 
 /* ── Inner component with room context ── */
-const MeetingInner = ({ meetingTitle, isHost, roomId, onLeave }: Omit<Props, "token" | "serverUrl">) => {
+const MeetingInner = ({ meetingTitle, isHost, roomId, meetingId, onLeave }: Omit<Props, "token" | "serverUrl">) => {
   const room = useRoomContext();
   const [showBgDialog, setShowBgDialog] = useState(false);
   const [activeBg, setActiveBg] = useState("none");
@@ -83,7 +85,7 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, onLeave }: Omit<Props, "to
     return () => { room.off(RoomEvent.Disconnected, handleDisconnected); };
   }, [room, onLeave]);
 
-  // Mark leaving when the LiveKit ControlBar's Leave button is clicked
+  // Mark leaving + translate LiveKit UI elements to pt-BR
   useEffect(() => {
     const observer = new MutationObserver(() => {
       const leaveBtn = document.querySelector('.lk-disconnect-button');
@@ -94,6 +96,24 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, onLeave }: Omit<Props, "to
           setTimeout(() => onLeave(), 500);
         }, { once: true });
       }
+
+      // Translate chat input placeholder
+      const chatInput = document.querySelector('.lk-chat-form-input') as HTMLInputElement;
+      if (chatInput && chatInput.placeholder !== 'Digite uma mensagem...') {
+        chatInput.placeholder = 'Digite uma mensagem...';
+      }
+
+      // Translate "Send" button text
+      const sendBtn = document.querySelector('.lk-chat-form-button');
+      if (sendBtn && sendBtn.textContent?.trim() === 'Send') {
+        sendBtn.textContent = 'Enviar';
+      }
+
+      // Translate any "No Video" or participant placeholder text
+      document.querySelectorAll('.lk-participant-name').forEach((el) => {
+        if (el.getAttribute('data-translated')) return;
+        el.setAttribute('data-translated', 'true');
+      });
     });
     observer.observe(document.body, { childList: true, subtree: true });
     return () => observer.disconnect();
@@ -112,7 +132,7 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, onLeave }: Omit<Props, "to
   };
 
   return (
-    <div className="flex flex-col bg-[#111] text-white overflow-hidden lk-meeting-container" style={{ height: "100dvh" }}>
+    <div className="flex flex-col bg-[#111] text-white overflow-hidden lk-meeting-container notranslate" translate="no" style={{ height: "100dvh" }}>
       {/* Header */}
       <div className="h-12 flex items-center justify-between px-4 bg-[#1a1a1a] border-b border-white/10 shrink-0 z-10">
         <div className="flex items-center gap-3">
@@ -143,6 +163,7 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, onLeave }: Omit<Props, "to
       <div className="flex-1 overflow-hidden relative">
         <VideoConference />
         <FloatingParticipants />
+        {isHost && <WaitingRoomNotifications meetingId={meetingId} />}
       </div>
 
       {/* Background filter dialog */}
@@ -184,7 +205,7 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, onLeave }: Omit<Props, "to
   );
 };
 
-const MeetingRoomView = ({ token, serverUrl, meetingTitle, isHost, roomId, onLeave }: Props) => {
+const MeetingRoomView = ({ token, serverUrl, meetingTitle, isHost, roomId, meetingId, onLeave }: Props) => {
   const roomOptions = useMemo(
     () => ({
       disconnectOnPageLeave: false,
@@ -212,6 +233,7 @@ const MeetingRoomView = ({ token, serverUrl, meetingTitle, isHost, roomId, onLea
         meetingTitle={meetingTitle}
         isHost={isHost}
         roomId={roomId}
+        meetingId={meetingId}
         onLeave={onLeave}
       />
       <RoomAudioRenderer />

@@ -93,6 +93,44 @@ export type Database = {
           },
         ]
       }
+      meeting_waiting_room: {
+        Row: {
+          created_at: string
+          display_name: string
+          guest_id: string
+          id: string
+          meeting_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          guest_id: string
+          id?: string
+          meeting_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          guest_id?: string
+          id?: string
+          meeting_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_waiting_room_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meetings: {
         Row: {
           created_at: string
