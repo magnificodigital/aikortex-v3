@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Bot, Send, X, Sparkles } from "lucide-react";
+import { Bot, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -24,13 +24,7 @@ interface Props {
 }
 
 export default function FlowCopilotPanel({ onClose }: Props) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content: "Olá! 👋 Sou o Copiloto de Flows. Posso ajudar a criar, otimizar e configurar seus fluxos de automação. O que deseja construir?",
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -46,7 +40,6 @@ export default function FlowCopilotPanel({ onClose }: Props) {
     setInput("");
     setLoading(true);
 
-    // Simulate AI response
     setTimeout(() => {
       const assistantMsg: Message = {
         id: `a-${Date.now()}`,
@@ -62,106 +55,127 @@ export default function FlowCopilotPanel({ onClose }: Props) {
     setInput(text);
   };
 
+  const isEmpty = messages.length === 0;
+
   return (
-    <div className="flex flex-col h-full bg-card border-l border-border">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-primary" />
+    <div className="flex flex-col h-full">
+      {isEmpty ? (
+        /* Empty state — Sim Studio "New Chat" style */
+        <div className="flex-1 flex flex-col">
+          <div className="px-4 pt-4 pb-2">
+            <h3 className="text-sm font-semibold text-foreground">New Chat</h3>
           </div>
-          <div>
-            <h3 className="text-sm font-semibold text-foreground">Copiloto</h3>
-            <p className="text-[10px] text-muted-foreground">IA assistente de flows</p>
+          <div className="flex-1 flex flex-col justify-end px-3 pb-3">
+            {/* Suggestions */}
+            <div className="space-y-1.5 mb-3">
+              {SUGGESTIONS.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => handleSuggestion(s)}
+                  className="w-full text-left text-[11px] px-3 py-2 rounded-lg border border-border hover:border-primary/40 hover:bg-accent/30 text-muted-foreground hover:text-foreground transition-all"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+            {/* Input */}
+            <div className="relative">
+              <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                placeholder="Build an AI agent..."
+                className="min-h-[60px] max-h-[120px] text-xs resize-none pr-10"
+                rows={2}
+              />
+              <Button
+                size="icon"
+                variant="ghost"
+                className="absolute bottom-1.5 right-1.5 h-7 w-7"
+                onClick={handleSend}
+                disabled={!input.trim() || loading}
+              >
+                <Send className="w-3.5 h-3.5" />
+              </Button>
+            </div>
           </div>
         </div>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
-          <X className="w-4 h-4" />
-        </Button>
-      </div>
-
-      {/* Messages */}
-      <ScrollArea className="flex-1 px-4 py-3" ref={scrollRef}>
-        <div className="space-y-3">
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={cn(
-                "flex gap-2",
-                msg.role === "user" ? "justify-end" : "justify-start"
-              )}
-            >
-              {msg.role === "assistant" && (
-                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Bot className="w-3.5 h-3.5 text-primary" />
+      ) : (
+        /* Chat mode */
+        <>
+          <ScrollArea className="flex-1 px-3 py-3" ref={scrollRef}>
+            <div className="space-y-3">
+              {messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={cn(
+                    "flex gap-2",
+                    msg.role === "user" ? "justify-end" : "justify-start"
+                  )}
+                >
+                  {msg.role === "assistant" && (
+                    <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Bot className="w-3.5 h-3.5 text-primary" />
+                    </div>
+                  )}
+                  <div
+                    className={cn(
+                      "rounded-xl px-3 py-2 text-xs max-w-[85%]",
+                      msg.role === "user"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-foreground"
+                    )}
+                  >
+                    {msg.content}
+                  </div>
+                </div>
+              ))}
+              {loading && (
+                <div className="flex gap-2">
+                  <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Bot className="w-3.5 h-3.5 text-primary animate-pulse" />
+                  </div>
+                  <div className="bg-muted rounded-xl px-3 py-2 text-xs text-muted-foreground">
+                    Pensando...
+                  </div>
                 </div>
               )}
-              <div
-                className={cn(
-                  "rounded-xl px-3 py-2 text-xs max-w-[85%]",
-                  msg.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-foreground"
-                )}
+            </div>
+          </ScrollArea>
+
+          <div className="p-3 border-t border-border flex-shrink-0">
+            <div className="relative">
+              <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                placeholder="Descreva o que quer construir..."
+                className="min-h-[36px] max-h-[100px] text-xs resize-none pr-10"
+                rows={1}
+              />
+              <Button
+                size="icon"
+                variant="ghost"
+                className="absolute bottom-1 right-1 h-7 w-7"
+                onClick={handleSend}
+                disabled={!input.trim() || loading}
               >
-                {msg.content}
-              </div>
+                <Send className="w-3.5 h-3.5" />
+              </Button>
             </div>
-          ))}
-          {loading && (
-            <div className="flex gap-2">
-              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Bot className="w-3.5 h-3.5 text-primary animate-pulse" />
-              </div>
-              <div className="bg-muted rounded-xl px-3 py-2 text-xs text-muted-foreground">
-                Pensando...
-              </div>
-            </div>
-          )}
-        </div>
-      </ScrollArea>
-
-      {/* Suggestions */}
-      {messages.length <= 1 && (
-        <div className="px-4 pb-2 flex flex-wrap gap-1.5">
-          {SUGGESTIONS.map((s) => (
-            <button
-              key={s}
-              onClick={() => handleSuggestion(s)}
-              className="text-[10px] px-2.5 py-1.5 rounded-full border border-border hover:border-primary/50 hover:bg-accent/40 text-muted-foreground hover:text-foreground transition-all"
-            >
-              {s}
-            </button>
-          ))}
-        </div>
+          </div>
+        </>
       )}
-
-      {/* Input */}
-      <div className="p-3 border-t border-border flex-shrink-0">
-        <div className="flex gap-2 items-end">
-          <Textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            placeholder="Descreva o que quer construir..."
-            className="min-h-[36px] max-h-[100px] text-xs resize-none"
-            rows={1}
-          />
-          <Button
-            size="icon"
-            className="h-9 w-9 flex-shrink-0"
-            onClick={handleSend}
-            disabled={!input.trim() || loading}
-          >
-            <Send className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
     </div>
   );
 }
