@@ -9,6 +9,7 @@ export interface FlowNodeData {
   description: string;
   config: Record<string, unknown>;
   color: string;
+  nodeType: string;
 }
 
 export interface NodeTemplate {
