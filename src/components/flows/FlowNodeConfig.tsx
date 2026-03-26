@@ -188,6 +188,20 @@ function renderConfigFields(
   }
 
   if (nodeType.startsWith("agent_ai")) {
+    const AGENT_PRESETS = [
+      { value: "sdr-1", label: "Agente SDR", icon: "📞" },
+      { value: "bdr-1", label: "Agente BDR", icon: "🎯" },
+      { value: "sac-1", label: "Agente SAC", icon: "🛟" },
+      { value: "social-1", label: "Social Media Manager", icon: "📱" },
+      { value: "custom-1", label: "Agente Personalizado", icon: "⚙️" },
+    ];
+    const LLM_MODELS = [
+      { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+      { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+      { value: "gemini-3-flash-preview", label: "Gemini 3 Flash" },
+      { value: "gpt-5", label: "GPT-5" },
+      { value: "gpt-5-mini", label: "GPT-5 Mini" },
+    ];
     return (
       <>
         <div className="space-y-2">
@@ -195,10 +209,22 @@ function renderConfigFields(
           <Select value={(config.agentId as string) || ""} onValueChange={(v) => updateConfig("agentId", v)}>
             <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecionar agente" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="sdr">Agente SDR</SelectItem>
-              <SelectItem value="bdr">Agente BDR</SelectItem>
-              <SelectItem value="sac">Agente SAC</SelectItem>
-              <SelectItem value="cs">Agente CS</SelectItem>
+              {AGENT_PRESETS.map((a) => (
+                <SelectItem key={a.value} value={a.value}>
+                  <span className="flex items-center gap-2">{a.icon} {a.label}</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label className="text-xs">Modelo LLM</Label>
+          <Select value={(config.model as string) || "gemini-2.5-flash"} onValueChange={(v) => updateConfig("model", v)}>
+            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {LLM_MODELS.map((m) => (
+                <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
