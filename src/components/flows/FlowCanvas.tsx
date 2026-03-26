@@ -49,6 +49,7 @@ const defaultStartNode: Node = {
     description: "Ponto de início do fluxo",
     config: {},
     color: "hsl(142, 71%, 45%)",
+    nodeType: "trigger_start",
   } satisfies FlowNodeData,
 };
 
