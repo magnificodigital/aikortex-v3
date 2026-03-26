@@ -384,3 +384,29 @@ body::after {
 .lk-meeting-container .lk-disconnect-button .lk-button-label::after { content: "Sair"; font-size: 0.75rem; }
 .lk-meeting-container .lk-start-audio-button .lk-button-label::after { content: "Iniciar Áudio"; font-size: 0.75rem; }
 .lk-meeting-container .lk-settings-button .lk-button-label::after { content: "Configurações"; font-size: 0.75rem; }
+
+/* ── Mobile meeting fixes ── */
+.lk-meeting-container {
+  height: 100dvh !important;
+}
+
+.lk-meeting-container .lk-video-conference {
+  height: 100% !important;
+}
+
+.lk-meeting-container .lk-focus-layout,
+.lk-meeting-container .lk-grid-layout {
+  min-height: 0 !important;
+}
+
+/* Ensure video elements fill their containers on mobile */
+.lk-meeting-container .lk-participant-tile video {
+  object-fit: cover !important;
+}
+
+/* Fix for iOS safe area */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .lk-meeting-container .lk-control-bar {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
