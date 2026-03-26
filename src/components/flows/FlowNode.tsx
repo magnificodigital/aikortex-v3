@@ -188,6 +188,7 @@ function FlowNode({ data, selected, id }: NodeProps) {
           className={cn("!w-3 !h-3 !border-2 !border-card", handleColors[d.category])}
         />
       )}
+      </div>
     </div>
   );
 }
