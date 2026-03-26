@@ -63,7 +63,10 @@ const gestaoItems: NavItem[] = [
     label: "Vendas",
     icon: ShoppingCart,
     path: "/sales",
-    children: [{ label: "CRM", icon: Contact, path: "/aikortex/crm" }],
+    children: [
+      { label: "CRM", icon: Contact, path: "/aikortex/crm" },
+      { label: "Reuniões", icon: Video, path: "/meetings" },
+    ],
   },
   { label: "Financeiro", icon: DollarSign, path: "/financial" },
   { label: "Equipe", icon: UserCheck, path: "/team" },
