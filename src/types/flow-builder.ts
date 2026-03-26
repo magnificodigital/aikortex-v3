@@ -116,7 +116,7 @@ const nd = (id: string, label: string, category: FlowNodeCategory, icon: string,
   id,
   type: "flowNode",
   position: p,
-  data: { label, category, icon, description: desc, config: cfg, color } as FlowNodeData,
+  data: { label, category, icon, description: desc, config: cfg, color, nodeType: id } as FlowNodeData,
 });
 
 const ed = (src: string, tgt: string, srcHandle?: string) => ({
