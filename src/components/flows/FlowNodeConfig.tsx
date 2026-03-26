@@ -1,5 +1,6 @@
 import { type Node } from "@xyflow/react";
 import type { FlowNodeData } from "@/types/flow-builder";
+import { AGENT_TEMPLATES } from "@/types/agent-builder";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -188,13 +189,14 @@ function renderConfigFields(
   }
 
   if (nodeType.startsWith("agent_ai")) {
-    const AGENT_PRESETS = [
-      { value: "sdr-1", label: "Agente SDR", icon: "📞" },
-      { value: "bdr-1", label: "Agente BDR", icon: "🎯" },
-      { value: "sac-1", label: "Agente SAC", icon: "🛟" },
-      { value: "social-1", label: "Social Media Manager", icon: "📱" },
-      { value: "custom-1", label: "Agente Personalizado", icon: "⚙️" },
-    ];
+    const AGENT_TYPE_ICONS: Record<string, string> = {
+      SDR: "📞", BDR: "🎯", SAC: "🛟", CS: "🚀", Custom: "⚙️",
+    };
+    const agentOptions = AGENT_TEMPLATES.map((a) => ({
+      value: a.id,
+      label: a.name,
+      icon: AGENT_TYPE_ICONS[a.type] || "🤖",
+    }));
     const LLM_MODELS = [
       { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
       { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
@@ -205,11 +207,11 @@ function renderConfigFields(
     return (
       <>
         <div className="space-y-2">
-          <Label className="text-xs">Agente</Label>
+          <Label className="text-xs">Modelo de agente</Label>
           <Select value={(config.agentId as string) || ""} onValueChange={(v) => updateConfig("agentId", v)}>
-            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecionar agente" /></SelectTrigger>
+            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecionar modelo" /></SelectTrigger>
             <SelectContent>
-              {AGENT_PRESETS.map((a) => (
+              {agentOptions.map((a) => (
                 <SelectItem key={a.value} value={a.value}>
                   <span className="flex items-center gap-2">{a.icon} {a.label}</span>
                 </SelectItem>
