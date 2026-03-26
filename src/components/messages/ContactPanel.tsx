@@ -33,17 +33,11 @@ const ContactPanel = ({ contact }: ContactPanelProps) => {
 
   return (
     <div className="w-[300px] min-w-[260px] border-l border-border bg-card flex flex-col h-full overflow-hidden">
-      <Tabs defaultValue="contact" className="flex flex-col h-full">
-        <div className="border-b border-border px-2">
-          <TabsList className="w-full h-9 bg-transparent">
-            <TabsTrigger value="contact" className="flex-1 text-xs h-7">Contato</TabsTrigger>
-            <TabsTrigger value="copilot" className="flex-1 text-xs h-7">Copilot</TabsTrigger>
-          </TabsList>
-        </div>
-
-        <TabsContent value="contact" className="flex-1 mt-0 overflow-hidden">
-          <ScrollArea className="h-full">
-            <div className="p-4 space-y-4">
+      <div className="border-b border-border px-3 py-2">
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contato</span>
+      </div>
+      <ScrollArea className="flex-1">
+        <div className="p-4 space-y-4">
               {/* Profile Header */}
               <div className="flex flex-col items-center text-center space-y-2">
                 <Avatar className="h-14 w-14">
