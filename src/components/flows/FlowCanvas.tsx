@@ -49,6 +49,7 @@ const defaultStartNode: Node = {
     description: "Ponto de início do fluxo",
     config: {},
     color: "hsl(142, 71%, 45%)",
+    nodeType: "trigger_start",
   } satisfies FlowNodeData,
 };
 
@@ -117,6 +118,7 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave 
           description: template.description,
           config: { ...template.defaultConfig },
           color: template.color,
+          nodeType: template.type,
         } satisfies FlowNodeData,
       };
 
@@ -208,6 +210,7 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave 
           description: template.description,
           config: { ...template.defaultConfig },
           color: template.color,
+          nodeType: template.type,
         } satisfies FlowNodeData,
       };
 

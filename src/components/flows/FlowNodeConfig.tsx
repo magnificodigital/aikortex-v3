@@ -57,7 +57,7 @@ export default function FlowNodeConfig({ node, onClose, onUpdate, onDelete }: Pr
         </div>
 
         {/* Dynamic config fields based on node type */}
-        {renderConfigFields(node.type || "", config, updateConfig)}
+        {renderConfigFields(data.nodeType || node.type || "", config, updateConfig)}
       </div>
 
       <div className="p-3 border-t border-border">
