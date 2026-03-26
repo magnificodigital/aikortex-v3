@@ -1,13 +1,12 @@
-import { useCallback, useState, useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   LiveKitRoom,
   VideoConference,
   RoomAudioRenderer,
   useRoomContext,
-  Chat,
 } from "@livekit/components-react";
 import "@livekit/components-styles";
-import { RoomEvent } from "livekit-client";
+import { DisconnectReason, RoomEvent } from "livekit-client";
 import { Button } from "@/components/ui/button";
 import {
   Video,
@@ -43,6 +42,18 @@ const backgrounds = [
   { id: "gradient-dark", label: "Escuro", preview: "linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 100%)" },
 ];
 
+const shouldLeaveOnDisconnect = (reason?: DisconnectReason) => {
+  if (reason === undefined) return true;
+
+  return [
+    DisconnectReason.DUPLICATE_IDENTITY,
+    DisconnectReason.PARTICIPANT_REMOVED,
+    DisconnectReason.ROOM_DELETED,
+    DisconnectReason.ROOM_CLOSED,
+    DisconnectReason.USER_REJECTED,
+  ].includes(reason);
+};
+
 /* ── Inner component with room context ── */
 const MeetingInner = ({ meetingTitle, isHost, roomId, onLeave }: Omit<Props, "token" | "serverUrl">) => {
   const room = useRoomContext();
@@ -52,8 +63,18 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, onLeave }: Omit<Props, "to
 
   // Listen for room disconnection (host ends meeting) — ignore user-initiated disconnects
   useEffect(() => {
-    const handleDisconnected = () => {
+    const handleDisconnected = (reason?: DisconnectReason) => {
       if (leavingRef.current) return;
+
+      if (reason === DisconnectReason.CLIENT_INITIATED) {
+        return;
+      }
+
+      if (!shouldLeaveOnDisconnect(reason)) {
+        toast.warning("A conexão oscilou, mas a reunião continuará ativa quando a reconexão terminar.");
+        return;
+      }
+
       toast.info("A reunião foi encerrada");
       onLeave();
     };
@@ -162,11 +183,19 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, onLeave }: Omit<Props, "to
 };
 
 const MeetingRoomView = ({ token, serverUrl, meetingTitle, isHost, roomId, onLeave }: Props) => {
+  const roomOptions = useMemo(
+    () => ({
+      disconnectOnPageLeave: false,
+    }),
+    []
+  );
+
   return (
     <LiveKitRoom
       token={token}
       serverUrl={serverUrl}
       connect={true}
+      options={roomOptions}
       onDisconnected={() => {
         // handled by MeetingInner's RoomEvent listener
       }}
