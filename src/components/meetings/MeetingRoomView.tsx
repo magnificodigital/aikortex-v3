@@ -12,13 +12,14 @@ import { Button } from "@/components/ui/button";
 import {
   Video,
   Share2,
-  Paperclip,
+  Settings,
 } from "lucide-react";
 import { toast } from "sonner";
 import FloatingParticipants from "./FloatingParticipants";
 import WaitingRoomNotifications from "./WaitingRoomNotifications";
 import MeetingTimer from "./MeetingTimer";
 import SalesMentorPanel from "./SalesMentorPanel";
+import MeetingSettingsDialog from "./MeetingSettingsDialog";
 
 interface Props {
   token: string;
@@ -47,6 +48,7 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, meetingId, onLeave }: Omit
   const leavingRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [startedAt] = useState(() => Date.now());
+  const [showSettings, setShowSettings] = useState(false);
 
   const handleTimeUp = useCallback(() => {
     toast.info("O tempo da reunião de 30 minutos acabou.");
@@ -181,6 +183,9 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, meetingId, onLeave }: Omit
         </div>
         <div className="flex items-center gap-2">
           <MeetingTimer startedAt={startedAt} onTimeUp={handleTimeUp} />
+          <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-white/70 hover:text-white hover:bg-white/10" onClick={() => setShowSettings(true)}>
+            <Settings className="w-3.5 h-3.5" /> Configurações
+          </Button>
           <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-white/70 hover:text-white hover:bg-white/10" onClick={copyLink}>
             <Share2 className="w-3.5 h-3.5" /> Compartilhar
           </Button>
@@ -203,6 +208,8 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, meetingId, onLeave }: Omit
         onChange={handleFileSelect}
         accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip"
       />
+
+      <MeetingSettingsDialog open={showSettings} onOpenChange={setShowSettings} />
     </div>
   );
 };
