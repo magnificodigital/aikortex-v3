@@ -192,6 +192,7 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, meetingId, onLeave }: Omit
         <VideoConference />
         <FloatingParticipants />
         {isHost && <WaitingRoomNotifications meetingId={meetingId} />}
+        {isHost && <SalesMentorPanel meetingTitle={meetingTitle} />}
       </div>
 
       {/* Hidden file input */}
