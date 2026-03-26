@@ -34,6 +34,10 @@ const nodeTypes: NodeTypes = {
   flowNode: FlowNode,
 };
 
+const edgeTypes: EdgeTypes = {
+  flowEdge: FlowEdge,
+};
+
 const defaultStartNode: Node = {
   id: "start-1",
   type: "flowNode",
