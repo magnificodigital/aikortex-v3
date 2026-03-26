@@ -183,6 +183,22 @@ const Meetings = () => {
                       >
                         <Copy className="w-3.5 h-3.5" />
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          try {
+                            await deleteMeeting(m.id);
+                            toast.success("Reunião excluída");
+                          } catch {
+                            toast.error("Erro ao excluir reunião");
+                          }
+                        }}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
                     </div>
                   </div>
                 ))}
