@@ -145,6 +145,7 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, meetingId, onLeave }: Omit
       <div className="flex-1 overflow-hidden relative">
         <VideoConference />
         <FloatingParticipants />
+        {isHost && <WaitingRoomNotifications meetingId={meetingId} />}
       </div>
 
       {/* Background filter dialog */}
