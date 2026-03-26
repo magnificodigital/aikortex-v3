@@ -35,6 +35,8 @@ const ClientRegistration = lazy(() => import("./pages/ClientRegistration"));
 const AppBuilder = lazy(() => import("./pages/AppBuilder"));
 const Templates = lazy(() => import("./pages/Templates"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Meetings = lazy(() => import("./pages/Meetings"));
+const MeetingRoom = lazy(() => import("./pages/MeetingRoom"));
 
 const queryClient = new QueryClient();
 
