@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from "react";
 import {
   ReactFlow,
+  ReactFlowProvider,
   addEdge,
   useNodesState,
   useEdgesState,
@@ -11,6 +12,7 @@ import {
   type Edge,
   type Node,
   type NodeTypes,
+  type ReactFlowInstance,
   MarkerType,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -20,8 +22,9 @@ import FlowNode from "./FlowNode";
 import FlowNodeConfig from "./FlowNodeConfig";
 import FlowCopilotPanel from "./FlowCopilotPanel";
 import FlowNodePalette from "./FlowNodePalette";
+import FlowBottomToolbar from "./FlowBottomToolbar";
 import { Button } from "@/components/ui/button";
-import { Save, Play, Undo2, Redo2, Rocket, MoreHorizontal, MessageSquare } from "lucide-react";
+import { Save, Play, Undo2, Redo2, MoreHorizontal, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -55,7 +58,7 @@ interface FlowCanvasProps {
   onSave?: (name: string, nodes: unknown[], edges: unknown[], flowId?: string) => void;
 }
 
-export default function FlowCanvas({ initialNodes, initialEdges, flowName, flowId, onSave }: FlowCanvasProps) {
+function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave }: FlowCanvasProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const startNodes = initialNodes && (initialNodes as Node[]).length > 0
     ? (initialNodes as Node[])
@@ -63,7 +66,7 @@ export default function FlowCanvas({ initialNodes, initialEdges, flowName, flowI
   const [nodes, setNodes, onNodesChange] = useNodesState(startNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState((initialEdges as Edge[]) || []);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
-  const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
+  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
   const [rightTab, setRightTab] = useState<RightTab>("copilot");
   const [showRightPanel, setShowRightPanel] = useState(true);
 
@@ -82,22 +85,24 @@ export default function FlowCanvas({ initialNodes, initialEdges, flowName, flowI
   );
 
   const handleAddNode = useCallback(
-    (nodeType: string) => {
+    (nodeType: string, position?: { x: number; y: number }) => {
       const template = NODE_TEMPLATES.find((t) => t.type === nodeType);
       if (!template) return;
 
-      const position = reactFlowInstance
-        ? reactFlowInstance.screenToFlowPosition({
-            x: window.innerWidth / 2 - 100,
-            y: window.innerHeight / 2 - 100,
-          })
-        : { x: 400, y: 250 };
+      const pos = position
+        ? position
+        : reactFlowInstance
+          ? reactFlowInstance.screenToFlowPosition({
+              x: window.innerWidth / 2 - 100,
+              y: window.innerHeight / 2 - 100,
+            })
+          : { x: 400, y: 250 };
 
       nodeIdCounter++;
       const newNode: Node = {
         id: `node-${nodeIdCounter}-${Date.now()}`,
         type: "flowNode",
-        position,
+        position: pos,
         data: {
           label: template.label,
           category: template.category,
@@ -218,9 +223,8 @@ export default function FlowCanvas({ initialNodes, initialEdges, flowName, flowI
         onDrop={handleDrop}
         onDragOver={handleDragOver}
       >
-        {/* Top right controls — Sim Studio style */}
+        {/* Top right controls */}
         <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
-          {/* Utility buttons */}
           <div className="flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-border rounded-lg px-1 py-1">
             <Button variant="ghost" size="icon" className="h-7 w-7" title="Mais opções">
               <MoreHorizontal className="w-3.5 h-3.5" />
@@ -236,7 +240,6 @@ export default function FlowCanvas({ initialNodes, initialEdges, flowName, flowI
             </Button>
           </div>
 
-          {/* Deploy + Run */}
           <Button
             variant="outline"
             size="sm"
@@ -268,13 +271,16 @@ export default function FlowCanvas({ initialNodes, initialEdges, flowName, flowI
           </Button>
         </div>
 
+        {/* Bottom toolbar — quick add nodes by category */}
+        <FlowBottomToolbar onAddNode={handleAddNode} />
+
         <ReactFlow
           nodes={nodes}
           edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
-          onInit={setReactFlowInstance}
+          onInit={(instance) => setReactFlowInstance(instance as unknown as ReactFlowInstance)}
           onNodeClick={onNodeClick}
           onPaneClick={onPaneClick}
           nodeTypes={nodeTypes}
@@ -304,7 +310,7 @@ export default function FlowCanvas({ initialNodes, initialEdges, flowName, flowI
         </ReactFlow>
       </div>
 
-      {/* Right panel with tabs — Sim Studio style */}
+      {/* Right panel with tabs */}
       {showRightPanel && (
         <div className="w-[300px] border-l border-border flex-shrink-0 flex flex-col bg-card h-full overflow-hidden">
           {/* Tab headers */}
@@ -360,5 +366,13 @@ export default function FlowCanvas({ initialNodes, initialEdges, flowName, flowI
         </div>
       )}
     </div>
+  );
+}
+
+export default function FlowCanvas(props: FlowCanvasProps) {
+  return (
+    <ReactFlowProvider>
+      <FlowCanvasInner {...props} />
+    </ReactFlowProvider>
   );
 }
