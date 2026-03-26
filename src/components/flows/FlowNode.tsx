@@ -2,7 +2,7 @@ import { memo } from "react";
 import { Handle, Position, type NodeProps, useReactFlow } from "@xyflow/react";
 import type { FlowNodeData } from "@/types/flow-builder";
 import { cn } from "@/lib/utils";
-import { Copy, Trash2, Eye, Play, Type } from "lucide-react";
+import { Copy, Trash2 } from "lucide-react";
 
 const categoryAccent: Record<string, string> = {
   trigger: "border-l-green-500",
@@ -97,15 +97,6 @@ function FlowNode({ data, selected, id }: NodeProps) {
       {/* Floating toolbar on selection */}
       {selected && (
         <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-50 flex items-center gap-0.5 bg-card border border-border rounded-lg shadow-lg px-1 py-0.5 nodrag nopan">
-          <button onClick={(e) => e.stopPropagation()} className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors" title="Visualizar">
-            <Eye className="w-3.5 h-3.5" />
-          </button>
-          <button onClick={(e) => e.stopPropagation()} className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors" title="Executar">
-            <Play className="w-3.5 h-3.5" />
-          </button>
-          <button onClick={(e) => e.stopPropagation()} className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors" title="Renomear">
-            <Type className="w-3.5 h-3.5" />
-          </button>
           <button onClick={handleDuplicate} className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors" title="Duplicar">
             <Copy className="w-3.5 h-3.5" />
           </button>
