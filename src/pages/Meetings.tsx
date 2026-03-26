@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Video, Plus, Copy, ExternalLink, Clock, Users, Search } from "lucide-react";
+import { Video, Plus, Copy, ExternalLink, Clock, Users, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useMeetings, type Meeting } from "@/hooks/use-meetings";
 import { format } from "date-fns";
