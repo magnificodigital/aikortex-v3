@@ -34,6 +34,7 @@ import {
   MessageCircle,
   AppWindow,
   LayoutTemplate,
+  Video,
 } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import {
