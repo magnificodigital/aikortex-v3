@@ -58,7 +58,7 @@ const shouldLeaveOnDisconnect = (reason?: DisconnectReason) => {
 };
 
 /* ── Inner component with room context ── */
-const MeetingInner = ({ meetingTitle, isHost, roomId, onLeave }: Omit<Props, "token" | "serverUrl">) => {
+const MeetingInner = ({ meetingTitle, isHost, roomId, meetingId, onLeave }: Omit<Props, "token" | "serverUrl">) => {
   const room = useRoomContext();
   const [showBgDialog, setShowBgDialog] = useState(false);
   const [activeBg, setActiveBg] = useState("none");
