@@ -20,6 +20,7 @@ import "@xyflow/react/dist/style.css";
 
 import { NODE_TEMPLATES, type FlowNodeData } from "@/types/flow-builder";
 import FlowNode from "./FlowNode";
+import FlowEdge from "./FlowEdge";
 import FlowNodeConfig from "./FlowNodeConfig";
 import FlowCopilotPanel from "./FlowCopilotPanel";
 import FlowNodePalette from "./FlowNodePalette";
