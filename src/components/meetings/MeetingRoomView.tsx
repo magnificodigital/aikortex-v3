@@ -4,10 +4,9 @@ import {
   VideoConference,
   RoomAudioRenderer,
   useRoomContext,
-  useDataChannel,
 } from "@livekit/components-react";
 import "@livekit/components-styles";
-import { DisconnectReason, RoomEvent, DataPacket_Kind } from "livekit-client";
+import { DisconnectReason, RoomEvent } from "livekit-client";
 import { Button } from "@/components/ui/button";
 import {
   Video,
@@ -19,7 +18,9 @@ import FloatingParticipants from "./FloatingParticipants";
 import WaitingRoomNotifications from "./WaitingRoomNotifications";
 import MeetingTimer from "./MeetingTimer";
 import SalesMentorPanel from "./SalesMentorPanel";
+import MeetingTranslationPanel from "./MeetingTranslationPanel";
 import MeetingSettingsDialog from "./MeetingSettingsDialog";
+import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 
 interface Props {
   token: string;
