@@ -30,6 +30,7 @@ const QUICK_PROMPTS = [
 
 interface Props {
   meetingTitle: string;
+  liveTranscript?: string;
 }
 
 const SalesMentorPanel = ({ meetingTitle }: Props) => {
