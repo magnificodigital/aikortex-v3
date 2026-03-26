@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import FloatingParticipants from "./FloatingParticipants";
+import WaitingRoomNotifications from "./WaitingRoomNotifications";
 
 interface Props {
   token: string;
