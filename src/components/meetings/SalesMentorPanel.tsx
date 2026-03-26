@@ -33,7 +33,7 @@ interface Props {
   liveTranscript?: string;
 }
 
-const SalesMentorPanel = ({ meetingTitle }: Props) => {
+const SalesMentorPanel = ({ meetingTitle, liveTranscript }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
