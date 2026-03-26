@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import {
   Video,
   Share2,
-  Paperclip,
+  Settings,
 } from "lucide-react";
 import { toast } from "sonner";
 import FloatingParticipants from "./FloatingParticipants";
