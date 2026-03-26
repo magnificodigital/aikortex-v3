@@ -22,9 +22,9 @@ const MESSAGES_MAP: Record<string, ChatMessage[]> = {
   "1": [
     { id: "1", sender: "contact", text: "Hi, I need some help setting up my new device.", time: "Jan 15, 12:32 PM" },
     { id: "2", sender: "user", senderName: "Mathew M", text: "No problem! Can you please tell me the make and model of your device and what specifically you need help with?", time: "Jan 15, 12:32 PM", status: "read" },
-    { id: "s1", sender: "system", text: "Mathew M self-assigned this conversation" },
-    { id: "s2", sender: "system", text: "Mathew M set the priority to high" },
-    { id: "s3", sender: "system", text: "Mathew M added device-setup" },
+    { id: "s1", sender: "system", text: "Mathew M self-assigned this conversation", time: "" },
+    { id: "s2", sender: "system", text: "Mathew M set the priority to high", time: "" },
+    { id: "s3", sender: "system", text: "Mathew M added device-setup", time: "" },
     { id: "3", sender: "contact", text: "It's a Samsung Galaxy S24. I'm having trouble transferring my data from my old phone.", time: "Jan 15, 12:45 PM" },
     { id: "4", sender: "user", senderName: "Mathew M", text: "Got it! Samsung has a great tool called Smart Switch that makes data transfer easy. Have you tried using it?", time: "Jan 15, 12:47 PM", status: "read" },
   ],
