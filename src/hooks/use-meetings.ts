@@ -56,7 +56,7 @@ export function useMeetings() {
       .single();
 
     if (error) throw error;
-    return data as Meeting;
+    return data as unknown as Meeting;
   }, []);
 
   const endMeeting = useCallback(async (meetingId: string) => {
