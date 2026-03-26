@@ -3,23 +3,14 @@ import {
   LiveKitRoom,
   VideoConference,
   RoomAudioRenderer,
-  useTracks,
-  useParticipants,
   useRoomContext,
-  GridLayout,
-  ParticipantTile,
   Chat,
 } from "@livekit/components-react";
 import "@livekit/components-styles";
-import { Track, RoomEvent, Room } from "livekit-client";
+import { RoomEvent } from "livekit-client";
 import { Button } from "@/components/ui/button";
 import {
   Video,
-  Copy,
-  Users,
-  MessageSquare,
-  PhoneOff,
-  Monitor,
   X,
   Share2,
   ImageIcon,
@@ -55,7 +46,6 @@ const backgrounds = [
 /* ── Inner component with room context ── */
 const MeetingInner = ({ meetingTitle, isHost, roomId, onLeave }: Omit<Props, "token" | "serverUrl">) => {
   const room = useRoomContext();
-  const [showChat, setShowChat] = useState(false);
   const [showBgDialog, setShowBgDialog] = useState(false);
   const [activeBg, setActiveBg] = useState("none");
   const leavingRef = useRef(false);
@@ -63,7 +53,7 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, onLeave }: Omit<Props, "to
   // Listen for room disconnection (host ends meeting) — ignore user-initiated disconnects
   useEffect(() => {
     const handleDisconnected = () => {
-      if (leavingRef.current) return; // user clicked leave, already handled
+      if (leavingRef.current) return;
       toast.info("A reunião foi encerrada");
       onLeave();
     };
@@ -71,55 +61,38 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, onLeave }: Omit<Props, "to
     return () => { room.off(RoomEvent.Disconnected, handleDisconnected); };
   }, [room, onLeave]);
 
+  // Mark leaving when the LiveKit ControlBar's Leave button is clicked
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      const leaveBtn = document.querySelector('.lk-disconnect-button');
+      if (leaveBtn && !leaveBtn.getAttribute('data-patched')) {
+        leaveBtn.setAttribute('data-patched', 'true');
+        leaveBtn.addEventListener('click', () => {
+          leavingRef.current = true;
+          setTimeout(() => onLeave(), 500);
+        }, { once: true });
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [onLeave]);
+
   const copyLink = () => {
     const link = `${window.location.origin}/meetings/${roomId}`;
     navigator.clipboard.writeText(link);
     toast.success("Link copiado!");
   };
 
-  const handleLeave = useCallback(async () => {
-    leavingRef.current = true;
-    try {
-      await room.disconnect(true);
-    } catch (e) {
-      console.error("Error disconnecting:", e);
-    }
-    onLeave();
-  }, [room, onLeave]);
-
-  const handleEndForAll = useCallback(async () => {
-    leavingRef.current = true;
-    try {
-      await room.disconnect(true);
-    } catch (e) {
-      console.error("Error ending meeting:", e);
-    }
-    onLeave();
-  }, [room, onLeave]);
-
-  const toggleScreenShare = useCallback(async () => {
-    try {
-      const enabled = room.localParticipant.isScreenShareEnabled;
-      await room.localParticipant.setScreenShareEnabled(!enabled);
-    } catch (e: any) {
-      if (e.name !== "NotAllowedError") {
-        toast.error("Erro ao compartilhar tela");
-      }
-    }
-  }, [room]);
-
   const applyBackground = (bgId: string) => {
     setActiveBg(bgId);
     setShowBgDialog(false);
-    // Note: actual background processing requires @livekit/track-processors
-    // which needs additional setup. For now we track the selection.
     toast.success(`Fundo "${backgrounds.find(b => b.id === bgId)?.label}" aplicado`);
   };
 
   return (
-    <div className="h-screen flex flex-col bg-[#111] text-white overflow-hidden">
+    <div className="h-screen flex flex-col bg-[#111] text-white overflow-hidden lk-meeting-container">
       {/* Header */}
-      <div className="h-12 flex items-center justify-between px-4 bg-[#1a1a1a] border-b border-white/10 shrink-0">
+      <div className="h-12 flex items-center justify-between px-4 bg-[#1a1a1a] border-b border-white/10 shrink-0 z-10">
         <div className="flex items-center gap-3">
           <Video className="w-4 h-4 text-primary" />
           <span className="text-sm font-semibold truncate">{meetingTitle}</span>
@@ -130,84 +103,23 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, onLeave }: Omit<Props, "to
           )}
         </div>
         <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 gap-1.5 text-white/70 hover:text-white hover:bg-white/10"
+            onClick={() => setShowBgDialog(true)}
+          >
+            <ImageIcon className="w-3.5 h-3.5" /> Aparência
+          </Button>
           <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-white/70 hover:text-white hover:bg-white/10" onClick={copyLink}>
             <Share2 className="w-3.5 h-3.5" /> Compartilhar
           </Button>
         </div>
       </div>
 
-      {/* Main content */}
+      {/* Main content — VideoConference includes its own control bar */}
       <div className="flex-1 overflow-hidden">
-        <div className="flex h-full">
-          {/* Video area */}
-          <div className="flex-1 flex flex-col">
-            <VideoConference />
-          </div>
-
-          {/* Chat panel */}
-          {showChat && (
-            <div className="w-80 border-l border-white/10 bg-[#1a1a1a] flex flex-col">
-              <div className="h-10 flex items-center justify-between px-3 border-b border-white/10">
-                <span className="text-xs font-semibold">Chat</span>
-                <button onClick={() => setShowChat(false)} className="text-white/50 hover:text-white">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="flex-1 overflow-hidden">
-                <Chat />
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Bottom toolbar */}
-      <div className="h-16 flex items-center justify-center gap-2 bg-[#1a1a1a] border-t border-white/10 shrink-0 px-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-10 px-4 gap-2 text-white/70 hover:text-white hover:bg-white/10"
-          onClick={toggleScreenShare}
-        >
-          <Monitor className="w-4 h-4" /> Tela
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className={`h-10 px-4 gap-2 text-white/70 hover:text-white hover:bg-white/10 ${showChat ? "bg-white/10 text-white" : ""}`}
-          onClick={() => setShowChat(!showChat)}
-        >
-          <MessageSquare className="w-4 h-4" /> Chat
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className={`h-10 px-4 gap-2 text-white/70 hover:text-white hover:bg-white/10 ${activeBg !== "none" ? "bg-white/10 text-white" : ""}`}
-          onClick={() => setShowBgDialog(true)}
-        >
-          <ImageIcon className="w-4 h-4" /> Fundo
-        </Button>
-
-        <div className="w-px h-6 bg-white/10 mx-2" />
-
-        {isHost && (
-          <Button
-            variant="destructive"
-            size="sm"
-            className="h-10 px-4 gap-2 bg-red-700 hover:bg-red-800"
-            onClick={handleEndForAll}
-          >
-            <PhoneOff className="w-4 h-4" /> Encerrar para todos
-          </Button>
-        )}
-        <Button
-          variant="destructive"
-          size="sm"
-          className="h-10 px-6 gap-2"
-          onClick={handleLeave}
-        >
-          <PhoneOff className="w-4 h-4" /> Sair
-        </Button>
+        <VideoConference />
       </div>
 
       {/* Background filter dialog */}
@@ -255,6 +167,9 @@ const MeetingRoomView = ({ token, serverUrl, meetingTitle, isHost, roomId, onLea
       token={token}
       serverUrl={serverUrl}
       connect={true}
+      onDisconnected={() => {
+        // handled by MeetingInner's RoomEvent listener
+      }}
       onError={(e) => {
         console.error("LiveKit error:", e);
         toast.error("Erro na conexão da reunião");
