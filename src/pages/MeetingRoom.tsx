@@ -22,6 +22,9 @@ const MeetingRoom = () => {
   const [meetingTitle, setMeetingTitle] = useState("Reunião");
   const [isHost, setIsHost] = useState(false);
   const [displayName, setDisplayName] = useState("");
+  const [guestId] = useState(() => `guest-${crypto.randomUUID().slice(0, 8)}`);
+
+  const isGuest = !user;
 
   useEffect(() => {
     if (!roomId) { navigate("/meetings"); return; }
@@ -33,12 +36,20 @@ const MeetingRoom = () => {
           setState("ended");
           return;
         }
-        setIsHost(meeting.host_user_id === user?.id);
-        setDisplayName(user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Participante");
+        setIsHost(!isGuest && meeting.host_user_id === user?.id);
+        setDisplayName(
+          isGuest
+            ? ""
+            : user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Participante"
+        );
         setState("pre-join");
       } catch {
-        // Meeting not found - might be joining by link, allow pre-join
-        setDisplayName(user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Participante");
+        // Meeting not found - allow pre-join anyway for guests
+        setDisplayName(
+          isGuest
+            ? ""
+            : user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Participante"
+        );
         setState("pre-join");
       }
     };
@@ -46,10 +57,11 @@ const MeetingRoom = () => {
   }, [roomId, user]);
 
   const handleJoin = useCallback(async (name: string) => {
-    if (!roomId || !user) return;
+    if (!roomId) return;
     setState("connecting");
     try {
-      const { token: t, url } = await getLiveKitToken(roomId, user.id, name, isHost);
+      const identity = isGuest ? guestId : user!.id;
+      const { token: t, url } = await getLiveKitToken(roomId, identity, name, isHost);
       setToken(t);
       setWsUrl(url);
       setState("connected");
@@ -58,11 +70,17 @@ const MeetingRoom = () => {
       setState("error");
       toast.error("Não foi possível conectar à reunião");
     }
-  }, [roomId, user, isHost]);
+  }, [roomId, user, isHost, isGuest, guestId]);
 
   const handleLeave = useCallback(() => {
-    navigate("/meetings");
-  }, [navigate]);
+    if (isGuest) {
+      window.close();
+      // fallback if window.close doesn't work
+      setState("ended");
+    } else {
+      navigate("/meetings");
+    }
+  }, [navigate, isGuest]);
 
   if (state === "loading") {
     return (
@@ -81,9 +99,11 @@ const MeetingRoom = () => {
         <div className="text-center space-y-4">
           <h2 className="text-xl font-bold text-foreground">Reunião Encerrada</h2>
           <p className="text-sm text-muted-foreground">Esta reunião já foi encerrada.</p>
-          <button onClick={() => navigate("/meetings")} className="text-primary hover:underline text-sm">
-            Voltar para reuniões
-          </button>
+          {!isGuest && (
+            <button onClick={() => navigate("/meetings")} className="text-primary hover:underline text-sm">
+              Voltar para reuniões
+            </button>
+          )}
         </div>
       </div>
     );
@@ -99,9 +119,11 @@ const MeetingRoom = () => {
             <button onClick={() => setState("pre-join")} className="text-primary hover:underline text-sm">
               Tentar novamente
             </button>
-            <button onClick={() => navigate("/meetings")} className="text-muted-foreground hover:underline text-sm">
-              Voltar
-            </button>
+            {!isGuest && (
+              <button onClick={() => navigate("/meetings")} className="text-muted-foreground hover:underline text-sm">
+                Voltar
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -115,7 +137,8 @@ const MeetingRoom = () => {
         defaultName={displayName}
         isConnecting={state === "connecting"}
         onJoin={handleJoin}
-        onCancel={() => navigate("/meetings")}
+        onCancel={isGuest ? undefined : () => navigate("/meetings")}
+        isGuest={isGuest}
       />
     );
   }
