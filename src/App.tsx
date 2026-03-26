@@ -35,6 +35,8 @@ const ClientRegistration = lazy(() => import("./pages/ClientRegistration"));
 const AppBuilder = lazy(() => import("./pages/AppBuilder"));
 const Templates = lazy(() => import("./pages/Templates"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Meetings = lazy(() => import("./pages/Meetings"));
+const MeetingRoom = lazy(() => import("./pages/MeetingRoom"));
 
 const queryClient = new QueryClient();
 
@@ -84,6 +86,8 @@ const App = () => (
               <Route path="/iagora" element={<P><IAgora /></P>} />
               <Route path="/sintonia" element={<P><SintonIA /></P>} />
               <Route path="/settings" element={<P><SettingsPage /></P>} />
+              <Route path="/meetings" element={<P><Meetings /></P>} />
+              <Route path="/meetings/:roomId" element={<P><MeetingRoom /></P>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

@@ -34,6 +34,7 @@ import {
   MessageCircle,
   AppWindow,
   LayoutTemplate,
+  Video,
 } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import {
@@ -85,6 +86,7 @@ const aikortexItems: NavItem[] = [
   { label: "Templates", icon: LayoutTemplate, path: "/templates" },
   { label: "Mensagens", icon: MessageSquare, path: "/aikortex/messages" },
   { label: "Disparos", icon: Send, path: "/aikortex/broadcasts" },
+  { label: "Reuniões", icon: Video, path: "/meetings" },
 ];
 
 const SIDEBAR_STATE_KEY = "sidebar-state";
