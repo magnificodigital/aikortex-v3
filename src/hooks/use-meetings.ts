@@ -77,5 +77,14 @@ export function useMeetings() {
     return data as unknown as Meeting;
   }, []);
 
-  return { meetings, loading, fetchMeetings, createMeeting, endMeeting, getMeetingByRoomId };
+  const deleteMeeting = useCallback(async (meetingId: string) => {
+    const { error } = await supabase
+      .from("meetings")
+      .delete()
+      .eq("id", meetingId);
+    if (error) throw error;
+    setMeetings((prev) => prev.filter((m) => m.id !== meetingId));
+  }, []);
+
+  return { meetings, loading, fetchMeetings, createMeeting, endMeeting, deleteMeeting, getMeetingByRoomId };
 }

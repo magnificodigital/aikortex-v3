@@ -63,7 +63,10 @@ const gestaoItems: NavItem[] = [
     label: "Vendas",
     icon: ShoppingCart,
     path: "/sales",
-    children: [{ label: "CRM", icon: Contact, path: "/aikortex/crm" }],
+    children: [
+      { label: "CRM", icon: Contact, path: "/aikortex/crm" },
+      { label: "Reuniões", icon: Video, path: "/meetings" },
+    ],
   },
   { label: "Financeiro", icon: DollarSign, path: "/financial" },
   { label: "Equipe", icon: UserCheck, path: "/team" },
@@ -86,7 +89,6 @@ const aikortexItems: NavItem[] = [
   { label: "Templates", icon: LayoutTemplate, path: "/templates" },
   { label: "Mensagens", icon: MessageSquare, path: "/aikortex/messages" },
   { label: "Disparos", icon: Send, path: "/aikortex/broadcasts" },
-  { label: "Reuniões", icon: Video, path: "/meetings" },
 ];
 
 const SIDEBAR_STATE_KEY = "sidebar-state";

@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Video, Plus, Copy, ExternalLink, Clock, Users, Search } from "lucide-react";
+import { Video, Plus, Copy, ExternalLink, Clock, Users, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useMeetings, type Meeting } from "@/hooks/use-meetings";
 import { format } from "date-fns";
@@ -16,7 +16,7 @@ import { ptBR } from "date-fns/locale";
 
 const Meetings = () => {
   const navigate = useNavigate();
-  const { meetings, loading, fetchMeetings, createMeeting } = useMeetings();
+  const { meetings, loading, fetchMeetings, createMeeting, deleteMeeting } = useMeetings();
   const [showCreate, setShowCreate] = useState(false);
   const [title, setTitle] = useState("");
   const [waitingRoom, setWaitingRoom] = useState(false);
@@ -182,6 +182,22 @@ const Meetings = () => {
                         onClick={(e) => { e.stopPropagation(); copyLink(m.room_id); }}
                       >
                         <Copy className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          try {
+                            await deleteMeeting(m.id);
+                            toast.success("Reunião excluída");
+                          } catch {
+                            toast.error("Erro ao excluir reunião");
+                          }
+                        }}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     </div>
                   </div>
