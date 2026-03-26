@@ -391,33 +391,24 @@ body::after {
 .lk-meeting-container .lk-start-audio-button .lk-button-label::after { content: "Iniciar Áudio"; font-size: 0.75rem; }
 .lk-meeting-container .lk-settings-button .lk-button-label::after { content: "Configurações"; font-size: 0.75rem; }
 
-/* ── LiveKit chat translations ── */
-.lk-meeting-container .lk-chat-form-input::placeholder {
-  font-size: 0;
-}
-.lk-meeting-container .lk-chat-form-input::placeholder {
-  content: "Digite uma mensagem...";
-}
+/* ── LiveKit chat styling ── */
 .lk-meeting-container .lk-chat-form-input {
   font-size: 0.875rem;
 }
-/* Override placeholder via attribute */
-.lk-meeting-container .lk-chat-form-button {
-  font-size: 0;
-}
-.lk-meeting-container .lk-chat-form-button::after {
-  content: "Enviar";
-  font-size: 0.75rem;
-}
 
-/* LiveKit join button override */
-.lk-meeting-container .lk-prejoin .lk-button-label {
-  font-size: 0;
+/* Style the file upload button in chat */
+.lk-meeting-container .lk-chat-form [data-file-btn] {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: 4px 6px;
+  min-width: auto;
+  display: flex;
+  align-items: center;
 }
-
-/* Override "No video" text */
-.lk-meeting-container .lk-participant-placeholder {
-  font-size: 0;
+.lk-meeting-container .lk-chat-form [data-file-btn]:hover {
+  color: white;
 }
 
 /* ── Mobile meeting fixes ── */
