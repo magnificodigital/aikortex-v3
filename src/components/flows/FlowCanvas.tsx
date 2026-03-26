@@ -290,6 +290,7 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave 
           onNodeClick={onNodeClick}
           onPaneClick={onPaneClick}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           fitView
           snapToGrid
           snapGrid={[16, 16]}
@@ -303,6 +304,7 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave 
           proOptions={{ hideAttribution: true }}
           className="bg-background [&_.react-flow__attribution]:!hidden"
           defaultEdgeOptions={{
+            type: "flowEdge",
             animated: true,
             style: { stroke: "hsl(var(--primary))", strokeWidth: 2 },
             markerEnd: { type: MarkerType.ArrowClosed, color: "hsl(var(--primary))" },
