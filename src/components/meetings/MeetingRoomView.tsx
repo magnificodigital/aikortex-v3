@@ -85,7 +85,7 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, meetingId, onLeave }: Omit
     return () => { room.off(RoomEvent.Disconnected, handleDisconnected); };
   }, [room, onLeave]);
 
-  // Mark leaving when the LiveKit ControlBar's Leave button is clicked
+  // Mark leaving + translate LiveKit UI elements to pt-BR
   useEffect(() => {
     const observer = new MutationObserver(() => {
       const leaveBtn = document.querySelector('.lk-disconnect-button');
@@ -96,6 +96,24 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, meetingId, onLeave }: Omit
           setTimeout(() => onLeave(), 500);
         }, { once: true });
       }
+
+      // Translate chat input placeholder
+      const chatInput = document.querySelector('.lk-chat-form-input') as HTMLInputElement;
+      if (chatInput && chatInput.placeholder !== 'Digite uma mensagem...') {
+        chatInput.placeholder = 'Digite uma mensagem...';
+      }
+
+      // Translate "Send" button text
+      const sendBtn = document.querySelector('.lk-chat-form-button');
+      if (sendBtn && sendBtn.textContent?.trim() === 'Send') {
+        sendBtn.textContent = 'Enviar';
+      }
+
+      // Translate any "No Video" or participant placeholder text
+      document.querySelectorAll('.lk-participant-name').forEach((el) => {
+        if (el.getAttribute('data-translated')) return;
+        el.setAttribute('data-translated', 'true');
+      });
     });
     observer.observe(document.body, { childList: true, subtree: true });
     return () => observer.disconnect();
