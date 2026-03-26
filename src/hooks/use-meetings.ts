@@ -74,7 +74,7 @@ export function useMeetings() {
       .eq("room_id", roomId)
       .single();
     if (error) throw error;
-    return data as Meeting;
+    return data as unknown as Meeting;
   }, []);
 
   return { meetings, loading, fetchMeetings, createMeeting, endMeeting, getMeetingByRoomId };
