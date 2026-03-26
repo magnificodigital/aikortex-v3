@@ -12,6 +12,7 @@ import {
   type Edge,
   type Node,
   type NodeTypes,
+  type EdgeTypes,
   type ReactFlowInstance,
   MarkerType,
 } from "@xyflow/react";
@@ -19,6 +20,7 @@ import "@xyflow/react/dist/style.css";
 
 import { NODE_TEMPLATES, type FlowNodeData } from "@/types/flow-builder";
 import FlowNode from "./FlowNode";
+import FlowEdge from "./FlowEdge";
 import FlowNodeConfig from "./FlowNodeConfig";
 import FlowCopilotPanel from "./FlowCopilotPanel";
 import FlowNodePalette from "./FlowNodePalette";
@@ -30,6 +32,10 @@ import { cn } from "@/lib/utils";
 
 const nodeTypes: NodeTypes = {
   flowNode: FlowNode,
+};
+
+const edgeTypes: EdgeTypes = {
+  flowEdge: FlowEdge,
 };
 
 const defaultStartNode: Node = {
@@ -75,6 +81,7 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave 
       const edge: Edge = {
         ...connection,
         id: `e-${connection.source}-${connection.target}`,
+        type: "flowEdge",
         animated: true,
         style: { stroke: "hsl(var(--primary))", strokeWidth: 2 },
         markerEnd: { type: MarkerType.ArrowClosed, color: "hsl(var(--primary))" },
@@ -284,6 +291,7 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave 
           onNodeClick={onNodeClick}
           onPaneClick={onPaneClick}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           fitView
           snapToGrid
           snapGrid={[16, 16]}
@@ -297,6 +305,7 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave 
           proOptions={{ hideAttribution: true }}
           className="bg-background [&_.react-flow__attribution]:!hidden"
           defaultEdgeOptions={{
+            type: "flowEdge",
             animated: true,
             style: { stroke: "hsl(var(--primary))", strokeWidth: 2 },
             markerEnd: { type: MarkerType.ArrowClosed, color: "hsl(var(--primary))" },
