@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import FloatingParticipants from "./FloatingParticipants";
 import WaitingRoomNotifications from "./WaitingRoomNotifications";
+import MeetingTimer from "./MeetingTimer";
 
 interface Props {
   token: string;
