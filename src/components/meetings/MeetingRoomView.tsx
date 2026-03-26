@@ -4,10 +4,9 @@ import {
   VideoConference,
   RoomAudioRenderer,
   useRoomContext,
-  useDataChannel,
 } from "@livekit/components-react";
 import "@livekit/components-styles";
-import { DisconnectReason, RoomEvent, DataPacket_Kind } from "livekit-client";
+import { DisconnectReason, RoomEvent } from "livekit-client";
 import { Button } from "@/components/ui/button";
 import {
   Video,
@@ -19,7 +18,9 @@ import FloatingParticipants from "./FloatingParticipants";
 import WaitingRoomNotifications from "./WaitingRoomNotifications";
 import MeetingTimer from "./MeetingTimer";
 import SalesMentorPanel from "./SalesMentorPanel";
+import MeetingTranslationPanel from "./MeetingTranslationPanel";
 import MeetingSettingsDialog from "./MeetingSettingsDialog";
+import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 
 interface Props {
   token: string;
@@ -49,6 +50,14 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, meetingId, onLeave }: Omit
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [startedAt] = useState(() => Date.now());
   const [showSettings, setShowSettings] = useState(false);
+  const [speechEnabled, setSpeechEnabled] = useState(false);
+
+  const {
+    isListening,
+    isSupported,
+    recentPhrases,
+    getRecentTranscript,
+  } = useSpeechRecognition({ enabled: speechEnabled });
 
   const handleTimeUp = useCallback(() => {
     toast.info("O tempo da reunião de 30 minutos acabou.");
@@ -197,7 +206,18 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, meetingId, onLeave }: Omit
         <VideoConference />
         <FloatingParticipants />
         {isHost && <WaitingRoomNotifications meetingId={meetingId} />}
-        {isHost && <SalesMentorPanel meetingTitle={meetingTitle} />}
+        {isHost && (
+          <SalesMentorPanel
+            meetingTitle={meetingTitle}
+            liveTranscript={getRecentTranscript(120)}
+          />
+        )}
+        <MeetingTranslationPanel
+          isListening={isListening}
+          recentPhrases={recentPhrases}
+          onToggleListening={() => setSpeechEnabled((v) => !v)}
+          isSupported={isSupported}
+        />
       </div>
 
       {/* Hidden file input */}
