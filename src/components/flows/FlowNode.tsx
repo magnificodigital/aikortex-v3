@@ -62,23 +62,67 @@ const CONFIG_LABELS: Record<string, string> = {
   datetime: "Data/Hora",
 };
 
-function FlowNode({ data, selected }: NodeProps) {
+function FlowNode({ data, selected, id }: NodeProps) {
   const d = data as unknown as FlowNodeData;
   const isCondition = d.category === "condition";
+  const { setNodes, setEdges, getNodes } = useReactFlow();
 
-  // Get displayable config entries (non-empty, non-array, non-object)
   const configEntries = Object.entries(d.config || {}).filter(
     ([, v]) => v !== "" && v !== undefined && v !== null && !Array.isArray(v) && typeof v !== "object"
   ).slice(0, 4);
 
+  const handleDuplicate = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const nodes = getNodes();
+    const original = nodes.find((n) => n.id === id);
+    if (!original) return;
+    const newId = `node-dup-${Date.now()}`;
+    const newNode = {
+      ...original,
+      id: newId,
+      position: { x: original.position.x + 40, y: original.position.y + 60 },
+      selected: false,
+    };
+    setNodes((nds) => [...nds, newNode]);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setNodes((nds) => nds.filter((n) => n.id !== id));
+    setEdges((eds) => eds.filter((e) => e.source !== id && e.target !== id));
+  };
+
   return (
-    <div
-      className={cn(
-        "rounded-xl border border-border border-l-[4px] bg-card px-4 py-3 min-w-[220px] max-w-[280px] shadow-md transition-all cursor-pointer",
-        categoryAccent[d.category] || "border-l-border",
-        selected && "ring-2 ring-primary ring-offset-2 ring-offset-background shadow-xl scale-[1.02]"
+    <div className="relative group">
+      {/* Floating toolbar on selection */}
+      {selected && (
+        <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-50 flex items-center gap-0.5 bg-card border border-border rounded-lg shadow-lg px-1 py-0.5 nodrag nopan">
+          <button onClick={(e) => e.stopPropagation()} className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors" title="Visualizar">
+            <Eye className="w-3.5 h-3.5" />
+          </button>
+          <button onClick={(e) => e.stopPropagation()} className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors" title="Executar">
+            <Play className="w-3.5 h-3.5" />
+          </button>
+          <button onClick={(e) => e.stopPropagation()} className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors" title="Renomear">
+            <Type className="w-3.5 h-3.5" />
+          </button>
+          <button onClick={handleDuplicate} className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors" title="Duplicar">
+            <Copy className="w-3.5 h-3.5" />
+          </button>
+          <div className="w-px h-4 bg-border mx-0.5" />
+          <button onClick={handleDelete} className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors" title="Apagar">
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
       )}
-    >
+
+      <div
+        className={cn(
+          "rounded-xl border border-border border-l-[4px] bg-card px-4 py-3 min-w-[220px] max-w-[280px] shadow-md transition-all cursor-pointer",
+          categoryAccent[d.category] || "border-l-border",
+          selected && "ring-2 ring-primary ring-offset-2 ring-offset-background shadow-xl scale-[1.02]"
+        )}
+      >
       {/* Input handle */}
       {d.category !== "trigger" && (
         <Handle
