@@ -16,7 +16,7 @@ import { ptBR } from "date-fns/locale";
 
 const Meetings = () => {
   const navigate = useNavigate();
-  const { meetings, loading, fetchMeetings, createMeeting } = useMeetings();
+  const { meetings, loading, fetchMeetings, createMeeting, deleteMeeting } = useMeetings();
   const [showCreate, setShowCreate] = useState(false);
   const [title, setTitle] = useState("");
   const [waitingRoom, setWaitingRoom] = useState(false);
