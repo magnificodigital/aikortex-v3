@@ -208,6 +208,8 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, meetingId, onLeave }: Omit
         onChange={handleFileSelect}
         accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip"
       />
+
+      <MeetingSettingsDialog open={showSettings} onOpenChange={setShowSettings} />
     </div>
   );
 };
