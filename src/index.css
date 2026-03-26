@@ -370,3 +370,17 @@ body::after {
 .space-stars { opacity: 0.3; }
 .space-stars-layer2 { opacity: 0.2; }
 .space-stars-layer3 { opacity: 0.15; }
+
+/* ── LiveKit control bar translations (PT-BR) ── */
+.lk-meeting-container .lk-button-label {
+  font-size: 0;
+}
+
+/* Translate individual buttons */
+.lk-meeting-container .lk-camera-button .lk-button-label::after { content: "Câmera"; font-size: 0.75rem; }
+.lk-meeting-container .lk-microphone-button .lk-button-label::after { content: "Microfone"; font-size: 0.75rem; }
+.lk-meeting-container .lk-screen-share-button .lk-button-label::after { content: "Compartilhar tela"; font-size: 0.75rem; }
+.lk-meeting-container .lk-chat-toggle .lk-button-label::after { content: "Chat"; font-size: 0.75rem; }
+.lk-meeting-container .lk-disconnect-button .lk-button-label::after { content: "Sair"; font-size: 0.75rem; }
+.lk-meeting-container .lk-start-audio-button .lk-button-label::after { content: "Iniciar Áudio"; font-size: 0.75rem; }
+.lk-meeting-container .lk-settings-button .lk-button-label::after { content: "Configurações"; font-size: 0.75rem; }
