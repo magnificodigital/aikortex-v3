@@ -30,6 +30,7 @@ interface Props {
   meetingTitle: string;
   isHost: boolean;
   roomId: string;
+  meetingId: string;
   onLeave: () => void;
 }
 
