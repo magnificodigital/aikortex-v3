@@ -60,7 +60,7 @@ const MeetingPreJoin = ({ title, defaultName, isConnecting, onJoin, onCancel, is
   };
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex bg-background" style={{ minHeight: "100dvh" }}>
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-lg space-y-6">
           <div className="space-y-1">
