@@ -6,13 +6,21 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Map short UI model names to full gateway/API model names
+const MODEL_MAP: Record<string, { gateway: string; openai?: string }> = {
+  "gemini-2.5-flash": { gateway: "google/gemini-2.5-flash" },
+  "gemini-2.5-pro": { gateway: "google/gemini-2.5-pro" },
+  "gemini-3-flash-preview": { gateway: "google/gemini-3-flash-preview" },
+  "gpt-5": { gateway: "openai/gpt-5", openai: "gpt-4o" },
+  "gpt-5-mini": { gateway: "openai/gpt-5-mini", openai: "gpt-4o-mini" },
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const { messages, provider, model } = await req.json();
 
-    // Get user from auth header
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), {
@@ -35,8 +43,8 @@ serve(async (req) => {
       });
     }
 
-    // Determine which provider to use
     const selectedProvider = provider || "openai";
+    const modelMapping = MODEL_MAP[model] || null;
 
     // Try user's own API key first
     const { data: keyData } = await supabase
@@ -52,11 +60,11 @@ serve(async (req) => {
     let headers: Record<string, string>;
 
     if (keyData?.api_key) {
-      // Use user's own OpenAI key
       if (selectedProvider === "openai") {
         apiUrl = "https://api.openai.com/v1/chat/completions";
         apiKey = keyData.api_key;
-        apiModel = model || "gpt-4o-mini";
+        // Use OpenAI-native model name
+        apiModel = modelMapping?.openai || model || "gpt-4o-mini";
         headers = {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
@@ -71,12 +79,12 @@ serve(async (req) => {
           "anthropic-version": "2023-06-01",
         };
       } else {
-        // Fallback to Lovable AI gateway
+        // User key for other providers — still use Lovable gateway
         const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
         if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
         apiUrl = "https://ai.gateway.lovable.dev/v1/chat/completions";
         apiKey = LOVABLE_API_KEY;
-        apiModel = model || "google/gemini-3-flash-preview";
+        apiModel = modelMapping?.gateway || model || "google/gemini-3-flash-preview";
         headers = {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
@@ -88,7 +96,7 @@ serve(async (req) => {
       if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
       apiUrl = "https://ai.gateway.lovable.dev/v1/chat/completions";
       apiKey = LOVABLE_API_KEY;
-      apiModel = model || "google/gemini-3-flash-preview";
+      apiModel = modelMapping?.gateway || model || "google/gemini-3-flash-preview";
       headers = {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
@@ -105,6 +113,8 @@ serve(async (req) => {
       ],
       stream: true,
     };
+
+    console.log(`Using provider=${selectedProvider}, model=${apiModel}, hasUserKey=${!!keyData?.api_key}`);
 
     const response = await fetch(apiUrl, {
       method: "POST",
@@ -126,14 +136,14 @@ serve(async (req) => {
         });
       }
       if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos insuficientes." }), {
+        return new Response(JSON.stringify({ error: "Créditos insuficientes. Adicione créditos na sua conta." }), {
           status: 402,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const t = await response.text();
       console.error("AI API error:", response.status, t);
-      return new Response(JSON.stringify({ error: "Erro no serviço de IA" }), {
+      return new Response(JSON.stringify({ error: "Erro no serviço de IA. Verifique sua chave de API." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
