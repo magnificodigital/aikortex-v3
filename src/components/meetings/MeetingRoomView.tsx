@@ -19,6 +19,7 @@ import FloatingParticipants from "./FloatingParticipants";
 import WaitingRoomNotifications from "./WaitingRoomNotifications";
 import MeetingTimer from "./MeetingTimer";
 import SalesMentorPanel from "./SalesMentorPanel";
+import MeetingSettingsDialog from "./MeetingSettingsDialog";
 
 interface Props {
   token: string;
