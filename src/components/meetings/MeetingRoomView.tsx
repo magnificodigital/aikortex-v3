@@ -50,6 +50,14 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, meetingId, onLeave }: Omit
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [startedAt] = useState(() => Date.now());
   const [showSettings, setShowSettings] = useState(false);
+  const [speechEnabled, setSpeechEnabled] = useState(false);
+
+  const {
+    isListening,
+    isSupported,
+    recentPhrases,
+    getRecentTranscript,
+  } = useSpeechRecognition({ enabled: speechEnabled });
 
   const handleTimeUp = useCallback(() => {
     toast.info("O tempo da reunião de 30 minutos acabou.");
