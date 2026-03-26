@@ -112,11 +112,56 @@ export interface FlowTemplate {
 
 const pos = (x: number, y: number) => ({ x, y });
 
+const inferNodeType = (category: FlowNodeCategory, cfg: Record<string, unknown>): string => {
+  switch (category) {
+    case "trigger":
+      if ("formId" in cfg) return "trigger_form";
+      if ("cron" in cfg) return "trigger_schedule";
+      if ("event" in cfg) return "trigger_event";
+      if ("url" in cfg) return "trigger_webhook";
+      return "trigger_message";
+    case "condition":
+      if ("splitPercentage" in cfg) return "condition_ab";
+      if ("cases" in cfg) return "condition_switch";
+      return "condition_if";
+    case "message":
+      if ("imageUrl" in cfg) return "message_image";
+      if ("cards" in cfg) return "message_carousel";
+      if ("items" in cfg) return "message_list";
+      if ("variable" in cfg && !("text" in cfg)) return "message_input";
+      if ("buttons" in cfg && "text" in cfg) return "message_buttons";
+      return "message_text";
+    case "action":
+      if ("tag" in cfg) return "action_tag";
+      if ("variable" in cfg && "value" in cfg) return "action_variable";
+      if ("url" in cfg && "method" in cfg) return "action_http";
+      if ("to" in cfg || "subject" in cfg) return "action_email";
+      if ("department" in cfg) return "action_transfer";
+      return "action_end";
+    case "agent":
+      if ("knowledgeBaseId" in cfg) return "agent_knowledge";
+      if ("intents" in cfg) return "agent_intent";
+      if ("agentId" in cfg || "model" in cfg || "temperature" in cfg) return "agent_ai";
+      return "agent_sentiment";
+    case "integration":
+      if ("spreadsheetId" in cfg || "range" in cfg) return "integration_sheets";
+      if ("webhookUrl" in cfg) return "integration_zapier";
+      if ("template" in cfg || "phone" in cfg) return "integration_whatsapp";
+      if (cfg.provider === "google_calendar") return "integration_calendar";
+      return "integration_crm";
+    case "delay":
+      if ("datetime" in cfg) return "delay_schedule";
+      return "delay_wait";
+    default:
+      return "action_end";
+  }
+};
+
 const nd = (id: string, label: string, category: FlowNodeCategory, icon: string, desc: string, color: string, cfg: Record<string, unknown>, p: { x: number; y: number }) => ({
   id,
   type: "flowNode",
   position: p,
-  data: { label, category, icon, description: desc, config: cfg, color, nodeType: id } as FlowNodeData,
+  data: { label, category, icon, description: desc, config: cfg, color, nodeType: inferNodeType(category, cfg) } as FlowNodeData,
 });
 
 const ed = (src: string, tgt: string, srcHandle?: string) => ({
