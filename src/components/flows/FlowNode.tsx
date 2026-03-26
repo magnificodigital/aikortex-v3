@@ -3,14 +3,14 @@ import { Handle, Position, type NodeProps } from "@xyflow/react";
 import type { FlowNodeData } from "@/types/flow-builder";
 import { cn } from "@/lib/utils";
 
-const categoryStyles: Record<string, string> = {
-  trigger: "border-green-500/60 bg-green-500/10 shadow-green-500/10",
-  condition: "border-yellow-500/60 bg-yellow-500/10 shadow-yellow-500/10",
-  message: "border-blue-500/60 bg-blue-500/10 shadow-blue-500/10",
-  action: "border-purple-500/60 bg-purple-500/10 shadow-purple-500/10",
-  agent: "border-pink-500/60 bg-pink-500/10 shadow-pink-500/10",
-  integration: "border-cyan-500/60 bg-cyan-500/10 shadow-cyan-500/10",
-  delay: "border-orange-500/60 bg-orange-500/10 shadow-orange-500/10",
+const categoryAccent: Record<string, string> = {
+  trigger: "border-l-green-500",
+  condition: "border-l-yellow-500",
+  message: "border-l-blue-500",
+  action: "border-l-purple-500",
+  agent: "border-l-pink-500",
+  integration: "border-l-cyan-500",
+  delay: "border-l-orange-500",
 };
 
 const handleColors: Record<string, string> = {
@@ -23,19 +23,62 @@ const handleColors: Record<string, string> = {
   delay: "!bg-orange-500",
 };
 
+/** Pretty-print config keys for display */
+const CONFIG_LABELS: Record<string, string> = {
+  channel: "Canal",
+  keyword: "Palavra-chave",
+  url: "URL",
+  method: "Método",
+  cron: "Expressão Cron",
+  event: "Evento",
+  formId: "Formulário",
+  text: "Texto",
+  variable: "Variável",
+  validation: "Validação",
+  expression: "Expressão",
+  splitPercentage: "Divisão %",
+  imageUrl: "Imagem URL",
+  caption: "Legenda",
+  tag: "Tag",
+  value: "Valor",
+  to: "Para",
+  subject: "Assunto",
+  body: "Corpo",
+  department: "Departamento",
+  agentId: "Agente",
+  model: "Modelo",
+  temperature: "Temperatura",
+  knowledgeBaseId: "Base",
+  provider: "Provedor",
+  action: "Ação",
+  template: "Template",
+  phone: "Telefone",
+  spreadsheetId: "Planilha ID",
+  range: "Range",
+  webhookUrl: "Webhook URL",
+  duration: "Duração",
+  unit: "Unidade",
+  datetime: "Data/Hora",
+};
+
 function FlowNode({ data, selected }: NodeProps) {
   const d = data as unknown as FlowNodeData;
   const isCondition = d.category === "condition";
 
+  // Get displayable config entries (non-empty, non-array, non-object)
+  const configEntries = Object.entries(d.config || {}).filter(
+    ([, v]) => v !== "" && v !== undefined && v !== null && !Array.isArray(v) && typeof v !== "object"
+  ).slice(0, 3); // Show max 3 config fields
+
   return (
     <div
       className={cn(
-        "rounded-xl border-2 px-4 py-3 min-w-[180px] max-w-[220px] shadow-lg transition-all cursor-pointer backdrop-blur-sm",
-        categoryStyles[d.category] || "border-border bg-card",
-        selected && "ring-2 ring-primary ring-offset-2 ring-offset-background scale-105"
+        "rounded-xl border border-border border-l-[3px] bg-card px-4 py-3 min-w-[200px] max-w-[260px] shadow-md transition-all cursor-pointer",
+        categoryAccent[d.category] || "border-l-border",
+        selected && "ring-2 ring-primary ring-offset-2 ring-offset-background shadow-lg scale-[1.03]"
       )}
     >
-      {/* Input handle on the left (except triggers) */}
+      {/* Input handle */}
       {d.category !== "trigger" && (
         <Handle
           type="target"
@@ -44,15 +87,36 @@ function FlowNode({ data, selected }: NodeProps) {
         />
       )}
 
-      <div className="flex items-center gap-2.5">
-        <span className="text-xl flex-shrink-0">{d.icon}</span>
-        <div className="min-w-0">
+      {/* Header */}
+      <div className="flex items-center gap-2.5 mb-1">
+        <span className="text-lg flex-shrink-0">{d.icon}</span>
+        <div className="min-w-0 flex-1">
           <p className="text-xs font-semibold text-foreground truncate">{d.label}</p>
-          <p className="text-[10px] text-muted-foreground truncate">{d.description}</p>
         </div>
       </div>
 
-      {/* Output handles on the right */}
+      {/* Config details (Sim Studio style) */}
+      {configEntries.length > 0 && (
+        <div className="mt-2 pt-2 border-t border-border/50 space-y-1">
+          {configEntries.map(([key, val]) => (
+            <div key={key} className="flex items-center justify-between gap-2 text-[10px]">
+              <span className="text-muted-foreground font-medium truncate">
+                {CONFIG_LABELS[key] || key}
+              </span>
+              <span className="text-foreground/80 font-mono truncate max-w-[120px] text-right">
+                {String(val)}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Description if no config */}
+      {configEntries.length === 0 && d.description && (
+        <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{d.description}</p>
+      )}
+
+      {/* Output handles */}
       {isCondition ? (
         <>
           <Handle
