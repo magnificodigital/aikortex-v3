@@ -183,6 +183,9 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, meetingId, onLeave }: Omit
         </div>
         <div className="flex items-center gap-2">
           <MeetingTimer startedAt={startedAt} onTimeUp={handleTimeUp} />
+          <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-white/70 hover:text-white hover:bg-white/10" onClick={() => setShowSettings(true)}>
+            <Settings className="w-3.5 h-3.5" /> Configurações
+          </Button>
           <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-white/70 hover:text-white hover:bg-white/10" onClick={copyLink}>
             <Share2 className="w-3.5 h-3.5" /> Compartilhar
           </Button>
