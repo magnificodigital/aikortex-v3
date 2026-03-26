@@ -210,6 +210,7 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave 
           description: template.description,
           config: { ...template.defaultConfig },
           color: template.color,
+          nodeType: template.type,
         } satisfies FlowNodeData,
       };
 
