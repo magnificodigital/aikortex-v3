@@ -12,6 +12,7 @@ import {
   type Edge,
   type Node,
   type NodeTypes,
+  type EdgeTypes,
   type ReactFlowInstance,
   MarkerType,
 } from "@xyflow/react";
