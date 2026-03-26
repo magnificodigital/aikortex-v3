@@ -123,38 +123,8 @@ const ContactPanel = ({ contact }: ContactPanelProps) => {
                 </>
               )}
 
-              {/* Custom Attributes */}
-              {contact.customAttributes && contact.customAttributes.length > 0 && (
-                <>
-                  <Separator />
-                  <div>
-                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Atributos</p>
-                    <div className="space-y-2">
-                      {contact.customAttributes.map((attr) => (
-                        <div key={attr.label} className="flex items-start justify-between gap-2">
-                          <span className="text-[11px] text-muted-foreground">{attr.label}</span>
-                          <span className="text-[11px] text-foreground text-right">{attr.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
             </div>
           </ScrollArea>
-        </TabsContent>
-
-        <TabsContent value="copilot" className="flex-1 mt-0 overflow-hidden">
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center space-y-2 p-4">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                <Tag className="w-5 h-5 text-primary" />
-              </div>
-              <p className="text-xs text-muted-foreground">AI Copilot estará disponível em breve</p>
-            </div>
-          </div>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 };

@@ -88,7 +88,7 @@ const AikortexMessages = () => {
   return (
     <DashboardLayout>
       <div className="h-[calc(100vh-0px)] flex overflow-hidden -m-0">
-        <MessagesSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
+        
         <ConversationList
           conversations={CONVERSATIONS}
           selectedId={selectedConv}
