@@ -215,6 +215,7 @@ const MeetingRoomView = ({ token, serverUrl, meetingTitle, isHost, roomId, meeti
         meetingTitle={meetingTitle}
         isHost={isHost}
         roomId={roomId}
+        meetingId={meetingId}
         onLeave={onLeave}
       />
       <RoomAudioRenderer />
