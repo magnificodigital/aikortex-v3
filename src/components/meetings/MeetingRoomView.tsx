@@ -21,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import FloatingParticipants from "./FloatingParticipants";
 
 interface Props {
   token: string;
@@ -139,8 +140,9 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, onLeave }: Omit<Props, "to
       </div>
 
       {/* Main content — VideoConference includes its own control bar */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden relative">
         <VideoConference />
+        <FloatingParticipants />
       </div>
 
       {/* Background filter dialog */}
