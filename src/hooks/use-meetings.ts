@@ -32,7 +32,7 @@ export function useMeetings() {
       .eq("host_user_id", user.id)
       .order("created_at", { ascending: false });
 
-    if (!error && data) setMeetings(data as Meeting[]);
+    if (!error && data) setMeetings(data as unknown as Meeting[]);
     setLoading(false);
   }, []);
 
