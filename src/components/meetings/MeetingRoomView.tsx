@@ -48,6 +48,7 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, meetingId, onLeave }: Omit
   const leavingRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [startedAt] = useState(() => Date.now());
+  const [showSettings, setShowSettings] = useState(false);
 
   const handleTimeUp = useCallback(() => {
     toast.info("O tempo da reunião de 30 minutos acabou.");
