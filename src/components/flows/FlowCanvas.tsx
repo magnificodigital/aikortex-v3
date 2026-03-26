@@ -19,8 +19,9 @@ import { NODE_TEMPLATES, type FlowNodeData } from "@/types/flow-builder";
 import FlowNode from "./FlowNode";
 import FlowBottomToolbar from "./FlowBottomToolbar";
 import FlowNodeConfig from "./FlowNodeConfig";
+import FlowCopilotPanel from "./FlowCopilotPanel";
 import { Button } from "@/components/ui/button";
-import { Save, Play, Undo2, Redo2 } from "lucide-react";
+import { Save, Play, Undo2, Redo2, Sparkles, Rocket } from "lucide-react";
 import { toast } from "sonner";
 
 const nodeTypes: NodeTypes = {
@@ -60,6 +61,7 @@ export default function FlowCanvas({ initialNodes, initialEdges, flowName, flowI
   const [edges, setEdges, onEdgesChange] = useEdgesState((initialEdges as Edge[]) || []);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
+  const [showCopilot, setShowCopilot] = useState(false);
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -75,13 +77,11 @@ export default function FlowCanvas({ initialNodes, initialEdges, flowName, flowI
     [setEdges]
   );
 
-  // Add node from bottom toolbar
   const handleAddNode = useCallback(
     (nodeType: string) => {
       const template = NODE_TEMPLATES.find((t) => t.type === nodeType);
       if (!template) return;
 
-      // Place new node in center-ish of viewport
       const position = reactFlowInstance
         ? reactFlowInstance.screenToFlowPosition({
             x: window.innerWidth / 2,
@@ -148,12 +148,20 @@ export default function FlowCanvas({ initialNodes, initialEdges, flowName, flowI
     }
   };
 
-  const handleTest = () => {
+  const handleDeploy = () => {
     if (nodes.length < 2) {
       toast.error("Adicione pelo menos 2 blocos ao fluxo");
       return;
     }
-    toast.info("Simulação do fluxo iniciada...");
+    toast.success("Fluxo publicado com sucesso! 🚀");
+  };
+
+  const handleRun = () => {
+    if (nodes.length < 2) {
+      toast.error("Adicione pelo menos 2 blocos ao fluxo");
+      return;
+    }
+    toast.info("Executando fluxo...");
   };
 
   return (
@@ -161,7 +169,7 @@ export default function FlowCanvas({ initialNodes, initialEdges, flowName, flowI
       {/* Canvas */}
       <div className="flex-1 relative" ref={reactFlowWrapper}>
         {/* Top toolbar */}
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-border rounded-xl px-2 py-1.5 shadow-lg">
+        <div className="absolute top-3 left-3 z-10 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-border rounded-xl px-2 py-1.5 shadow-lg">
           <Button variant="ghost" size="icon" className="h-7 w-7" title="Desfazer">
             <Undo2 className="w-3.5 h-3.5" />
           </Button>
@@ -172,9 +180,27 @@ export default function FlowCanvas({ initialNodes, initialEdges, flowName, flowI
           <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-xs" onClick={handleSave}>
             <Save className="w-3.5 h-3.5" /> Salvar
           </Button>
-          <Button variant="default" size="sm" className="h-7 gap-1.5 text-xs" onClick={handleTest}>
-            <Play className="w-3.5 h-3.5" /> Testar
+        </div>
+
+        {/* Top right: Deploy + Run + Copilot */}
+        <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
+          <Button
+            variant={showCopilot ? "default" : "outline"}
+            size="sm"
+            className="h-8 gap-1.5 text-xs"
+            onClick={() => setShowCopilot(!showCopilot)}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            Copiloto
           </Button>
+          <div className="flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-border rounded-xl px-1.5 py-1 shadow-lg">
+            <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs" onClick={handleDeploy}>
+              <Rocket className="w-3.5 h-3.5" /> Deploy
+            </Button>
+            <Button variant="default" size="sm" className="h-7 gap-1.5 text-xs" onClick={handleRun}>
+              <Play className="w-3.5 h-3.5" /> Run
+            </Button>
+          </div>
         </div>
 
         <ReactFlow
@@ -212,18 +238,27 @@ export default function FlowCanvas({ initialNodes, initialEdges, flowName, flowI
           />
         </ReactFlow>
 
-        {/* Bottom toolbar with category icons */}
         <FlowBottomToolbar onAddNode={handleAddNode} />
       </div>
 
       {/* Right config panel */}
-      {selectedNode && (
+      {selectedNode && !showCopilot && (
         <div className="w-[280px] border-l border-border flex-shrink-0 overflow-hidden">
           <FlowNodeConfig
             node={selectedNode}
             onClose={() => setSelectedNode(null)}
             onUpdate={updateNodeData}
             onDelete={deleteNode}
+          />
+        </div>
+      )}
+
+      {/* Copilot panel */}
+      {showCopilot && (
+        <div className="w-[320px] flex-shrink-0 overflow-hidden">
+          <FlowCopilotPanel
+            onClose={() => setShowCopilot(false)}
+            onAddNode={handleAddNode}
           />
         </div>
       )}
