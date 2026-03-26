@@ -2,7 +2,7 @@ import { memo } from "react";
 import { Handle, Position, type NodeProps, useReactFlow } from "@xyflow/react";
 import type { FlowNodeData } from "@/types/flow-builder";
 import { cn } from "@/lib/utils";
-import { Copy, Trash2, Eye, Play, Type } from "lucide-react";
+import { Copy, Trash2 } from "lucide-react";
 
 const categoryAccent: Record<string, string> = {
   trigger: "border-l-green-500",
