@@ -206,7 +206,18 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, meetingId, onLeave }: Omit
         <VideoConference />
         <FloatingParticipants />
         {isHost && <WaitingRoomNotifications meetingId={meetingId} />}
-        {isHost && <SalesMentorPanel meetingTitle={meetingTitle} />}
+        {isHost && (
+          <SalesMentorPanel
+            meetingTitle={meetingTitle}
+            liveTranscript={getRecentTranscript(120)}
+          />
+        )}
+        <MeetingTranslationPanel
+          isListening={isListening}
+          recentPhrases={recentPhrases}
+          onToggleListening={() => setSpeechEnabled((v) => !v)}
+          isSupported={isSupported}
+        />
       </div>
 
       {/* Hidden file input */}
