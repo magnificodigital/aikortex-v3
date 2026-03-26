@@ -206,7 +206,7 @@ const MeetingRoomView = ({ token, serverUrl, meetingTitle, isHost, roomId, onLea
         toast.error("Erro na conexão da reunião");
       }}
       data-lk-theme="default"
-      style={{ height: "100vh" }}
+      style={{ height: "100dvh" }}
     >
       <MeetingInner
         meetingTitle={meetingTitle}
