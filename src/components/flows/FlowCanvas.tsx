@@ -81,6 +81,7 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave 
       const edge: Edge = {
         ...connection,
         id: `e-${connection.source}-${connection.target}`,
+        type: "flowEdge",
         animated: true,
         style: { stroke: "hsl(var(--primary))", strokeWidth: 2 },
         markerEnd: { type: MarkerType.ArrowClosed, color: "hsl(var(--primary))" },
