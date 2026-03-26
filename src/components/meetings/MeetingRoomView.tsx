@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import FloatingParticipants from "./FloatingParticipants";
 import WaitingRoomNotifications from "./WaitingRoomNotifications";
 import MeetingTimer from "./MeetingTimer";
+import SalesMentorPanel from "./SalesMentorPanel";
 
 interface Props {
   token: string;
@@ -191,6 +192,7 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, meetingId, onLeave }: Omit
         <VideoConference />
         <FloatingParticipants />
         {isHost && <WaitingRoomNotifications meetingId={meetingId} />}
+        {isHost && <SalesMentorPanel meetingTitle={meetingTitle} />}
       </div>
 
       {/* Hidden file input */}
