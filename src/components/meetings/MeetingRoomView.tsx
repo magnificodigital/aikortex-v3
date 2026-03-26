@@ -45,6 +45,13 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, meetingId, onLeave }: Omit
   const room = useRoomContext();
   const leavingRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [startedAt] = useState(() => Date.now());
+
+  const handleTimeUp = useCallback(() => {
+    toast.info("O tempo da reunião de 30 minutos acabou.");
+    leavingRef.current = true;
+    setTimeout(() => onLeave(), 1500);
+  }, [onLeave]);
 
   // Listen for room disconnection
   useEffect(() => {
