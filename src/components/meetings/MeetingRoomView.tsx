@@ -21,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import FloatingParticipants from "./FloatingParticipants";
 
 interface Props {
   token: string;
