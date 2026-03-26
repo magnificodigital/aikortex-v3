@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import {
   LiveKitRoom,
   VideoConference,
@@ -58,10 +58,12 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, onLeave }: Omit<Props, "to
   const [showChat, setShowChat] = useState(false);
   const [showBgDialog, setShowBgDialog] = useState(false);
   const [activeBg, setActiveBg] = useState("none");
+  const leavingRef = useRef(false);
 
-  // Listen for room disconnection (host ends meeting)
+  // Listen for room disconnection (host ends meeting) — ignore user-initiated disconnects
   useEffect(() => {
     const handleDisconnected = () => {
+      if (leavingRef.current) return; // user clicked leave, already handled
       toast.info("A reunião foi encerrada");
       onLeave();
     };
@@ -76,6 +78,7 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, onLeave }: Omit<Props, "to
   };
 
   const handleLeave = useCallback(async () => {
+    leavingRef.current = true;
     try {
       await room.disconnect(true);
     } catch (e) {
@@ -85,8 +88,8 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, onLeave }: Omit<Props, "to
   }, [room, onLeave]);
 
   const handleEndForAll = useCallback(async () => {
+    leavingRef.current = true;
     try {
-      // Disconnect all - the server will notify other participants
       await room.disconnect(true);
     } catch (e) {
       console.error("Error ending meeting:", e);
