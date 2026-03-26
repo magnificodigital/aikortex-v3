@@ -187,7 +187,7 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, meetingId, onLeave }: Omit
   );
 };
 
-const MeetingRoomView = ({ token, serverUrl, meetingTitle, isHost, roomId, onLeave }: Props) => {
+const MeetingRoomView = ({ token, serverUrl, meetingTitle, isHost, roomId, meetingId, onLeave }: Props) => {
   const roomOptions = useMemo(
     () => ({
       disconnectOnPageLeave: false,
