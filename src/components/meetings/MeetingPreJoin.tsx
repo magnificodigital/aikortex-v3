@@ -8,10 +8,11 @@ interface Props {
   defaultName: string;
   isConnecting: boolean;
   onJoin: (name: string) => void;
-  onCancel: () => void;
+  onCancel?: () => void;
+  isGuest?: boolean;
 }
 
-const MeetingPreJoin = ({ title, defaultName, isConnecting, onJoin, onCancel }: Props) => {
+const MeetingPreJoin = ({ title, defaultName, isConnecting, onJoin, onCancel, isGuest }: Props) => {
   const [name, setName] = useState(defaultName);
   const [videoEnabled, setVideoEnabled] = useState(true);
   const [audioEnabled, setAudioEnabled] = useState(true);
@@ -63,11 +64,17 @@ const MeetingPreJoin = ({ title, defaultName, isConnecting, onJoin, onCancel }: 
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-lg space-y-6">
           <div className="space-y-1">
-            <button onClick={onCancel} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
-              <ArrowLeft className="w-4 h-4" /> Voltar
-            </button>
+            {onCancel && (
+              <button onClick={onCancel} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
+                <ArrowLeft className="w-4 h-4" /> Voltar
+              </button>
+            )}
             <h1 className="text-2xl font-bold text-foreground">{title}</h1>
-            <p className="text-sm text-muted-foreground">Configure seu áudio e vídeo antes de entrar</p>
+            <p className="text-sm text-muted-foreground">
+              {isGuest
+                ? "Insira seu nome para entrar na reunião"
+                : "Configure seu áudio e vídeo antes de entrar"}
+            </p>
           </div>
 
           {/* Video preview */}

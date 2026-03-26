@@ -87,7 +87,7 @@ const App = () => (
               <Route path="/sintonia" element={<P><SintonIA /></P>} />
               <Route path="/settings" element={<P><SettingsPage /></P>} />
               <Route path="/meetings" element={<P><Meetings /></P>} />
-              <Route path="/meetings/:roomId" element={<P><MeetingRoom /></P>} />
+              <Route path="/meetings/:roomId" element={<MeetingRoom />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
