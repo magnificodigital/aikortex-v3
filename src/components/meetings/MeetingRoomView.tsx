@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import FloatingParticipants from "./FloatingParticipants";
 import WaitingRoomNotifications from "./WaitingRoomNotifications";
 import MeetingTimer from "./MeetingTimer";
+import SalesMentorPanel from "./SalesMentorPanel";
 
 interface Props {
   token: string;
