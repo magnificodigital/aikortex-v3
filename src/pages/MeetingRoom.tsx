@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMeetings } from "@/hooks/use-meetings";
@@ -25,9 +25,14 @@ const MeetingRoom = () => {
   const [guestId] = useState(() => `guest-${crypto.randomUUID().slice(0, 8)}`);
 
   const isGuest = !user;
+  const initializedRef = useRef(false);
 
   useEffect(() => {
     if (!roomId) { navigate("/meetings"); return; }
+    // Only run initialization once — prevent re-run when `user` ref changes (e.g. tab switch auth refresh)
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
     const load = async () => {
       try {
         const meeting = await getMeetingByRoomId(roomId);
@@ -54,7 +59,7 @@ const MeetingRoom = () => {
       }
     };
     load();
-  }, [roomId, user]);
+  }, [roomId, user, isGuest, navigate, getMeetingByRoomId]);
 
   const handleJoin = useCallback(async (name: string) => {
     if (!roomId) return;
