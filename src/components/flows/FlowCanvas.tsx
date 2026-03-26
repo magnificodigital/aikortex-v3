@@ -1,11 +1,10 @@
-import { useState, useCallback, useRef, useMemo } from "react";
+import { useState, useCallback, useRef } from "react";
 import {
   ReactFlow,
   addEdge,
   useNodesState,
   useEdgesState,
   Controls,
-  MiniMap,
   Background,
   BackgroundVariant,
   type Connection,
@@ -18,10 +17,10 @@ import "@xyflow/react/dist/style.css";
 
 import { NODE_TEMPLATES, type FlowNodeData } from "@/types/flow-builder";
 import FlowNode from "./FlowNode";
-import FlowNodePalette from "./FlowNodePalette";
+import FlowBottomToolbar from "./FlowBottomToolbar";
 import FlowNodeConfig from "./FlowNodeConfig";
 import { Button } from "@/components/ui/button";
-import { Save, Play, Undo2, Redo2, ZoomIn, ZoomOut } from "lucide-react";
+import { Save, Play, Undo2, Redo2 } from "lucide-react";
 import { toast } from "sonner";
 
 const nodeTypes: NodeTypes = {
@@ -76,24 +75,19 @@ export default function FlowCanvas({ initialNodes, initialEdges, flowName, flowI
     [setEdges]
   );
 
-  const onDragOver = useCallback((event: React.DragEvent) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
-  }, []);
-
-  const onDrop = useCallback(
-    (event: React.DragEvent) => {
-      event.preventDefault();
-      const nodeType = event.dataTransfer.getData("application/reactflow");
-      if (!nodeType || !reactFlowInstance) return;
-
+  // Add node from bottom toolbar
+  const handleAddNode = useCallback(
+    (nodeType: string) => {
       const template = NODE_TEMPLATES.find((t) => t.type === nodeType);
       if (!template) return;
 
-      const position = reactFlowInstance.screenToFlowPosition({
-        x: event.clientX,
-        y: event.clientY,
-      });
+      // Place new node in center-ish of viewport
+      const position = reactFlowInstance
+        ? reactFlowInstance.screenToFlowPosition({
+            x: window.innerWidth / 2,
+            y: window.innerHeight / 2 - 100,
+          })
+        : { x: 400, y: 250 };
 
       nodeIdCounter++;
       const newNode: Node = {
@@ -164,14 +158,9 @@ export default function FlowCanvas({ initialNodes, initialEdges, flowName, flowI
 
   return (
     <div className="flex h-full">
-      {/* Left palette */}
-      <div className="w-[240px] border-r border-border flex-shrink-0 overflow-hidden">
-        <FlowNodePalette />
-      </div>
-
       {/* Canvas */}
       <div className="flex-1 relative" ref={reactFlowWrapper}>
-        {/* Toolbar */}
+        {/* Top toolbar */}
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-border rounded-xl px-2 py-1.5 shadow-lg">
           <Button variant="ghost" size="icon" className="h-7 w-7" title="Desfazer">
             <Undo2 className="w-3.5 h-3.5" />
@@ -195,8 +184,6 @@ export default function FlowCanvas({ initialNodes, initialEdges, flowName, flowI
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onInit={setReactFlowInstance}
-          onDrop={onDrop}
-          onDragOver={onDragOver}
           onNodeClick={onNodeClick}
           onPaneClick={onPaneClick}
           nodeTypes={nodeTypes}
@@ -208,6 +195,7 @@ export default function FlowCanvas({ initialNodes, initialEdges, flowName, flowI
           selectionOnDrag
           panOnScroll
           zoomOnDoubleClick
+          edgesReconnectable
           connectionLineStyle={{ stroke: "hsl(var(--primary))", strokeWidth: 2 }}
           proOptions={{ hideAttribution: true }}
           className="bg-background [&_.react-flow__attribution]:!hidden"
@@ -222,15 +210,10 @@ export default function FlowCanvas({ initialNodes, initialEdges, flowName, flowI
             className="!bg-card/90 !border-border !rounded-xl !shadow-lg [&>button]:!bg-transparent [&>button]:!border-border [&>button]:!text-foreground [&>button:hover]:!bg-accent"
             showInteractive={false}
           />
-          <MiniMap
-            className="!bg-card/90 !border-border !rounded-xl !shadow-lg"
-            nodeColor={(n) => {
-              const d = n.data as unknown as FlowNodeData;
-              return d.color || "hsl(var(--muted))";
-            }}
-            maskColor="hsl(var(--background) / 0.7)"
-          />
         </ReactFlow>
+
+        {/* Bottom toolbar with category icons */}
+        <FlowBottomToolbar onAddNode={handleAddNode} />
       </div>
 
       {/* Right config panel */}
