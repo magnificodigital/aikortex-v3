@@ -112,7 +112,7 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, onLeave }: Omit<Props, "to
   };
 
   return (
-    <div className="flex flex-col bg-[#111] text-white overflow-hidden lk-meeting-container" style={{ height: "100dvh" }}>
+    <div className="flex flex-col bg-[#111] text-white overflow-hidden lk-meeting-container notranslate" translate="no" style={{ height: "100dvh" }}>
       {/* Header */}
       <div className="h-12 flex items-center justify-between px-4 bg-[#1a1a1a] border-b border-white/10 shrink-0 z-10">
         <div className="flex items-center gap-3">
