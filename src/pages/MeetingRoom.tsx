@@ -6,8 +6,9 @@ import { getLiveKitToken } from "@/lib/livekit";
 import { toast } from "sonner";
 import MeetingPreJoin from "@/components/meetings/MeetingPreJoin";
 import MeetingRoomView from "@/components/meetings/MeetingRoomView";
+import WaitingRoom from "@/components/meetings/WaitingRoom";
 
-export type MeetingState = "loading" | "pre-join" | "connecting" | "connected" | "error" | "ended";
+export type MeetingState = "loading" | "pre-join" | "waiting" | "connecting" | "connected" | "error" | "ended" | "rejected";
 
 const MeetingRoom = () => {
   const { roomId } = useParams<{ roomId: string }>();
@@ -20,16 +21,17 @@ const MeetingRoom = () => {
   const [token, setToken] = useState("");
   const [wsUrl, setWsUrl] = useState("");
   const [meetingTitle, setMeetingTitle] = useState("Reunião");
+  const [meetingId, setMeetingId] = useState("");
   const [isHost, setIsHost] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [guestId] = useState(() => `guest-${crypto.randomUUID().slice(0, 8)}`);
+  const [joinName, setJoinName] = useState("");
 
   const isGuest = !user;
   const initializedRef = useRef(false);
 
   useEffect(() => {
     if (!roomId) { navigate("/meetings"); return; }
-    // Only run initialization once — prevent re-run when `user` ref changes (e.g. tab switch auth refresh)
     if (initializedRef.current) return;
     initializedRef.current = true;
 
@@ -37,6 +39,7 @@ const MeetingRoom = () => {
       try {
         const meeting = await getMeetingByRoomId(roomId);
         setMeetingTitle(meeting.title);
+        setMeetingId(meeting.id);
         if (meeting.status === "ended") {
           setState("ended");
           return;
@@ -49,7 +52,6 @@ const MeetingRoom = () => {
         );
         setState("pre-join");
       } catch {
-        // Meeting not found - allow pre-join anyway for guests
         setDisplayName(
           isGuest
             ? ""
@@ -61,7 +63,7 @@ const MeetingRoom = () => {
     load();
   }, [roomId, user, isGuest, navigate, getMeetingByRoomId]);
 
-  const handleJoin = useCallback(async (name: string) => {
+  const connectToRoom = useCallback(async (name: string) => {
     if (!roomId) return;
     setState("connecting");
     try {
@@ -77,10 +79,28 @@ const MeetingRoom = () => {
     }
   }, [roomId, user, isHost, isGuest, guestId]);
 
+  const handleJoin = useCallback(async (name: string) => {
+    setJoinName(name);
+    // Guests go to waiting room; hosts/authenticated users connect directly
+    if (isGuest && meetingId) {
+      setState("waiting");
+    } else {
+      connectToRoom(name);
+    }
+  }, [isGuest, meetingId, connectToRoom]);
+
+  const handleApproved = useCallback(() => {
+    toast.success("Entrada autorizada pelo anfitrião!");
+    connectToRoom(joinName || "Participante");
+  }, [connectToRoom, joinName]);
+
+  const handleRejected = useCallback(() => {
+    setState("rejected");
+  }, []);
+
   const handleLeave = useCallback(() => {
     if (isGuest) {
       window.close();
-      // fallback if window.close doesn't work
       setState("ended");
     } else {
       navigate("/meetings");
@@ -114,6 +134,22 @@ const MeetingRoom = () => {
     );
   }
 
+  if (state === "rejected") {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="text-center space-y-4 max-w-sm px-4">
+          <div className="w-16 h-16 mx-auto rounded-full bg-destructive/10 flex items-center justify-center">
+            <span className="text-2xl">❌</span>
+          </div>
+          <h2 className="text-xl font-bold text-foreground">Entrada não autorizada</h2>
+          <p className="text-sm text-muted-foreground">
+            O anfitrião não autorizou sua entrada nesta reunião.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (state === "error") {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
@@ -132,6 +168,19 @@ const MeetingRoom = () => {
           </div>
         </div>
       </div>
+    );
+  }
+
+  if (state === "waiting") {
+    return (
+      <WaitingRoom
+        meetingId={meetingId}
+        guestId={guestId}
+        displayName={joinName || "Participante"}
+        meetingTitle={meetingTitle}
+        onApproved={handleApproved}
+        onRejected={handleRejected}
+      />
     );
   }
 
@@ -155,6 +204,7 @@ const MeetingRoom = () => {
       meetingTitle={meetingTitle}
       isHost={isHost}
       roomId={roomId!}
+      meetingId={meetingId}
       onLeave={handleLeave}
     />
   );
