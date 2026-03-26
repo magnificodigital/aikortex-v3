@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import FloatingParticipants from "./FloatingParticipants";
 import WaitingRoomNotifications from "./WaitingRoomNotifications";
+import MeetingTimer from "./MeetingTimer";
 
 interface Props {
   token: string;
@@ -44,6 +45,13 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, meetingId, onLeave }: Omit
   const room = useRoomContext();
   const leavingRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [startedAt] = useState(() => Date.now());
+
+  const handleTimeUp = useCallback(() => {
+    toast.info("O tempo da reunião de 30 minutos acabou.");
+    leavingRef.current = true;
+    setTimeout(() => onLeave(), 1500);
+  }, [onLeave]);
 
   // Listen for room disconnection
   useEffect(() => {
@@ -170,7 +178,8 @@ const MeetingInner = ({ meetingTitle, isHost, roomId, meetingId, onLeave }: Omit
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
+          <MeetingTimer startedAt={startedAt} onTimeUp={handleTimeUp} />
           <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-white/70 hover:text-white hover:bg-white/10" onClick={copyLink}>
             <Share2 className="w-3.5 h-3.5" /> Compartilhar
           </Button>
