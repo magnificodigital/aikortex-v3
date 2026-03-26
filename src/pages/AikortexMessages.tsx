@@ -1,6 +1,6 @@
 import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
-import MessagesSidebar from "@/components/messages/MessagesSidebar";
+
 import ConversationList, { Conversation } from "@/components/messages/ConversationList";
 import ChatArea, { ChatMessage } from "@/components/messages/ChatArea";
 import ContactPanel, { ContactInfo } from "@/components/messages/ContactPanel";

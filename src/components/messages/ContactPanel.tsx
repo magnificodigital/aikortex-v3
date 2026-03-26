@@ -1,10 +1,10 @@
-import { Mail, Phone, MapPin, Globe, Clock, Calendar, Tag, Building, Copy, MessageSquare, Pencil } from "lucide-react";
+import { Mail, Phone, MapPin, Globe, Clock, Calendar, Building, Copy, MessageSquare, Pencil } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
 export interface ContactInfo {
