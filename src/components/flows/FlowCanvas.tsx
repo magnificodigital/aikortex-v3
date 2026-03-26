@@ -287,7 +287,7 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave 
           fitView
           snapToGrid
           snapGrid={[16, 16]}
-          deleteKeyCode="Delete"
+          deleteKeyCode={["Delete", "Backspace"]}
           multiSelectionKeyCode="Shift"
           selectionOnDrag
           panOnScroll
