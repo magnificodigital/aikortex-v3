@@ -166,7 +166,24 @@ export default function FlowCopilotPanel({ onClose, onAddNode, initialPrompt }: 
     }
   }, [input, messages, isStreaming, parseAndAddNodes]);
 
-  const handleSuggestion = (text: string) => {
+  // Auto-send initial prompt from Home page
+  useEffect(() => {
+    if (initialPrompt && !didAutoSend.current && !isStreaming) {
+      didAutoSend.current = true;
+      setInput(initialPrompt);
+      // Small delay to ensure state is ready
+      setTimeout(() => {
+        setInput("");
+        // Manually trigger send with the prompt
+        const userMsg: Message = { id: `u-${Date.now()}`, role: "user", content: initialPrompt };
+        setMessages([userMsg]);
+        // Trigger the actual API call
+        handleAutoSend(initialPrompt);
+      }, 100);
+    }
+  }, [initialPrompt]);
+
+
     setInput(text);
   };
 
