@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { NODE_TEMPLATES } from "@/types/flow-builder";
 import { AGENT_TEMPLATES } from "@/types/agent-builder";
 import ReactMarkdown from "react-markdown";
+import { supabase } from "@/integrations/supabase/client";
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-chat`;
 
@@ -93,11 +94,17 @@ export default function FlowCopilotPanel({ onClose, onAddNode, initialPrompt }: 
     ];
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) {
+        throw new Error("Você precisa estar logado para usar o Copilot.");
+      }
+
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
           messages: apiMessages,
