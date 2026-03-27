@@ -46,9 +46,10 @@ Reply in Portuguese Brazilian. Be direct and use markdown when appropriate.`;
 interface Props {
   onClose: () => void;
   onAddNode?: (nodeType: string) => void;
+  initialPrompt?: string;
 }
 
-export default function FlowCopilotPanel({ onClose, onAddNode }: Props) {
+export default function FlowCopilotPanel({ onClose, onAddNode, initialPrompt }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
