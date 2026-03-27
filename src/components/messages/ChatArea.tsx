@@ -32,19 +32,23 @@ interface ChatAreaProps {
 const AiToggleButton = () => {
   const [aiActive, setAiActive] = useState(true);
   return (
-    <Button
-      size="icon"
-      variant="ghost"
-      className="h-7 w-7 relative"
+    <button
       onClick={() => setAiActive(!aiActive)}
-      title={aiActive ? "IA ativada – clique para modo humano" : "Modo humano – clique para ativar IA"}
+      className={cn(
+        "flex items-center gap-1.5 h-7 px-2.5 rounded-full text-[11px] font-medium transition-all border",
+        aiActive
+          ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/20"
+          : "bg-muted text-muted-foreground border-border hover:bg-accent"
+      )}
+      title={aiActive ? "Clique para modo humano" : "Clique para ativar IA"}
     >
-      <Bot className={cn("w-4 h-4 transition-colors", aiActive ? "text-emerald-500" : "text-foreground")} />
-      <span className={cn(
-        "absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full border border-card",
-        aiActive ? "bg-emerald-500" : "bg-muted-foreground"
-      )} />
-    </Button>
+      {aiActive ? (
+        <Bot className="w-3.5 h-3.5 text-emerald-500" />
+      ) : (
+        <User className="w-3.5 h-3.5" />
+      )}
+      {aiActive ? "IA" : "Humano"}
+    </button>
   );
 };
 
