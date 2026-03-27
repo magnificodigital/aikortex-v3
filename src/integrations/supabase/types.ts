@@ -197,6 +197,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_agents: {
+        Row: {
+          agent_type: string
+          avatar_url: string | null
+          config: Json
+          created_at: string
+          description: string | null
+          id: string
+          model: string | null
+          name: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_type?: string
+          avatar_url?: string | null
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          model?: string | null
+          name: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_type?: string
+          avatar_url?: string | null
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          model?: string | null
+          name?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_api_keys: {
         Row: {
           api_key: string
