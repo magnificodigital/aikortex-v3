@@ -329,6 +329,7 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
             showInteractive={false}
           />
         </ReactFlow>
+        </div>
       </div>
 
       {/* Right panel with tabs */}
