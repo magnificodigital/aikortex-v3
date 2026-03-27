@@ -152,6 +152,9 @@ const AikortexAutomations = () => {
               flowName={buildingFlow.name}
               flowId={buildingFlow.flowId}
               onSave={handleSaveFlow}
+              flows={flows}
+              onOpenFlow={handleOpenFlow}
+              onNewFlow={handleNewBlank}
             />
           </div>
         </div>
