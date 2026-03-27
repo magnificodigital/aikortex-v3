@@ -251,7 +251,7 @@ export const FLOW_TEMPLATES: FlowTemplate[] = [
     tags: ["sac", "suporte", "atendimento"],
     nodes: [
       nd("c1", "Chat", "trigger", "💬", "Nova mensagem", "#22c55e", { channel: "any" }, pos(50, 200), "trigger_chat"),
-      nd("c2", "Agent", "processing", "🤖", "Analisa e responde", "#6366f1", { model: "gemini-2.5-flash", systemPrompt: "Você é um assistente de suporte." }, pos(350, 200), "agent"),
+      nd("c2", "Agente IA", "processing", "🧠", "Analisa e responde", "#6366f1", { agentType: "sac", model: "gemini-2.5-flash", systemPrompt: "Você é um assistente de suporte." }, pos(350, 200), "agent_ai"),
       nd("c3", "Evaluator", "logic", "📊", "Avalia qualidade", "#f59e0b", { criteria: "resolved" }, pos(650, 200), "evaluator"),
       nd("c4", "Response", "output", "📤", "Resposta final", "#06b6d4", { format: "text" }, pos(950, 100), "response"),
       nd("c5", "Human in the Loop", "control", "👤", "Escalar para humano", "#ec4899", { approvalMessage: "Caso não resolvido" }, pos(950, 300), "human_in_loop"),
