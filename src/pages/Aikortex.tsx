@@ -95,6 +95,9 @@ const Aikortex = () => {
   const [rightPanelTab, setRightPanelTab] = useState("agent");
   const [didAutoRoute, setDidAutoRoute] = useState(false);
   const [chatMode, setChatMode] = useState<"setup" | "test">("setup");
+  const [savedAgentId, setSavedAgentId] = useState<string | null>(null);
+
+  const { saveAgent: saveUserAgent } = useUserAgents();
 
   const { keys, loading: keysLoading, refetch: refetchKeys } = useApiKeys();
 
