@@ -168,6 +168,7 @@ const AikortexAutomations = () => {
             flows={flows}
             onOpenFlow={handleOpenFlow}
             onNewFlow={handleNewBlank}
+            initialPrompt={copilotPrompt || undefined}
           />
         </div>
       </div>
