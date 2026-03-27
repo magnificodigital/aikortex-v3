@@ -6,12 +6,17 @@ import { Copy, Trash2 } from "lucide-react";
 
 /** Sim Studio–style category colors */
 const categoryColors: Record<string, { bg: string; border: string; iconBg: string; handle: string }> = {
-  trigger:    { bg: "bg-emerald-500/5", border: "border-emerald-500/20", iconBg: "bg-emerald-500/15", handle: "!bg-emerald-500" },
-  processing: { bg: "bg-indigo-500/5",  border: "border-indigo-500/20",  iconBg: "bg-indigo-500/15",  handle: "!bg-indigo-500" },
-  logic:      { bg: "bg-amber-500/5",   border: "border-amber-500/20",   iconBg: "bg-amber-500/15",   handle: "!bg-amber-500" },
-  control:    { bg: "bg-pink-500/5",    border: "border-pink-500/20",    iconBg: "bg-pink-500/15",    handle: "!bg-pink-500" },
-  output:     { bg: "bg-cyan-500/5",    border: "border-cyan-500/20",    iconBg: "bg-cyan-500/15",    handle: "!bg-cyan-500" },
-  integration:{ bg: "bg-violet-500/5",  border: "border-violet-500/20",  iconBg: "bg-violet-500/15",  handle: "!bg-violet-500" },
+  trigger:      { bg: "bg-emerald-500/5", border: "border-emerald-500/20", iconBg: "bg-emerald-500/15", handle: "!bg-emerald-500" },
+  processing:   { bg: "bg-indigo-500/5",  border: "border-indigo-500/20",  iconBg: "bg-indigo-500/15",  handle: "!bg-indigo-500" },
+  logic:        { bg: "bg-amber-500/5",   border: "border-amber-500/20",   iconBg: "bg-amber-500/15",   handle: "!bg-amber-500" },
+  control:      { bg: "bg-pink-500/5",    border: "border-pink-500/20",    iconBg: "bg-pink-500/15",    handle: "!bg-pink-500" },
+  output:       { bg: "bg-cyan-500/5",    border: "border-cyan-500/20",    iconBg: "bg-cyan-500/15",    handle: "!bg-cyan-500" },
+  integration:  { bg: "bg-violet-500/5",  border: "border-violet-500/20",  iconBg: "bg-violet-500/15",  handle: "!bg-violet-500" },
+  data_capture: { bg: "bg-emerald-400/5", border: "border-emerald-400/20", iconBg: "bg-emerald-400/15", handle: "!bg-emerald-400" },
+  crm_actions:  { bg: "bg-orange-500/5",  border: "border-orange-500/20",  iconBg: "bg-orange-500/15",  handle: "!bg-orange-500" },
+  knowledge:    { bg: "bg-purple-500/5",  border: "border-purple-500/20",  iconBg: "bg-purple-500/15",  handle: "!bg-purple-500" },
+  database:     { bg: "bg-blue-500/5",    border: "border-blue-500/20",    iconBg: "bg-blue-500/15",    handle: "!bg-blue-500" },
+  dev_advanced: { bg: "bg-slate-500/5",   border: "border-slate-500/20",   iconBg: "bg-slate-500/15",   handle: "!bg-slate-500" },
 };
 
 const defaultCat = { bg: "bg-muted/30", border: "border-border", iconBg: "bg-muted/60", handle: "!bg-muted-foreground" };

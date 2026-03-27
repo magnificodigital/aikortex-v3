@@ -17,6 +17,11 @@ const categoryBorder: Record<string, string> = {
   control: "border-l-pink-500",
   output: "border-l-cyan-500",
   integration: "border-l-violet-500",
+  data_capture: "border-l-emerald-400",
+  crm_actions: "border-l-orange-500",
+  knowledge: "border-l-purple-500",
+  database: "border-l-blue-500",
+  dev_advanced: "border-l-slate-500",
 };
 
 export default function FlowNodePalette() {
