@@ -41,17 +41,27 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
       content: m.text,
     }));
 
+    // Add system prompt if provided
+    if (options.systemPrompt) {
+      apiMessages.unshift({ role: "system", content: options.systemPrompt });
+    }
+
     try {
+      // Get user session token for auth
+      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
           messages: apiMessages,
           provider: options.provider || deriveProvider(options.model),
           model: options.model,
+          useGateway: options.useGateway ?? false,
         }),
       });
 
