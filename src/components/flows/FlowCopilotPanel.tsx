@@ -184,7 +184,7 @@ export default function FlowCopilotPanel({ onClose, onAddNode, initialPrompt }: 
       {isEmpty ? (
         <div className="flex-1 flex flex-col">
           <div className="px-4 pt-4 pb-2">
-            <h3 className="text-sm font-semibold text-foreground">New Chat</h3>
+            <h3 className="text-sm font-semibold text-foreground">Novo Chat</h3>
           </div>
           <div className="flex-1 flex flex-col justify-end px-3 pb-3">
             <div className="space-y-1.5 mb-3">
