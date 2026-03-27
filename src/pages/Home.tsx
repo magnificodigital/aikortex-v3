@@ -37,17 +37,30 @@ const Home = () => {
   const FLOW_KEYWORDS = ["fluxo", "flow", "automação", "automatizar", "automatização", "automation", "pipeline", "workflow", "nutrição", "sequência", "automacao", "sequencia"];
   const AGENT_KEYWORDS = ["agente", "agent", "sdr", "bdr", "sac", "suporte", "atendimento", "qualificação", "prospecção", "cobranças", "onboarding"];
 
+  const detectCategory = (text: string): "app" | "agentes" | "flows" => {
+    const lower = text.toLowerCase();
+    if (FLOW_KEYWORDS.some((k) => lower.includes(k))) return "flows";
+    if (AGENT_KEYWORDS.some((k) => lower.includes(k))) return "agentes";
+    return "app";
+  };
+
   const handleSubmit = () => {
-    const text = prompt.trim().toLowerCase();
+    const text = prompt.trim();
     if (!text) return;
 
-    // Check flow keywords FIRST (higher priority), then agents, then default to app
-    if (activeCreationTab === "flows" || FLOW_KEYWORDS.some((k) => text.includes(k))) {
-      navigate("/aikortex/automations", { state: { initialPrompt: prompt.trim() } });
-    } else if (activeCreationTab === "agentes" || AGENT_KEYWORDS.some((k) => text.includes(k))) {
-      navigate("/aikortex/agents", { state: { initialPrompt: prompt.trim() } });
+    // Auto-detect category from text, override manual tab if keywords match
+    const detected = detectCategory(text);
+    // Switch tab visually before navigating
+    if (detected !== activeCreationTab) {
+      setActiveCreationTab(detected);
+    }
+
+    if (detected === "flows") {
+      navigate("/aikortex/automations", { state: { initialPrompt: text } });
+    } else if (detected === "agentes") {
+      navigate("/aikortex/agents", { state: { initialPrompt: text } });
     } else {
-      navigate("/app-builder", { state: { initialPrompt: prompt.trim() } });
+      navigate("/app-builder", { state: { initialPrompt: text } });
     }
   };
 
@@ -119,7 +132,16 @@ const Home = () => {
           {/* Text area */}
           <textarea
             value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              setPrompt(val);
+              if (val.trim().length > 3) {
+                const detected = detectCategory(val);
+                if (detected !== activeCreationTab) {
+                  setActiveCreationTab(detected);
+                }
+              }
+            }}
             placeholder="Crie um app que..."
             className="w-full bg-transparent border-none outline-none resize-none text-sm text-foreground placeholder:text-muted-foreground px-4 py-3 min-h-[80px]"
           />
