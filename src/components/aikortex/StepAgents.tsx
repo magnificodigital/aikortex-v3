@@ -1,5 +1,8 @@
 import { AgentRecommendation } from "@/types/agent-builder";
-import { ArrowRight, Settings2, Sparkles } from "lucide-react";
+import { ArrowRight, Settings2, Sparkles, Bot, Trash2, Loader2 } from "lucide-react";
+import { useUserAgents, type UserAgent } from "@/hooks/use-user-agents";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 import avatar1 from "@/assets/avatars/avatar-1.png";
 import avatar2 from "@/assets/avatars/avatar-2.png";
@@ -42,7 +45,17 @@ const TEMPLATE_CARDS = [
   },
 ];
 
+const AVATAR_MAP: Record<string, string> = {
+  "sdr-1": avatar1,
+  "bdr-1": avatar2,
+  "sac-1": avatar3,
+  "social-1": avatar8,
+  "custom-1": avatar1,
+};
+
 const StepAgents = ({ selected, onSelect }: Props) => {
+  const { agents, loading, deleteAgent } = useUserAgents();
+
   const handleSelect = (id: string, type: string, name: string, description: string) => {
     onSelect({
       id,
@@ -56,12 +69,98 @@ const StepAgents = ({ selected, onSelect }: Props) => {
     });
   };
 
+  const handleSelectSaved = (agent: UserAgent) => {
+    onSelect({
+      id: agent.id,
+      type: agent.agent_type as any,
+      name: agent.name,
+      objective: agent.description,
+      targetAudience: "",
+      benefits: [],
+      exampleConversation: [],
+      selected: true,
+    });
+  };
+
   const isCustomSelected = selected?.id === "custom-1";
 
   return (
     <div className="space-y-8 animate-fade-in max-w-5xl mx-auto flex flex-col items-center justify-center min-h-[calc(100vh-12rem)]">
+      {/* My Agents Section */}
+      {!loading && agents.length > 0 && (
+        <div className="space-y-4 w-full">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-foreground bg-primary/10 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+                <Bot className="w-3.5 h-3.5" />
+                Meus Agentes
+              </span>
+              <span className="text-xs text-muted-foreground">{agents.length} agente{agents.length > 1 ? "s" : ""} configurado{agents.length > 1 ? "s" : ""}</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {agents.map((agent) => {
+              const active = selected?.id === agent.id;
+              const avatarSrc = agent.avatar_url || AVATAR_MAP[agent.agent_type?.toLowerCase() === "sdr" ? "sdr-1" : agent.agent_type?.toLowerCase() === "bdr" ? "bdr-1" : agent.agent_type?.toLowerCase() === "sac" ? "sac-1" : "custom-1"] || avatar1;
+              return (
+                <button
+                  key={agent.id}
+                  onClick={() => handleSelectSaved(agent)}
+                  className={`text-left rounded-xl border p-5 transition-all duration-200 space-y-4 relative group ${
+                    active
+                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      : "border-border bg-card hover:border-primary/40"
+                  }`}
+                >
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteAgent(agent.id);
+                    }}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                  <img
+                    src={avatarSrc}
+                    alt={agent.name}
+                    loading="lazy"
+                    width={48}
+                    height={48}
+                    className="w-12 h-12 rounded-full object-cover"
+                  />
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-bold text-foreground">{agent.name}</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                      {agent.description || "Sem descrição"}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 pt-1">
+                    <Badge variant={agent.status === "online" ? "default" : "secondary"} className="text-[10px] h-5">
+                      <span className={`w-1.5 h-1.5 rounded-full mr-1 ${agent.status === "online" ? "bg-emerald-400" : "bg-muted-foreground/40"}`} />
+                      {agent.status === "online" ? "Online" : "Configurando"}
+                    </Badge>
+                    <span className="text-[10px] text-muted-foreground">{agent.agent_type}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {loading && (
+        <div className="flex items-center gap-2 text-muted-foreground text-sm">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          Carregando agentes...
+        </div>
+      )}
+
       {/* Templates Section */}
-      <div className="space-y-4">
+      <div className="space-y-4 w-full">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-foreground bg-muted px-3 py-1.5 rounded-lg">Templates</span>
@@ -110,14 +209,14 @@ const StepAgents = ({ selected, onSelect }: Props) => {
       </div>
 
       {/* Divider */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 w-full">
         <div className="flex-1 h-px bg-border" />
         <span className="text-xs text-muted-foreground font-medium">ou</span>
         <div className="flex-1 h-px bg-border" />
       </div>
 
       {/* Custom Agent Section */}
-      <div className="space-y-3">
+      <div className="space-y-3 w-full">
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-foreground bg-muted px-3 py-1.5 rounded-lg">Personalizado</span>
           <span className="text-xs text-muted-foreground">Crie do zero com total liberdade</span>
