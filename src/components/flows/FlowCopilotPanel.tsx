@@ -61,7 +61,7 @@ interface Props {
   initialPrompt?: string;
 }
 
-export default function FlowCopilotPanel({ onClose, onAddNode, initialPrompt }: Props) {
+export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, initialPrompt }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
