@@ -82,6 +82,7 @@ const Aikortex = () => {
   const [rightPanelTab, setRightPanelTab] = useState("agent");
   const [didAutoRoute, setDidAutoRoute] = useState(false);
   const [chatMode, setChatMode] = useState<"setup" | "test">("setup");
+  const [freeModel, setFreeModel] = useState("stepfun/step-3.5-flash:free");
 
   const { keys, loading: keysLoading, refetch: refetchKeys } = useApiKeys();
 
