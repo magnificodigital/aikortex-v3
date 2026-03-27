@@ -64,6 +64,12 @@ const SETUP_SYSTEM_PROMPT = `Você é o assistente de configuração de agentes 
 
 Quando o usuário responder algo claro, confirme com ✅ e passe para o próximo item. Exemplo: "✅ Nome definido: Agente Luna. Qual o objetivo principal?"
 
+REGRA IMPORTANTE sobre Integrações, Canais e Arquivos/Conhecimento:
+- Quando o assunto for sobre **Integrações** (APIs, MCPs, Webhooks, chaves de API), responda: "⚙️ Para configurar integrações, use o painel à direita na aba **Integrações**." e inclua exatamente este marcador: [SWITCH_TAB:connectors]
+- Quando o assunto for sobre **Canais** (WhatsApp, Instagram, Facebook, Site, Telegram), responda: "📱 Para configurar canais, use o painel à direita na aba **Canais**." e inclua exatamente este marcador: [SWITCH_TAB:channels]
+- Quando o assunto for sobre **Arquivos/Conhecimento** (documentos, PDFs, URLs, base de conhecimento), responda: "📄 Para adicionar arquivos e conhecimento, use o painel à direita na aba **Conhecimento**." e inclua exatamente este marcador: [SWITCH_TAB:knowledge]
+- Após o marcador, continue guiando brevemente o que o usuário deve fazer nessa aba.
+
 IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
 
 const Aikortex = () => {
@@ -122,6 +128,17 @@ const Aikortex = () => {
 
   const activeChat = chatMode === "setup" ? setupChat : testChat;
   const { messages, sendMessage, isStreaming } = activeChat;
+
+  // Auto-switch right panel tab when AI suggests it
+  useEffect(() => {
+    if (messages.length === 0) return;
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg.role !== "agent") return;
+    const match = lastMsg.text.match(/\[SWITCH_TAB:(connectors|channels|knowledge)\]/);
+    if (match) {
+      setRightPanelTab(match[1]);
+    }
+  }, [messages]);
 
   const canSend = chatMode === "setup" || hasApiKey || keysLoading;
 
@@ -289,7 +306,7 @@ const Aikortex = () => {
                 }`}>
                   {msg.role === "agent" ? (
                     <div className="prose prose-sm dark:prose-invert max-w-none">
-                      <ReactMarkdown>{msg.text}</ReactMarkdown>
+                      <ReactMarkdown>{msg.text.replace(/\[SWITCH_TAB:\w+\]/g, "")}</ReactMarkdown>
                     </div>
                   ) : (
                     msg.text
