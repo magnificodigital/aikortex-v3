@@ -51,6 +51,12 @@ const LLM_MODELS = [
   { value: "gpt-5-mini", label: "GPT-5 Mini" },
 ];
 
+const FREE_MODELS = [
+  { value: "stepfun/step-3.5-flash:free", label: "Step 3.5 Flash" },
+  { value: "deepseek/deepseek-chat-v3-0324:free", label: "DeepSeek V3" },
+  { value: "google/gemma-3-27b-it:free", label: "Gemma 3 27B" },
+];
+
 const SETUP_SYSTEM_PROMPT = `Você é um assistente especializado em configuração de agentes de IA na plataforma Aikortex. 
 Sua missão é guiar o usuário para completar TODAS as configurações do agente de forma clara e objetiva.
 
