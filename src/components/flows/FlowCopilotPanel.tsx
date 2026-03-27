@@ -35,22 +35,33 @@ ${nodeList}
 Available AI Agents:
 ${agentList}
 
-When the user asks to add a block, include a special line in your response:
+IMPORTANT: When the user asks to CREATE a flow or automation, you MUST respond with a [BUILD_FLOW] JSON block that defines ALL nodes and their connections. Format:
+
+[BUILD_FLOW]
+{"nodes":[{"id":"n1","type":"trigger_chat"},{"id":"n2","type":"agent"},{"id":"n3","type":"send_message"}],"edges":[{"source":"n1","target":"n2"},{"source":"n2","target":"n3"}]}
+[/BUILD_FLOW]
+
+Rules for BUILD_FLOW:
+- Each node needs a temporary "id" (e.g. "n1","n2") and a "type" matching one of the available blocks above.
+- Edges define connections using the temporary ids.
+- Always connect nodes sequentially unless branching logic is needed.
+- Start with a trigger block.
+- You can ONLY use one BUILD_FLOW per response.
+
+When the user asks to ADD a SINGLE block to an existing flow, use:
 [ADD_NODE:block_type]
 
-For example, to add a chat trigger:
-[ADD_NODE:trigger_chat]
-
-You can add multiple blocks in a single response. Always explain what each block does.
+Always explain what each block does after the command block.
 Reply in Portuguese Brazilian. Be direct and use markdown when appropriate.`;
 
 interface Props {
   onClose: () => void;
   onAddNode?: (nodeType: string) => void;
+  onBuildFlow?: (flowDef: { nodes: { id: string; type: string }[]; edges: { source: string; target: string }[] }) => void;
   initialPrompt?: string;
 }
 
-export default function FlowCopilotPanel({ onClose, onAddNode, initialPrompt }: Props) {
+export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, initialPrompt }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -61,9 +72,24 @@ export default function FlowCopilotPanel({ onClose, onAddNode, initialPrompt }: 
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
-  // Parse [ADD_NODE:type] commands from AI response
-  const parseAndAddNodes = useCallback(
+  // Parse [BUILD_FLOW]...[/BUILD_FLOW] and [ADD_NODE:type] commands from AI response
+  const parseAndExecuteCommands = useCallback(
     (text: string) => {
+      // Check for BUILD_FLOW command
+      const buildFlowMatch = text.match(/\[BUILD_FLOW\]\s*([\s\S]*?)\s*\[\/BUILD_FLOW\]/);
+      if (buildFlowMatch && onBuildFlow) {
+        try {
+          const flowDef = JSON.parse(buildFlowMatch[1].trim());
+          if (flowDef.nodes && flowDef.edges) {
+            onBuildFlow(flowDef);
+          }
+        } catch (e) {
+          console.error("Failed to parse BUILD_FLOW:", e);
+        }
+        return;
+      }
+
+      // Fallback: individual ADD_NODE commands
       if (!onAddNode) return;
       const regex = /\[ADD_NODE:(\w+)\]/g;
       let match;
@@ -74,7 +100,7 @@ export default function FlowCopilotPanel({ onClose, onAddNode, initialPrompt }: 
         }
       }
     },
-    [onAddNode]
+    [onAddNode, onBuildFlow]
   );
 
   const handleSend = useCallback(async (overrideText?: string) => {
@@ -160,7 +186,7 @@ export default function FlowCopilotPanel({ onClose, onAddNode, initialPrompt }: 
         }
       }
 
-      parseAndAddNodes(assistantText);
+      parseAndExecuteCommands(assistantText);
     } catch (e: any) {
       console.error("Copilot chat error:", e);
       setMessages((prev) => [
@@ -170,7 +196,7 @@ export default function FlowCopilotPanel({ onClose, onAddNode, initialPrompt }: 
     } finally {
       setIsStreaming(false);
     }
-  }, [input, messages, isStreaming, parseAndAddNodes]);
+  }, [input, messages, isStreaming, parseAndExecuteCommands]);
 
   // Auto-send initial prompt from Home page
   useEffect(() => {
@@ -259,7 +285,7 @@ export default function FlowCopilotPanel({ onClose, onAddNode, initialPrompt }: 
                     {msg.role === "assistant" ? (
                       <div className="prose prose-xs prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
                         <ReactMarkdown>
-                          {msg.content.replace(/\[ADD_NODE:\w+\]/g, "").trim()}
+                          {msg.content.replace(/\[BUILD_FLOW\][\s\S]*?\[\/BUILD_FLOW\]/g, "").replace(/\[ADD_NODE:\w+\]/g, "").trim()}
                         </ReactMarkdown>
                       </div>
                     ) : (
