@@ -72,9 +72,24 @@ export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, init
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
-  // Parse [ADD_NODE:type] commands from AI response
-  const parseAndAddNodes = useCallback(
+  // Parse [BUILD_FLOW]...[/BUILD_FLOW] and [ADD_NODE:type] commands from AI response
+  const parseAndExecuteCommands = useCallback(
     (text: string) => {
+      // Check for BUILD_FLOW command
+      const buildFlowMatch = text.match(/\[BUILD_FLOW\]\s*([\s\S]*?)\s*\[\/BUILD_FLOW\]/);
+      if (buildFlowMatch && onBuildFlow) {
+        try {
+          const flowDef = JSON.parse(buildFlowMatch[1].trim());
+          if (flowDef.nodes && flowDef.edges) {
+            onBuildFlow(flowDef);
+          }
+        } catch (e) {
+          console.error("Failed to parse BUILD_FLOW:", e);
+        }
+        return;
+      }
+
+      // Fallback: individual ADD_NODE commands
       if (!onAddNode) return;
       const regex = /\[ADD_NODE:(\w+)\]/g;
       let match;
@@ -85,7 +100,7 @@ export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, init
         }
       }
     },
-    [onAddNode]
+    [onAddNode, onBuildFlow]
   );
 
   const handleSend = useCallback(async (overrideText?: string) => {
