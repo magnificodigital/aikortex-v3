@@ -126,8 +126,16 @@ const WizardRightPanel = ({
     if (activeTab && activeTab !== rightTab) {
       setRightTab(activeTab);
     }
-  }, [activeTab]);
-  const [settingsNav, setSettingsNav] = useState<SettingsNavKey>("identidade");
+  const [settingsNav, setSettingsNav] = useState<SettingsNavKey>(
+    (activeSection as SettingsNavKey) || "identidade"
+  );
+
+  // Sync section from parent
+  useEffect(() => {
+    if (activeSection && activeSection !== settingsNav) {
+      setSettingsNav(activeSection as SettingsNavKey);
+    }
+  }, [activeSection]);
   const [urlInput, setUrlInput] = useState("");
   const [urls, setUrls] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
