@@ -16,32 +16,32 @@ interface Message {
 }
 
 const SUGGESTIONS = [
-  "Crie um fluxo de qualificação de leads",
-  "Adicione um bloco de IA para classificar intenções",
-  "Como conectar com WhatsApp?",
-  "Otimize meu fluxo atual",
+  "Build a lead qualification flow",
+  "Add an Agent block to classify intents",
+  "How to connect with WhatsApp?",
+  "Optimize my current workflow",
 ];
 
 // Build a system prompt that knows about available nodes and agents
 const nodeList = NODE_TEMPLATES.map((n) => `- ${n.type}: ${n.label} (${n.category})`).join("\n");
 const agentList = AGENT_TEMPLATES.map((a) => `- ${a.id}: ${a.name} (${a.type}) — ${a.objective}`).join("\n");
 
-const SYSTEM_PROMPT = `Você é o Copilot do Flow Builder do Aikortex. Ajude o usuário a construir fluxos de automação.
+const SYSTEM_PROMPT = `You are the Copilot for the Aikortex Flow Builder. Help the user build automation workflows.
 
-Blocos disponíveis:
+Available blocks:
 ${nodeList}
 
-Agentes IA disponíveis:
+Available AI Agents:
 ${agentList}
 
-Quando o usuário pedir para adicionar um bloco, inclua na resposta uma linha especial no formato:
-[ADD_NODE:tipo_do_bloco]
+When the user asks to add a block, include a special line in your response:
+[ADD_NODE:block_type]
 
-Por exemplo, se pedirem para adicionar um gatilho de mensagem:
-[ADD_NODE:trigger_message]
+For example, to add a chat trigger:
+[ADD_NODE:trigger_chat]
 
-Você pode adicionar múltiplos blocos em uma resposta. Sempre explique o que cada bloco faz.
-Responda sempre em português brasileiro. Seja direto e use markdown quando apropriado.`;
+You can add multiple blocks in a single response. Always explain what each block does.
+Reply in Portuguese Brazilian. Be direct and use markdown when appropriate.`;
 
 interface Props {
   onClose: () => void;

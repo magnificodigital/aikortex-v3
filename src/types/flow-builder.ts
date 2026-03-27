@@ -1,6 +1,12 @@
-// ── Flow Builder Types ──
+// ── Flow Builder Types – Aligned with Sim Studio ──
 
-export type FlowNodeCategory = "trigger" | "action" | "condition" | "agent" | "integration" | "delay" | "message";
+export type FlowNodeCategory =
+  | "processing"
+  | "logic"
+  | "control"
+  | "output"
+  | "integration"
+  | "trigger";
 
 export interface FlowNodeData {
   label: string;
@@ -23,61 +29,52 @@ export interface NodeTemplate {
 }
 
 export const NODE_CATEGORIES: { key: FlowNodeCategory; label: string; color: string }[] = [
-  { key: "trigger", label: "Gatilhos", color: "hsl(142, 71%, 45%)" },
-  { key: "condition", label: "Condições", color: "hsl(45, 93%, 47%)" },
-  { key: "message", label: "Mensagens", color: "hsl(217, 91%, 60%)" },
-  { key: "action", label: "Ações", color: "hsl(262, 83%, 58%)" },
-  { key: "agent", label: "Agentes IA", color: "hsl(330, 81%, 60%)" },
-  { key: "integration", label: "Integrações", color: "hsl(199, 89%, 48%)" },
-  { key: "delay", label: "Tempo", color: "hsl(25, 95%, 53%)" },
+  { key: "trigger", label: "Triggers", color: "#22c55e" },
+  { key: "processing", label: "Processing", color: "#6366f1" },
+  { key: "logic", label: "Logic", color: "#f59e0b" },
+  { key: "control", label: "Control Flow", color: "#ec4899" },
+  { key: "output", label: "Output", color: "#06b6d4" },
+  { key: "integration", label: "Integration", color: "#8b5cf6" },
 ];
 
 export const NODE_TEMPLATES: NodeTemplate[] = [
-  // Triggers
-  { type: "trigger_message", label: "Mensagem recebida", category: "trigger", icon: "💬", description: "Inicia quando uma mensagem é recebida", color: "hsl(142, 71%, 45%)", defaultConfig: { channel: "any", keyword: "" } },
-  { type: "trigger_webhook", label: "Webhook", category: "trigger", icon: "🔗", description: "Inicia via chamada de API externa", color: "hsl(142, 71%, 45%)", defaultConfig: { url: "", method: "POST" } },
-  { type: "trigger_schedule", label: "Agendamento", category: "trigger", icon: "⏰", description: "Inicia em horário programado", color: "hsl(142, 71%, 45%)", defaultConfig: { cron: "", timezone: "America/Sao_Paulo" } },
-  { type: "trigger_event", label: "Evento", category: "trigger", icon: "⚡", description: "Inicia quando um evento ocorre", color: "hsl(142, 71%, 45%)", defaultConfig: { event: "" } },
-  { type: "trigger_form", label: "Formulário", category: "trigger", icon: "📋", description: "Inicia ao submeter um formulário", color: "hsl(142, 71%, 45%)", defaultConfig: { formId: "" } },
+  // ── Triggers ──
+  { type: "trigger_chat", label: "Chat", category: "trigger", icon: "💬", description: "Starts when a chat message is received", color: "#22c55e", defaultConfig: { channel: "any" } },
+  { type: "trigger_webhook", label: "Webhook", category: "trigger", icon: "🔗", description: "Starts via external API call", color: "#22c55e", defaultConfig: { method: "POST" } },
+  { type: "trigger_schedule", label: "Schedule", category: "trigger", icon: "📅", description: "Starts on a cron schedule", color: "#22c55e", defaultConfig: { frequency: "daily", time: "09:00" } },
+  { type: "trigger_form", label: "Input Form", category: "trigger", icon: "📋", description: "Starts with form input fields", color: "#22c55e", defaultConfig: { fields: [] } },
 
-  // Conditions
-  { type: "condition_if", label: "Se / Senão", category: "condition", icon: "🔀", description: "Direciona o fluxo com base em condições", color: "hsl(45, 93%, 47%)", defaultConfig: { conditions: [] } },
-  { type: "condition_switch", label: "Switch", category: "condition", icon: "🔄", description: "Múltiplas rotas baseadas em valor", color: "hsl(45, 93%, 47%)", defaultConfig: { variable: "", cases: [] } },
-  { type: "condition_ab", label: "Teste A/B", category: "condition", icon: "🎯", description: "Divide tráfego aleatoriamente", color: "hsl(45, 93%, 47%)", defaultConfig: { splitPercentage: 50 } },
+  // ── Processing ──
+  { type: "agent", label: "Agent", category: "processing", icon: "🤖", description: "Chat with AI models", color: "#6366f1", defaultConfig: { model: "gemini-2.5-flash", temperature: 0.7, systemPrompt: "" } },
+  { type: "function", label: "Function", category: "processing", icon: "⚡", description: "Run custom JavaScript/TypeScript code", color: "#6366f1", defaultConfig: { code: "", language: "javascript" } },
+  { type: "api", label: "API", category: "processing", icon: "🌐", description: "Connect to external services via HTTP", color: "#6366f1", defaultConfig: { url: "", method: "GET", headers: {}, body: "" } },
 
-  // Messages
-  { type: "message_text", label: "Enviar texto", category: "message", icon: "✉️", description: "Envia uma mensagem de texto", color: "hsl(217, 91%, 60%)", defaultConfig: { text: "", buttons: [] } },
-  { type: "message_image", label: "Enviar imagem", category: "message", icon: "🖼️", description: "Envia uma imagem", color: "hsl(217, 91%, 60%)", defaultConfig: { imageUrl: "", caption: "" } },
-  { type: "message_carousel", label: "Carrossel", category: "message", icon: "🎠", description: "Envia um carrossel de cards", color: "hsl(217, 91%, 60%)", defaultConfig: { cards: [] } },
-  { type: "message_input", label: "Capturar entrada", category: "message", icon: "📝", description: "Pede e salva entrada do usuário", color: "hsl(217, 91%, 60%)", defaultConfig: { variable: "", validation: "text" } },
-  { type: "message_buttons", label: "Botões", category: "message", icon: "🔘", description: "Envia opções com botões", color: "hsl(217, 91%, 60%)", defaultConfig: { text: "", buttons: [] } },
-  { type: "message_list", label: "Lista", category: "message", icon: "📃", description: "Envia uma lista de opções", color: "hsl(217, 91%, 60%)", defaultConfig: { title: "", items: [] } },
+  // ── Logic ──
+  { type: "condition", label: "Condition", category: "logic", icon: "🔀", description: "Branch paths based on boolean expressions", color: "#f59e0b", defaultConfig: { expression: "" } },
+  { type: "router", label: "Router", category: "logic", icon: "🧭", description: "AI-powered intelligent routing", color: "#f59e0b", defaultConfig: { model: "gemini-2.5-flash", routes: [] } },
+  { type: "evaluator", label: "Evaluator", category: "logic", icon: "📊", description: "Score and assess content quality using AI", color: "#f59e0b", defaultConfig: { model: "gemini-2.5-flash", criteria: "" } },
 
-  // Actions
-  { type: "action_tag", label: "Adicionar tag", category: "action", icon: "🏷️", description: "Adiciona tag ao contato", color: "hsl(262, 83%, 58%)", defaultConfig: { tag: "" } },
-  { type: "action_variable", label: "Definir variável", category: "action", icon: "📊", description: "Define valor de uma variável", color: "hsl(262, 83%, 58%)", defaultConfig: { variable: "", value: "" } },
-  { type: "action_http", label: "Requisição HTTP", category: "action", icon: "🌐", description: "Faz chamada HTTP externa", color: "hsl(262, 83%, 58%)", defaultConfig: { url: "", method: "GET", headers: {}, body: "" } },
-  { type: "action_email", label: "Enviar email", category: "action", icon: "📧", description: "Envia um email", color: "hsl(262, 83%, 58%)", defaultConfig: { to: "", subject: "", body: "" } },
-  { type: "action_transfer", label: "Transferir humano", category: "action", icon: "👤", description: "Transfere para atendente humano", color: "hsl(262, 83%, 58%)", defaultConfig: { department: "" } },
-  { type: "action_end", label: "Encerrar conversa", category: "action", icon: "🛑", description: "Encerra a conversa", color: "hsl(262, 83%, 58%)", defaultConfig: {} },
+  // ── Control Flow ──
+  { type: "variables", label: "Variables", category: "control", icon: "📦", description: "Set and manage workflow-scoped variables", color: "#ec4899", defaultConfig: { variable: "", value: "" } },
+  { type: "wait", label: "Wait", category: "control", icon: "⏳", description: "Pause execution for a specified time", color: "#ec4899", defaultConfig: { duration: 5, unit: "seconds" } },
+  { type: "human_in_loop", label: "Human in the Loop", category: "control", icon: "👤", description: "Pause for human approval before continuing", color: "#ec4899", defaultConfig: { approvalMessage: "" } },
+  { type: "loop", label: "Loop", category: "control", icon: "🔄", description: "Iterate over items in a list", color: "#ec4899", defaultConfig: { iterableVariable: "", maxIterations: 100 } },
+  { type: "parallel", label: "Parallel", category: "control", icon: "⚙️", description: "Execute multiple branches simultaneously", color: "#ec4899", defaultConfig: { branches: 2 } },
+  { type: "guardrails", label: "Guardrails", category: "control", icon: "🛡️", description: "Validate and filter AI outputs", color: "#ec4899", defaultConfig: { rules: [] } },
 
-  // Agent
-  { type: "agent_ai", label: "Agente IA", category: "agent", icon: "🤖", description: "Processa com agente IA configurado", color: "hsl(330, 81%, 60%)", defaultConfig: { agentId: "", model: "", temperature: 0.7 } },
-  { type: "agent_intent", label: "Detectar intenção", category: "agent", icon: "🧠", description: "Classifica intenção do usuário", color: "hsl(330, 81%, 60%)", defaultConfig: { intents: [] } },
-  { type: "agent_sentiment", label: "Análise de sentimento", category: "agent", icon: "😊", description: "Analisa sentimento da mensagem", color: "hsl(330, 81%, 60%)", defaultConfig: {} },
-  { type: "agent_knowledge", label: "Base de conhecimento", category: "agent", icon: "📚", description: "Consulta base de conhecimento", color: "hsl(330, 81%, 60%)", defaultConfig: { knowledgeBaseId: "" } },
+  // ── Output ──
+  { type: "response", label: "Response", category: "output", icon: "📤", description: "Format and return final workflow results", color: "#06b6d4", defaultConfig: { format: "json", template: "" } },
 
-  // Integration
-  { type: "integration_crm", label: "CRM", category: "integration", icon: "💼", description: "Cria/atualiza lead no CRM", color: "hsl(199, 89%, 48%)", defaultConfig: { provider: "", action: "create_lead" } },
-  { type: "integration_calendar", label: "Agenda", category: "integration", icon: "📅", description: "Cria evento na agenda", color: "hsl(199, 89%, 48%)", defaultConfig: { provider: "google_calendar", action: "create_event" } },
-  { type: "integration_whatsapp", label: "WhatsApp", category: "integration", icon: "📱", description: "Envia mensagem via WhatsApp", color: "hsl(199, 89%, 48%)", defaultConfig: { template: "", phone: "" } },
-  { type: "integration_sheets", label: "Google Sheets", category: "integration", icon: "📊", description: "Adiciona dados em planilha", color: "hsl(199, 89%, 48%)", defaultConfig: { spreadsheetId: "", range: "" } },
-  { type: "integration_zapier", label: "Zapier", category: "integration", icon: "⚡", description: "Dispara ação no Zapier", color: "hsl(199, 89%, 48%)", defaultConfig: { webhookUrl: "" } },
-
-  // Delay
-  { type: "delay_wait", label: "Aguardar", category: "delay", icon: "⏳", description: "Aguarda um tempo antes de continuar", color: "hsl(25, 95%, 53%)", defaultConfig: { duration: 5, unit: "seconds" } },
-  { type: "delay_schedule", label: "Aguardar até", category: "delay", icon: "📆", description: "Aguarda até data/hora específica", color: "hsl(25, 95%, 53%)", defaultConfig: { datetime: "" } },
+  // ── Integration ──
+  { type: "integration_crm", label: "CRM", category: "integration", icon: "💼", description: "Create/update leads in CRM", color: "#8b5cf6", defaultConfig: { provider: "", action: "create_lead" } },
+  { type: "integration_email", label: "Email", category: "integration", icon: "📧", description: "Send emails", color: "#8b5cf6", defaultConfig: { to: "", subject: "", body: "" } },
+  { type: "integration_whatsapp", label: "WhatsApp", category: "integration", icon: "📱", description: "Send WhatsApp messages", color: "#8b5cf6", defaultConfig: { template: "", phone: "" } },
+  { type: "integration_sheets", label: "Google Sheets", category: "integration", icon: "📊", description: "Read/write spreadsheet data", color: "#8b5cf6", defaultConfig: { spreadsheetId: "", range: "" } },
+  { type: "integration_calendar", label: "Calendar", category: "integration", icon: "📅", description: "Create calendar events", color: "#8b5cf6", defaultConfig: { provider: "google_calendar", action: "create_event" } },
+  { type: "workflow_block", label: "Workflow", category: "integration", icon: "🔁", description: "Call a child workflow", color: "#8b5cf6", defaultConfig: { workflowId: "" } },
 ];
+
+// ── Saved Flow ──
 
 export interface SavedFlow {
   id: string;
@@ -97,7 +94,7 @@ export interface FlowFolder {
   createdAt: string;
 }
 
-// ── Flow Templates (prebuilt flows) ──
+// ── Flow Templates ──
 
 export interface FlowTemplate {
   id: string;
@@ -112,56 +109,11 @@ export interface FlowTemplate {
 
 const pos = (x: number, y: number) => ({ x, y });
 
-const inferNodeType = (category: FlowNodeCategory, cfg: Record<string, unknown>): string => {
-  switch (category) {
-    case "trigger":
-      if ("formId" in cfg) return "trigger_form";
-      if ("cron" in cfg) return "trigger_schedule";
-      if ("event" in cfg) return "trigger_event";
-      if ("url" in cfg) return "trigger_webhook";
-      return "trigger_message";
-    case "condition":
-      if ("splitPercentage" in cfg) return "condition_ab";
-      if ("cases" in cfg) return "condition_switch";
-      return "condition_if";
-    case "message":
-      if ("imageUrl" in cfg) return "message_image";
-      if ("cards" in cfg) return "message_carousel";
-      if ("items" in cfg) return "message_list";
-      if ("variable" in cfg && !("text" in cfg)) return "message_input";
-      if ("buttons" in cfg && "text" in cfg) return "message_buttons";
-      return "message_text";
-    case "action":
-      if ("tag" in cfg) return "action_tag";
-      if ("variable" in cfg && "value" in cfg) return "action_variable";
-      if ("url" in cfg && "method" in cfg) return "action_http";
-      if ("to" in cfg || "subject" in cfg) return "action_email";
-      if ("department" in cfg) return "action_transfer";
-      return "action_end";
-    case "agent":
-      if ("knowledgeBaseId" in cfg) return "agent_knowledge";
-      if ("intents" in cfg) return "agent_intent";
-      if ("agentId" in cfg || "model" in cfg || "temperature" in cfg) return "agent_ai";
-      return "agent_sentiment";
-    case "integration":
-      if ("spreadsheetId" in cfg || "range" in cfg) return "integration_sheets";
-      if ("webhookUrl" in cfg) return "integration_zapier";
-      if ("template" in cfg || "phone" in cfg) return "integration_whatsapp";
-      if (cfg.provider === "google_calendar") return "integration_calendar";
-      return "integration_crm";
-    case "delay":
-      if ("datetime" in cfg) return "delay_schedule";
-      return "delay_wait";
-    default:
-      return "action_end";
-  }
-};
-
-const nd = (id: string, label: string, category: FlowNodeCategory, icon: string, desc: string, color: string, cfg: Record<string, unknown>, p: { x: number; y: number }) => ({
+const nd = (id: string, label: string, category: FlowNodeCategory, icon: string, desc: string, color: string, cfg: Record<string, unknown>, p: { x: number; y: number }, nodeType: string) => ({
   id,
   type: "flowNode",
   position: p,
-  data: { label, category, icon, description: desc, config: cfg, color, nodeType: inferNodeType(category, cfg) } as FlowNodeData,
+  data: { label, category, icon, description: desc, config: cfg, color, nodeType } as FlowNodeData,
 });
 
 const ed = (src: string, tgt: string, srcHandle?: string) => ({
@@ -177,86 +129,56 @@ export const FLOW_TEMPLATES: FlowTemplate[] = [
   {
     id: "tpl-lead-qualification",
     name: "Qualificação de Leads",
-    description: "Qualifica leads automaticamente via WhatsApp, capturando dados e enviando para o CRM.",
+    description: "Qualifica leads automaticamente via chat, capturando dados e enviando para o CRM.",
     category: "Vendas",
     icon: "🎯",
-    tags: ["lead", "vendas", "whatsapp", "crm"],
+    tags: ["lead", "vendas", "crm"],
     nodes: [
-      nd("s1", "Mensagem recebida", "trigger", "💬", "Nova mensagem no WhatsApp", "hsl(142,71%,45%)", { channel: "whatsapp" }, pos(50, 200)),
-      nd("s2", "Boas-vindas", "message", "✉️", "Envia saudação", "hsl(217,91%,60%)", { text: "Olá! 👋 Como posso ajudar?" }, pos(300, 200)),
-      nd("s3", "Capturar nome", "message", "📝", "Pede o nome", "hsl(217,91%,60%)", { variable: "nome", validation: "text" }, pos(550, 200)),
-      nd("s4", "Capturar email", "message", "📝", "Pede o email", "hsl(217,91%,60%)", { variable: "email", validation: "email" }, pos(800, 200)),
-      nd("s5", "Agente IA", "agent", "🤖", "Qualifica o lead", "hsl(330,81%,60%)", { agentId: "sdr", temperature: 0.7 }, pos(1050, 200)),
-      nd("s6", "É qualificado?", "condition", "🔀", "Verifica score", "hsl(45,93%,47%)", { expression: '{{score}} >= 7' }, pos(1300, 200)),
-      nd("s7", "Criar lead CRM", "integration", "💼", "Salva no CRM", "hsl(199,89%,48%)", { provider: "hubspot", action: "create_lead" }, pos(1550, 100)),
-      nd("s8", "Transferir humano", "action", "👤", "Passa para vendedor", "hsl(262,83%,58%)", { department: "vendas" }, pos(1800, 100)),
-      nd("s9", "Enviar conteúdo", "message", "✉️", "Envia material educativo", "hsl(217,91%,60%)", { text: "Enquanto isso, confira nosso material..." }, pos(1550, 320)),
+      nd("s1", "Chat", "trigger", "💬", "Nova mensagem recebida", "#22c55e", { channel: "whatsapp" }, pos(50, 200), "trigger_chat"),
+      nd("s2", "Agent", "processing", "🤖", "Qualifica o lead", "#6366f1", { model: "gemini-2.5-flash", temperature: 0.7 }, pos(350, 200), "agent"),
+      nd("s3", "Condition", "logic", "🔀", "Lead qualificado?", "#f59e0b", { expression: '{{score}} >= 7' }, pos(650, 200), "condition"),
+      nd("s4", "CRM", "integration", "💼", "Salva no CRM", "#8b5cf6", { provider: "hubspot", action: "create_lead" }, pos(950, 100), "integration_crm"),
+      nd("s5", "Response", "output", "📤", "Envia resposta", "#06b6d4", { format: "text", template: "Lead qualificado!" }, pos(950, 300), "response"),
     ],
     edges: [
-      ed("s1", "s2"), ed("s2", "s3"), ed("s3", "s4"), ed("s4", "s5"), ed("s5", "s6"),
-      ed("s6", "s7", "yes"), ed("s6", "s9", "no"), ed("s7", "s8"),
+      ed("s1", "s2"), ed("s2", "s3"),
+      ed("s3", "s4", "yes"), ed("s3", "s5", "no"),
     ],
   },
   {
     id: "tpl-customer-support",
-    name: "Atendimento ao Cliente (SAC)",
+    name: "Atendimento ao Cliente",
     description: "Fluxo de atendimento com IA que resolve dúvidas ou transfere para humano.",
     category: "Suporte",
     icon: "🛟",
-    tags: ["sac", "suporte", "atendimento", "ia"],
+    tags: ["sac", "suporte", "atendimento"],
     nodes: [
-      nd("c1", "Mensagem recebida", "trigger", "💬", "Nova mensagem", "hsl(142,71%,45%)", { channel: "any" }, pos(50, 200)),
-      nd("c2", "Detectar intenção", "agent", "🧠", "Classifica assunto", "hsl(330,81%,60%)", { intents: ["duvida", "reclamacao", "elogio"] }, pos(300, 200)),
-      nd("c3", "Base de conhecimento", "agent", "📚", "Busca resposta", "hsl(330,81%,60%)", { knowledgeBaseId: "" }, pos(550, 200)),
-      nd("c4", "Resolveu?", "condition", "🔀", "IA resolveu?", "hsl(45,93%,47%)", { expression: '{{resolved}} == true' }, pos(800, 200)),
-      nd("c5", "Enviar resposta", "message", "✉️", "Resposta automática", "hsl(217,91%,60%)", { text: "{{ai_response}}" }, pos(1050, 100)),
-      nd("c6", "Transferir humano", "action", "👤", "Atendente humano", "hsl(262,83%,58%)", { department: "suporte" }, pos(1050, 320)),
-      nd("c7", "Pesquisa satisfação", "message", "📝", "Avalia atendimento", "hsl(217,91%,60%)", { variable: "satisfacao", validation: "number" }, pos(1300, 200)),
+      nd("c1", "Chat", "trigger", "💬", "Nova mensagem", "#22c55e", { channel: "any" }, pos(50, 200), "trigger_chat"),
+      nd("c2", "Agent", "processing", "🤖", "Analisa e responde", "#6366f1", { model: "gemini-2.5-flash", systemPrompt: "Você é um assistente de suporte." }, pos(350, 200), "agent"),
+      nd("c3", "Evaluator", "logic", "📊", "Avalia qualidade", "#f59e0b", { criteria: "resolved" }, pos(650, 200), "evaluator"),
+      nd("c4", "Response", "output", "📤", "Resposta final", "#06b6d4", { format: "text" }, pos(950, 100), "response"),
+      nd("c5", "Human in the Loop", "control", "👤", "Escalar para humano", "#ec4899", { approvalMessage: "Caso não resolvido" }, pos(950, 300), "human_in_loop"),
     ],
     edges: [
-      ed("c1", "c2"), ed("c2", "c3"), ed("c3", "c4"),
-      ed("c4", "c5", "yes"), ed("c4", "c6", "no"),
-      ed("c5", "c7"), ed("c6", "c7"),
+      ed("c1", "c2"), ed("c2", "c3"),
+      ed("c3", "c4", "yes"), ed("c3", "c5", "no"),
     ],
   },
   {
-    id: "tpl-onboarding",
-    name: "Onboarding de Clientes",
-    description: "Guia novos clientes passo a passo após a compra.",
-    category: "Sucesso do Cliente",
-    icon: "🚀",
-    tags: ["onboarding", "cliente", "boas-vindas"],
+    id: "tpl-data-pipeline",
+    name: "Pipeline de Dados",
+    description: "Coleta dados via API, processa com código customizado e salva em planilha.",
+    category: "Automação",
+    icon: "🔄",
+    tags: ["api", "dados", "automação"],
     nodes: [
-      nd("o1", "Novo cliente", "trigger", "⚡", "Evento de compra", "hsl(142,71%,45%)", { event: "purchase_completed" }, pos(50, 200)),
-      nd("o2", "Email boas-vindas", "action", "📧", "Envia email de boas-vindas", "hsl(262,83%,58%)", { to: "{{email}}", subject: "Bem-vindo!", body: "" }, pos(300, 200)),
-      nd("o3", "Aguardar 1 dia", "delay", "⏳", "Espera 24h", "hsl(25,95%,53%)", { duration: 1, unit: "days" }, pos(550, 200)),
-      nd("o4", "WhatsApp tutorial", "integration", "📱", "Envia tutorial via WhatsApp", "hsl(199,89%,48%)", { template: "onboarding_tutorial" }, pos(800, 200)),
-      nd("o5", "Aguardar 3 dias", "delay", "⏳", "Espera 3 dias", "hsl(25,95%,53%)", { duration: 3, unit: "days" }, pos(1050, 200)),
-      nd("o6", "Check-in IA", "agent", "🤖", "IA verifica satisfação", "hsl(330,81%,60%)", { agentId: "cs", temperature: 0.5 }, pos(1300, 200)),
+      nd("d1", "Schedule", "trigger", "📅", "Executa diariamente", "#22c55e", { frequency: "daily", time: "08:00" }, pos(50, 200), "trigger_schedule"),
+      nd("d2", "API", "processing", "🌐", "Busca dados externos", "#6366f1", { url: "https://api.example.com/data", method: "GET" }, pos(350, 200), "api"),
+      nd("d3", "Function", "processing", "⚡", "Transforma dados", "#6366f1", { code: "return data.map(item => ({ ...item, processed: true }))" }, pos(650, 200), "function"),
+      nd("d4", "Google Sheets", "integration", "📊", "Salva na planilha", "#8b5cf6", { spreadsheetId: "", range: "A1" }, pos(950, 200), "integration_sheets"),
     ],
     edges: [
-      ed("o1", "o2"), ed("o2", "o3"), ed("o3", "o4"), ed("o4", "o5"), ed("o5", "o6"),
-    ],
-  },
-  {
-    id: "tpl-abandoned-cart",
-    name: "Carrinho Abandonado",
-    description: "Recupera vendas de carrinhos abandonados com mensagens automáticas.",
-    category: "E-commerce",
-    icon: "🛒",
-    tags: ["ecommerce", "carrinho", "recuperação", "vendas"],
-    nodes: [
-      nd("a1", "Carrinho abandonado", "trigger", "⚡", "Evento de abandono", "hsl(142,71%,45%)", { event: "cart_abandoned" }, pos(50, 200)),
-      nd("a2", "Aguardar 30min", "delay", "⏳", "Espera 30 min", "hsl(25,95%,53%)", { duration: 30, unit: "minutes" }, pos(300, 200)),
-      nd("a3", "Lembrete WhatsApp", "message", "✉️", "Lembra do carrinho", "hsl(217,91%,60%)", { text: "Ei {{nome}}, você esqueceu itens no carrinho! 🛒" }, pos(550, 200)),
-      nd("a4", "Aguardar 1 dia", "delay", "⏳", "Espera 1 dia", "hsl(25,95%,53%)", { duration: 1, unit: "days" }, pos(800, 200)),
-      nd("a5", "Comprou?", "condition", "🔀", "Verificar status", "hsl(45,93%,47%)", { expression: '{{purchased}} == true' }, pos(1050, 200)),
-      nd("a6", "Encerrar", "action", "🛑", "Fim do fluxo", "hsl(262,83%,58%)", {}, pos(1300, 100)),
-      nd("a7", "Oferecer desconto", "message", "✉️", "Cupom de desconto", "hsl(217,91%,60%)", { text: "Use o cupom VOLTE10 e ganhe 10% off! 🎉" }, pos(1300, 320)),
-    ],
-    edges: [
-      ed("a1", "a2"), ed("a2", "a3"), ed("a3", "a4"), ed("a4", "a5"),
-      ed("a5", "a6", "yes"), ed("a5", "a7", "no"),
+      ed("d1", "d2"), ed("d2", "d3"), ed("d3", "d4"),
     ],
   },
   {
@@ -267,36 +189,13 @@ export const FLOW_TEMPLATES: FlowTemplate[] = [
     icon: "📅",
     tags: ["agendamento", "reunião", "calendário"],
     nodes: [
-      nd("m1", "Mensagem recebida", "trigger", "💬", "Pedido de reunião", "hsl(142,71%,45%)", { channel: "any", keyword: "agendar" }, pos(50, 200)),
-      nd("m2", "Agente IA", "agent", "🤖", "Identifica necessidade", "hsl(330,81%,60%)", { agentId: "sdr", temperature: 0.5 }, pos(300, 200)),
-      nd("m3", "Capturar data", "message", "📝", "Pede data preferida", "hsl(217,91%,60%)", { variable: "data_reuniao", validation: "text" }, pos(550, 200)),
-      nd("m4", "Criar evento", "integration", "📅", "Agenda no Google Calendar", "hsl(199,89%,48%)", { provider: "google_calendar", action: "create_event" }, pos(800, 200)),
-      nd("m5", "Confirmação", "message", "✉️", "Confirma o agendamento", "hsl(217,91%,60%)", { text: "Reunião agendada para {{data_reuniao}} ✅" }, pos(1050, 200)),
+      nd("m1", "Chat", "trigger", "💬", "Pedido de reunião", "#22c55e", { channel: "any" }, pos(50, 200), "trigger_chat"),
+      nd("m2", "Agent", "processing", "🤖", "Identifica necessidade", "#6366f1", { model: "gemini-2.5-flash", temperature: 0.5 }, pos(350, 200), "agent"),
+      nd("m3", "Calendar", "integration", "📅", "Agenda no calendário", "#8b5cf6", { provider: "google_calendar", action: "create_event" }, pos(650, 200), "integration_calendar"),
+      nd("m4", "Response", "output", "📤", "Confirma agendamento", "#06b6d4", { format: "text", template: "Reunião agendada ✅" }, pos(950, 200), "response"),
     ],
     edges: [
-      ed("m1", "m2"), ed("m2", "m3"), ed("m3", "m4"), ed("m4", "m5"),
-    ],
-  },
-  {
-    id: "tpl-nps-survey",
-    name: "Pesquisa NPS",
-    description: "Coleta NPS automaticamente e encaminha feedbacks negativos.",
-    category: "Sucesso do Cliente",
-    icon: "⭐",
-    tags: ["nps", "pesquisa", "feedback", "satisfação"],
-    nodes: [
-      nd("n1", "Agendamento", "trigger", "⏰", "Dispara periodicamente", "hsl(142,71%,45%)", { cron: "0 10 * * 1" }, pos(50, 200)),
-      nd("n2", "Enviar NPS", "message", "📝", "Pergunta de 0-10", "hsl(217,91%,60%)", { variable: "nps_score", validation: "number" }, pos(300, 200)),
-      nd("n3", "Análise sentimento", "agent", "😊", "Analisa a nota", "hsl(330,81%,60%)", {}, pos(550, 200)),
-      nd("n4", "Score >= 9?", "condition", "🔀", "Promotor?", "hsl(45,93%,47%)", { expression: '{{nps_score}} >= 9' }, pos(800, 200)),
-      nd("n5", "Agradecer", "message", "✉️", "Agradece o feedback", "hsl(217,91%,60%)", { text: "Obrigado pelo feedback! 🎉" }, pos(1050, 100)),
-      nd("n6", "Salvar planilha", "integration", "📊", "Registra no Sheets", "hsl(199,89%,48%)", { spreadsheetId: "", range: "NPS!A:C" }, pos(1300, 100)),
-      nd("n7", "Alerta equipe", "action", "👤", "Notifica CS", "hsl(262,83%,58%)", { department: "cs" }, pos(1050, 320)),
-    ],
-    edges: [
-      ed("n1", "n2"), ed("n2", "n3"), ed("n3", "n4"),
-      ed("n4", "n5", "yes"), ed("n4", "n7", "no"),
-      ed("n5", "n6"),
+      ed("m1", "m2"), ed("m2", "m3"), ed("m3", "m4"),
     ],
   },
 ];
