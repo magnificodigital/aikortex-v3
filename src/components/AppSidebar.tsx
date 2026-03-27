@@ -271,6 +271,14 @@ const AppSidebar = () => {
           <Settings className={`w-4 h-4 shrink-0 ${isItemActive("/settings") ? "text-primary" : ""}`} />
           {!collapsed && <span>Configurações</span>}
         </Link>
+        <Link
+          to="/tutorials"
+          className={linkClasses(isItemActive("/tutorials"))}
+          title={collapsed ? "Tutoriais" : undefined}
+        >
+          <BookOpen className={`w-4 h-4 shrink-0 ${isItemActive("/tutorials") ? "text-primary" : ""}`} />
+          {!collapsed && <span>Tutoriais</span>}
+        </Link>
 
         <button
           onClick={toggle}

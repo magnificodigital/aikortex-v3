@@ -37,6 +37,7 @@ const Templates = lazy(() => import("./pages/Templates"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Meetings = lazy(() => import("./pages/Meetings"));
 const MeetingRoom = lazy(() => import("./pages/MeetingRoom"));
+const Tutorials = lazy(() => import("./pages/Tutorials"));
 
 const queryClient = new QueryClient();
 
@@ -88,6 +89,7 @@ const App = () => (
               <Route path="/settings" element={<P><SettingsPage /></P>} />
               <Route path="/meetings" element={<P><Meetings /></P>} />
               <Route path="/meetings/:roomId" element={<MeetingRoom />} />
+              <Route path="/tutorials" element={<P><Tutorials /></P>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
