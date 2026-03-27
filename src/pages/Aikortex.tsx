@@ -29,6 +29,7 @@ import StepAgents from "@/components/aikortex/StepAgents";
 import WizardRightPanel from "@/components/aikortex/WizardRightPanel";
 import { useAgentChat } from "@/hooks/use-agent-chat";
 import { useApiKeys } from "@/hooks/use-api-keys";
+import { useUserAgents } from "@/hooks/use-user-agents";
 
 import avatar1 from "@/assets/avatars/avatar-1.png";
 import avatar2 from "@/assets/avatars/avatar-2.png";
