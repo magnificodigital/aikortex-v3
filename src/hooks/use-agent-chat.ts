@@ -12,6 +12,13 @@ interface UseAgentChatOptions {
   model?: string;
 }
 
+function deriveProvider(model?: string): string {
+  if (!model) return "openai";
+  if (model.startsWith("gemini")) return "gemini";
+  if (model.startsWith("gpt")) return "openai";
+  return "openai";
+}
+
 export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAgentChatOptions = {}) {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [isStreaming, setIsStreaming] = useState(false);
