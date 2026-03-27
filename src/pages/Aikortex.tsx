@@ -149,6 +149,7 @@ const Aikortex = () => {
 
     // Auto-fill fields from [SET:field=value] markers
     const setMatches = lastMsg.text.matchAll(/\[SET:(\w+)=([^\]]+)\]/g);
+    const updates: Partial<BusinessContext> = {};
     for (const m of setMatches) {
       const field = m[1] as keyof BusinessContext;
       const value = m[2];
@@ -158,8 +159,27 @@ const Aikortex = () => {
         "website", "painPoints", "businessHours", "escalationRules",
       ];
       if (validFields.includes(field)) {
-        setContext(prev => ({ ...prev, [field]: value }));
+        updates[field] = value as any;
       }
+    }
+    if (Object.keys(updates).length > 0) {
+      setContext(prev => {
+        const next = { ...prev, ...updates };
+        // Auto-save agent to database
+        const agentName = updates.agentName || prev.agentName || selectedAgent?.name || "Agente";
+        saveUserAgent({
+          id: savedAgentId || undefined,
+          name: agentName,
+          agent_type: selectedAgent?.type || "Custom",
+          description: next.mainProduct || selectedAgent?.objective || "",
+          model: agentModel,
+          status: "configuring",
+          config: next as any,
+        }).then(saved => {
+          if (saved && !savedAgentId) setSavedAgentId(saved.id);
+        });
+        return next;
+      });
     }
   }, [messages]);
 
