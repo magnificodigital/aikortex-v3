@@ -37,6 +37,17 @@ const AikortexAutomations = () => {
     }
   });
 
+  // Auto-open flow builder when arriving with initialPrompt from Home
+  useEffect(() => {
+    const state = location.state as any;
+    if (state?.initialPrompt && !buildingFlow) {
+      setCopilotPrompt(state.initialPrompt);
+      setBuildingFlow({ name: "Novo Fluxo" });
+      // Clear state to prevent re-triggering
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
   const persistFlows = useCallback((next: SavedFlow[]) => {
     setFlows(next);
     localStorage.setItem("aikortex_flows", JSON.stringify(next));
