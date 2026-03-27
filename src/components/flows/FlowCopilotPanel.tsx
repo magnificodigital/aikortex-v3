@@ -76,13 +76,14 @@ export default function FlowCopilotPanel({ onClose, onAddNode, initialPrompt }: 
     [onAddNode]
   );
 
-  const handleSend = useCallback(async () => {
-    if (!input.trim() || isStreaming) return;
+  const handleSend = useCallback(async (overrideText?: string) => {
+    const text = overrideText || input;
+    if (!text.trim() || isStreaming) return;
 
-    const userMsg: Message = { id: `u-${Date.now()}`, role: "user", content: input.trim() };
+    const userMsg: Message = { id: `u-${Date.now()}`, role: "user", content: text.trim() };
     const updatedMessages = [...messages, userMsg];
     setMessages(updatedMessages);
-    setInput("");
+    if (!overrideText) setInput("");
     setIsStreaming(true);
 
     // Build API messages
@@ -116,7 +117,6 @@ export default function FlowCopilotPanel({ onClose, onAddNode, initialPrompt }: 
       let buffer = "";
       let assistantText = "";
 
-      // Add empty assistant message
       const assistantId = `a-${Date.now()}`;
       setMessages((prev) => [...prev, { id: assistantId, role: "assistant", content: "" }]);
 
@@ -153,7 +153,6 @@ export default function FlowCopilotPanel({ onClose, onAddNode, initialPrompt }: 
         }
       }
 
-      // Parse node commands after streaming is done
       parseAndAddNodes(assistantText);
     } catch (e: any) {
       console.error("Copilot chat error:", e);
@@ -168,20 +167,11 @@ export default function FlowCopilotPanel({ onClose, onAddNode, initialPrompt }: 
 
   // Auto-send initial prompt from Home page
   useEffect(() => {
-    if (initialPrompt && !didAutoSend.current && !isStreaming) {
+    if (initialPrompt && !didAutoSend.current && !isStreaming && messages.length === 0) {
       didAutoSend.current = true;
-      setInput(initialPrompt);
-      // Small delay to ensure state is ready
-      setTimeout(() => {
-        setInput("");
-        // Manually trigger send with the prompt
-        const userMsg: Message = { id: `u-${Date.now()}`, role: "user", content: initialPrompt };
-        setMessages([userMsg]);
-        // Trigger the actual API call
-        handleAutoSend(initialPrompt);
-      }, 100);
+      handleSend(initialPrompt);
     }
-  }, [initialPrompt]);
+  }, [initialPrompt, handleSend]);
 
 
     setInput(text);
