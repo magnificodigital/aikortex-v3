@@ -396,8 +396,8 @@ const Aikortex = () => {
           ) : (
             <Badge variant="outline" className="text-xs gap-1">
               <TestTube className="w-3 h-3" />
-              Modo Teste — {LLM_MODELS.find(m => m.value === agentModel)?.label || agentModel}
-              <span className={`w-1.5 h-1.5 rounded-full ${hasApiKey ? "bg-emerald-500" : "bg-yellow-500"}`} />
+              Modo Teste — {hasApiKey ? (LLM_MODELS.find(m => m.value === agentModel)?.label || agentModel) : "Configure sua chave de API"}
+              <span className={`w-1.5 h-1.5 rounded-full ${hasApiKey ? "bg-emerald-500" : "bg-destructive"}`} />
             </Badge>
           )}
         </div>
