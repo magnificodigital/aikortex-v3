@@ -75,7 +75,7 @@ serve(async (req) => {
         apiUrl = "https://api.openai.com/v1/chat/completions";
         apiKey = keyData.api_key;
         // Use OpenAI-native model name
-        apiModel = modelMapping?.openai || model || "gpt-4o-mini";
+        apiModel = modelMapping?.openai || model || "gpt-5.4-mini";
         headers = {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
