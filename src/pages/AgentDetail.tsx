@@ -89,8 +89,8 @@ const AgentDetail = () => {
           <img src={agent.avatar} alt={agent.name} className="w-7 h-7 rounded-full object-cover" />
           <span className="text-sm font-semibold">{agent.name}</span>
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
-            <span className={`w-1.5 h-1.5 rounded-full ${isFullyConfigured ? "bg-emerald-500" : "bg-yellow-500"}`} />
-            {isFullyConfigured ? "Online" : "Configurando"}
+            <span className={`w-1.5 h-1.5 rounded-full ${hasApiKey ? "bg-emerald-500" : "bg-yellow-500"}`} />
+            {hasApiKey ? "Online" : "Sem chave API"}
           </span>
         </div>
 
