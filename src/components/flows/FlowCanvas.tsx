@@ -58,13 +58,13 @@ const defaultStartNode: Node = {
   type: "flowNode",
   position: { x: 50, y: 200 },
   data: {
-    label: "Início",
+    label: "Chat",
     category: "trigger",
-    icon: "🚀",
-    description: "Ponto de início do fluxo",
-    config: {},
-    color: "hsl(142, 71%, 45%)",
-    nodeType: "trigger_start",
+    icon: "💬",
+    description: "Starts when a message is received",
+    config: { channel: "any" },
+    color: "#22c55e",
+    nodeType: "trigger_chat",
   } satisfies FlowNodeData,
 };
 
