@@ -11,7 +11,7 @@ export interface ChatMessage {
 interface UseAgentChatOptions {
   provider?: string;
   model?: string;
-  /** When true, uses the free Lovable AI gateway instead of requiring a user API key */
+  /** When true, uses OpenRouter free model instead of requiring a user API key */
   useGateway?: boolean;
   /** System prompt override */
   systemPrompt?: string;
