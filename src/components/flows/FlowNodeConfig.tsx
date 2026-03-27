@@ -1,5 +1,6 @@
 import { type Node } from "@xyflow/react";
 import type { FlowNodeData } from "@/types/flow-builder";
+import { AGENT_TEMPLATES } from "@/types/agent-builder";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -103,6 +104,68 @@ function renderConfigFields(
         <div className="space-y-2">
           <Label className="text-xs">System Prompt</Label>
           <Textarea value={(config.systemPrompt as string) || ""} onChange={(e) => updateConfig("systemPrompt", e.target.value)} className="text-xs min-h-[80px]" placeholder="You are a helpful assistant..." />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-xs">Temperature</Label>
+          <Input type="number" step="0.1" min="0" max="2" value={(config.temperature as number) ?? 0.7} onChange={(e) => updateConfig("temperature", parseFloat(e.target.value))} className="h-8 text-xs" />
+        </div>
+      </>
+    );
+  }
+
+  // ── Agent IA (user's configured agents) ──
+  if (nodeType === "agent_ai") {
+    const LLM_MODELS = [
+      { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+      { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+      { value: "gemini-3-flash-preview", label: "Gemini 3 Flash" },
+      { value: "gpt-5", label: "GPT-5" },
+      { value: "gpt-5-mini", label: "GPT-5 Mini" },
+    ];
+    return (
+      <>
+        <div className="space-y-2">
+          <Label className="text-xs">Tipo de Agente</Label>
+          <Select value={(config.agentType as string) || ""} onValueChange={(v) => {
+            updateConfig("agentType", v);
+            const agent = AGENT_TEMPLATES.find((a) => a.type === v);
+            if (agent) {
+              updateConfig("agentId", agent.id);
+            }
+          }}>
+            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione um agente" /></SelectTrigger>
+            <SelectContent>
+              {AGENT_TEMPLATES.map((agent) => (
+                <SelectItem key={agent.id} value={agent.type}>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{agent.name}</span>
+                    <span className="text-muted-foreground text-[10px]">({agent.type})</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        {(config.agentType as string) && (
+          <div className="rounded-lg border border-border/60 bg-muted/20 p-2.5 space-y-1">
+            <p className="text-[10px] font-semibold text-foreground">
+              {AGENT_TEMPLATES.find((a) => a.type === config.agentType)?.name}
+            </p>
+            <p className="text-[9px] text-muted-foreground">
+              {AGENT_TEMPLATES.find((a) => a.type === config.agentType)?.objective}
+            </p>
+          </div>
+        )}
+        <div className="space-y-2">
+          <Label className="text-xs">Modelo LLM</Label>
+          <Select value={(config.model as string) || "gemini-2.5-flash"} onValueChange={(v) => updateConfig("model", v)}>
+            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {LLM_MODELS.map((m) => (
+                <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-2">
           <Label className="text-xs">Temperature</Label>

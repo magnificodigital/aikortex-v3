@@ -46,6 +46,7 @@ export const NODE_TEMPLATES: NodeTemplate[] = [
 
   // ── Processing ──
   { type: "agent", label: "Agent", category: "processing", icon: "🤖", description: "Chat with AI models", color: "#6366f1", defaultConfig: { model: "gemini-2.5-flash", temperature: 0.7, systemPrompt: "" } },
+  { type: "agent_ai", label: "Agente IA", category: "processing", icon: "🧠", description: "Use one of your configured AI agents (SDR, BDR, SAC, CS)", color: "#6366f1", defaultConfig: { agentType: "", agentId: "", model: "gemini-2.5-flash", temperature: 0.7 } },
   { type: "function", label: "Function", category: "processing", icon: "⚡", description: "Run custom JavaScript/TypeScript code", color: "#6366f1", defaultConfig: { code: "", language: "javascript" } },
   { type: "api", label: "API", category: "processing", icon: "🌐", description: "Connect to external services via HTTP", color: "#6366f1", defaultConfig: { url: "", method: "GET", headers: {}, body: "" } },
 
