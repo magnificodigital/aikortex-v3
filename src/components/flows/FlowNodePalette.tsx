@@ -11,13 +11,12 @@ import {
 } from "@/components/ui/accordion";
 
 const categoryBorder: Record<string, string> = {
-  trigger: "border-l-green-500",
-  condition: "border-l-yellow-500",
-  message: "border-l-blue-500",
-  action: "border-l-purple-500",
-  agent: "border-l-pink-500",
-  integration: "border-l-cyan-500",
-  delay: "border-l-orange-500",
+  trigger: "border-l-emerald-500",
+  processing: "border-l-indigo-500",
+  logic: "border-l-amber-500",
+  control: "border-l-pink-500",
+  output: "border-l-cyan-500",
+  integration: "border-l-violet-500",
 };
 
 export default function FlowNodePalette() {
@@ -41,11 +40,11 @@ export default function FlowNodePalette() {
   return (
     <div className="h-full flex flex-col bg-card/80 backdrop-blur-sm">
       <div className="p-3 border-b border-border">
-        <h3 className="text-xs font-bold text-foreground mb-2 uppercase tracking-wider">Blocos</h3>
+        <h3 className="text-xs font-bold text-foreground mb-2 uppercase tracking-wider">Blocks</h3>
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
           <Input
-            placeholder="Buscar blocos..."
+            placeholder="Search blocks..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-8 h-8 text-xs"

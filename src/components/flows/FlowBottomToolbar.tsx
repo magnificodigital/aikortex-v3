@@ -7,16 +7,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Zap, GitBranch, MessageSquare, Play, Bot, Plug, Clock } from "lucide-react";
+import { Zap, Cpu, GitBranch, SlidersHorizontal, Send, Plug } from "lucide-react";
 
 const categoryIcons: Record<string, React.ReactNode> = {
   trigger: <Zap className="w-4 h-4" />,
-  condition: <GitBranch className="w-4 h-4" />,
-  message: <MessageSquare className="w-4 h-4" />,
-  action: <Play className="w-4 h-4" />,
-  agent: <Bot className="w-4 h-4" />,
+  processing: <Cpu className="w-4 h-4" />,
+  logic: <GitBranch className="w-4 h-4" />,
+  control: <SlidersHorizontal className="w-4 h-4" />,
+  output: <Send className="w-4 h-4" />,
   integration: <Plug className="w-4 h-4" />,
-  delay: <Clock className="w-4 h-4" />,
 };
 
 interface Props {
