@@ -35,7 +35,7 @@ const Home = () => {
   const navigate = useNavigate();
 
   const FLOW_KEYWORDS = ["fluxo", "flow", "automação", "automatizar", "automatização", "automation", "pipeline", "workflow", "nutrição", "sequência", "automacao", "sequencia"];
-  const AGENT_KEYWORDS = ["agente", "agent", "sdr", "bdr", "sac", "suporte", "atendimento", "qualificação", "prospecção", "cobranças", "onboarding"];
+  const AGENT_KEYWORDS = ["agente", "agent", "sdr", "bdr", "sac", "suporte", "atendimento", "qualificação", "prospecção", "cobranças", "onboarding", "customer success", "cs ", "assistente", "diagnóstico", "diagnostico", "qualificador", "agendador", "chatbot", "bot"];
 
   const detectCategory = (text: string): "app" | "agentes" | "flows" => {
     const lower = text.toLowerCase();
