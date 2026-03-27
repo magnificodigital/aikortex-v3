@@ -61,6 +61,7 @@ interface Props {
   onModelChange: (model: string) => void;
   activeTab?: string;
   onTabChange?: (tab: string) => void;
+  onApiKeysChanged?: () => void | Promise<void>;
 }
 
 interface KnowledgeFileLocal {
@@ -87,7 +88,7 @@ const PROVIDER_MAP: Record<string, string> = {
   "RD Station": "rdstation",
 };
 
-const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTab, onTabChange }: Props) => {
+const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTab, onTabChange, onApiKeysChanged }: Props) => {
   const [rightTab, setRightTab] = useState(activeTab || "agent");
 
   // Filter integrations and channels by agent type
@@ -201,6 +202,7 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
         ...prev,
         [connectorDialog.label]: { key: keyInput.trim(), configured: true },
       }));
+      await onApiKeysChanged?.();
       setConnectorDialog(null);
       setKeyInput("");
       toast.success(`${connectorDialog.label} conectado com sucesso!`);
@@ -225,6 +227,7 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
         delete next[connectorDialog.label];
         return next;
       });
+      await onApiKeysChanged?.();
       setConnectorDialog(null);
       setKeyInput("");
       toast.success(`${connectorDialog.label} desconectado.`);
