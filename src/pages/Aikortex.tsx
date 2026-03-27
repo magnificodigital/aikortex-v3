@@ -54,27 +54,49 @@ const LLM_MODELS = [
 
 const SETUP_SYSTEM_PROMPT = `Você é o assistente de configuração de agentes na Aikortex. Responda em português brasileiro, seja BREVE e direto. Faça UMA pergunta por vez, curta (máximo 2 linhas). Se a resposta do usuário for válida, confirme rapidamente e preencha o campo automaticamente. Não repita informações já fornecidas.
 
-Áreas de configuração: Identidade (nome, descrição), Objetivo (missão), Instruções (tom, personalidade), Integrações (APIs/MCPs), Canais (WhatsApp, Instagram, Site), Conhecimento (documentos/URLs).
+FLUXO COMPLETO DE CONFIGURAÇÃO (siga nesta ordem):
+1. **Identidade** — Nome do agente, descrição/cargo, empresa, tom de voz, mensagem de saudação
+2. **Foto** — Pergunte se quer trocar a foto do agente
+3. **Objetivo** — O que o agente faz (propósito), resultado esperado, público atendido
+4. **Ações** — Quais ações personalizadas o agente deve ter (ex: agendar reunião, enviar proposta)
+5. **Estágios** — Revisar/ajustar etapas da conversa
+6. **Avançado** — Limite de respostas, tamanho de mensagem, criatividade, tempo mínimo de resposta
+7. **Integrações, Canais e Arquivos** — Direcionados ao painel lateral
 
 REGRA DE PREENCHIMENTO AUTOMÁTICO:
-Sempre que confirmar um campo, inclua um marcador oculto no formato [SET:campo=valor]. Os campos disponíveis são:
+Sempre que confirmar um campo, inclua um marcador oculto no formato [SET:campo=valor]. Campos disponíveis:
 - agentName (nome do agente)
 - companyName (nome da empresa)
 - industry (setor/indústria)
-- mainProduct (produto/serviço principal)
-- targetAudienceDescription (público-alvo)
+- mainProduct (cargo/função do agente)
+- targetAudienceDescription (o que o agente faz — propósito principal)
+- painPoints (resultado esperado)
+- knowledgeSources (público atendido)
 - toneOfVoice (tom de voz)
-- greetingMessage (mensagem de boas-vindas)
+- greetingMessage (mensagem de saudação)
 - website (site da empresa)
+- businessHours (horário de funcionamento)
+- escalationRules (regras de escalação)
 
 Exemplo: "✅ Nome definido! [SET:agentName=Luna] Qual o objetivo principal do agente?"
 Exemplo: "✅ Entendi! [SET:companyName=TechCorp] [SET:industry=Tecnologia] E qual é o produto ou serviço principal?"
+Exemplo: "✅ Propósito registrado! [SET:targetAudienceDescription=Qualificar leads inbound e agendar reuniões] [SWITCH_NAV:objetivo] Qual o resultado esperado?"
+
+REGRA DE NAVEGAÇÃO DO PAINEL:
+Quando preencher campos de uma seção, inclua o marcador [SWITCH_NAV:secao] para direcionar o painel à direita:
+- [SWITCH_NAV:identidade] — ao configurar nome, empresa, tom de voz
+- [SWITCH_NAV:objetivo] — ao configurar propósito, resultado esperado, público
+- [SWITCH_NAV:intencoes] — ao configurar ações personalizadas
+- [SWITCH_NAV:estagios] — ao configurar etapas da conversa
+- [SWITCH_NAV:avancado] — ao configurar limites e comportamento
+
+REGRA SOBRE FOTO DO AGENTE:
+Quando o usuário quiser trocar a foto/avatar, responda: "📷 Para trocar a foto do agente, clique no ícone da câmera no painel à direita, na seção **Identidade**." e inclua [SWITCH_NAV:identidade]
 
 REGRA IMPORTANTE sobre Integrações, Canais e Arquivos/Conhecimento:
-- Quando o assunto for sobre **Integrações** (APIs, MCPs, Webhooks, chaves de API), responda: "⚙️ Para configurar integrações, use o painel à direita na aba **Integrações**." e inclua exatamente este marcador: [SWITCH_TAB:connectors]
-- Quando o assunto for sobre **Canais** (WhatsApp, Instagram, Facebook, Site, Telegram), responda: "📱 Para configurar canais, use o painel à direita na aba **Canais**." e inclua exatamente este marcador: [SWITCH_TAB:channels]
-- Quando o assunto for sobre **Arquivos/Conhecimento** (documentos, PDFs, URLs, base de conhecimento), responda: "📄 Para adicionar arquivos e conhecimento, use o painel à direita na aba **Conhecimento**." e inclua exatamente este marcador: [SWITCH_TAB:knowledge]
-- Após o marcador, continue guiando brevemente o que o usuário deve fazer nessa aba.
+- **Integrações** (APIs, MCPs, Webhooks, chaves de API): "⚙️ Para configurar integrações, use o painel à direita na aba **Integrações**." [SWITCH_TAB:connectors]
+- **Canais** (WhatsApp, Instagram, Facebook, Site, Telegram): "📱 Para configurar canais, use o painel à direita na aba **Canais**." [SWITCH_TAB:channels]
+- **Arquivos/Conhecimento** (documentos, PDFs, URLs, base de conhecimento): "📄 Para adicionar arquivos e conhecimento, use o painel à direita na aba **Conhecimento**." [SWITCH_TAB:knowledge]
 
 IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
 
@@ -93,6 +115,7 @@ const Aikortex = () => {
   const [input, setInput] = useState("");
   const [agentModel, setAgentModel] = useState("gemini-2.5-flash");
   const [rightPanelTab, setRightPanelTab] = useState("agent");
+  const [rightPanelSection, setRightPanelSection] = useState<string | undefined>(undefined);
   const [didAutoRoute, setDidAutoRoute] = useState(false);
   const [chatMode, setChatMode] = useState<"setup" | "test">("setup");
   const [savedAgentId, setSavedAgentId] = useState<string | null>(null);
@@ -137,15 +160,22 @@ const Aikortex = () => {
   const activeChat = chatMode === "setup" ? setupChat : testChat;
   const { messages, sendMessage, isStreaming } = activeChat;
 
-  // Auto-switch right panel tab and auto-fill fields when AI suggests it
+  // Auto-switch right panel tab/section and auto-fill fields when AI suggests it
   useEffect(() => {
     if (messages.length === 0) return;
     const lastMsg = messages[messages.length - 1];
     if (lastMsg.role !== "agent") return;
 
-    // Switch tab
+    // Switch top-level tab
     const tabMatch = lastMsg.text.match(/\[SWITCH_TAB:(connectors|channels|knowledge)\]/);
     if (tabMatch) setRightPanelTab(tabMatch[1]);
+
+    // Switch agent sub-section navigation
+    const navMatch = lastMsg.text.match(/\[SWITCH_NAV:(identidade|objetivo|intencoes|estagios|avancado)\]/);
+    if (navMatch) {
+      setRightPanelTab("agent");
+      setRightPanelSection(navMatch[1]);
+    }
 
     // Auto-fill fields from [SET:field=value] markers
     const setMatches = lastMsg.text.matchAll(/\[SET:(\w+)=([^\]]+)\]/g);
@@ -156,7 +186,7 @@ const Aikortex = () => {
       const validFields: (keyof BusinessContext)[] = [
         "agentName", "companyName", "industry", "mainProduct",
         "targetAudienceDescription", "toneOfVoice", "greetingMessage",
-        "website", "painPoints", "businessHours", "escalationRules",
+        "website", "painPoints", "knowledgeSources", "businessHours", "escalationRules",
       ];
       if (validFields.includes(field)) {
         updates[field] = value as any;
@@ -338,7 +368,7 @@ const Aikortex = () => {
                 }`}>
                   {msg.role === "agent" ? (
                     <div className="prose prose-sm dark:prose-invert max-w-none">
-                      <ReactMarkdown>{msg.text.replace(/\[SWITCH_TAB:\w+\]/g, "").replace(/\[SET:\w+=[^\]]+\]/g, "")}</ReactMarkdown>
+                      <ReactMarkdown>{msg.text.replace(/\[SWITCH_TAB:\w+\]/g, "").replace(/\[SET:\w+=[^\]]+\]/g, "").replace(/\[SWITCH_NAV:\w+\]/g, "")}</ReactMarkdown>
                     </div>
                   ) : (
                     msg.text
@@ -437,6 +467,8 @@ const Aikortex = () => {
         onAdvancedConfigChange={setAdvancedConfig}
         activeTab={rightPanelTab}
         onTabChange={setRightPanelTab}
+        activeSection={rightPanelSection}
+        onSectionChange={setRightPanelSection}
       />
     </div>
   );

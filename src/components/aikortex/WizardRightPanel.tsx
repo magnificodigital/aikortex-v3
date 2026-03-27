@@ -100,6 +100,8 @@ interface Props {
   onAdvancedConfigChange: (cfg: AgentAdvancedConfig) => void;
   activeTab?: string;
   onTabChange?: (tab: string) => void;
+  activeSection?: string;
+  onSectionChange?: (section: string) => void;
 }
 
 const WizardRightPanel = ({
@@ -111,6 +113,7 @@ const WizardRightPanel = ({
   stages, onStagesChange,
   advancedConfig, onAdvancedConfigChange,
   activeTab, onTabChange,
+  activeSection, onSectionChange,
 }: Props) => {
   const [rightTab, setRightTab] = useState(activeTab || "agent");
 
@@ -124,7 +127,17 @@ const WizardRightPanel = ({
       setRightTab(activeTab);
     }
   }, [activeTab]);
-  const [settingsNav, setSettingsNav] = useState<SettingsNavKey>("identidade");
+
+  const [settingsNav, setSettingsNav] = useState<SettingsNavKey>(
+    (activeSection as SettingsNavKey) || "identidade"
+  );
+
+  // Sync section from parent
+  useEffect(() => {
+    if (activeSection && activeSection !== settingsNav) {
+      setSettingsNav(activeSection as SettingsNavKey);
+    }
+  }, [activeSection]);
   const [urlInput, setUrlInput] = useState("");
   const [urls, setUrls] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
