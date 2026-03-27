@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Zap, Cpu, GitBranch, SlidersHorizontal, Send, Plug } from "lucide-react";
+import { Zap, Cpu, GitBranch, SlidersHorizontal, Send, Plug, FormInput, Target, BookOpen, Database, Code2 } from "lucide-react";
 
 const categoryIcons: Record<string, React.ReactNode> = {
   trigger: <Zap className="w-4 h-4" />,
@@ -16,6 +16,11 @@ const categoryIcons: Record<string, React.ReactNode> = {
   control: <SlidersHorizontal className="w-4 h-4" />,
   output: <Send className="w-4 h-4" />,
   integration: <Plug className="w-4 h-4" />,
+  data_capture: <FormInput className="w-4 h-4" />,
+  crm_actions: <Target className="w-4 h-4" />,
+  knowledge: <BookOpen className="w-4 h-4" />,
+  database: <Database className="w-4 h-4" />,
+  dev_advanced: <Code2 className="w-4 h-4" />,
 };
 
 interface Props {
