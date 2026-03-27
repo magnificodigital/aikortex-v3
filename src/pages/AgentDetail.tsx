@@ -38,8 +38,25 @@ const AgentDetail = () => {
 
   const [input, setInput] = useState("");
   const [agentModel, setAgentModel] = useState(agent.model);
-  const [isFullyConfigured, setIsFullyConfigured] = useState(true);
   const [rightPanelTab, setRightPanelTab] = useState("agent");
+
+  const { keys, loading: keysLoading, refetch: refetchKeys } = useApiKeys();
+
+  // Derive provider from selected model
+  const currentProvider = useMemo(() => {
+    if (agentModel.startsWith("gemini")) return "gemini";
+    if (agentModel.startsWith("gpt")) return "openai";
+    return "openai";
+  }, [agentModel]);
+
+  const hasApiKey = !!keys[currentProvider]?.configured;
+
+  // Refetch keys when switching back to chat from integrations tab
+  useEffect(() => {
+    if (rightPanelTab !== "connectors") {
+      refetchKeys();
+    }
+  }, [rightPanelTab, refetchKeys]);
 
   const { messages, sendMessage, isStreaming } = useAgentChat(
     [{ role: "agent", text: `Olá! Sou ${agent.name}. Como posso ajudar?` }],
