@@ -65,6 +65,9 @@ interface FlowCanvasProps {
   flowName?: string;
   flowId?: string;
   onSave?: (name: string, nodes: unknown[], edges: unknown[], flowId?: string) => void;
+  flows?: SavedFlow[];
+  onOpenFlow?: (flow: SavedFlow) => void;
+  onNewFlow?: () => void;
 }
 
 function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave }: FlowCanvasProps) {
