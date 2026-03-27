@@ -265,6 +265,17 @@ const AgentDetail = () => {
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                   <Paperclip className="w-4 h-4" />
                 </Button>
+                {chatMode === "setup" && (
+                  <select
+                    value={setupModel}
+                    onChange={(e) => setSetupModel(e.target.value)}
+                    className="text-xs text-muted-foreground hover:text-foreground bg-transparent border border-border rounded-md px-2 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary/40"
+                  >
+                    {FREE_MODELS.map((m) => (
+                      <option key={m.value} value={m.value}>{m.label}</option>
+                    ))}
+                  </select>
+                )}
                 {chatMode === "test" && (
                   <select
                     value={agentModel}
