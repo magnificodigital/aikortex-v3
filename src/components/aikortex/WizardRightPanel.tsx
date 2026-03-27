@@ -257,12 +257,30 @@ const WizardRightPanel = ({
     }
   };
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (ev) => setAvatarPreview(ev.target?.result as string);
-      reader.readAsDataURL(file);
+    if (!file) return;
+    // Show immediate preview
+    const reader = new FileReader();
+    reader.onload = (ev) => setAvatarPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+    // Upload to storage
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error("Faça login para enviar imagens."); return; }
+      const ext = file.name.split(".").pop() || "png";
+      const path = `${user.id}/agent-avatar-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("agent-avatars").upload(path, file, { upsert: true });
+      if (error) { toast.error("Erro ao enviar imagem."); console.error(error); return; }
+      const { data: urlData } = supabase.storage.from("agent-avatars").getPublicUrl(path);
+      if (urlData?.publicUrl) {
+        setAvatarPreview(urlData.publicUrl);
+        toast.success("Avatar atualizado!");
+      }
+    } catch (err) {
+      console.error("Avatar upload error:", err);
+      toast.error("Erro ao enviar avatar.");
     }
   };
 

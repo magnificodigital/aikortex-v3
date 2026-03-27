@@ -33,6 +33,13 @@ const LLM_MODELS = [
   { value: "gpt-5-mini", label: "GPT-5 Mini", provider: "openai" },
 ] as const;
 
+const FREE_MODELS = [
+  { value: "stepfun/step-3.5-flash:free", label: "Step 3.5 Flash" },
+  { value: "deepseek/deepseek-chat-v3-0324:free", label: "DeepSeek V3" },
+  { value: "google/gemma-3-27b-it:free", label: "Gemma 3 27B" },
+  { value: "meta-llama/llama-4-maverick:free", label: "Llama 4 Maverick" },
+] as const;
+
 const getProviderForModel = (model: string) => {
   if (model.startsWith("gemini")) return "gemini";
   if (model.startsWith("gpt")) return "openai";
@@ -68,8 +75,9 @@ const AgentDetail = () => {
 
   const [input, setInput] = useState("");
   const [agentModel, setAgentModel] = useState(agent.model);
+  const [setupModel, setSetupModel] = useState<string>(FREE_MODELS[0].value);
   const [rightPanelTab, setRightPanelTab] = useState("agent");
-  // "setup" = uses free Lovable AI gateway to help configure
+  // "setup" = uses free OpenRouter models to help configure
   // "test" = uses the user's configured LLM to test the agent
   const [chatMode, setChatMode] = useState<"setup" | "test">("setup");
 
@@ -100,7 +108,7 @@ const AgentDetail = () => {
 
   const setupChat = useAgentChat(
     [{ role: "agent", text: `Olá! 👋 Sou o assistente de configuração do **${agent.name}**. O que gostaria de configurar?` }],
-    { model: "gemini-2.5-flash", systemPrompt: SETUP_SYSTEM_PROMPT }
+    { useGateway: true, gatewayModel: setupModel, systemPrompt: SETUP_SYSTEM_PROMPT }
   );
 
   const testChat = useAgentChat(
@@ -176,7 +184,7 @@ const AgentDetail = () => {
           {chatMode === "setup" ? (
             <Badge variant="secondary" className="text-xs gap-1">
               <Bot className="w-3 h-3" />
-              Assistente de Configuração — Lovable AI
+              Assistente de Configuração — {FREE_MODELS.find(m => m.value === setupModel)?.label || "IA Gratuita"}
             </Badge>
           ) : (
             <Badge variant="outline" className="text-xs gap-1">
@@ -257,6 +265,17 @@ const AgentDetail = () => {
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                   <Paperclip className="w-4 h-4" />
                 </Button>
+                {chatMode === "setup" && (
+                  <select
+                    value={setupModel}
+                    onChange={(e) => setSetupModel(e.target.value)}
+                    className="text-xs text-muted-foreground hover:text-foreground bg-transparent border border-border rounded-md px-2 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary/40"
+                  >
+                    {FREE_MODELS.map((m) => (
+                      <option key={m.value} value={m.value}>{m.label}</option>
+                    ))}
+                  </select>
+                )}
                 {chatMode === "test" && (
                   <select
                     value={agentModel}
