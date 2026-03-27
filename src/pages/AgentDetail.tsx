@@ -144,7 +144,7 @@ const AgentDetail = () => {
           {chatMode === "setup" ? (
             <Badge variant="secondary" className="text-xs gap-1">
               <Bot className="w-3 h-3" />
-              Assistente de Configuração — Step 3.5 Flash (gratuito)
+              Assistente de Configuração — Lovable AI
             </Badge>
           ) : (
             <Badge variant="outline" className="text-xs gap-1">
