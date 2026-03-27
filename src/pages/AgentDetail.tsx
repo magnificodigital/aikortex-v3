@@ -108,7 +108,7 @@ const AgentDetail = () => {
 
   const setupChat = useAgentChat(
     [{ role: "agent", text: `Olá! 👋 Sou o assistente de configuração do **${agent.name}**. O que gostaria de configurar?` }],
-    { model: "gemini-2.5-flash", systemPrompt: SETUP_SYSTEM_PROMPT }
+    { useGateway: true, gatewayModel: setupModel, systemPrompt: SETUP_SYSTEM_PROMPT }
   );
 
   const testChat = useAgentChat(
