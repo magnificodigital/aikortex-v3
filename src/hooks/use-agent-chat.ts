@@ -124,7 +124,7 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
     } finally {
       setIsStreaming(false);
     }
-  }, [messages, isStreaming, options.provider, options.model, options.useGateway, options.systemPrompt]);
+  }, [messages, isStreaming, options.provider, options.model, options.useGateway, options.gatewayModel, options.systemPrompt]);
 
   return { messages, setMessages, sendMessage, isStreaming };
 }
