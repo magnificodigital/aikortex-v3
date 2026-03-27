@@ -1,13 +1,15 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Send, Paperclip, HelpCircle, AlertTriangle, KeyRound } from "lucide-react";
+import { ArrowLeft, Send, Paperclip, HelpCircle, AlertTriangle, KeyRound, Bot, TestTube } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import AgentRightPanel from "@/components/aikortex/AgentRightPanel";
 import { useAgentChat } from "@/hooks/use-agent-chat";
 import { useApiKeys } from "@/hooks/use-api-keys";
+import ReactMarkdown from "react-markdown";
 import type { AgentType } from "@/types/agent-builder";
 
 import avatar1 from "@/assets/avatars/avatar-1.png";
@@ -31,6 +33,23 @@ const LLM_MODELS = [
   { value: "gpt-5-mini", label: "GPT-5 Mini" },
 ];
 
+const SETUP_SYSTEM_PROMPT = `Você é um assistente especializado em configuração de agentes de IA na plataforma Aikortex. 
+Sua missão é guiar o usuário para completar TODAS as configurações do agente de forma clara e objetiva.
+
+Ao iniciar, apresente-se brevemente e pergunte o que o usuário deseja configurar. As áreas de configuração são:
+
+1. **Identidade** — Nome, descrição, foto do agente
+2. **Objetivo** — Qual a missão principal do agente (vender, qualificar leads, atender clientes, etc.)
+3. **Instruções (Prompt)** — Tom de voz, regras de comportamento, personalidade
+4. **Integrações** — APIs, MCPs, Webhooks que o agente pode usar
+5. **Canais** — WhatsApp, Instagram, Site, etc.
+6. **Conhecimento** — Documentos e URLs de referência
+
+Seja direto, use português brasileiro, e ajude o usuário a preencher cada campo com sugestões práticas.
+Quando todas as configurações estiverem completas, informe que o agente está pronto e sugira que ele mude para o modo de **Teste** para experimentar a IA com o modelo configurado.
+
+IMPORTANTE: Você NÃO é o agente final. Você é o assistente de configuração. Não tente responder como se fosse o agente do usuário.`;
+
 const AgentDetail = () => {
   const navigate = useNavigate();
   const { agentId } = useParams();
@@ -39,10 +58,12 @@ const AgentDetail = () => {
   const [input, setInput] = useState("");
   const [agentModel, setAgentModel] = useState(agent.model);
   const [rightPanelTab, setRightPanelTab] = useState("agent");
+  // "setup" = uses free Lovable AI gateway to help configure
+  // "test" = uses the user's configured LLM to test the agent
+  const [chatMode, setChatMode] = useState<"setup" | "test">("setup");
 
   const { keys, loading: keysLoading, refetch: refetchKeys } = useApiKeys();
 
-  // Derive provider from selected model
   const currentProvider = useMemo(() => {
     if (agentModel.startsWith("gemini")) return "gemini";
     if (agentModel.startsWith("gpt")) return "openai";
@@ -51,20 +72,29 @@ const AgentDetail = () => {
 
   const hasApiKey = !!keys[currentProvider]?.configured;
 
-  // Refetch keys when switching back to chat from integrations tab
   useEffect(() => {
     if (rightPanelTab !== "connectors") {
       refetchKeys();
     }
   }, [rightPanelTab, refetchKeys]);
 
-  const { messages, sendMessage, isStreaming } = useAgentChat(
-    [{ role: "agent", text: `Olá! Sou ${agent.name}. Como posso ajudar?` }],
+  const setupChat = useAgentChat(
+    [{ role: "agent", text: `Olá! 👋 Sou o assistente de configuração do **${agent.name}**. Vou te ajudar a deixar tudo pronto!\n\nO que gostaria de configurar primeiro? Posso ajudar com identidade, objetivo, instruções, integrações, canais ou base de conhecimento.` }],
+    { useGateway: true, systemPrompt: SETUP_SYSTEM_PROMPT }
+  );
+
+  const testChat = useAgentChat(
+    [{ role: "agent", text: `🧪 Modo de Teste ativado! Agora estou respondendo como o **${agent.name}** usando o modelo ${LLM_MODELS.find(m => m.value === agentModel)?.label || agentModel}. Envie uma mensagem para testar.` }],
     { model: agentModel }
   );
 
+  const activeChat = chatMode === "setup" ? setupChat : testChat;
+  const { messages, sendMessage, isStreaming } = activeChat;
+
+  const canSend = chatMode === "setup" || hasApiKey || keysLoading;
+
   const handleSend = () => {
-    if (!input.trim() || isStreaming) return;
+    if (!input.trim() || isStreaming || !canSend) return;
     const text = input.trim();
     setInput("");
     sendMessage(text);
@@ -88,12 +118,45 @@ const AgentDetail = () => {
           </Button>
           <img src={agent.avatar} alt={agent.name} className="w-7 h-7 rounded-full object-cover" />
           <span className="text-sm font-semibold">{agent.name}</span>
-          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-            <span className={`w-1.5 h-1.5 rounded-full ${hasApiKey ? "bg-emerald-500" : "bg-yellow-500"}`} />
-            {hasApiKey ? "Online" : "Sem chave API"}
-          </span>
+
+          {/* Mode toggle */}
+          <div className="ml-auto flex items-center gap-1.5">
+            <Button
+              variant={chatMode === "setup" ? "default" : "ghost"}
+              size="sm"
+              className="text-xs gap-1 h-7"
+              onClick={() => setChatMode("setup")}
+            >
+              <Bot className="w-3 h-3" />
+              Configurar
+            </Button>
+            <Button
+              variant={chatMode === "test" ? "default" : "ghost"}
+              size="sm"
+              className="text-xs gap-1 h-7"
+              onClick={() => setChatMode("test")}
+            >
+              <TestTube className="w-3 h-3" />
+              Testar
+            </Button>
+          </div>
         </div>
 
+        {/* Mode indicator */}
+        <div className="px-4 py-1.5 border-b border-border bg-muted/30 flex items-center gap-2">
+          {chatMode === "setup" ? (
+            <Badge variant="secondary" className="text-xs gap-1">
+              <Bot className="w-3 h-3" />
+              Assistente de Configuração — Modelo gratuito
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="text-xs gap-1">
+              <TestTube className="w-3 h-3" />
+              Modo Teste — {LLM_MODELS.find(m => m.value === agentModel)?.label || agentModel}
+              <span className={`w-1.5 h-1.5 rounded-full ${hasApiKey ? "bg-emerald-500" : "bg-yellow-500"}`} />
+            </Badge>
+          )}
+        </div>
 
         {/* Messages */}
         <ScrollArea className="flex-1 p-4">
@@ -108,21 +171,27 @@ const AgentDetail = () => {
                     ? "bg-muted/60 text-foreground"
                     : "bg-primary text-primary-foreground ml-auto"
                 }`}>
-                  {msg.text}
+                  {msg.role === "agent" ? (
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                      <ReactMarkdown>{msg.text}</ReactMarkdown>
+                    </div>
+                  ) : (
+                    msg.text
+                  )}
                 </div>
               </div>
             ))}
           </div>
         </ScrollArea>
 
-        {/* API Key Warning */}
-        {!keysLoading && !hasApiKey && (
+        {/* API Key Warning — only in test mode */}
+        {chatMode === "test" && !keysLoading && !hasApiKey && (
           <div className="px-4 pt-2">
             <Alert className="border-yellow-500/30 bg-yellow-500/5">
               <AlertTriangle className="h-4 w-4 text-yellow-500" />
               <AlertDescription className="text-xs text-muted-foreground flex items-center justify-between">
                 <span>
-                  Configure sua chave de API do provedor <strong className="text-foreground">{currentProvider === "openai" ? "OpenAI" : "Gemini"}</strong> na aba Integrações para usar o agente.
+                  Configure sua chave de API do provedor <strong className="text-foreground">{currentProvider === "openai" ? "OpenAI" : "Gemini"}</strong> na aba Integrações para testar o agente.
                 </span>
                 <Button
                   variant="outline"
@@ -137,37 +206,45 @@ const AgentDetail = () => {
           </div>
         )}
 
-        {/* Input — large textarea like reference */}
+        {/* Input */}
         <div className="px-4 pb-4 pt-2">
           <div className="border border-border rounded-xl bg-muted/30 flex flex-col">
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={!hasApiKey && !keysLoading ? "⚠️ Configure sua chave de API na aba Integrações para enviar mensagens..." : "Envie uma mensagem ao agente..."}
+              placeholder={
+                chatMode === "test" && !hasApiKey && !keysLoading
+                  ? "⚠️ Configure sua chave de API na aba Integrações para testar..."
+                  : chatMode === "setup"
+                    ? "Pergunte sobre a configuração do agente..."
+                    : "Envie uma mensagem para testar o agente..."
+              }
               className="border-0 bg-transparent text-sm min-h-[80px] max-h-[160px] resize-none focus-visible:ring-0 focus-visible:ring-offset-0 p-4"
-              disabled={!hasApiKey && !keysLoading}
+              disabled={!canSend}
             />
             <div className="flex items-center justify-between px-3 pb-3">
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                   <Paperclip className="w-4 h-4" />
                 </Button>
-                <select
-                  value={agentModel}
-                  onChange={(e) => setAgentModel(e.target.value)}
-                  className="text-xs text-muted-foreground hover:text-foreground bg-transparent border border-border rounded-md px-2 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary/40"
-                >
-                  {LLM_MODELS.map((m) => (
-                    <option key={m.value} value={m.value}>{m.label}</option>
-                  ))}
-                </select>
+                {chatMode === "test" && (
+                  <select
+                    value={agentModel}
+                    onChange={(e) => setAgentModel(e.target.value)}
+                    className="text-xs text-muted-foreground hover:text-foreground bg-transparent border border-border rounded-md px-2 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary/40"
+                  >
+                    {LLM_MODELS.map((m) => (
+                      <option key={m.value} value={m.value}>{m.label}</option>
+                    ))}
+                  </select>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                   <HelpCircle className="w-4 h-4" />
                 </Button>
-                <Button size="icon" className="h-8 w-8 rounded-full" onClick={handleSend} disabled={!input.trim() || isStreaming || (!hasApiKey && !keysLoading)}>
+                <Button size="icon" className="h-8 w-8 rounded-full" onClick={handleSend} disabled={!input.trim() || isStreaming || !canSend}>
                   <Send className="w-4 h-4" />
                 </Button>
               </div>

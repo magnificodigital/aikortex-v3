@@ -30,7 +30,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages, provider, model } = await req.json();
+    const { messages, provider, model, useGateway } = await req.json();
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
@@ -57,40 +57,62 @@ serve(async (req) => {
     const selectedProvider = provider || "openai";
     const modelMapping = MODEL_MAP[model] || null;
 
-    // Try user's own API key first
-    const { data: keyData } = await supabase
-      .from("user_api_keys")
-      .select("api_key")
-      .eq("provider", selectedProvider)
-      .eq("user_id", user.id)
-      .maybeSingle();
-
     let apiUrl: string;
     let apiKey: string;
     let apiModel: string;
     let headers: Record<string, string>;
 
-    if (keyData?.api_key) {
-      if (selectedProvider === "openai") {
-        apiUrl = "https://api.openai.com/v1/chat/completions";
-        apiKey = keyData.api_key;
-        // Use OpenAI-native model name
-        apiModel = modelMapping?.openai || model || "gpt-5.4-mini";
-        headers = {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        };
-      } else if (selectedProvider === "anthropic") {
-        apiUrl = "https://api.anthropic.com/v1/messages";
-        apiKey = keyData.api_key;
-        apiModel = model || "claude-3-haiku-20240307";
-        headers = {
-          "x-api-key": apiKey,
-          "Content-Type": "application/json",
-          "anthropic-version": "2023-06-01",
-        };
+    // If useGateway is true, skip user key lookup and go straight to Lovable AI gateway
+    if (useGateway) {
+      const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+      if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+      apiUrl = "https://ai.gateway.lovable.dev/v1/chat/completions";
+      apiKey = LOVABLE_API_KEY;
+      apiModel = "google/gemini-3-flash-preview";
+      headers = {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      };
+    } else {
+      // Try user's own API key first
+      const { data: keyData } = await supabase
+        .from("user_api_keys")
+        .select("api_key")
+        .eq("provider", selectedProvider)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (keyData?.api_key) {
+        if (selectedProvider === "openai") {
+          apiUrl = "https://api.openai.com/v1/chat/completions";
+          apiKey = keyData.api_key;
+          apiModel = modelMapping?.openai || model || "gpt-5.4-mini";
+          headers = {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+          };
+        } else if (selectedProvider === "anthropic") {
+          apiUrl = "https://api.anthropic.com/v1/messages";
+          apiKey = keyData.api_key;
+          apiModel = model || "claude-3-haiku-20240307";
+          headers = {
+            "x-api-key": apiKey,
+            "Content-Type": "application/json",
+            "anthropic-version": "2023-06-01",
+          };
+        } else {
+          const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+          if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+          apiUrl = "https://ai.gateway.lovable.dev/v1/chat/completions";
+          apiKey = LOVABLE_API_KEY;
+          apiModel = modelMapping?.gateway || model || "google/gemini-3-flash-preview";
+          headers = {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+          };
+        }
       } else {
-        // User key for other providers — still use Lovable gateway
+        // No user key — use Lovable AI gateway
         const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
         if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
         apiUrl = "https://ai.gateway.lovable.dev/v1/chat/completions";
@@ -101,17 +123,6 @@ serve(async (req) => {
           "Content-Type": "application/json",
         };
       }
-    } else {
-      // No user key — use Lovable AI gateway
-      const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-      if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
-      apiUrl = "https://ai.gateway.lovable.dev/v1/chat/completions";
-      apiKey = LOVABLE_API_KEY;
-      apiModel = modelMapping?.gateway || model || "google/gemini-3-flash-preview";
-      headers = {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      };
     }
 
     const defaultSystemPrompt = `Você é um agente de IA inteligente e prestativo. Responda sempre em português brasileiro. Seja direto, profissional e use markdown quando apropriado.`;
