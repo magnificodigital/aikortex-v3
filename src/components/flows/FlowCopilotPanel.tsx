@@ -186,7 +186,7 @@ export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, init
         }
       }
 
-      parseAndAddNodes(assistantText);
+      parseAndExecuteCommands(assistantText);
     } catch (e: any) {
       console.error("Copilot chat error:", e);
       setMessages((prev) => [
