@@ -46,13 +46,15 @@ Reply in Portuguese Brazilian. Be direct and use markdown when appropriate.`;
 interface Props {
   onClose: () => void;
   onAddNode?: (nodeType: string) => void;
+  initialPrompt?: string;
 }
 
-export default function FlowCopilotPanel({ onClose, onAddNode }: Props) {
+export default function FlowCopilotPanel({ onClose, onAddNode, initialPrompt }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const didAutoSend = useRef(false);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -74,13 +76,14 @@ export default function FlowCopilotPanel({ onClose, onAddNode }: Props) {
     [onAddNode]
   );
 
-  const handleSend = useCallback(async () => {
-    if (!input.trim() || isStreaming) return;
+  const handleSend = useCallback(async (overrideText?: string) => {
+    const text = overrideText || input;
+    if (!text.trim() || isStreaming) return;
 
-    const userMsg: Message = { id: `u-${Date.now()}`, role: "user", content: input.trim() };
+    const userMsg: Message = { id: `u-${Date.now()}`, role: "user", content: text.trim() };
     const updatedMessages = [...messages, userMsg];
     setMessages(updatedMessages);
-    setInput("");
+    if (!overrideText) setInput("");
     setIsStreaming(true);
 
     // Build API messages
@@ -114,7 +117,6 @@ export default function FlowCopilotPanel({ onClose, onAddNode }: Props) {
       let buffer = "";
       let assistantText = "";
 
-      // Add empty assistant message
       const assistantId = `a-${Date.now()}`;
       setMessages((prev) => [...prev, { id: assistantId, role: "assistant", content: "" }]);
 
@@ -151,7 +153,6 @@ export default function FlowCopilotPanel({ onClose, onAddNode }: Props) {
         }
       }
 
-      // Parse node commands after streaming is done
       parseAndAddNodes(assistantText);
     } catch (e: any) {
       console.error("Copilot chat error:", e);
@@ -163,6 +164,14 @@ export default function FlowCopilotPanel({ onClose, onAddNode }: Props) {
       setIsStreaming(false);
     }
   }, [input, messages, isStreaming, parseAndAddNodes]);
+
+  // Auto-send initial prompt from Home page
+  useEffect(() => {
+    if (initialPrompt && !didAutoSend.current && !isStreaming && messages.length === 0) {
+      didAutoSend.current = true;
+      handleSend(initialPrompt);
+    }
+  }, [initialPrompt, handleSend]);
 
   const handleSuggestion = (text: string) => {
     setInput(text);
@@ -207,7 +216,7 @@ export default function FlowCopilotPanel({ onClose, onAddNode }: Props) {
                 size="icon"
                 variant="ghost"
                 className="absolute bottom-1.5 right-1.5 h-7 w-7"
-                onClick={handleSend}
+                onClick={() => handleSend()}
                 disabled={!input.trim() || isStreaming}
               >
                 <Send className="w-3.5 h-3.5" />
@@ -284,7 +293,7 @@ export default function FlowCopilotPanel({ onClose, onAddNode }: Props) {
                 size="icon"
                 variant="ghost"
                 className="absolute bottom-1 right-1 h-7 w-7"
-                onClick={handleSend}
+                onClick={() => handleSend()}
                 disabled={!input.trim() || isStreaming}
               >
                 <Send className="w-3.5 h-3.5" />

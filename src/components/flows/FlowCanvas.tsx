@@ -89,9 +89,10 @@ interface FlowCanvasProps {
   flows?: SavedFlow[];
   onOpenFlow?: (flow: SavedFlow) => void;
   onNewFlow?: () => void;
+  initialPrompt?: string;
 }
 
-function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave, flows = [], onOpenFlow, onNewFlow }: FlowCanvasProps) {
+function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave, flows = [], onOpenFlow, onNewFlow, initialPrompt }: FlowCanvasProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const startNodes = initialNodes && (initialNodes as Node[]).length > 0
     ? (initialNodes as Node[])
@@ -292,6 +293,7 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
             <FlowCopilotPanel
               onClose={() => setShowLeftPanel(false)}
               onAddNode={handleAddNode}
+              initialPrompt={initialPrompt}
             />
           </div>
         </div>

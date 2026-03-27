@@ -1,4 +1,5 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Workflow, Plus, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,8 @@ import FlowTemplateGallery from "@/components/flows/FlowTemplateGallery";
 import FlowList from "@/components/flows/FlowList";
 
 const AikortexAutomations = () => {
+  const location = useLocation();
+  const [copilotPrompt, setCopilotPrompt] = useState<string | null>(null);
   const [buildingFlow, setBuildingFlow] = useState<{
     name: string;
     nodes?: unknown[];
@@ -33,6 +36,17 @@ const AikortexAutomations = () => {
       return [];
     }
   });
+
+  // Auto-open flow builder when arriving with initialPrompt from Home
+  useEffect(() => {
+    const state = location.state as any;
+    if (state?.initialPrompt && !buildingFlow) {
+      setCopilotPrompt(state.initialPrompt);
+      setBuildingFlow({ name: "Novo Fluxo" });
+      // Clear state to prevent re-triggering
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const persistFlows = useCallback((next: SavedFlow[]) => {
     setFlows(next);
@@ -154,6 +168,7 @@ const AikortexAutomations = () => {
             flows={flows}
             onOpenFlow={handleOpenFlow}
             onNewFlow={handleNewBlank}
+            initialPrompt={copilotPrompt || undefined}
           />
         </div>
       </div>
