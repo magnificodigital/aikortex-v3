@@ -57,6 +57,7 @@ Reply in Portuguese Brazilian. Be direct and use markdown when appropriate.`;
 interface Props {
   onClose: () => void;
   onAddNode?: (nodeType: string) => void;
+  onBuildFlow?: (flowDef: { nodes: { id: string; type: string }[]; edges: { source: string; target: string }[] }) => void;
   initialPrompt?: string;
 }
 
