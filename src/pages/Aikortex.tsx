@@ -159,15 +159,22 @@ const Aikortex = () => {
   const activeChat = chatMode === "setup" ? setupChat : testChat;
   const { messages, sendMessage, isStreaming } = activeChat;
 
-  // Auto-switch right panel tab and auto-fill fields when AI suggests it
+  // Auto-switch right panel tab/section and auto-fill fields when AI suggests it
   useEffect(() => {
     if (messages.length === 0) return;
     const lastMsg = messages[messages.length - 1];
     if (lastMsg.role !== "agent") return;
 
-    // Switch tab
+    // Switch top-level tab
     const tabMatch = lastMsg.text.match(/\[SWITCH_TAB:(connectors|channels|knowledge)\]/);
     if (tabMatch) setRightPanelTab(tabMatch[1]);
+
+    // Switch agent sub-section navigation
+    const navMatch = lastMsg.text.match(/\[SWITCH_NAV:(identidade|objetivo|intencoes|estagios|avancado)\]/);
+    if (navMatch) {
+      setRightPanelTab("agent");
+      setRightPanelSection(navMatch[1]);
+    }
 
     // Auto-fill fields from [SET:field=value] markers
     const setMatches = lastMsg.text.matchAll(/\[SET:(\w+)=([^\]]+)\]/g);
@@ -178,7 +185,7 @@ const Aikortex = () => {
       const validFields: (keyof BusinessContext)[] = [
         "agentName", "companyName", "industry", "mainProduct",
         "targetAudienceDescription", "toneOfVoice", "greetingMessage",
-        "website", "painPoints", "businessHours", "escalationRules",
+        "website", "painPoints", "knowledgeSources", "businessHours", "escalationRules",
       ];
       if (validFields.includes(field)) {
         updates[field] = value as any;
