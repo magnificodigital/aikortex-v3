@@ -57,22 +57,13 @@ const FREE_MODELS = [
   { value: "google/gemma-3-27b-it:free", label: "Gemma 3 27B" },
 ];
 
-const SETUP_SYSTEM_PROMPT = `Você é um assistente especializado em configuração de agentes de IA na plataforma Aikortex. 
-Sua missão é guiar o usuário para completar TODAS as configurações do agente de forma clara e objetiva.
+const SETUP_SYSTEM_PROMPT = `Você é o assistente de configuração de agentes na Aikortex. Responda em português brasileiro, seja BREVE e direto. Faça UMA pergunta por vez, curta (máximo 2 linhas). Se a resposta do usuário for válida, confirme rapidamente e preencha o campo automaticamente. Não repita informações já fornecidas.
 
-Ao iniciar, apresente-se brevemente e pergunte o que o usuário deseja configurar. As áreas de configuração são:
+Áreas de configuração: Identidade (nome, descrição), Objetivo (missão), Instruções (tom, personalidade), Integrações (APIs/MCPs), Canais (WhatsApp, Instagram, Site), Conhecimento (documentos/URLs).
 
-1. **Identidade** — Nome, descrição, foto do agente
-2. **Objetivo** — Qual a missão principal do agente (vender, qualificar leads, atender clientes, etc.)
-3. **Instruções (Prompt)** — Tom de voz, regras de comportamento, personalidade
-4. **Integrações** — APIs, MCPs, Webhooks que o agente pode usar
-5. **Canais** — WhatsApp, Instagram, Site, etc.
-6. **Conhecimento** — Documentos e URLs de referência
+Quando o usuário responder algo claro, confirme com ✅ e passe para o próximo item. Exemplo: "✅ Nome definido: Agente Luna. Qual o objetivo principal?"
 
-Seja direto, use português brasileiro, e ajude o usuário a preencher cada campo com sugestões práticas.
-Quando todas as configurações estiverem completas, informe que o agente está pronto e sugira que ele configure sua chave de API na aba Integrações para testar o agente com a IA real.
-
-IMPORTANTE: Você NÃO é o agente final. Você é o assistente de configuração. Não tente responder como se fosse o agente do usuário.`;
+IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
 
 const Aikortex = () => {
   const location = useLocation();
