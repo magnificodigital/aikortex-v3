@@ -1,4 +1,5 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Workflow, Plus, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
