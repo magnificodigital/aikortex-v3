@@ -29,6 +29,25 @@ interface ChatAreaProps {
   onSend: (text: string) => void;
 }
 
+const AiToggleButton = () => {
+  const [aiActive, setAiActive] = useState(true);
+  return (
+    <Button
+      size="icon"
+      variant="ghost"
+      className="h-7 w-7 relative"
+      onClick={() => setAiActive(!aiActive)}
+      title={aiActive ? "IA ativada – clique para modo humano" : "Modo humano – clique para ativar IA"}
+    >
+      <Bot className={cn("w-4 h-4 transition-colors", aiActive ? "text-emerald-500" : "text-foreground")} />
+      <span className={cn(
+        "absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full border border-card",
+        aiActive ? "bg-emerald-500" : "bg-muted-foreground"
+      )} />
+    </Button>
+  );
+};
+
 const ChatArea = ({ conversation, messages, onSend }: ChatAreaProps) => {
   const [input, setInput] = useState("");
   const [activeTab, setActiveTab] = useState<"reply" | "note">("reply");
