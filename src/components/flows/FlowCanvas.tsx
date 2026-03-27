@@ -349,6 +349,7 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
             <FlowCopilotPanel
               onClose={() => setShowLeftPanel(false)}
               onAddNode={handleAddNode}
+              onBuildFlow={handleBuildFlow}
               initialPrompt={initialPrompt}
             />
           </div>
