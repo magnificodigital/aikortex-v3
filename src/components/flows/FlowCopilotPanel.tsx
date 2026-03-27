@@ -208,7 +208,7 @@ export default function FlowCopilotPanel({ onClose, onAddNode, initialPrompt }: 
                     handleSend();
                   }
                 }}
-                placeholder="Build an AI agent..."
+                placeholder="Descreva o que quer construir..."
                 className="min-h-[60px] max-h-[120px] text-xs resize-none pr-10"
                 rows={2}
               />
