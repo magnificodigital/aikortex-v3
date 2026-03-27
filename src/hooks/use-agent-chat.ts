@@ -36,7 +36,7 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
     setIsStreaming(true);
 
     // Build messages array for API (convert our format to OpenAI format)
-    const apiMessages = [...messages, userMsg].map(m => ({
+    const apiMessages: Array<{role: string; content: string}> = [...messages, userMsg].map(m => ({
       role: m.role === "agent" ? "assistant" : m.role,
       content: m.text,
     }));
