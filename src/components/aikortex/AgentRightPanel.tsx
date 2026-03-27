@@ -739,7 +739,7 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
 
       {/* Integration Config Dialog */}
       <Dialog open={!!connectorDialog} onOpenChange={(open) => { if (!open) { setConnectorDialog(null); setKeyInput(""); } }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center gap-3">
               {connectorDialog && (
@@ -761,7 +761,8 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
             </div>
           </DialogHeader>
 
-          <div className="space-y-4 pt-2">
+          <div className="space-y-5 pt-2">
+            {/* API Key */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">API Key</label>
               <div className="relative">
@@ -799,7 +800,41 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
               </p>
             </div>
 
-            <div className="flex items-center justify-between pt-2">
+            {/* Model Selection — only for LLM providers */}
+            {connectorDialog && LLM_PROVIDER_MODELS[connectorDialog.label] && (
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-foreground">Modelo padrão</label>
+                <p className="text-[11px] text-muted-foreground -mt-1">Escolha o modelo que será usado pelo agente.</p>
+                <RadioGroup value={selectedDialogModel} onValueChange={setSelectedDialogModel} className="space-y-2">
+                  {LLM_PROVIDER_MODELS[connectorDialog.label].models.map((m) => (
+                    <div key={m.value} className={`flex items-start gap-3 rounded-lg border p-3 transition-colors cursor-pointer ${selectedDialogModel === m.value ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"}`} onClick={() => setSelectedDialogModel(m.value)}>
+                      <RadioGroupItem value={m.value} id={m.value} className="mt-0.5" />
+                      <Label htmlFor={m.value} className="cursor-pointer flex-1">
+                        <span className="text-sm font-medium text-foreground">{m.label}</span>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">{m.desc}</p>
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </div>
+            )}
+
+            {/* Capabilities — only for LLM providers */}
+            {connectorDialog && LLM_PROVIDER_MODELS[connectorDialog.label] && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Recursos disponíveis</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {LLM_PROVIDER_MODELS[connectorDialog.label].capabilities.map((cap) => (
+                    <span key={cap} className="text-[11px] px-2 py-1 rounded-full bg-muted text-muted-foreground border border-border">
+                      {cap}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex items-center justify-between pt-2 border-t border-border">
               {connectorKeys[connectorDialog?.label || ""]?.configured ? (
                 <Button variant="destructive" size="sm" className="text-xs gap-1.5" onClick={handleDisconnect}>
                   <Trash2 className="w-3 h-3" /> Desconectar
