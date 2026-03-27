@@ -155,12 +155,23 @@ const Aikortex = () => {
 
   const hasApiKey = !!keys[currentProvider]?.configured;
 
-  // Auto-switch to test mode when API key becomes available
+  // Auto-switch setupModel to user's best model when keys become available
   useEffect(() => {
-    if (hasApiKey && chatMode === "setup" && step === "configure") {
-      // Don't auto-switch, let user decide
+    if (keysLoading) return;
+    if (availableModels.length > 0) {
+      // If current setupModel is a free model, switch to user's best model
+      const isFreeModel = FREE_MODELS.some(m => m.value === setupModel);
+      if (isFreeModel) {
+        setSetupModel(availableModels[0].value);
+      }
+    } else {
+      // No user keys, ensure we're on a free model
+      const isFreeModel = FREE_MODELS.some(m => m.value === setupModel);
+      if (!isFreeModel) {
+        setSetupModel(FREE_MODELS[0].value);
+      }
     }
-  }, [hasApiKey, chatMode, step]);
+  }, [availableModels, keysLoading]);
 
   useEffect(() => {
     if (rightPanelTab !== "connectors") {

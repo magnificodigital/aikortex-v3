@@ -97,6 +97,22 @@ const AgentDetail = () => {
     }
   }, [rightPanelTab, refetchKeys]);
 
+  // Auto-switch setupModel to user's best model when keys become available
+  useEffect(() => {
+    if (keysLoading) return;
+    if (availableModels.length > 0) {
+      const isFreeModel = FREE_MODELS.some(m => m.value === setupModel);
+      if (isFreeModel) {
+        setSetupModel(availableModels[0].value);
+      }
+    } else {
+      const isFreeModel = FREE_MODELS.some(m => m.value === setupModel);
+      if (!isFreeModel) {
+        setSetupModel(FREE_MODELS[0].value);
+      }
+    }
+  }, [availableModels, keysLoading]);
+
   useEffect(() => {
     if (chatMode !== "test" || keysLoading) return;
     const nextModel = getBestAvailableModel(agentModel, keys);
