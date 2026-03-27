@@ -216,7 +216,7 @@ export default function FlowCopilotPanel({ onClose, onAddNode, initialPrompt }: 
                 size="icon"
                 variant="ghost"
                 className="absolute bottom-1.5 right-1.5 h-7 w-7"
-                onClick={handleSend}
+                onClick={() => handleSend()}
                 disabled={!input.trim() || isStreaming}
               >
                 <Send className="w-3.5 h-3.5" />
