@@ -62,16 +62,18 @@ serve(async (req) => {
     let apiModel: string;
     let headers: Record<string, string>;
 
-    // If useGateway is true, skip user key lookup and go straight to Lovable AI gateway
+    // If useGateway is true, use OpenRouter free model (Step 3.5 Flash)
     if (useGateway) {
-      const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-      if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
-      apiUrl = "https://ai.gateway.lovable.dev/v1/chat/completions";
-      apiKey = LOVABLE_API_KEY;
-      apiModel = "google/gemini-3-flash-preview";
+      const OPENROUTER_KEY = Deno.env.get("OPENROUTER_API_KEY");
+      if (!OPENROUTER_KEY) throw new Error("OPENROUTER_API_KEY is not configured");
+      apiUrl = "https://openrouter.ai/api/v1/chat/completions";
+      apiKey = OPENROUTER_KEY;
+      apiModel = "stepfun/step-3.5-flash:free";
       headers = {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
+        "HTTP-Referer": "https://aikortex.lovable.app",
+        "X-OpenRouter-Title": "Aikortex",
       };
     } else {
       // Try user's own API key first
@@ -139,7 +141,7 @@ serve(async (req) => {
       stream: true,
     };
 
-    console.log(`Using provider=${selectedProvider}, model=${apiModel}, hasUserKey=${!!keyData?.api_key}`);
+    console.log(`Using provider=${selectedProvider}, model=${apiModel}, useGateway=${useGateway}`);
 
     const response = await fetch(apiUrl, {
       method: "POST",

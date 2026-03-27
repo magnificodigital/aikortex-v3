@@ -126,6 +126,7 @@ export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, init
         throw new Error("Você precisa estar logado para usar o Copilot.");
       }
 
+      // Use OpenRouter free model via edge function
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
@@ -134,7 +135,8 @@ export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, init
         },
         body: JSON.stringify({
           messages: apiMessages,
-          model: "gemini-2.5-flash",
+          model: "stepfun/step-3.5-flash:free",
+          useGateway: true,
         }),
       });
 
