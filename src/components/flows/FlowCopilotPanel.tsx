@@ -7,8 +7,6 @@ import { NODE_TEMPLATES } from "@/types/flow-builder";
 import { AGENT_TEMPLATES } from "@/types/agent-builder";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
-import { AGENT_TEMPLATES } from "@/types/agent-builder";
-import ReactMarkdown from "react-markdown";
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-chat`;
 
