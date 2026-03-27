@@ -114,14 +114,17 @@ serve(async (req) => {
       };
     }
 
-    const systemPrompt = `Você é um agente de IA inteligente e prestativo. Responda sempre em português brasileiro. Seja direto, profissional e use markdown quando apropriado.`;
+    const defaultSystemPrompt = `Você é um agente de IA inteligente e prestativo. Responda sempre em português brasileiro. Seja direto, profissional e use markdown quando apropriado.`;
+
+    // If messages already contain a system prompt, use it; otherwise prepend default
+    const hasSystemPrompt = messages.some((m: { role: string }) => m.role === "system");
+    const finalMessages = hasSystemPrompt
+      ? messages
+      : [{ role: "system", content: defaultSystemPrompt }, ...messages];
 
     const body: Record<string, unknown> = {
       model: apiModel,
-      messages: [
-        { role: "system", content: systemPrompt },
-        ...messages,
-      ],
+      messages: finalMessages,
       stream: true,
     };
 
