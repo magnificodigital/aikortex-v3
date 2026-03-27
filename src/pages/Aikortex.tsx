@@ -55,6 +55,7 @@ const FREE_MODELS = [
   { value: "stepfun/step-3.5-flash:free", label: "Step 3.5 Flash" },
   { value: "deepseek/deepseek-chat-v3-0324:free", label: "DeepSeek V3" },
   { value: "google/gemma-3-27b-it:free", label: "Gemma 3 27B" },
+  { value: "minimax/minimax-m1:free", label: "MiniMax M1" },
 ];
 
 const SETUP_SYSTEM_PROMPT = `Você é o assistente de configuração de agentes na Aikortex. Responda em português brasileiro, seja BREVE e direto. Faça UMA pergunta por vez, curta (máximo 2 linhas). Se a resposta do usuário for válida, confirme rapidamente e preencha o campo automaticamente. Não repita informações já fornecidas.
