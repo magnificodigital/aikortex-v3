@@ -196,7 +196,7 @@ export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, init
     } finally {
       setIsStreaming(false);
     }
-  }, [input, messages, isStreaming, parseAndAddNodes]);
+  }, [input, messages, isStreaming, parseAndExecuteCommands]);
 
   // Auto-send initial prompt from Home page
   useEffect(() => {
