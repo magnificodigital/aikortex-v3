@@ -231,13 +231,17 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
 
   return (
     <div className="flex h-full">
+      {/* Workspace sidebar — Sim Studio style */}
+      <FlowWorkspaceSidebar
+        flows={flows}
+        activeFlowId={flowId}
+        onOpenFlow={(flow) => onOpenFlow?.(flow)}
+        onNewFlow={() => onNewFlow?.()}
+      />
+
       {/* Canvas area */}
-      <div
-        className="flex-1 relative"
-        ref={reactFlowWrapper}
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-      >
+      <div className="flex-1 relative flex flex-col">
+        <div className="flex-1 relative" ref={reactFlowWrapper} onDrop={handleDrop} onDragOver={handleDragOver}>
         {/* Top right controls */}
         <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
           <div className="flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-border rounded-lg px-1 py-1">
