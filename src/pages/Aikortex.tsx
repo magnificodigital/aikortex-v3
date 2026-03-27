@@ -178,9 +178,18 @@ const Aikortex = () => {
 
   const agentNameForChat = selectedAgent?.name || "Agente IA";
 
+  // Use user's own LLM when they have an API key configured; otherwise fall back to free models
+  const setupHasUserKey = availableModels.length > 0;
+  const setupChatOptions = useMemo(() => {
+    if (setupHasUserKey) {
+      return { model: setupModel, systemPrompt: SETUP_SYSTEM_PROMPT };
+    }
+    return { useGateway: true, gatewayModel: setupModel, systemPrompt: SETUP_SYSTEM_PROMPT };
+  }, [setupHasUserKey, setupModel]);
+
   const setupChat = useAgentChat(
     [{ role: "agent", text: `👋 Vou configurar o **${agentNameForChat}**. Qual nome quer dar ao agente?` }],
-    { useGateway: true, gatewayModel: setupModel, systemPrompt: SETUP_SYSTEM_PROMPT }
+    setupChatOptions
   );
 
   const testChat = useAgentChat(
