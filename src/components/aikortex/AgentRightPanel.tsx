@@ -166,6 +166,7 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
   const [keyInput, setKeyInput] = useState("");
   const [showKey, setShowKey] = useState(false);
   const [savingKey, setSavingKey] = useState(false);
+  const [selectedDialogModel, setSelectedDialogModel] = useState("");
 
   // Load existing keys from DB on mount
   useEffect(() => {
