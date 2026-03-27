@@ -16,10 +16,10 @@ interface Message {
 }
 
 const SUGGESTIONS = [
-  "Build a lead qualification flow",
-  "Add an Agent block to classify intents",
-  "How to connect with WhatsApp?",
-  "Optimize my current workflow",
+  "Crie um fluxo de qualificação de leads",
+  "Adicione um bloco de Agente para classificar intenções",
+  "Como conectar com WhatsApp?",
+  "Otimize meu fluxo atual",
 ];
 
 // Build a system prompt that knows about available nodes and agents
@@ -184,7 +184,7 @@ export default function FlowCopilotPanel({ onClose, onAddNode, initialPrompt }: 
       {isEmpty ? (
         <div className="flex-1 flex flex-col">
           <div className="px-4 pt-4 pb-2">
-            <h3 className="text-sm font-semibold text-foreground">New Chat</h3>
+            <h3 className="text-sm font-semibold text-foreground">Novo Chat</h3>
           </div>
           <div className="flex-1 flex flex-col justify-end px-3 pb-3">
             <div className="space-y-1.5 mb-3">
@@ -208,7 +208,7 @@ export default function FlowCopilotPanel({ onClose, onAddNode, initialPrompt }: 
                     handleSend();
                   }
                 }}
-                placeholder="Build an AI agent..."
+                placeholder="Descreva o que quer construir..."
                 className="min-h-[60px] max-h-[120px] text-xs resize-none pr-10"
                 rows={2}
               />

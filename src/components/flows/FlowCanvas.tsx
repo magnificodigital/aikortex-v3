@@ -61,7 +61,7 @@ const defaultStartNode: Node = {
     label: "Chat",
     category: "trigger",
     icon: "💬",
-    description: "Starts when a message is received",
+    description: "Inicia quando uma mensagem é recebida",
     config: { channel: "any" },
     color: "#22c55e",
     nodeType: "trigger_chat",
