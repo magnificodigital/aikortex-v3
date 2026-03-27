@@ -132,7 +132,16 @@ const Home = () => {
           {/* Text area */}
           <textarea
             value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              setPrompt(val);
+              if (val.trim().length > 3) {
+                const detected = detectCategory(val);
+                if (detected !== activeCreationTab) {
+                  setActiveCreationTab(detected);
+                }
+              }
+            }}
             placeholder="Crie um app que..."
             className="w-full bg-transparent border-none outline-none resize-none text-sm text-foreground placeholder:text-muted-foreground px-4 py-3 min-h-[80px]"
           />
