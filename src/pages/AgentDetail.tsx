@@ -76,8 +76,8 @@ const AgentDetail = () => {
   }, [rightPanelTab, refetchKeys]);
 
   const setupChat = useAgentChat(
-    [{ role: "agent", text: `Olá! 👋 Sou o assistente de configuração do **${agent.name}**. Vou te ajudar a deixar tudo pronto!\n\nO que gostaria de configurar primeiro? Posso ajudar com identidade, objetivo, instruções, integrações, canais ou base de conhecimento.` }],
-    { useGateway: true, systemPrompt: SETUP_SYSTEM_PROMPT }
+    [{ role: "agent", text: `Olá! 👋 Sou o assistente de configuração do **${agent.name}**. O que gostaria de configurar?` }],
+    { model: "gemini-2.5-flash", systemPrompt: SETUP_SYSTEM_PROMPT }
   );
 
   const testChat = useAgentChat(
