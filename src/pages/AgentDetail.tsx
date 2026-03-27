@@ -105,9 +105,18 @@ const AgentDetail = () => {
     }
   }, [agentModel, chatMode, keys, keysLoading]);
 
+  // Use user's own LLM when they have an API key configured; otherwise fall back to free models
+  const setupHasUserKey = availableModels.length > 0;
+  const setupChatOptions = useMemo(() => {
+    if (setupHasUserKey) {
+      return { model: setupModel, systemPrompt: SETUP_SYSTEM_PROMPT };
+    }
+    return { useGateway: true, gatewayModel: setupModel, systemPrompt: SETUP_SYSTEM_PROMPT };
+  }, [setupHasUserKey, setupModel]);
+
   const setupChat = useAgentChat(
     [{ role: "agent", text: `Olá! 👋 Sou o assistente de configuração do **${agent.name}**. O que gostaria de configurar?` }],
-    { useGateway: true, gatewayModel: setupModel, systemPrompt: SETUP_SYSTEM_PROMPT }
+    setupChatOptions
   );
 
   const testChat = useAgentChat(
