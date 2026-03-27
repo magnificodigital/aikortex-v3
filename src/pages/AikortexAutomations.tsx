@@ -12,6 +12,8 @@ import FlowTemplateGallery from "@/components/flows/FlowTemplateGallery";
 import FlowList from "@/components/flows/FlowList";
 
 const AikortexAutomations = () => {
+  const location = useLocation();
+  const [copilotPrompt, setCopilotPrompt] = useState<string | null>(null);
   const [buildingFlow, setBuildingFlow] = useState<{
     name: string;
     nodes?: unknown[];

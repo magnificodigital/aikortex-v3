@@ -45,7 +45,7 @@ const Home = () => {
     if (activeCreationTab === "agentes" || AGENT_KEYWORDS.some((k) => text.includes(k))) {
       navigate("/aikortex/agents", { state: { initialPrompt: prompt.trim() } });
     } else if (activeCreationTab === "flows" || FLOW_KEYWORDS.some((k) => text.includes(k))) {
-      navigate("/aikortex", { state: { initialPrompt: prompt.trim(), tab: "flows" } });
+      navigate("/aikortex/automations", { state: { initialPrompt: prompt.trim() } });
     } else {
       navigate("/app-builder", { state: { initialPrompt: prompt.trim() } });
     }
