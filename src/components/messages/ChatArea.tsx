@@ -97,9 +97,7 @@ const ChatArea = ({ conversation, messages, onSend }: ChatAreaProps) => {
           <Button variant="ghost" size="icon" className="h-7 w-7">
             <MoreVertical className="w-3.5 h-3.5" />
           </Button>
-          <Button size="sm" variant="outline" className="h-7 text-xs gap-1">
-            Resolver <ChevronDown className="w-3 h-3" />
-          </Button>
+          <AiToggleButton />
         </div>
       </div>
 
