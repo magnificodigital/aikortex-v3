@@ -7,12 +7,23 @@ const corsHeaders = {
 };
 
 // Map short UI model names to full gateway/API model names
+// OpenAI native model IDs: https://developers.openai.com/api/docs/models
 const MODEL_MAP: Record<string, { gateway: string; openai?: string }> = {
+  // Gemini models
   "gemini-2.5-flash": { gateway: "google/gemini-2.5-flash" },
   "gemini-2.5-pro": { gateway: "google/gemini-2.5-pro" },
   "gemini-3-flash-preview": { gateway: "google/gemini-3-flash-preview" },
-  "gpt-5": { gateway: "openai/gpt-5", openai: "gpt-4o" },
-  "gpt-5-mini": { gateway: "openai/gpt-5-mini", openai: "gpt-4o-mini" },
+  // OpenAI models — gateway uses openai/ prefix, native API uses model ID directly
+  "gpt-5": { gateway: "openai/gpt-5", openai: "gpt-5" },
+  "gpt-5-mini": { gateway: "openai/gpt-5-mini", openai: "gpt-5-mini" },
+  "gpt-5-nano": { gateway: "openai/gpt-5-nano", openai: "gpt-5-nano" },
+  "gpt-5.2": { gateway: "openai/gpt-5.2", openai: "gpt-5.2" },
+  "gpt-5.4": { gateway: "openai/gpt-5", openai: "gpt-5.4" },
+  "gpt-5.4-mini": { gateway: "openai/gpt-5-mini", openai: "gpt-5.4-mini" },
+  "gpt-5.4-nano": { gateway: "openai/gpt-5-nano", openai: "gpt-5.4-nano" },
+  // Legacy aliases
+  "gpt-4o": { gateway: "openai/gpt-5", openai: "gpt-4o" },
+  "gpt-4o-mini": { gateway: "openai/gpt-5-mini", openai: "gpt-4o-mini" },
 };
 
 serve(async (req) => {
@@ -64,7 +75,7 @@ serve(async (req) => {
         apiUrl = "https://api.openai.com/v1/chat/completions";
         apiKey = keyData.api_key;
         // Use OpenAI-native model name
-        apiModel = modelMapping?.openai || model || "gpt-4o-mini";
+        apiModel = modelMapping?.openai || model || "gpt-5.4-mini";
         headers = {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",

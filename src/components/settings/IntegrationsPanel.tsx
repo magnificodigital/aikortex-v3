@@ -7,7 +7,7 @@ import { Check, Eye, EyeOff, ExternalLink, KeyRound, Blocks, Plus, Settings, Tra
 import { toast } from "sonner";
 
 const INTEGRATIONS = [
-  { label: "OpenAI", desc: "Modelos GPT para geração de texto e análise.", logo: "https://cdn.simpleicons.org/openai" },
+  { label: "OpenAI", desc: "Modelos GPT-5.4 para geração de texto, visão e análise.", logo: "https://cdn.simpleicons.org/openai" },
   { label: "Anthropic", desc: "Modelos Claude para raciocínio avançado.", logo: "https://cdn.simpleicons.org/anthropic" },
   { label: "Gemini", desc: "IA multimodal do Google.", logo: "https://cdn.simpleicons.org/googlegemini" },
   { label: "ElevenLabs", desc: "Geração de voz e text-to-speech.", logo: "https://cdn.simpleicons.org/elevenlabs" },
