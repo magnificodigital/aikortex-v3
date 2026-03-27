@@ -132,10 +132,10 @@ const Aikortex = () => {
     setDidAutoRoute(true);
 
     const text = state.initialPrompt.toLowerCase();
-    const SDR_KW = ["sdr", "qualificação", "qualificacao", "inbound"];
-    const BDR_KW = ["bdr", "prospecção", "prospeccao", "outbound"];
-    const SAC_KW = ["sac", "suporte", "atendimento", "customer"];
-    const CS_KW = ["customer success", "cs ", "pós-venda", "onboarding", "retenção"];
+    const SDR_KW = ["sdr", "qualificação", "qualificacao", "qualificador", "qualificar", "inbound", "triagem", "filtrar lead"];
+    const BDR_KW = ["bdr", "prospecção", "prospeccao", "outbound", "captura de lead", "captação", "captacao", "gerar lead", "cold call"];
+    const SAC_KW = ["sac", "suporte", "atendimento", "customer service", "help desk", "chamado", "reclamação", "reclamacao"];
+    const CS_KW = ["customer success", "cs ", "pós-venda", "pos-venda", "onboarding", "retenção", "retencao", "churn"];
 
     let agentId = "custom-1";
     let agentType: "SDR" | "BDR" | "SAC" | "CS" | "Custom" = "Custom";
