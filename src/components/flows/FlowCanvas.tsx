@@ -25,10 +25,12 @@ import FlowNodeConfig from "./FlowNodeConfig";
 import FlowCopilotPanel from "./FlowCopilotPanel";
 import FlowNodePalette from "./FlowNodePalette";
 import FlowBottomToolbar from "./FlowBottomToolbar";
+import FlowWorkspaceSidebar from "./FlowWorkspaceSidebar";
 import { Button } from "@/components/ui/button";
 import { Save, Play, Undo2, Redo2, MoreHorizontal, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import type { SavedFlow } from "@/types/flow-builder";
 
 const nodeTypes: NodeTypes = {
   flowNode: FlowNode,
