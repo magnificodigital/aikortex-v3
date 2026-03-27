@@ -1,8 +1,13 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Bot, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { NODE_TEMPLATES } from "@/types/flow-builder";
+import { AGENT_TEMPLATES } from "@/types/agent-builder";
+import ReactMarkdown from "react-markdown";
+
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-chat`;
 
 interface Message {
   id: string;
@@ -17,6 +22,27 @@ const SUGGESTIONS = [
   "Otimize meu fluxo atual",
 ];
 
+// Build a system prompt that knows about available nodes and agents
+const nodeList = NODE_TEMPLATES.map((n) => `- ${n.type}: ${n.label} (${n.category})`).join("\n");
+const agentList = AGENT_TEMPLATES.map((a) => `- ${a.id}: ${a.name} (${a.type}) — ${a.objective}`).join("\n");
+
+const SYSTEM_PROMPT = `Você é o Copilot do Flow Builder do Aikortex. Ajude o usuário a construir fluxos de automação.
+
+Blocos disponíveis:
+${nodeList}
+
+Agentes IA disponíveis:
+${agentList}
+
+Quando o usuário pedir para adicionar um bloco, inclua na resposta uma linha especial no formato:
+[ADD_NODE:tipo_do_bloco]
+
+Por exemplo, se pedirem para adicionar um gatilho de mensagem:
+[ADD_NODE:trigger_message]
+
+Você pode adicionar múltiplos blocos em uma resposta. Sempre explique o que cada bloco faz.
+Responda sempre em português brasileiro. Seja direto e use markdown quando apropriado.`;
+
 interface Props {
   onClose: () => void;
   onAddNode?: (nodeType: string) => void;
@@ -25,36 +51,119 @@ interface Props {
 export default function FlowCopilotPanel({ onClose, onAddNode }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
-  const handleSend = async () => {
-    if (!input.trim() || loading) return;
-    const userMsg: Message = { id: `u-${Date.now()}`, role: "user", content: input.trim() };
-    setMessages((prev) => [...prev, userMsg]);
-    setInput("");
-    setLoading(true);
-
-    setTimeout(() => {
-      const { text, nodeType } = getSimulatedResponse(userMsg.content);
-      const assistantMsg: Message = {
-        id: `a-${Date.now()}`,
-        role: "assistant",
-        content: text,
-      };
-      setMessages((prev) => [...prev, assistantMsg]);
-      setLoading(false);
-
-      // Auto-add a node if the response suggests one
-      if (nodeType && onAddNode) {
-        onAddNode(nodeType);
+  // Parse [ADD_NODE:type] commands from AI response
+  const parseAndAddNodes = useCallback(
+    (text: string) => {
+      if (!onAddNode) return;
+      const regex = /\[ADD_NODE:(\w+)\]/g;
+      let match;
+      while ((match = regex.exec(text)) !== null) {
+        const nodeType = match[1];
+        if (NODE_TEMPLATES.some((t) => t.type === nodeType)) {
+          onAddNode(nodeType);
+        }
       }
-    }, 1200);
-  };
+    },
+    [onAddNode]
+  );
+
+  const handleSend = useCallback(async () => {
+    if (!input.trim() || isStreaming) return;
+
+    const userMsg: Message = { id: `u-${Date.now()}`, role: "user", content: input.trim() };
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
+    setInput("");
+    setIsStreaming(true);
+
+    // Build API messages
+    const apiMessages = [
+      { role: "system", content: SYSTEM_PROMPT },
+      ...updatedMessages.map((m) => ({ role: m.role, content: m.content })),
+    ];
+
+    try {
+      const resp = await fetch(CHAT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
+          messages: apiMessages,
+          provider: "openai",
+          model: "gemini-2.5-flash",
+        }),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({ error: "Erro desconhecido" }));
+        throw new Error(err.error || `Erro ${resp.status}`);
+      }
+
+      if (!resp.body) throw new Error("Sem resposta do servidor");
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let assistantText = "";
+
+      // Add empty assistant message
+      const assistantId = `a-${Date.now()}`;
+      setMessages((prev) => [...prev, { id: assistantId, role: "assistant", content: "" }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = buffer.indexOf("\n")) !== -1) {
+          let line = buffer.slice(0, newlineIndex);
+          buffer = buffer.slice(newlineIndex + 1);
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (!line.startsWith("data: ")) continue;
+
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") break;
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              assistantText += content;
+              const finalText = assistantText;
+              setMessages((prev) => {
+                const arr = [...prev];
+                arr[arr.length - 1] = { ...arr[arr.length - 1], content: finalText };
+                return arr;
+              });
+            }
+          } catch {
+            // partial JSON, skip
+          }
+        }
+      }
+
+      // Parse node commands after streaming is done
+      parseAndAddNodes(assistantText);
+    } catch (e: any) {
+      console.error("Copilot chat error:", e);
+      setMessages((prev) => [
+        ...prev.filter((m) => m.content !== ""),
+        { id: `e-${Date.now()}`, role: "assistant", content: `⚠️ ${e.message || "Erro ao conectar com a IA."}` },
+      ]);
+    } finally {
+      setIsStreaming(false);
+    }
+  }, [input, messages, isStreaming, parseAndAddNodes]);
 
   const handleSuggestion = (text: string) => {
     setInput(text);
@@ -65,13 +174,11 @@ export default function FlowCopilotPanel({ onClose, onAddNode }: Props) {
   return (
     <div className="flex flex-col h-full">
       {isEmpty ? (
-        /* Empty state — "New Chat" style */
         <div className="flex-1 flex flex-col">
           <div className="px-4 pt-4 pb-2">
             <h3 className="text-sm font-semibold text-foreground">New Chat</h3>
           </div>
           <div className="flex-1 flex flex-col justify-end px-3 pb-3">
-            {/* Suggestions */}
             <div className="space-y-1.5 mb-3">
               {SUGGESTIONS.map((s) => (
                 <button
@@ -83,7 +190,6 @@ export default function FlowCopilotPanel({ onClose, onAddNode }: Props) {
                 </button>
               ))}
             </div>
-            {/* Input */}
             <div className="relative">
               <Textarea
                 value={input}
@@ -103,7 +209,7 @@ export default function FlowCopilotPanel({ onClose, onAddNode }: Props) {
                 variant="ghost"
                 className="absolute bottom-1.5 right-1.5 h-7 w-7"
                 onClick={handleSend}
-                disabled={!input.trim() || loading}
+                disabled={!input.trim() || isStreaming}
               >
                 <Send className="w-3.5 h-3.5" />
               </Button>
@@ -111,7 +217,6 @@ export default function FlowCopilotPanel({ onClose, onAddNode }: Props) {
           </div>
         </div>
       ) : (
-        /* Chat mode */
         <>
           <div className="flex-1 overflow-y-auto px-3 py-3" ref={scrollRef}>
             <div className="space-y-3">
@@ -136,11 +241,19 @@ export default function FlowCopilotPanel({ onClose, onAddNode }: Props) {
                         : "bg-muted text-foreground"
                     )}
                   >
-                    {msg.content}
+                    {msg.role === "assistant" ? (
+                      <div className="prose prose-xs prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                        <ReactMarkdown>
+                          {msg.content.replace(/\[ADD_NODE:\w+\]/g, "").trim()}
+                        </ReactMarkdown>
+                      </div>
+                    ) : (
+                      msg.content
+                    )}
                   </div>
                 </div>
               ))}
-              {loading && (
+              {isStreaming && messages[messages.length - 1]?.content === "" && (
                 <div className="flex gap-2">
                   <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                     <Bot className="w-3.5 h-3.5 text-primary animate-pulse" />
@@ -173,7 +286,7 @@ export default function FlowCopilotPanel({ onClose, onAddNode }: Props) {
                 variant="ghost"
                 className="absolute bottom-1 right-1 h-7 w-7"
                 onClick={handleSend}
-                disabled={!input.trim() || loading}
+                disabled={!input.trim() || isStreaming}
               >
                 <Send className="w-3.5 h-3.5" />
               </Button>
@@ -183,30 +296,4 @@ export default function FlowCopilotPanel({ onClose, onAddNode }: Props) {
       )}
     </div>
   );
-}
-
-function getSimulatedResponse(input: string): { text: string; nodeType?: string } {
-  const lower = input.toLowerCase();
-  if (lower.includes("qualificação") || lower.includes("lead"))
-    return {
-      text: "Para criar um fluxo de qualificação de leads, sugiro começar com um gatilho de 'Mensagem recebida', seguido de blocos de captura de dados (nome, email), um Agente IA para qualificar, e uma condição para direcionar leads quentes ao CRM. Adicionei um bloco de gatilho para começar!",
-      nodeType: "trigger_message",
-    };
-  if (lower.includes("whatsapp"))
-    return {
-      text: "Para conectar com WhatsApp, adicione um bloco de integração 'WhatsApp' ao seu fluxo. Você precisará configurar o template de mensagem e o número de telefone de destino. Adicionei o bloco para você!",
-      nodeType: "integration_whatsapp",
-    };
-  if (lower.includes("ia") || lower.includes("agente") || lower.includes("intenção"))
-    return {
-      text: "O bloco 'Detectar Intenção' usa IA para classificar as mensagens dos usuários em categorias como dúvida, reclamação ou elogio. Adicionei o bloco ao canvas!",
-      nodeType: "agent_intent",
-    };
-  if (lower.includes("otimiz"))
-    return {
-      text: "Para otimizar seu fluxo, considere: 1) Adicionar tratamento de erros com blocos de condição 2) Inserir delays estratégicos 3) Usar análise de sentimento antes de escalar para humano 4) Implementar testes A/B.",
-    };
-  return {
-    text: "Entendi! Posso ajudar com isso. Para implementar, sugiro usar uma combinação de blocos de gatilho, ações e condições. Quer que eu detalhe o passo a passo ou prefere que eu adicione blocos automaticamente ao canvas?",
-  };
 }
