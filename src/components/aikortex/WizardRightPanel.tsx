@@ -219,6 +219,8 @@ const WizardRightPanel = ({
     const existing = connectorKeys[integration.label];
     setKeyInput(existing?.configured ? existing.key : "");
     setShowKey(false);
+    const providerModels = LLM_PROVIDER_MODELS[integration.label];
+    setSelectedDialogModel(providerModels?.models[0]?.value || "");
     setConnectorDialog(integration);
   };
 
