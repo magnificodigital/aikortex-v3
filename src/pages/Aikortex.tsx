@@ -64,6 +64,12 @@ const SETUP_SYSTEM_PROMPT = `Você é o assistente de configuração de agentes 
 
 Quando o usuário responder algo claro, confirme com ✅ e passe para o próximo item. Exemplo: "✅ Nome definido: Agente Luna. Qual o objetivo principal?"
 
+REGRA IMPORTANTE sobre Integrações, Canais e Arquivos/Conhecimento:
+- Quando o assunto for sobre **Integrações** (APIs, MCPs, Webhooks, chaves de API), responda: "⚙️ Para configurar integrações, use o painel à direita na aba **Integrações**." e inclua exatamente este marcador: [SWITCH_TAB:connectors]
+- Quando o assunto for sobre **Canais** (WhatsApp, Instagram, Facebook, Site, Telegram), responda: "📱 Para configurar canais, use o painel à direita na aba **Canais**." e inclua exatamente este marcador: [SWITCH_TAB:channels]
+- Quando o assunto for sobre **Arquivos/Conhecimento** (documentos, PDFs, URLs, base de conhecimento), responda: "📄 Para adicionar arquivos e conhecimento, use o painel à direita na aba **Conhecimento**." e inclua exatamente este marcador: [SWITCH_TAB:knowledge]
+- Após o marcador, continue guiando brevemente o que o usuário deve fazer nessa aba.
+
 IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
 
 const Aikortex = () => {
