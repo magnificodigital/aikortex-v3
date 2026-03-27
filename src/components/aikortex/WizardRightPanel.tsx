@@ -195,6 +195,7 @@ const WizardRightPanel = ({
   const [keyInput, setKeyInput] = useState("");
   const [showKey, setShowKey] = useState(false);
   const [savingKey, setSavingKey] = useState(false);
+  const [selectedDialogModel, setSelectedDialogModel] = useState("");
 
   useEffect(() => {
     const loadKeys = async () => {
