@@ -17,6 +17,35 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
+const LLM_PROVIDER_MODELS: Record<string, { models: { value: string; label: string; desc: string }[]; capabilities: string[] }> = {
+  OpenAI: {
+    models: [
+      { value: "gpt-5", label: "GPT-5", desc: "Mais poderoso. Raciocínio complexo e contexto longo." },
+      { value: "gpt-5-mini", label: "GPT-5 Mini", desc: "Equilíbrio entre custo e desempenho." },
+      { value: "gpt-5-nano", label: "GPT-5 Nano", desc: "Mais rápido e econômico para tarefas simples." },
+      { value: "gpt-4o", label: "GPT-4o", desc: "Multimodal com visão e áudio." },
+      { value: "gpt-4o-mini", label: "GPT-4o Mini", desc: "Versão leve do GPT-4o." },
+    ],
+    capabilities: ["Chat e completions", "Visão (imagens)", "Function calling", "JSON mode", "Embeddings", "Text-to-speech", "Speech-to-text"],
+  },
+  Anthropic: {
+    models: [
+      { value: "claude-4-sonnet", label: "Claude 4 Sonnet", desc: "Mais inteligente e versátil." },
+      { value: "claude-3.5-sonnet", label: "Claude 3.5 Sonnet", desc: "Excelente raciocínio e código." },
+      { value: "claude-3-haiku", label: "Claude 3 Haiku", desc: "Rápido e econômico." },
+    ],
+    capabilities: ["Chat e completions", "Visão (imagens)", "Function calling", "Contexto de 200K tokens"],
+  },
+  Gemini: {
+    models: [
+      { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro", desc: "Top-tier com raciocínio avançado." },
+      { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash", desc: "Rápido e equilibrado." },
+      { value: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite", desc: "Mais econômico para tarefas simples." },
+    ],
+    capabilities: ["Chat e completions", "Visão (imagens e vídeo)", "Function calling", "Contexto de 1M tokens", "Geração de imagens"],
+  },
+};
+
 const INTEGRATIONS = [
   { label: "OpenAI", desc: "Modelos GPT para geração de texto e análise.", logo: "https://cdn.simpleicons.org/openai" },
   { label: "Anthropic", desc: "Modelos Claude para raciocínio avançado.", logo: "https://cdn.simpleicons.org/anthropic" },
