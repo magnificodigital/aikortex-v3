@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-chat`;
 
@@ -10,6 +11,10 @@ export interface ChatMessage {
 interface UseAgentChatOptions {
   provider?: string;
   model?: string;
+  /** When true, uses the free Lovable AI gateway instead of requiring a user API key */
+  useGateway?: boolean;
+  /** System prompt override */
+  systemPrompt?: string;
 }
 
 function deriveProvider(model?: string): string {
