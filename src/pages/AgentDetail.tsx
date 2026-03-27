@@ -33,6 +33,13 @@ const LLM_MODELS = [
   { value: "gpt-5-mini", label: "GPT-5 Mini", provider: "openai" },
 ] as const;
 
+const FREE_MODELS = [
+  { value: "stepfun/step-3.5-flash:free", label: "Step 3.5 Flash" },
+  { value: "deepseek/deepseek-chat-v3-0324:free", label: "DeepSeek V3" },
+  { value: "google/gemma-3-27b-it:free", label: "Gemma 3 27B" },
+  { value: "meta-llama/llama-4-maverick:free", label: "Llama 4 Maverick" },
+] as const;
+
 const getProviderForModel = (model: string) => {
   if (model.startsWith("gemini")) return "gemini";
   if (model.startsWith("gpt")) return "openai";
