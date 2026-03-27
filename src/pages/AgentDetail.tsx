@@ -75,8 +75,9 @@ const AgentDetail = () => {
 
   const [input, setInput] = useState("");
   const [agentModel, setAgentModel] = useState(agent.model);
+  const [setupModel, setSetupModel] = useState<string>(FREE_MODELS[0].value);
   const [rightPanelTab, setRightPanelTab] = useState("agent");
-  // "setup" = uses free Lovable AI gateway to help configure
+  // "setup" = uses free OpenRouter models to help configure
   // "test" = uses the user's configured LLM to test the agent
   const [chatMode, setChatMode] = useState<"setup" | "test">("setup");
 
