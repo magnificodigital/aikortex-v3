@@ -13,6 +13,8 @@ interface UseAgentChatOptions {
   model?: string;
   /** When true, uses OpenRouter free model instead of requiring a user API key */
   useGateway?: boolean;
+  /** Specific free model to use when useGateway is true */
+  gatewayModel?: string;
   /** System prompt override */
   systemPrompt?: string;
 }
@@ -62,6 +64,7 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
           provider: options.provider || deriveProvider(options.model),
           model: options.model,
           useGateway: options.useGateway ?? false,
+          gatewayModel: options.gatewayModel,
         }),
       });
 
@@ -121,7 +124,7 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
     } finally {
       setIsStreaming(false);
     }
-  }, [messages, isStreaming, options.provider, options.model, options.useGateway, options.systemPrompt]);
+  }, [messages, isStreaming, options.provider, options.model, options.useGateway, options.gatewayModel, options.systemPrompt]);
 
   return { messages, setMessages, sendMessage, isStreaming };
 }

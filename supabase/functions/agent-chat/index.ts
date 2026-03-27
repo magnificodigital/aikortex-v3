@@ -30,7 +30,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages, provider, model, useGateway } = await req.json();
+    const { messages, provider, model, useGateway, gatewayModel } = await req.json();
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
@@ -68,7 +68,7 @@ serve(async (req) => {
       if (!OPENROUTER_KEY) throw new Error("OPENROUTER_API_KEY is not configured");
       apiUrl = "https://openrouter.ai/api/v1/chat/completions";
       apiKey = OPENROUTER_KEY;
-      apiModel = "stepfun/step-3.5-flash:free";
+      apiModel = gatewayModel || "stepfun/step-3.5-flash:free";
       headers = {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",

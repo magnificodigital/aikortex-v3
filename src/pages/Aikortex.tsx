@@ -51,22 +51,19 @@ const LLM_MODELS = [
   { value: "gpt-5-mini", label: "GPT-5 Mini" },
 ];
 
-const SETUP_SYSTEM_PROMPT = `Você é um assistente especializado em configuração de agentes de IA na plataforma Aikortex. 
-Sua missão é guiar o usuário para completar TODAS as configurações do agente de forma clara e objetiva.
+const FREE_MODELS = [
+  { value: "stepfun/step-3.5-flash:free", label: "Step 3.5 Flash" },
+  { value: "deepseek/deepseek-chat-v3-0324:free", label: "DeepSeek V3" },
+  { value: "google/gemma-3-27b-it:free", label: "Gemma 3 27B" },
+];
 
-Ao iniciar, apresente-se brevemente e pergunte o que o usuário deseja configurar. As áreas de configuração são:
+const SETUP_SYSTEM_PROMPT = `Você é o assistente de configuração de agentes na Aikortex. Responda em português brasileiro, seja BREVE e direto. Faça UMA pergunta por vez, curta (máximo 2 linhas). Se a resposta do usuário for válida, confirme rapidamente e preencha o campo automaticamente. Não repita informações já fornecidas.
 
-1. **Identidade** — Nome, descrição, foto do agente
-2. **Objetivo** — Qual a missão principal do agente (vender, qualificar leads, atender clientes, etc.)
-3. **Instruções (Prompt)** — Tom de voz, regras de comportamento, personalidade
-4. **Integrações** — APIs, MCPs, Webhooks que o agente pode usar
-5. **Canais** — WhatsApp, Instagram, Site, etc.
-6. **Conhecimento** — Documentos e URLs de referência
+Áreas de configuração: Identidade (nome, descrição), Objetivo (missão), Instruções (tom, personalidade), Integrações (APIs/MCPs), Canais (WhatsApp, Instagram, Site), Conhecimento (documentos/URLs).
 
-Seja direto, use português brasileiro, e ajude o usuário a preencher cada campo com sugestões práticas.
-Quando todas as configurações estiverem completas, informe que o agente está pronto e sugira que ele configure sua chave de API na aba Integrações para testar o agente com a IA real.
+Quando o usuário responder algo claro, confirme com ✅ e passe para o próximo item. Exemplo: "✅ Nome definido: Agente Luna. Qual o objetivo principal?"
 
-IMPORTANTE: Você NÃO é o agente final. Você é o assistente de configuração. Não tente responder como se fosse o agente do usuário.`;
+IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
 
 const Aikortex = () => {
   const location = useLocation();
@@ -85,6 +82,7 @@ const Aikortex = () => {
   const [rightPanelTab, setRightPanelTab] = useState("agent");
   const [didAutoRoute, setDidAutoRoute] = useState(false);
   const [chatMode, setChatMode] = useState<"setup" | "test">("setup");
+  const [freeModel, setFreeModel] = useState("stepfun/step-3.5-flash:free");
 
   const { keys, loading: keysLoading, refetch: refetchKeys } = useApiKeys();
 
@@ -112,8 +110,8 @@ const Aikortex = () => {
   const agentNameForChat = selectedAgent?.name || "Agente IA";
 
   const setupChat = useAgentChat(
-    [{ role: "agent", text: `Olá! 👋 Sou o assistente de configuração do **${agentNameForChat}**. Vou te ajudar a deixar tudo pronto!\n\nO que gostaria de configurar primeiro? Posso ajudar com identidade, objetivo, instruções, integrações, canais ou base de conhecimento.` }],
-    { useGateway: true, systemPrompt: SETUP_SYSTEM_PROMPT }
+    [{ role: "agent", text: `👋 Vou configurar o **${agentNameForChat}**. Qual nome quer dar ao agente?` }],
+    { useGateway: true, gatewayModel: freeModel, systemPrompt: SETUP_SYSTEM_PROMPT }
   );
 
   const testChat = useAgentChat(
@@ -134,10 +132,10 @@ const Aikortex = () => {
     setDidAutoRoute(true);
 
     const text = state.initialPrompt.toLowerCase();
-    const SDR_KW = ["sdr", "qualificação", "qualificacao", "inbound"];
-    const BDR_KW = ["bdr", "prospecção", "prospeccao", "outbound"];
-    const SAC_KW = ["sac", "suporte", "atendimento", "customer"];
-    const CS_KW = ["customer success", "cs ", "pós-venda", "onboarding", "retenção"];
+    const SDR_KW = ["sdr", "qualificação", "qualificacao", "qualificador", "qualificar", "inbound", "triagem", "filtrar lead"];
+    const BDR_KW = ["bdr", "prospecção", "prospeccao", "outbound", "captura de lead", "captação", "captacao", "gerar lead", "cold call"];
+    const SAC_KW = ["sac", "suporte", "atendimento", "customer service", "help desk", "chamado", "reclamação", "reclamacao"];
+    const CS_KW = ["customer success", "cs ", "pós-venda", "pos-venda", "onboarding", "retenção", "retencao", "churn"];
 
     let agentId = "custom-1";
     let agentType: "SDR" | "BDR" | "SAC" | "CS" | "Custom" = "Custom";
@@ -253,10 +251,21 @@ const Aikortex = () => {
         {/* Mode indicator */}
         <div className="px-4 py-1.5 border-b border-border bg-muted/30 flex items-center gap-2">
           {chatMode === "setup" ? (
-            <Badge variant="secondary" className="text-xs gap-1">
-              <Bot className="w-3 h-3" />
-              Assistente de Configuração — Step 3.5 Flash (gratuito)
-            </Badge>
+            <>
+              <Badge variant="secondary" className="text-xs gap-1">
+                <Bot className="w-3 h-3" />
+                Configuração (gratuito)
+              </Badge>
+              <select
+                value={freeModel}
+                onChange={(e) => setFreeModel(e.target.value)}
+                className="text-xs text-muted-foreground bg-transparent border border-border rounded-md px-2 py-0.5 cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary/40"
+              >
+                {FREE_MODELS.map((m) => (
+                  <option key={m.value} value={m.value}>{m.label}</option>
+                ))}
+              </select>
+            </>
           ) : (
             <Badge variant="outline" className="text-xs gap-1">
               <TestTube className="w-3 h-3" />
