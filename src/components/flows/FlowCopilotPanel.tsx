@@ -16,10 +16,10 @@ interface Message {
 }
 
 const SUGGESTIONS = [
-  "Build a lead qualification flow",
-  "Add an Agent block to classify intents",
-  "How to connect with WhatsApp?",
-  "Optimize my current workflow",
+  "Crie um fluxo de qualificação de leads",
+  "Adicione um bloco de Agente para classificar intenções",
+  "Como conectar com WhatsApp?",
+  "Otimize meu fluxo atual",
 ];
 
 // Build a system prompt that knows about available nodes and agents
