@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Send, Paperclip, HelpCircle } from "lucide-react";
+import { ArrowLeft, Send, Paperclip, HelpCircle, AlertTriangle, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import AgentRightPanel from "@/components/aikortex/AgentRightPanel";
 import { useAgentChat } from "@/hooks/use-agent-chat";
+import { useApiKeys } from "@/hooks/use-api-keys";
 import type { AgentType } from "@/types/agent-builder";
 
 import avatar1 from "@/assets/avatars/avatar-1.png";

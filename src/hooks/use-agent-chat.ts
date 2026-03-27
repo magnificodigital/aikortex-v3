@@ -45,7 +45,7 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
         },
         body: JSON.stringify({
           messages: apiMessages,
-          provider: options.provider || "openai",
+          provider: options.provider || deriveProvider(options.model),
           model: options.model,
         }),
       });
