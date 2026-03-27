@@ -232,7 +232,7 @@ export const FLOW_TEMPLATES: FlowTemplate[] = [
     tags: ["lead", "vendas", "crm"],
     nodes: [
       nd("s1", "Chat", "trigger", "💬", "Nova mensagem recebida", "#22c55e", { channel: "whatsapp" }, pos(50, 200), "trigger_chat"),
-      nd("s2", "Agent", "processing", "🤖", "Qualifica o lead", "#6366f1", { model: "gemini-2.5-flash", temperature: 0.7 }, pos(350, 200), "agent"),
+      nd("s2", "Agente IA", "processing", "🧠", "Qualifica o lead", "#6366f1", { agentType: "sdr", model: "gemini-2.5-flash", temperature: 0.7 }, pos(350, 200), "agent_ai"),
       nd("s3", "Condition", "logic", "🔀", "Lead qualificado?", "#f59e0b", { expression: '{{score}} >= 7' }, pos(650, 200), "condition"),
       nd("s4", "CRM", "integration", "💼", "Salva no CRM", "#8b5cf6", { provider: "hubspot", action: "create_lead" }, pos(950, 100), "integration_crm"),
       nd("s5", "Response", "output", "📤", "Envia resposta", "#06b6d4", { format: "text", template: "Lead qualificado!" }, pos(950, 300), "response"),
