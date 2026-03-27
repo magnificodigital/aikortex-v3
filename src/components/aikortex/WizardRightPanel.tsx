@@ -126,6 +126,8 @@ const WizardRightPanel = ({
     if (activeTab && activeTab !== rightTab) {
       setRightTab(activeTab);
     }
+  }, [activeTab]);
+
   const [settingsNav, setSettingsNav] = useState<SettingsNavKey>(
     (activeSection as SettingsNavKey) || "identidade"
   );
