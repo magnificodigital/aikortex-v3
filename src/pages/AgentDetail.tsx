@@ -115,6 +115,28 @@ const AgentDetail = () => {
           </div>
         </ScrollArea>
 
+        {/* API Key Warning */}
+        {!keysLoading && !hasApiKey && (
+          <div className="px-4 pt-2">
+            <Alert className="border-yellow-500/30 bg-yellow-500/5">
+              <AlertTriangle className="h-4 w-4 text-yellow-500" />
+              <AlertDescription className="text-xs text-muted-foreground flex items-center justify-between">
+                <span>
+                  Configure sua chave de API do provedor <strong className="text-foreground">{currentProvider === "openai" ? "OpenAI" : "Gemini"}</strong> na aba Integrações para usar o agente.
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs gap-1 ml-3 shrink-0"
+                  onClick={() => setRightPanelTab("connectors")}
+                >
+                  <KeyRound className="w-3 h-3" /> Configurar
+                </Button>
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+
         {/* Input — large textarea like reference */}
         <div className="px-4 pb-4 pt-2">
           <div className="border border-border rounded-xl bg-muted/30 flex flex-col">
@@ -122,8 +144,9 @@ const AgentDetail = () => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Envie uma mensagem ao agente..."
+              placeholder={!hasApiKey && !keysLoading ? "⚠️ Configure sua chave de API na aba Integrações para enviar mensagens..." : "Envie uma mensagem ao agente..."}
               className="border-0 bg-transparent text-sm min-h-[80px] max-h-[160px] resize-none focus-visible:ring-0 focus-visible:ring-offset-0 p-4"
+              disabled={!hasApiKey && !keysLoading}
             />
             <div className="flex items-center justify-between px-3 pb-3">
               <div className="flex items-center gap-2">
@@ -144,7 +167,7 @@ const AgentDetail = () => {
                 <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                   <HelpCircle className="w-4 h-4" />
                 </Button>
-                <Button size="icon" className="h-8 w-8 rounded-full" onClick={handleSend} disabled={!input.trim() || isStreaming}>
+                <Button size="icon" className="h-8 w-8 rounded-full" onClick={handleSend} disabled={!input.trim() || isStreaming || (!hasApiKey && !keysLoading)}>
                   <Send className="w-4 h-4" />
                 </Button>
               </div>
