@@ -13,6 +13,8 @@ interface UseAgentChatOptions {
   model?: string;
   /** When true, uses OpenRouter free model instead of requiring a user API key */
   useGateway?: boolean;
+  /** Specific free model to use when useGateway is true */
+  gatewayModel?: string;
   /** System prompt override */
   systemPrompt?: string;
 }
