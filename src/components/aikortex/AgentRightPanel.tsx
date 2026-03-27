@@ -238,6 +238,10 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
         [connectorDialog.label]: { key: keyInput.trim(), configured: true },
       }));
       await onApiKeysChanged?.();
+      // Auto-select the chosen model for the agent
+      if (selectedDialogModel && LLM_PROVIDER_MODELS[connectorDialog.label]) {
+        onModelChange(selectedDialogModel);
+      }
       setConnectorDialog(null);
       setKeyInput("");
       toast.success(`${connectorDialog.label} conectado com sucesso!`);
