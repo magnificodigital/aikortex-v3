@@ -253,8 +253,17 @@ const Aikortex = () => {
           {chatMode === "setup" ? (
             <Badge variant="secondary" className="text-xs gap-1">
               <Bot className="w-3 h-3" />
-              Assistente de Configuração — Step 3.5 Flash (gratuito)
+              Configuração — {FREE_MODELS.find(m => m.value === freeModel)?.label || "Step 3.5 Flash"} (gratuito)
             </Badge>
+            <select
+              value={freeModel}
+              onChange={(e) => setFreeModel(e.target.value)}
+              className="text-xs text-muted-foreground bg-transparent border border-border rounded-md px-2 py-0.5 cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary/40"
+            >
+              {FREE_MODELS.map((m) => (
+                <option key={m.value} value={m.value}>{m.label}</option>
+              ))}
+            </select>
           ) : (
             <Badge variant="outline" className="text-xs gap-1">
               <TestTube className="w-3 h-3" />
