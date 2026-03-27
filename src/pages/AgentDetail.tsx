@@ -86,8 +86,7 @@ const AgentDetail = () => {
   const currentProvider = useMemo(() => getProviderForModel(agentModel), [agentModel]);
 
   const availableModels = useMemo(() => {
-    const filtered = LLM_MODELS.filter((model) => keys[model.provider]?.configured);
-    return filtered.length > 0 ? filtered : LLM_MODELS;
+    return LLM_MODELS.filter((model) => keys[model.provider]?.configured);
   }, [keys]);
 
   const hasApiKey = !!keys[currentProvider]?.configured;
