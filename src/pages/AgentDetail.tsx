@@ -86,8 +86,7 @@ const AgentDetail = () => {
   const currentProvider = useMemo(() => getProviderForModel(agentModel), [agentModel]);
 
   const availableModels = useMemo(() => {
-    const filtered = LLM_MODELS.filter((model) => keys[model.provider]?.configured);
-    return filtered.length > 0 ? filtered : LLM_MODELS;
+    return LLM_MODELS.filter((model) => keys[model.provider]?.configured);
   }, [keys]);
 
   const hasApiKey = !!keys[currentProvider]?.configured;
@@ -189,8 +188,8 @@ const AgentDetail = () => {
           ) : (
             <Badge variant="outline" className="text-xs gap-1">
               <TestTube className="w-3 h-3" />
-              Modo Teste — {LLM_MODELS.find(m => m.value === agentModel)?.label || agentModel}
-              <span className={`w-1.5 h-1.5 rounded-full ${hasApiKey ? "bg-emerald-500" : "bg-yellow-500"}`} />
+              Modo Teste — {hasApiKey ? (LLM_MODELS.find(m => m.value === agentModel)?.label || agentModel) : "Configure sua chave de API"}
+              <span className={`w-1.5 h-1.5 rounded-full ${hasApiKey ? "bg-emerald-500" : "bg-destructive"}`} />
             </Badge>
           )}
         </div>
@@ -276,7 +275,7 @@ const AgentDetail = () => {
                     ))}
                   </select>
                 )}
-                {chatMode === "test" && (
+                {chatMode === "test" && availableModels.length > 0 && (
                   <select
                     value={agentModel}
                     onChange={(e) => setAgentModel(e.target.value)}
@@ -286,6 +285,9 @@ const AgentDetail = () => {
                       <option key={m.value} value={m.value}>{m.label}</option>
                     ))}
                   </select>
+                )}
+                {chatMode === "test" && availableModels.length === 0 && !keysLoading && (
+                  <span className="text-xs text-destructive">Sem chave de API configurada</span>
                 )}
               </div>
               <div className="flex items-center gap-2">
