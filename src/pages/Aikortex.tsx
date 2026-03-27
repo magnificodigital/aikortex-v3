@@ -306,7 +306,7 @@ const Aikortex = () => {
                 }`}>
                   {msg.role === "agent" ? (
                     <div className="prose prose-sm dark:prose-invert max-w-none">
-                      <ReactMarkdown>{msg.text}</ReactMarkdown>
+                      <ReactMarkdown>{msg.text.replace(/\[SWITCH_TAB:\w+\]/g, "")}</ReactMarkdown>
                     </div>
                   ) : (
                     msg.text
