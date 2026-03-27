@@ -35,13 +35,23 @@ ${nodeList}
 Available AI Agents:
 ${agentList}
 
-When the user asks to add a block, include a special line in your response:
+IMPORTANT: When the user asks to CREATE a flow or automation, you MUST respond with a [BUILD_FLOW] JSON block that defines ALL nodes and their connections. Format:
+
+[BUILD_FLOW]
+{"nodes":[{"id":"n1","type":"trigger_chat"},{"id":"n2","type":"agent"},{"id":"n3","type":"send_message"}],"edges":[{"source":"n1","target":"n2"},{"source":"n2","target":"n3"}]}
+[/BUILD_FLOW]
+
+Rules for BUILD_FLOW:
+- Each node needs a temporary "id" (e.g. "n1","n2") and a "type" matching one of the available blocks above.
+- Edges define connections using the temporary ids.
+- Always connect nodes sequentially unless branching logic is needed.
+- Start with a trigger block.
+- You can ONLY use one BUILD_FLOW per response.
+
+When the user asks to ADD a SINGLE block to an existing flow, use:
 [ADD_NODE:block_type]
 
-For example, to add a chat trigger:
-[ADD_NODE:trigger_chat]
-
-You can add multiple blocks in a single response. Always explain what each block does.
+Always explain what each block does after the command block.
 Reply in Portuguese Brazilian. Be direct and use markdown when appropriate.`;
 
 interface Props {
