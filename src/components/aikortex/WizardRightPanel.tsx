@@ -100,6 +100,8 @@ interface Props {
   onAdvancedConfigChange: (cfg: AgentAdvancedConfig) => void;
   activeTab?: string;
   onTabChange?: (tab: string) => void;
+  activeSection?: string;
+  onSectionChange?: (section: string) => void;
 }
 
 const WizardRightPanel = ({
