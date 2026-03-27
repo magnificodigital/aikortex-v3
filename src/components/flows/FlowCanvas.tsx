@@ -155,6 +155,62 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
     [reactFlowInstance, setNodes]
   );
 
+  const handleBuildFlow = useCallback(
+    (flowDef: { nodes: { id: string; type: string }[]; edges: { source: string; target: string }[] }) => {
+      const X_START = 100;
+      const X_GAP = 280;
+      const Y_CENTER = 200;
+
+      const idMap = new Map<string, string>();
+      const newNodes: Node[] = [];
+
+      flowDef.nodes.forEach((n, i) => {
+        const template = NODE_TEMPLATES.find((t) => t.type === n.type);
+        if (!template) return;
+
+        nodeIdCounter++;
+        const realId = `node-${nodeIdCounter}-${Date.now()}-${i}`;
+        idMap.set(n.id, realId);
+
+        newNodes.push({
+          id: realId,
+          type: "flowNode",
+          position: { x: X_START + i * X_GAP, y: Y_CENTER },
+          data: {
+            label: template.label,
+            category: template.category,
+            icon: template.icon,
+            description: template.description,
+            config: { ...template.defaultConfig },
+            color: template.color,
+            nodeType: template.type,
+          } satisfies FlowNodeData,
+        });
+      });
+
+      const newEdges: Edge[] = flowDef.edges
+        .map((e) => {
+          const source = idMap.get(e.source);
+          const target = idMap.get(e.target);
+          if (!source || !target) return null;
+          return {
+            id: `e-${source}-${target}`,
+            source,
+            target,
+            type: "flowEdge",
+            animated: true,
+            style: { stroke: "hsl(var(--primary))", strokeWidth: 2 },
+            markerEnd: { type: MarkerType.ArrowClosed, color: "hsl(var(--primary))" },
+          } as Edge;
+        })
+        .filter(Boolean) as Edge[];
+
+      setNodes(newNodes);
+      setEdges(newEdges);
+    },
+    [setNodes, setEdges]
+  );
+
   const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
     setSelectedNode(node);
     setRightTab("editor");
