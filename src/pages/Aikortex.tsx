@@ -110,8 +110,8 @@ const Aikortex = () => {
   const agentNameForChat = selectedAgent?.name || "Agente IA";
 
   const setupChat = useAgentChat(
-    [{ role: "agent", text: `Olá! 👋 Sou o assistente de configuração do **${agentNameForChat}**. Vou te ajudar a deixar tudo pronto!\n\nO que gostaria de configurar primeiro? Posso ajudar com identidade, objetivo, instruções, integrações, canais ou base de conhecimento.` }],
-    { useGateway: true, systemPrompt: SETUP_SYSTEM_PROMPT }
+    [{ role: "agent", text: `👋 Vou configurar o **${agentNameForChat}**. Qual nome quer dar ao agente?` }],
+    { useGateway: true, gatewayModel: freeModel, systemPrompt: SETUP_SYSTEM_PROMPT }
   );
 
   const testChat = useAgentChat(
