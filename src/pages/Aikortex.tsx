@@ -481,7 +481,7 @@ const Aikortex = () => {
                     ))}
                   </select>
                 )}
-                {chatMode === "test" && (
+                {chatMode === "test" && availableModels.length > 0 && (
                   <select
                     value={agentModel}
                     onChange={(e) => setAgentModel(e.target.value)}
@@ -491,6 +491,9 @@ const Aikortex = () => {
                       <option key={m.value} value={m.value}>{m.label}</option>
                     ))}
                   </select>
+                )}
+                {chatMode === "test" && availableModels.length === 0 && !keysLoading && (
+                  <span className="text-xs text-destructive">Sem chave de API configurada</span>
                 )}
               </div>
               <div className="flex items-center gap-2">
