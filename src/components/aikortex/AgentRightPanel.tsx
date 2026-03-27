@@ -209,6 +209,9 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
       setKeyInput("");
     }
     setShowKey(false);
+    // Set default model for LLM providers
+    const providerModels = LLM_PROVIDER_MODELS[integration.label];
+    setSelectedDialogModel(providerModels?.models[0]?.value || "");
     setConnectorDialog(integration);
   };
 
