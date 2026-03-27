@@ -26,12 +26,26 @@ const AGENTS_MAP: Record<string, { name: string; avatar: string; model: string; 
 };
 
 const LLM_MODELS = [
-  { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
-  { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
-  { value: "gemini-3-flash-preview", label: "Gemini 3 Flash" },
-  { value: "gpt-5", label: "GPT-5" },
-  { value: "gpt-5-mini", label: "GPT-5 Mini" },
-];
+  { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash", provider: "gemini" },
+  { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro", provider: "gemini" },
+  { value: "gemini-3-flash-preview", label: "Gemini 3 Flash", provider: "gemini" },
+  { value: "gpt-5", label: "GPT-5", provider: "openai" },
+  { value: "gpt-5-mini", label: "GPT-5 Mini", provider: "openai" },
+] as const;
+
+const getProviderForModel = (model: string) => {
+  if (model.startsWith("gemini")) return "gemini";
+  if (model.startsWith("gpt")) return "openai";
+  return "openai";
+};
+
+const getBestAvailableModel = (currentModel: string, keys: Record<string, { configured: boolean }>) => {
+  const currentProvider = getProviderForModel(currentModel);
+  if (keys[currentProvider]?.configured) return currentModel;
+  if (keys.openai?.configured) return "gpt-5-mini";
+  if (keys.gemini?.configured) return "gemini-2.5-flash";
+  return currentModel;
+};
 
 const SETUP_SYSTEM_PROMPT = `Você é um assistente especializado em configuração de agentes de IA na plataforma Aikortex. 
 Seja BREVE e direto. Faça UMA pergunta por vez (máximo 2 linhas). Quando a resposta for válida, confirme com ✅ e passe ao próximo item.
@@ -61,11 +75,12 @@ const AgentDetail = () => {
 
   const { keys, loading: keysLoading, refetch: refetchKeys } = useApiKeys();
 
-  const currentProvider = useMemo(() => {
-    if (agentModel.startsWith("gemini")) return "gemini";
-    if (agentModel.startsWith("gpt")) return "openai";
-    return "openai";
-  }, [agentModel]);
+  const currentProvider = useMemo(() => getProviderForModel(agentModel), [agentModel]);
+
+  const availableModels = useMemo(() => {
+    const filtered = LLM_MODELS.filter((model) => keys[model.provider]?.configured);
+    return filtered.length > 0 ? filtered : LLM_MODELS;
+  }, [keys]);
 
   const hasApiKey = !!keys[currentProvider]?.configured;
 
@@ -74,6 +89,14 @@ const AgentDetail = () => {
       refetchKeys();
     }
   }, [rightPanelTab, refetchKeys]);
+
+  useEffect(() => {
+    if (chatMode !== "test" || keysLoading) return;
+    const nextModel = getBestAvailableModel(agentModel, keys);
+    if (nextModel !== agentModel) {
+      setAgentModel(nextModel);
+    }
+  }, [agentModel, chatMode, keys, keysLoading]);
 
   const setupChat = useAgentChat(
     [{ role: "agent", text: `Olá! 👋 Sou o assistente de configuração do **${agent.name}**. O que gostaria de configurar?` }],
@@ -85,10 +108,19 @@ const AgentDetail = () => {
     { model: agentModel }
   );
 
+  useEffect(() => {
+    testChat.setMessages([
+      {
+        role: "agent",
+        text: `🧪 Modo de Teste ativado! Agora estou respondendo como o **${agent.name}** usando o modelo ${LLM_MODELS.find((m) => m.value === agentModel)?.label || agentModel}. Envie uma mensagem para testar.`,
+      },
+    ]);
+  }, [agent.name, agentModel, testChat.setMessages]);
+
   const activeChat = chatMode === "setup" ? setupChat : testChat;
   const { messages, sendMessage, isStreaming } = activeChat;
 
-  const canSend = chatMode === "setup" || hasApiKey || keysLoading;
+  const canSend = chatMode === "setup" || (!keysLoading && hasApiKey);
 
   const handleSend = () => {
     if (!input.trim() || isStreaming || !canSend) return;
@@ -188,7 +220,7 @@ const AgentDetail = () => {
               <AlertTriangle className="h-4 w-4 text-yellow-500" />
               <AlertDescription className="text-xs text-muted-foreground flex items-center justify-between">
                 <span>
-                  Configure sua chave de API do provedor <strong className="text-foreground">{currentProvider === "openai" ? "OpenAI" : "Gemini"}</strong> na aba Integrações para testar o agente.
+                  Configure sua chave de API do provedor <strong className="text-foreground">{currentProvider === "openai" ? "OpenAI" : "Gemini"}</strong> na aba Integrações para testar com o modelo <strong className="text-foreground">{LLM_MODELS.find((m) => m.value === agentModel)?.label || agentModel}</strong>.
                 </span>
                 <Button
                   variant="outline"
@@ -231,7 +263,7 @@ const AgentDetail = () => {
                     onChange={(e) => setAgentModel(e.target.value)}
                     className="text-xs text-muted-foreground hover:text-foreground bg-transparent border border-border rounded-md px-2 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary/40"
                   >
-                    {LLM_MODELS.map((m) => (
+                    {availableModels.map((m) => (
                       <option key={m.value} value={m.value}>{m.label}</option>
                     ))}
                   </select>
@@ -251,7 +283,7 @@ const AgentDetail = () => {
       </div>
 
       {/* RIGHT — Panel */}
-      <AgentRightPanel agent={agent} agentType={agent.agentType} agentModel={agentModel} onModelChange={setAgentModel} activeTab={rightPanelTab} onTabChange={setRightPanelTab} />
+      <AgentRightPanel agent={agent} agentType={agent.agentType} agentModel={agentModel} onModelChange={setAgentModel} activeTab={rightPanelTab} onTabChange={setRightPanelTab} onApiKeysChanged={refetchKeys} />
     </div>
   );
 };

@@ -102,6 +102,7 @@ interface Props {
   onTabChange?: (tab: string) => void;
   activeSection?: string;
   onSectionChange?: (section: string) => void;
+  onApiKeysChanged?: () => void | Promise<void>;
 }
 
 const WizardRightPanel = ({
@@ -114,6 +115,7 @@ const WizardRightPanel = ({
   advancedConfig, onAdvancedConfigChange,
   activeTab, onTabChange,
   activeSection, onSectionChange,
+  onApiKeysChanged,
 }: Props) => {
   const [rightTab, setRightTab] = useState(activeTab || "agent");
 
@@ -203,6 +205,7 @@ const WizardRightPanel = ({
       );
       if (error) { toast.error("Erro ao salvar chave."); console.error(error); return; }
       setConnectorKeys(prev => ({ ...prev, [connectorDialog.label]: { key: keyInput.trim(), configured: true } }));
+      await onApiKeysChanged?.();
       setConnectorDialog(null);
       setKeyInput("");
       toast.success(`${connectorDialog.label} conectado com sucesso!`);
@@ -219,6 +222,7 @@ const WizardRightPanel = ({
       const provider = PROVIDER_MAP[connectorDialog.label] || connectorDialog.label.toLowerCase();
       await supabase.from("user_api_keys").delete().eq("user_id", user.id).eq("provider", provider);
       setConnectorKeys(prev => { const next = { ...prev }; delete next[connectorDialog.label]; return next; });
+      await onApiKeysChanged?.();
       setConnectorDialog(null);
       setKeyInput("");
       toast.success(`${connectorDialog.label} desconectado.`);
@@ -500,7 +504,10 @@ const WizardRightPanel = ({
                       return (
                         <button
                           key={item.key}
-                          onClick={() => setSettingsNav(item.key)}
+                          onClick={() => {
+                            setSettingsNav(item.key);
+                            onSectionChange?.(item.key);
+                          }}
                           className={`w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
                             settingsNav === item.key
                               ? "bg-primary/10 text-primary font-medium"
