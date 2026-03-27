@@ -155,24 +155,6 @@ const Aikortex = () => {
 
   const hasApiKey = !!keys[currentProvider]?.configured;
 
-  // Auto-switch setupModel to user's best model when keys become available
-  useEffect(() => {
-    if (keysLoading) return;
-    if (availableModels.length > 0) {
-      // If current setupModel is a free model, switch to user's best model
-      const isFreeModel = FREE_MODELS.some(m => m.value === setupModel);
-      if (isFreeModel) {
-        setSetupModel(availableModels[0].value);
-      }
-    } else {
-      // No user keys, ensure we're on a free model
-      const isFreeModel = FREE_MODELS.some(m => m.value === setupModel);
-      if (!isFreeModel) {
-        setSetupModel(FREE_MODELS[0].value);
-      }
-    }
-  }, [availableModels, keysLoading]);
-
   useEffect(() => {
     if (rightPanelTab !== "connectors") {
       refetchKeys();
@@ -189,18 +171,10 @@ const Aikortex = () => {
 
   const agentNameForChat = selectedAgent?.name || "Agente IA";
 
-  // Use user's own LLM when they have an API key configured; otherwise fall back to free models
-  const setupHasUserKey = availableModels.length > 0;
-  const setupChatOptions = useMemo(() => {
-    if (setupHasUserKey) {
-      return { model: setupModel, systemPrompt: SETUP_SYSTEM_PROMPT };
-    }
-    return { useGateway: true, gatewayModel: setupModel, systemPrompt: SETUP_SYSTEM_PROMPT };
-  }, [setupHasUserKey, setupModel]);
-
+  // Setup mode ALWAYS uses free OpenRouter models
   const setupChat = useAgentChat(
     [{ role: "agent", text: `👋 Vou configurar o **${agentNameForChat}**. Qual nome quer dar ao agente?` }],
-    setupChatOptions
+    { useGateway: true, gatewayModel: setupModel, systemPrompt: SETUP_SYSTEM_PROMPT }
   );
 
   const testChat = useAgentChat(
@@ -411,10 +385,7 @@ const Aikortex = () => {
           {chatMode === "setup" ? (
             <Badge variant="secondary" className="text-xs gap-1">
               <Bot className="w-3 h-3" />
-              Assistente de Configuração — {setupHasUserKey
-                ? (LLM_MODELS.find(m => m.value === setupModel)?.label || setupModel)
-                : (FREE_MODELS.find(m => m.value === setupModel)?.label || "IA Gratuita")}
-              {setupHasUserKey && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />}
+              Assistente de Configuração — {FREE_MODELS.find(m => m.value === setupModel)?.label || "IA Gratuita"}
             </Badge>
           ) : (
             <Badge variant="outline" className="text-xs gap-1">
@@ -499,15 +470,9 @@ const Aikortex = () => {
                     onChange={(e) => setSetupModel(e.target.value)}
                     className="text-xs text-muted-foreground hover:text-foreground bg-transparent border border-border rounded-md px-2 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary/40"
                   >
-                    {setupHasUserKey ? (
-                      availableModels.map((m) => (
-                        <option key={m.value} value={m.value}>{m.label}</option>
-                      ))
-                    ) : (
-                      FREE_MODELS.map((m) => (
-                        <option key={m.value} value={m.value}>{m.label}</option>
-                      ))
-                    )}
+                    {FREE_MODELS.map((m) => (
+                      <option key={m.value} value={m.value}>{m.label}</option>
+                    ))}
                   </select>
                 )}
                 {chatMode === "test" && availableModels.length > 0 && (
