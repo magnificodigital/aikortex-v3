@@ -61,8 +61,7 @@ export const NODE_TEMPLATES: NodeTemplate[] = [
   { type: "trigger_manual", label: "Trigger Manual", category: "trigger", icon: "🖱️", description: "Manually triggered by the user", color: "#22c55e", defaultConfig: {} },
 
   // ── Processing ──
-  { type: "agent", label: "Agent", category: "processing", icon: "🤖", description: "Chat with AI models", color: "#6366f1", defaultConfig: { model: "gemini-2.5-flash", temperature: 0.7, systemPrompt: "" } },
-  { type: "agent_ai", label: "Agente IA", category: "processing", icon: "🧠", description: "Use one of your configured AI agents", color: "#6366f1", defaultConfig: { agentType: "", agentId: "", model: "gemini-2.5-flash", temperature: 0.7 } },
+  { type: "agent_ai", label: "Agente IA", category: "processing", icon: "🧠", description: "Converse com modelos de IA configurados", color: "#6366f1", defaultConfig: { agentType: "", agentId: "", model: "gemini-2.5-flash", temperature: 0.7, systemPrompt: "" } },
   { type: "function", label: "Function", category: "processing", icon: "⚡", description: "Run custom JavaScript/TypeScript code", color: "#6366f1", defaultConfig: { code: "", language: "javascript" } },
   { type: "api", label: "API Request", category: "processing", icon: "🌐", description: "Connect to external services via HTTP", color: "#6366f1", defaultConfig: { url: "", method: "GET", headers: {}, body: "" } },
   { type: "prompt", label: "Prompt", category: "processing", icon: "📝", description: "Send a structured prompt to an AI model", color: "#6366f1", defaultConfig: { model: "gemini-2.5-flash", prompt: "", temperature: 0.7 } },
