@@ -98,7 +98,6 @@ export default function FlowCopilotPanel({ onClose, onAddNode }: Props) {
         },
         body: JSON.stringify({
           messages: apiMessages,
-          provider: "openai",
           model: "gemini-2.5-flash",
         }),
       });

@@ -1,5 +1,6 @@
 import { type Node } from "@xyflow/react";
 import type { FlowNodeData } from "@/types/flow-builder";
+import { AGENT_TEMPLATES } from "@/types/agent-builder";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
