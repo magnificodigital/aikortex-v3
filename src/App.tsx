@@ -37,6 +37,7 @@ const Templates = lazy(() => import("./pages/Templates"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Meetings = lazy(() => import("./pages/Meetings"));
 const MeetingRoom = lazy(() => import("./pages/MeetingRoom"));
+const Tutorials = lazy(() => import("./pages/Tutorials"));
 
 const queryClient = new QueryClient();
 
