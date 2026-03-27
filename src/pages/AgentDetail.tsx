@@ -97,6 +97,22 @@ const AgentDetail = () => {
     }
   }, [rightPanelTab, refetchKeys]);
 
+  // Auto-switch setupModel to user's best model when keys become available
+  useEffect(() => {
+    if (keysLoading) return;
+    if (availableModels.length > 0) {
+      const isFreeModel = FREE_MODELS.some(m => m.value === setupModel);
+      if (isFreeModel) {
+        setSetupModel(availableModels[0].value);
+      }
+    } else {
+      const isFreeModel = FREE_MODELS.some(m => m.value === setupModel);
+      if (!isFreeModel) {
+        setSetupModel(FREE_MODELS[0].value);
+      }
+    }
+  }, [availableModels, keysLoading]);
+
   useEffect(() => {
     if (chatMode !== "test" || keysLoading) return;
     const nextModel = getBestAvailableModel(agentModel, keys);
@@ -105,9 +121,18 @@ const AgentDetail = () => {
     }
   }, [agentModel, chatMode, keys, keysLoading]);
 
+  // Use user's own LLM when they have an API key configured; otherwise fall back to free models
+  const setupHasUserKey = availableModels.length > 0;
+  const setupChatOptions = useMemo(() => {
+    if (setupHasUserKey) {
+      return { model: setupModel, systemPrompt: SETUP_SYSTEM_PROMPT };
+    }
+    return { useGateway: true, gatewayModel: setupModel, systemPrompt: SETUP_SYSTEM_PROMPT };
+  }, [setupHasUserKey, setupModel]);
+
   const setupChat = useAgentChat(
     [{ role: "agent", text: `Olá! 👋 Sou o assistente de configuração do **${agent.name}**. O que gostaria de configurar?` }],
-    { useGateway: true, gatewayModel: setupModel, systemPrompt: SETUP_SYSTEM_PROMPT }
+    setupChatOptions
   );
 
   const testChat = useAgentChat(
@@ -183,7 +208,10 @@ const AgentDetail = () => {
           {chatMode === "setup" ? (
             <Badge variant="secondary" className="text-xs gap-1">
               <Bot className="w-3 h-3" />
-              Assistente de Configuração — {FREE_MODELS.find(m => m.value === setupModel)?.label || "IA Gratuita"}
+              Assistente de Configuração — {setupHasUserKey
+                ? (LLM_MODELS.find(m => m.value === setupModel)?.label || setupModel)
+                : (FREE_MODELS.find(m => m.value === setupModel)?.label || "IA Gratuita")}
+              {setupHasUserKey && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />}
             </Badge>
           ) : (
             <Badge variant="outline" className="text-xs gap-1">
@@ -270,9 +298,15 @@ const AgentDetail = () => {
                     onChange={(e) => setSetupModel(e.target.value)}
                     className="text-xs text-muted-foreground hover:text-foreground bg-transparent border border-border rounded-md px-2 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary/40"
                   >
-                    {FREE_MODELS.map((m) => (
-                      <option key={m.value} value={m.value}>{m.label}</option>
-                    ))}
+                    {setupHasUserKey ? (
+                      availableModels.map((m) => (
+                        <option key={m.value} value={m.value}>{m.label}</option>
+                      ))
+                    ) : (
+                      FREE_MODELS.map((m) => (
+                        <option key={m.value} value={m.value}>{m.label}</option>
+                      ))
+                    )}
                   </select>
                 )}
                 {chatMode === "test" && availableModels.length > 0 && (
