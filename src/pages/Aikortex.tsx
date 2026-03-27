@@ -122,7 +122,7 @@ const Aikortex = () => {
 
   const setupChat = useAgentChat(
     [{ role: "agent", text: `👋 Vou configurar o **${agentNameForChat}**. Qual nome quer dar ao agente?` }],
-    { useGateway: true, gatewayModel: freeModel, systemPrompt: SETUP_SYSTEM_PROMPT }
+    { model: "gemini-2.5-flash", systemPrompt: SETUP_SYSTEM_PROMPT }
   );
 
   const testChat = useAgentChat(
