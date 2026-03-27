@@ -34,18 +34,18 @@ const Home = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  const FLOW_KEYWORDS = ["fluxo", "flow", "automação", "automatizar", "automatização", "automation", "pipeline", "workflow", "nutrição", "sequência", "automacao", "sequencia"];
   const AGENT_KEYWORDS = ["agente", "agent", "sdr", "bdr", "sac", "suporte", "atendimento", "qualificação", "prospecção", "cobranças", "onboarding"];
-  const FLOW_KEYWORDS = ["fluxo", "flow", "automação", "automation", "pipeline", "workflow", "nutrição", "sequência"];
 
   const handleSubmit = () => {
     const text = prompt.trim().toLowerCase();
     if (!text) return;
 
-    // Check active tab first, then detect intent from text
-    if (activeCreationTab === "agentes" || AGENT_KEYWORDS.some((k) => text.includes(k))) {
-      navigate("/aikortex/agents", { state: { initialPrompt: prompt.trim() } });
-    } else if (activeCreationTab === "flows" || FLOW_KEYWORDS.some((k) => text.includes(k))) {
+    // Check flow keywords FIRST (higher priority), then agents, then default to app
+    if (activeCreationTab === "flows" || FLOW_KEYWORDS.some((k) => text.includes(k))) {
       navigate("/aikortex/automations", { state: { initialPrompt: prompt.trim() } });
+    } else if (activeCreationTab === "agentes" || AGENT_KEYWORDS.some((k) => text.includes(k))) {
+      navigate("/aikortex/agents", { state: { initialPrompt: prompt.trim() } });
     } else {
       navigate("/app-builder", { state: { initialPrompt: prompt.trim() } });
     }
