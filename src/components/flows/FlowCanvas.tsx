@@ -25,10 +25,12 @@ import FlowNodeConfig from "./FlowNodeConfig";
 import FlowCopilotPanel from "./FlowCopilotPanel";
 import FlowNodePalette from "./FlowNodePalette";
 import FlowBottomToolbar from "./FlowBottomToolbar";
+import FlowWorkspaceSidebar from "./FlowWorkspaceSidebar";
 import { Button } from "@/components/ui/button";
 import { Save, Play, Undo2, Redo2, MoreHorizontal, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import type { SavedFlow } from "@/types/flow-builder";
 
 const nodeTypes: NodeTypes = {
   flowNode: FlowNode,
@@ -63,9 +65,12 @@ interface FlowCanvasProps {
   flowName?: string;
   flowId?: string;
   onSave?: (name: string, nodes: unknown[], edges: unknown[], flowId?: string) => void;
+  flows?: SavedFlow[];
+  onOpenFlow?: (flow: SavedFlow) => void;
+  onNewFlow?: () => void;
 }
 
-function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave }: FlowCanvasProps) {
+function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave, flows = [], onOpenFlow, onNewFlow }: FlowCanvasProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const startNodes = initialNodes && (initialNodes as Node[]).length > 0
     ? (initialNodes as Node[])
@@ -226,13 +231,17 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave 
 
   return (
     <div className="flex h-full">
+      {/* Workspace sidebar — Sim Studio style */}
+      <FlowWorkspaceSidebar
+        flows={flows}
+        activeFlowId={flowId}
+        onOpenFlow={(flow) => onOpenFlow?.(flow)}
+        onNewFlow={() => onNewFlow?.()}
+      />
+
       {/* Canvas area */}
-      <div
-        className="flex-1 relative"
-        ref={reactFlowWrapper}
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-      >
+      <div className="flex-1 relative flex flex-col">
+        <div className="flex-1 relative" ref={reactFlowWrapper} onDrop={handleDrop} onDragOver={handleDragOver}>
         {/* Top right controls */}
         <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
           <div className="flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-border rounded-lg px-1 py-1">
@@ -320,6 +329,7 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave 
             showInteractive={false}
           />
         </ReactFlow>
+        </div>
       </div>
 
       {/* Right panel with tabs */}

@@ -14,6 +14,16 @@ const categoryAccent: Record<string, string> = {
   delay: "border-l-orange-500",
 };
 
+const categoryIconBg: Record<string, string> = {
+  trigger: "bg-green-500/15 text-green-400",
+  condition: "bg-yellow-500/15 text-yellow-400",
+  message: "bg-blue-500/15 text-blue-400",
+  action: "bg-purple-500/15 text-purple-400",
+  agent: "bg-pink-500/15 text-pink-400",
+  integration: "bg-cyan-500/15 text-cyan-400",
+  delay: "bg-orange-500/15 text-orange-400",
+};
+
 const handleColors: Record<string, string> = {
   trigger: "!bg-green-500",
   condition: "!bg-yellow-500",
@@ -109,7 +119,7 @@ function FlowNode({ data, selected, id }: NodeProps) {
 
       <div
         className={cn(
-          "rounded-xl border border-border border-l-[4px] bg-card px-4 py-3 min-w-[220px] max-w-[280px] shadow-md transition-all cursor-pointer",
+          "rounded-xl border border-border border-l-[4px] bg-card px-4 py-3 min-w-[240px] max-w-[300px] shadow-md transition-all cursor-pointer",
           categoryAccent[d.category] || "border-l-border",
           selected && "ring-2 ring-primary ring-offset-2 ring-offset-background shadow-xl scale-[1.02]"
         )}
@@ -123,23 +133,28 @@ function FlowNode({ data, selected, id }: NodeProps) {
         />
       )}
 
-      {/* Header — icon + title, Sim Studio style */}
+      {/* Header — Sim Studio style with colored icon background */}
       <div className="flex items-center gap-2.5">
-        <div className="w-7 h-7 rounded-lg bg-muted/60 flex items-center justify-center flex-shrink-0">
+        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0", categoryIconBg[d.category] || "bg-muted/60")}>
           <span className="text-base">{d.icon}</span>
         </div>
-        <p className="text-[13px] font-semibold text-foreground truncate">{d.label}</p>
+        <div className="min-w-0">
+          <p className="text-[13px] font-bold text-foreground truncate">{d.label}</p>
+          {d.description && configEntries.length > 0 && (
+            <p className="text-[10px] text-muted-foreground truncate">{d.description}</p>
+          )}
+        </div>
       </div>
 
-      {/* Config key-value rows — Sim Studio style */}
+      {/* Config key-value rows — Sim Studio style with separator */}
       {configEntries.length > 0 && (
-        <div className="mt-3 space-y-1.5">
+        <div className="mt-3 pt-2.5 border-t border-border/40 space-y-1.5">
           {configEntries.map(([key, val]) => (
             <div key={key} className="flex items-center justify-between gap-3">
               <span className="text-[11px] text-muted-foreground font-medium">
                 {CONFIG_LABELS[key] || key}
               </span>
-              <span className="text-[11px] text-foreground font-mono truncate max-w-[140px] text-right">
+              <span className="text-[11px] text-foreground font-mono truncate max-w-[150px] text-right bg-muted/30 px-1.5 py-0.5 rounded">
                 {String(val)}
               </span>
             </div>
