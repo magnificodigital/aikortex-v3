@@ -51,18 +51,23 @@ const LLM_MODELS = [
   { value: "gpt-5-mini", label: "GPT-5 Mini" },
 ];
 
-const FREE_MODELS = [
-  { value: "stepfun/step-3.5-flash:free", label: "Step 3.5 Flash" },
-  { value: "deepseek/deepseek-chat-v3-0324:free", label: "DeepSeek V3" },
-  { value: "google/gemma-3-27b-it:free", label: "Gemma 3 27B" },
-  { value: "minimax/minimax-m1:free", label: "MiniMax M1" },
-];
-
 const SETUP_SYSTEM_PROMPT = `Você é o assistente de configuração de agentes na Aikortex. Responda em português brasileiro, seja BREVE e direto. Faça UMA pergunta por vez, curta (máximo 2 linhas). Se a resposta do usuário for válida, confirme rapidamente e preencha o campo automaticamente. Não repita informações já fornecidas.
 
 Áreas de configuração: Identidade (nome, descrição), Objetivo (missão), Instruções (tom, personalidade), Integrações (APIs/MCPs), Canais (WhatsApp, Instagram, Site), Conhecimento (documentos/URLs).
 
-Quando o usuário responder algo claro, confirme com ✅ e passe para o próximo item. Exemplo: "✅ Nome definido: Agente Luna. Qual o objetivo principal?"
+REGRA DE PREENCHIMENTO AUTOMÁTICO:
+Sempre que confirmar um campo, inclua um marcador oculto no formato [SET:campo=valor]. Os campos disponíveis são:
+- agentName (nome do agente)
+- companyName (nome da empresa)
+- industry (setor/indústria)
+- mainProduct (produto/serviço principal)
+- targetAudienceDescription (público-alvo)
+- toneOfVoice (tom de voz)
+- greetingMessage (mensagem de boas-vindas)
+- website (site da empresa)
+
+Exemplo: "✅ Nome definido! [SET:agentName=Luna] Qual o objetivo principal do agente?"
+Exemplo: "✅ Entendi! [SET:companyName=TechCorp] [SET:industry=Tecnologia] E qual é o produto ou serviço principal?"
 
 REGRA IMPORTANTE sobre Integrações, Canais e Arquivos/Conhecimento:
 - Quando o assunto for sobre **Integrações** (APIs, MCPs, Webhooks, chaves de API), responda: "⚙️ Para configurar integrações, use o painel à direita na aba **Integrações**." e inclua exatamente este marcador: [SWITCH_TAB:connectors]
@@ -89,7 +94,6 @@ const Aikortex = () => {
   const [rightPanelTab, setRightPanelTab] = useState("agent");
   const [didAutoRoute, setDidAutoRoute] = useState(false);
   const [chatMode, setChatMode] = useState<"setup" | "test">("setup");
-  const [freeModel, setFreeModel] = useState("stepfun/step-3.5-flash:free");
 
   const { keys, loading: keysLoading, refetch: refetchKeys } = useApiKeys();
 
@@ -118,7 +122,7 @@ const Aikortex = () => {
 
   const setupChat = useAgentChat(
     [{ role: "agent", text: `👋 Vou configurar o **${agentNameForChat}**. Qual nome quer dar ao agente?` }],
-    { useGateway: true, gatewayModel: freeModel, systemPrompt: SETUP_SYSTEM_PROMPT }
+    { model: "gemini-2.5-flash", systemPrompt: SETUP_SYSTEM_PROMPT }
   );
 
   const testChat = useAgentChat(
@@ -129,14 +133,29 @@ const Aikortex = () => {
   const activeChat = chatMode === "setup" ? setupChat : testChat;
   const { messages, sendMessage, isStreaming } = activeChat;
 
-  // Auto-switch right panel tab when AI suggests it
+  // Auto-switch right panel tab and auto-fill fields when AI suggests it
   useEffect(() => {
     if (messages.length === 0) return;
     const lastMsg = messages[messages.length - 1];
     if (lastMsg.role !== "agent") return;
-    const match = lastMsg.text.match(/\[SWITCH_TAB:(connectors|channels|knowledge)\]/);
-    if (match) {
-      setRightPanelTab(match[1]);
+
+    // Switch tab
+    const tabMatch = lastMsg.text.match(/\[SWITCH_TAB:(connectors|channels|knowledge)\]/);
+    if (tabMatch) setRightPanelTab(tabMatch[1]);
+
+    // Auto-fill fields from [SET:field=value] markers
+    const setMatches = lastMsg.text.matchAll(/\[SET:(\w+)=([^\]]+)\]/g);
+    for (const m of setMatches) {
+      const field = m[1] as keyof BusinessContext;
+      const value = m[2];
+      const validFields: (keyof BusinessContext)[] = [
+        "agentName", "companyName", "industry", "mainProduct",
+        "targetAudienceDescription", "toneOfVoice", "greetingMessage",
+        "website", "painPoints", "businessHours", "escalationRules",
+      ];
+      if (validFields.includes(field)) {
+        setContext(prev => ({ ...prev, [field]: value }));
+      }
     }
   }, [messages]);
 
@@ -269,21 +288,10 @@ const Aikortex = () => {
         {/* Mode indicator */}
         <div className="px-4 py-1.5 border-b border-border bg-muted/30 flex items-center gap-2">
           {chatMode === "setup" ? (
-            <>
-              <Badge variant="secondary" className="text-xs gap-1">
-                <Bot className="w-3 h-3" />
-                Configuração (gratuito)
-              </Badge>
-              <select
-                value={freeModel}
-                onChange={(e) => setFreeModel(e.target.value)}
-                className="text-xs text-muted-foreground bg-transparent border border-border rounded-md px-2 py-0.5 cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary/40"
-              >
-                {FREE_MODELS.map((m) => (
-                  <option key={m.value} value={m.value}>{m.label}</option>
-                ))}
-              </select>
-            </>
+            <Badge variant="secondary" className="text-xs gap-1">
+              <Bot className="w-3 h-3" />
+              Assistente de Configuração — Lovable AI
+            </Badge>
           ) : (
             <Badge variant="outline" className="text-xs gap-1">
               <TestTube className="w-3 h-3" />
@@ -306,7 +314,7 @@ const Aikortex = () => {
                 }`}>
                   {msg.role === "agent" ? (
                     <div className="prose prose-sm dark:prose-invert max-w-none">
-                      <ReactMarkdown>{msg.text.replace(/\[SWITCH_TAB:\w+\]/g, "")}</ReactMarkdown>
+                      <ReactMarkdown>{msg.text.replace(/\[SWITCH_TAB:\w+\]/g, "").replace(/\[SET:\w+=[^\]]+\]/g, "")}</ReactMarkdown>
                     </div>
                   ) : (
                     msg.text
