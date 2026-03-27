@@ -54,6 +54,7 @@ export default function FlowCopilotPanel({ onClose, onAddNode, initialPrompt }: 
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const didAutoSend = useRef(false);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
