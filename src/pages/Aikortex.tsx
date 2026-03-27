@@ -385,10 +385,7 @@ const Aikortex = () => {
           {chatMode === "setup" ? (
             <Badge variant="secondary" className="text-xs gap-1">
               <Bot className="w-3 h-3" />
-              Assistente de Configuração — {setupHasUserKey
-                ? (LLM_MODELS.find(m => m.value === setupModel)?.label || setupModel)
-                : (FREE_MODELS.find(m => m.value === setupModel)?.label || "IA Gratuita")}
-              {setupHasUserKey && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />}
+              Assistente de Configuração — {FREE_MODELS.find(m => m.value === setupModel)?.label || "IA Gratuita"}
             </Badge>
           ) : (
             <Badge variant="outline" className="text-xs gap-1">
