@@ -61,8 +61,7 @@ export const NODE_TEMPLATES: NodeTemplate[] = [
   { type: "trigger_manual", label: "Trigger Manual", category: "trigger", icon: "🖱️", description: "Manually triggered by the user", color: "#22c55e", defaultConfig: {} },
 
   // ── Processing ──
-  { type: "agent", label: "Agent", category: "processing", icon: "🤖", description: "Chat with AI models", color: "#6366f1", defaultConfig: { model: "gemini-2.5-flash", temperature: 0.7, systemPrompt: "" } },
-  { type: "agent_ai", label: "Agente IA", category: "processing", icon: "🧠", description: "Use one of your configured AI agents", color: "#6366f1", defaultConfig: { agentType: "", agentId: "", model: "gemini-2.5-flash", temperature: 0.7 } },
+  { type: "agent_ai", label: "Agente IA", category: "processing", icon: "🧠", description: "Converse com modelos de IA configurados", color: "#6366f1", defaultConfig: { agentType: "", agentId: "", model: "gemini-2.5-flash", temperature: 0.7, systemPrompt: "" } },
   { type: "function", label: "Function", category: "processing", icon: "⚡", description: "Run custom JavaScript/TypeScript code", color: "#6366f1", defaultConfig: { code: "", language: "javascript" } },
   { type: "api", label: "API Request", category: "processing", icon: "🌐", description: "Connect to external services via HTTP", color: "#6366f1", defaultConfig: { url: "", method: "GET", headers: {}, body: "" } },
   { type: "prompt", label: "Prompt", category: "processing", icon: "📝", description: "Send a structured prompt to an AI model", color: "#6366f1", defaultConfig: { model: "gemini-2.5-flash", prompt: "", temperature: 0.7 } },
@@ -233,7 +232,7 @@ export const FLOW_TEMPLATES: FlowTemplate[] = [
     tags: ["lead", "vendas", "crm"],
     nodes: [
       nd("s1", "Chat", "trigger", "💬", "Nova mensagem recebida", "#22c55e", { channel: "whatsapp" }, pos(50, 200), "trigger_chat"),
-      nd("s2", "Agent", "processing", "🤖", "Qualifica o lead", "#6366f1", { model: "gemini-2.5-flash", temperature: 0.7 }, pos(350, 200), "agent"),
+      nd("s2", "Agente IA", "processing", "🧠", "Qualifica o lead", "#6366f1", { agentType: "sdr", model: "gemini-2.5-flash", temperature: 0.7 }, pos(350, 200), "agent_ai"),
       nd("s3", "Condition", "logic", "🔀", "Lead qualificado?", "#f59e0b", { expression: '{{score}} >= 7' }, pos(650, 200), "condition"),
       nd("s4", "CRM", "integration", "💼", "Salva no CRM", "#8b5cf6", { provider: "hubspot", action: "create_lead" }, pos(950, 100), "integration_crm"),
       nd("s5", "Response", "output", "📤", "Envia resposta", "#06b6d4", { format: "text", template: "Lead qualificado!" }, pos(950, 300), "response"),
@@ -252,7 +251,7 @@ export const FLOW_TEMPLATES: FlowTemplate[] = [
     tags: ["sac", "suporte", "atendimento"],
     nodes: [
       nd("c1", "Chat", "trigger", "💬", "Nova mensagem", "#22c55e", { channel: "any" }, pos(50, 200), "trigger_chat"),
-      nd("c2", "Agent", "processing", "🤖", "Analisa e responde", "#6366f1", { model: "gemini-2.5-flash", systemPrompt: "Você é um assistente de suporte." }, pos(350, 200), "agent"),
+      nd("c2", "Agente IA", "processing", "🧠", "Analisa e responde", "#6366f1", { agentType: "sac", model: "gemini-2.5-flash", systemPrompt: "Você é um assistente de suporte." }, pos(350, 200), "agent_ai"),
       nd("c3", "Evaluator", "logic", "📊", "Avalia qualidade", "#f59e0b", { criteria: "resolved" }, pos(650, 200), "evaluator"),
       nd("c4", "Response", "output", "📤", "Resposta final", "#06b6d4", { format: "text" }, pos(950, 100), "response"),
       nd("c5", "Human in the Loop", "control", "👤", "Escalar para humano", "#ec4899", { approvalMessage: "Caso não resolvido" }, pos(950, 300), "human_in_loop"),
@@ -288,7 +287,7 @@ export const FLOW_TEMPLATES: FlowTemplate[] = [
     tags: ["agendamento", "reunião", "calendário"],
     nodes: [
       nd("m1", "Chat", "trigger", "💬", "Pedido de reunião", "#22c55e", { channel: "any" }, pos(50, 200), "trigger_chat"),
-      nd("m2", "Agent", "processing", "🤖", "Identifica necessidade", "#6366f1", { model: "gemini-2.5-flash", temperature: 0.5 }, pos(350, 200), "agent"),
+      nd("m2", "Agente IA", "processing", "🧠", "Identifica necessidade", "#6366f1", { agentType: "", model: "gemini-2.5-flash", temperature: 0.5 }, pos(350, 200), "agent_ai"),
       nd("m3", "Calendar", "integration", "📅", "Agenda no calendário", "#8b5cf6", { provider: "google_calendar", action: "create_event" }, pos(650, 200), "integration_calendar"),
       nd("m4", "Response", "output", "📤", "Confirma agendamento", "#06b6d4", { format: "text", template: "Reunião agendada ✅" }, pos(950, 200), "response"),
     ],
