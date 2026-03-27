@@ -173,7 +173,7 @@ export default function FlowCopilotPanel({ onClose, onAddNode, initialPrompt }: 
     }
   }, [initialPrompt, handleSend]);
 
-
+  const handleSuggestion = (text: string) => {
     setInput(text);
   };
 
