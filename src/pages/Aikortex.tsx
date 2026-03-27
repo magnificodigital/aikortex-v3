@@ -467,6 +467,8 @@ const Aikortex = () => {
         onAdvancedConfigChange={setAdvancedConfig}
         activeTab={rightPanelTab}
         onTabChange={setRightPanelTab}
+        activeSection={rightPanelSection}
+        onSectionChange={setRightPanelSection}
       />
     </div>
   );
