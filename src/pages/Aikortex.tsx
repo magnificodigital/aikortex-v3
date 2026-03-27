@@ -129,6 +129,17 @@ const Aikortex = () => {
   const activeChat = chatMode === "setup" ? setupChat : testChat;
   const { messages, sendMessage, isStreaming } = activeChat;
 
+  // Auto-switch right panel tab when AI suggests it
+  useEffect(() => {
+    if (messages.length === 0) return;
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg.role !== "agent") return;
+    const match = lastMsg.text.match(/\[SWITCH_TAB:(connectors|channels|knowledge)\]/);
+    if (match) {
+      setRightPanelTab(match[1]);
+    }
+  }, [messages]);
+
   const canSend = chatMode === "setup" || hasApiKey || keysLoading;
 
   // Auto-route from Home prompt
