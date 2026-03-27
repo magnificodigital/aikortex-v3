@@ -1,9 +1,12 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
-import { ArrowLeft, Send, Paperclip, HelpCircle, ChevronDown } from "lucide-react";
+import { ArrowLeft, Send, Paperclip, HelpCircle, Bot, TestTube, AlertTriangle, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import ReactMarkdown from "react-markdown";
 
 import DashboardLayout from "@/components/DashboardLayout";
 import {
@@ -24,6 +27,8 @@ import {
 import { AGENT_PRESETS } from "@/types/agent-presets";
 import StepAgents from "@/components/aikortex/StepAgents";
 import WizardRightPanel from "@/components/aikortex/WizardRightPanel";
+import { useAgentChat } from "@/hooks/use-agent-chat";
+import { useApiKeys } from "@/hooks/use-api-keys";
 
 import avatar1 from "@/assets/avatars/avatar-1.png";
 import avatar2 from "@/assets/avatars/avatar-2.png";
@@ -46,12 +51,22 @@ const LLM_MODELS = [
   { value: "gpt-5-mini", label: "GPT-5 Mini" },
 ];
 
-const MOCK_RESPONSES: Record<string, string> = {
-  default: "Olá! Como posso ajudar você hoje?",
-  oi: "Olá! Que bom te ver por aqui. Como posso ajudar?",
-  preço: "Nossos planos são flexíveis. Posso agendar uma conversa com nosso especialista?",
-  funciona: "Nosso sistema é super intuitivo! Quer que eu te mostre como?",
-};
+const SETUP_SYSTEM_PROMPT = `Você é um assistente especializado em configuração de agentes de IA na plataforma Aikortex. 
+Sua missão é guiar o usuário para completar TODAS as configurações do agente de forma clara e objetiva.
+
+Ao iniciar, apresente-se brevemente e pergunte o que o usuário deseja configurar. As áreas de configuração são:
+
+1. **Identidade** — Nome, descrição, foto do agente
+2. **Objetivo** — Qual a missão principal do agente (vender, qualificar leads, atender clientes, etc.)
+3. **Instruções (Prompt)** — Tom de voz, regras de comportamento, personalidade
+4. **Integrações** — APIs, MCPs, Webhooks que o agente pode usar
+5. **Canais** — WhatsApp, Instagram, Site, etc.
+6. **Conhecimento** — Documentos e URLs de referência
+
+Seja direto, use português brasileiro, e ajude o usuário a preencher cada campo com sugestões práticas.
+Quando todas as configurações estiverem completas, informe que o agente está pronto e sugira que ele configure sua chave de API na aba Integrações para testar o agente com a IA real.
+
+IMPORTANTE: Você NÃO é o agente final. Você é o assistente de configuração. Não tente responder como se fosse o agente do usuário.`;
 
 const Aikortex = () => {
   const location = useLocation();
