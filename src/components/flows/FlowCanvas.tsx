@@ -25,9 +25,22 @@ import FlowNodeConfig from "./FlowNodeConfig";
 import FlowCopilotPanel from "./FlowCopilotPanel";
 import FlowNodePalette from "./FlowNodePalette";
 import FlowBottomToolbar from "./FlowBottomToolbar";
-import FlowWorkspaceSidebar from "./FlowWorkspaceSidebar";
 import { Button } from "@/components/ui/button";
-import { Save, Play, Undo2, Redo2, MoreHorizontal, MessageSquare } from "lucide-react";
+import {
+  Play,
+  Rocket,
+  Trash2,
+  Copy,
+  Download,
+  PanelLeft,
+  PanelRight,
+  MessageSquare,
+  Wrench,
+  Settings2,
+  Database,
+  ListChecks,
+  ScrollText,
+} from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { SavedFlow } from "@/types/flow-builder";
@@ -57,7 +70,15 @@ const defaultStartNode: Node = {
 
 let nodeIdCounter = 1;
 
-type RightTab = "copilot" | "toolbar" | "editor";
+type RightTab = "toolbar" | "editor" | "database" | "tasks" | "logs";
+
+const RIGHT_TABS: { id: RightTab; label: string; icon: React.ElementType }[] = [
+  { id: "toolbar", label: "Blocos", icon: Wrench },
+  { id: "editor", label: "Editor", icon: Settings2 },
+  { id: "database", label: "Database", icon: Database },
+  { id: "tasks", label: "Tarefas", icon: ListChecks },
+  { id: "logs", label: "Logs", icon: ScrollText },
+];
 
 interface FlowCanvasProps {
   initialNodes?: unknown[];
@@ -79,8 +100,9 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
   const [edges, setEdges, onEdgesChange] = useEdgesState((initialEdges as Edge[]) || []);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
-  const [rightTab, setRightTab] = useState<RightTab>("copilot");
+  const [rightTab, setRightTab] = useState<RightTab>("toolbar");
   const [showRightPanel, setShowRightPanel] = useState(true);
+  const [showLeftPanel, setShowLeftPanel] = useState(true);
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -173,6 +195,14 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
     }
   };
 
+  const handleRun = () => {
+    if (nodes.length < 2) {
+      toast.error("Adicione pelo menos 2 blocos ao fluxo");
+      return;
+    }
+    toast.info("Executando fluxo...");
+  };
+
   const handleDeploy = () => {
     if (nodes.length < 2) {
       toast.error("Adicione pelo menos 2 blocos ao fluxo");
@@ -181,12 +211,27 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
     toast.success("Fluxo publicado com sucesso! 🚀");
   };
 
-  const handleRun = () => {
-    if (nodes.length < 2) {
-      toast.error("Adicione pelo menos 2 blocos ao fluxo");
-      return;
+  const handleDeleteFlow = () => {
+    toast.success("Fluxo excluído");
+  };
+
+  const handleDuplicate = () => {
+    if (onSave) {
+      onSave(`${flowName || "Novo Fluxo"} (cópia)`, nodes, edges);
     }
-    toast.info("Executando fluxo...");
+    toast.success("Fluxo duplicado");
+  };
+
+  const handleExport = () => {
+    const data = JSON.stringify({ nodes, edges, name: flowName }, null, 2);
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${flowName || "flow"}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Fluxo exportado");
   };
 
   const handleDrop = useCallback(
@@ -231,139 +276,152 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
 
   return (
     <div className="flex h-full">
-      {/* Workspace sidebar — Sim Studio style */}
-      <FlowWorkspaceSidebar
-        flows={flows}
-        activeFlowId={flowId}
-        onOpenFlow={(flow) => onOpenFlow?.(flow)}
-        onNewFlow={() => onNewFlow?.()}
-      />
-
-      {/* Canvas area */}
-      <div className="flex-1 relative flex flex-col">
-        <div className="flex-1 relative" ref={reactFlowWrapper} onDrop={handleDrop} onDragOver={handleDragOver}>
-        {/* Top right controls */}
-        <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
-          <div className="flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-border rounded-lg px-1 py-1">
-            <Button variant="ghost" size="icon" className="h-7 w-7" title="Mais opções">
-              <MoreHorizontal className="w-3.5 h-3.5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              title="Chat"
-              onClick={() => { setShowRightPanel(!showRightPanel); setRightTab("copilot"); }}
-            >
-              <MessageSquare className="w-3.5 h-3.5" />
+      {/* LEFT — Copilot */}
+      {showLeftPanel && (
+        <div className="w-[300px] border-r border-border flex-shrink-0 flex flex-col bg-card h-full overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="w-4 h-4 text-primary" />
+              <span className="text-xs font-semibold text-foreground">Copilot</span>
+            </div>
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShowLeftPanel(false)}>
+              <PanelLeft className="w-3.5 h-3.5" />
             </Button>
           </div>
+          <div className="flex-1 overflow-hidden">
+            <FlowCopilotPanel
+              onClose={() => setShowLeftPanel(false)}
+              onAddNode={handleAddNode}
+            />
+          </div>
+        </div>
+      )}
 
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 gap-1.5 text-xs font-medium bg-card/90 backdrop-blur-sm"
-            onClick={handleDeploy}
-          >
-            Deploy
-          </Button>
-          <Button
-            size="sm"
-            className="h-8 gap-1.5 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white"
-            onClick={handleRun}
-          >
-            <Play className="w-3.5 h-3.5 fill-current" /> Run
-          </Button>
+      {/* CENTER — Canvas */}
+      <div className="flex-1 relative flex flex-col min-w-0">
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-3 py-1.5 border-b border-border bg-card/80 backdrop-blur-sm flex-shrink-0">
+          <div className="flex items-center gap-1">
+            {!showLeftPanel && (
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowLeftPanel(true)} title="Copilot">
+                <PanelLeft className="w-3.5 h-3.5" />
+              </Button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 gap-1.5 text-[11px]"
+              onClick={handleRun}
+            >
+              <Play className="w-3 h-3 fill-current" /> Run
+            </Button>
+            <Button
+              size="sm"
+              className="h-7 gap-1.5 text-[11px] bg-emerald-600 hover:bg-emerald-700 text-white"
+              onClick={handleDeploy}
+            >
+              <Rocket className="w-3 h-3" /> Deploy
+            </Button>
+            <div className="w-px h-5 bg-border mx-0.5" />
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleDuplicate} title="Duplicar">
+              <Copy className="w-3.5 h-3.5" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleExport} title="Exportar">
+              <Download className="w-3.5 h-3.5" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={handleDeleteFlow} title="Excluir">
+              <Trash2 className="w-3.5 h-3.5" />
+            </Button>
+            <div className="w-px h-5 bg-border mx-0.5" />
+            {!showRightPanel && (
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowRightPanel(true)} title="Painel direito">
+                <PanelRight className="w-3.5 h-3.5" />
+              </Button>
+            )}
+          </div>
         </div>
 
-        {/* Top left: undo/redo/save */}
-        <div className="absolute top-3 left-3 z-10 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-border rounded-lg px-1.5 py-1">
-          <Button variant="ghost" size="icon" className="h-7 w-7" title="Desfazer">
-            <Undo2 className="w-3.5 h-3.5" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" title="Refazer">
-            <Redo2 className="w-3.5 h-3.5" />
-          </Button>
-          <div className="w-px h-5 bg-border mx-0.5" />
-          <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-xs" onClick={handleSave}>
-            <Save className="w-3.5 h-3.5" /> Salvar
-          </Button>
-        </div>
+        {/* Canvas */}
+        <div className="flex-1 relative" ref={reactFlowWrapper} onDrop={handleDrop} onDragOver={handleDragOver}>
+          <FlowBottomToolbar onAddNode={handleAddNode} />
 
-        {/* Bottom toolbar — quick add nodes by category */}
-        <FlowBottomToolbar onAddNode={handleAddNode} />
-
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onInit={(instance) => setReactFlowInstance(instance as unknown as ReactFlowInstance)}
-          onNodeClick={onNodeClick}
-          onPaneClick={onPaneClick}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          fitView
-          snapToGrid
-          snapGrid={[16, 16]}
-          deleteKeyCode={["Delete", "Backspace"]}
-          multiSelectionKeyCode="Shift"
-          selectionOnDrag
-          panOnScroll
-          zoomOnDoubleClick
-          edgesReconnectable
-          connectionLineStyle={{ stroke: "hsl(var(--primary))", strokeWidth: 2 }}
-          proOptions={{ hideAttribution: true }}
-          className="bg-background [&_.react-flow__attribution]:!hidden"
-          defaultEdgeOptions={{
-            type: "flowEdge",
-            animated: true,
-            style: { stroke: "hsl(var(--primary))", strokeWidth: 2 },
-            markerEnd: { type: MarkerType.ArrowClosed, color: "hsl(var(--primary))" },
-          }}
-        >
-          <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="hsl(var(--muted-foreground) / 0.15)" />
-          <Controls
-            className="!bg-card/90 !border-border !rounded-lg !shadow-lg [&>button]:!bg-transparent [&>button]:!border-border [&>button]:!text-foreground [&>button:hover]:!bg-accent"
-            showInteractive={false}
-          />
-        </ReactFlow>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onInit={(instance) => setReactFlowInstance(instance as unknown as ReactFlowInstance)}
+            onNodeClick={onNodeClick}
+            onPaneClick={onPaneClick}
+            nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
+            fitView
+            snapToGrid
+            snapGrid={[16, 16]}
+            deleteKeyCode={["Delete", "Backspace"]}
+            multiSelectionKeyCode="Shift"
+            selectionOnDrag
+            panOnScroll
+            zoomOnDoubleClick
+            edgesReconnectable
+            connectionLineStyle={{ stroke: "hsl(var(--primary))", strokeWidth: 2 }}
+            proOptions={{ hideAttribution: true }}
+            className="bg-background [&_.react-flow__attribution]:!hidden"
+            defaultEdgeOptions={{
+              type: "flowEdge",
+              animated: true,
+              style: { stroke: "hsl(var(--primary))", strokeWidth: 2 },
+              markerEnd: { type: MarkerType.ArrowClosed, color: "hsl(var(--primary))" },
+            }}
+          >
+            <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="hsl(var(--muted-foreground) / 0.15)" />
+            <Controls
+              className="!bg-card/90 !border-border !rounded-lg !shadow-lg [&>button]:!bg-transparent [&>button]:!border-border [&>button]:!text-foreground [&>button:hover]:!bg-accent"
+              showInteractive={false}
+            />
+          </ReactFlow>
         </div>
       </div>
 
-      {/* Right panel with tabs */}
+      {/* RIGHT — Toolbar / Editor / Database / Tasks / Logs */}
       {showRightPanel && (
         <div className="w-[300px] border-l border-border flex-shrink-0 flex flex-col bg-card h-full overflow-hidden">
-          {/* Tab headers */}
-          <div className="flex items-center border-b border-border px-1 flex-shrink-0">
-            {(["copilot", "toolbar", "editor"] as RightTab[]).map((tab) => (
+          {/* Vertical icon tabs */}
+          <div className="flex items-center border-b border-border">
+            {RIGHT_TABS.map((tab) => (
               <button
-                key={tab}
-                onClick={() => setRightTab(tab)}
+                key={tab.id}
+                onClick={() => setRightTab(tab.id)}
                 className={cn(
-                  "px-3 py-2.5 text-xs font-medium transition-colors relative",
-                  rightTab === tab
-                    ? "text-foreground"
+                  "flex-1 flex flex-col items-center gap-0.5 py-2 text-[9px] font-medium transition-colors relative",
+                  rightTab === tab.id
+                    ? "text-primary"
                     : "text-muted-foreground hover:text-foreground"
                 )}
+                title={tab.label}
               >
-                {tab === "copilot" ? "Copilot" : tab === "toolbar" ? "Toolbar" : "Editor"}
-                {rightTab === tab && (
-                  <div className="absolute bottom-0 left-1 right-1 h-0.5 bg-primary rounded-full" />
+                <tab.icon className="w-3.5 h-3.5" />
+                <span>{tab.label}</span>
+                {rightTab === tab.id && (
+                  <div className="absolute bottom-0 left-2 right-2 h-0.5 bg-primary rounded-full" />
                 )}
               </button>
             ))}
+            <button
+              onClick={() => setShowRightPanel(false)}
+              className="px-2 py-2 text-muted-foreground hover:text-foreground transition-colors"
+              title="Fechar"
+            >
+              <PanelRight className="w-3.5 h-3.5" />
+            </button>
           </div>
 
           {/* Tab content */}
           <div className="flex-1 overflow-hidden">
-            {rightTab === "copilot" && (
-              <FlowCopilotPanel
-                onClose={() => setShowRightPanel(false)}
-                onAddNode={handleAddNode}
-              />
-            )}
             {rightTab === "toolbar" && (
               <FlowNodePalette />
             )}
@@ -378,10 +436,37 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
             {rightTab === "editor" && !selectedNode && (
               <div className="flex flex-col items-center justify-center h-full text-center px-6">
                 <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center mb-3">
-                  <MessageSquare className="w-5 h-5 text-muted-foreground" />
+                  <Settings2 className="w-5 h-5 text-muted-foreground" />
                 </div>
                 <p className="text-sm font-medium text-foreground mb-1">Nenhum bloco selecionado</p>
                 <p className="text-xs text-muted-foreground">Clique em um bloco no canvas para editá-lo aqui.</p>
+              </div>
+            )}
+            {rightTab === "database" && (
+              <div className="flex flex-col items-center justify-center h-full text-center px-6">
+                <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center mb-3">
+                  <Database className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <p className="text-sm font-medium text-foreground mb-1">Base de Dados</p>
+                <p className="text-xs text-muted-foreground">Gerencie tabelas e variáveis do fluxo.</p>
+              </div>
+            )}
+            {rightTab === "tasks" && (
+              <div className="flex flex-col items-center justify-center h-full text-center px-6">
+                <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center mb-3">
+                  <ListChecks className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <p className="text-sm font-medium text-foreground mb-1">Tarefas Agendadas</p>
+                <p className="text-xs text-muted-foreground">Visualize e gerencie tarefas programadas.</p>
+              </div>
+            )}
+            {rightTab === "logs" && (
+              <div className="flex flex-col items-center justify-center h-full text-center px-6">
+                <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center mb-3">
+                  <ScrollText className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <p className="text-sm font-medium text-foreground mb-1">Logs de Execução</p>
+                <p className="text-xs text-muted-foreground">Histórico de execuções e erros do fluxo.</p>
               </div>
             )}
           </div>
