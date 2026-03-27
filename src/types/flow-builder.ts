@@ -287,7 +287,7 @@ export const FLOW_TEMPLATES: FlowTemplate[] = [
     tags: ["agendamento", "reunião", "calendário"],
     nodes: [
       nd("m1", "Chat", "trigger", "💬", "Pedido de reunião", "#22c55e", { channel: "any" }, pos(50, 200), "trigger_chat"),
-      nd("m2", "Agent", "processing", "🤖", "Identifica necessidade", "#6366f1", { model: "gemini-2.5-flash", temperature: 0.5 }, pos(350, 200), "agent"),
+      nd("m2", "Agente IA", "processing", "🧠", "Identifica necessidade", "#6366f1", { agentType: "", model: "gemini-2.5-flash", temperature: 0.5 }, pos(350, 200), "agent_ai"),
       nd("m3", "Calendar", "integration", "📅", "Agenda no calendário", "#8b5cf6", { provider: "google_calendar", action: "create_event" }, pos(650, 200), "integration_calendar"),
       nd("m4", "Response", "output", "📤", "Confirma agendamento", "#06b6d4", { format: "text", template: "Reunião agendada ✅" }, pos(950, 200), "response"),
     ],
