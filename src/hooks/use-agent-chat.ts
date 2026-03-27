@@ -64,6 +64,7 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
           provider: options.provider || deriveProvider(options.model),
           model: options.model,
           useGateway: options.useGateway ?? false,
+          gatewayModel: options.gatewayModel,
         }),
       });
 
