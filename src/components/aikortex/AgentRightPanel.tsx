@@ -399,6 +399,10 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
     onConfigChange?.({
       name: agentName,
       description: agentDesc,
+      objective: agentObjective,
+      instructions: agentInstructions,
+      toneOfVoice: agentToneOfVoice,
+      greetingMessage: agentGreetingMessage,
       avatarUrl: avatarPreview || agent.avatar || "",
       channels: connectedChannels,
       integrations: Object.entries(connectorKeys).filter(([, v]) => v.configured).map(([k]) => k),
