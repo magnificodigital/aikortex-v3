@@ -66,6 +66,10 @@ const buildSetupSystemPrompt = (config: AgentConfig | null, apiKeys: Record<stri
   const configStatus = config ? [
     config.name ? `Nome: ${config.name}` : null,
     config.description ? `Descrição: ${config.description.slice(0, 200)}` : null,
+    config.objective ? `Objetivo: ${config.objective.slice(0, 200)}` : null,
+    config.instructions ? `Instruções: ${config.instructions.slice(0, 200)}` : null,
+    config.toneOfVoice ? `Tom de voz: ${config.toneOfVoice}` : null,
+    config.greetingMessage ? `Mensagem de saudação: ${config.greetingMessage.slice(0, 100)}` : null,
     config.channels?.length ? `Canais: ${config.channels.join(", ")}` : null,
     config.integrations?.length ? `Integrações: ${config.integrations.join(", ")}` : null,
     config.knowledgeFiles?.length ? `Arquivos: ${config.knowledgeFiles.length} arquivo(s)` : null,
