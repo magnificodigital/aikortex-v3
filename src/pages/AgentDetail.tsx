@@ -18,6 +18,7 @@ import avatar1 from "@/assets/avatars/avatar-1.png";
 import avatar2 from "@/assets/avatars/avatar-2.png";
 import avatar3 from "@/assets/avatars/avatar-3.png";
 import avatar8 from "@/assets/avatars/avatar-8.png";
+import { DEFAULT_FREE_SETUP_MODEL, GATEWAY_MODELS, normalizeFreeSetupModel } from "@/lib/free-setup-models";
 
 const AGENTS_MAP: Record<string, { name: string; avatar: string; model: string; agentType: AgentType }> = {
   "sdr-1": { name: "Agente SDR", avatar: avatar1, model: "gemini-2.5-flash", agentType: "SDR" },
@@ -46,13 +47,6 @@ const LLM_MODELS = [
   { value: "claude-3.5-sonnet", label: "Claude 3.5 Sonnet", provider: "anthropic" },
   { value: "claude-3-opus", label: "Claude 3 Opus", provider: "anthropic" },
   { value: "claude-3-haiku", label: "Claude 3 Haiku", provider: "anthropic" },
-] as const;
-
-const GATEWAY_MODELS = [
-  { value: "google/gemma-3-4b-it:free", label: "Gemma 3 4B (Grátis)" },
-  { value: "deepseek/deepseek-chat-v3-0324:free", label: "DeepSeek V3 (Grátis)" },
-  { value: "meta-llama/llama-4-maverick:free", label: "Llama 4 Maverick (Grátis)" },
-  { value: "qwen/qwen3-8b:free", label: "Qwen3 8B (Grátis)" },
 ] as const;
 
 const getProviderForModel = (model: string): string => {
