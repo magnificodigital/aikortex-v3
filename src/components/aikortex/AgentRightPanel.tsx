@@ -336,6 +336,22 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
     if (storagePrefix) { try { return localStorage.getItem(`${storagePrefix}-desc`) || ""; } catch {} }
     return "";
   });
+  const [agentObjective, setAgentObjective] = useState(() => {
+    if (storagePrefix) { try { return localStorage.getItem(`${storagePrefix}-objective`) || ""; } catch {} }
+    return "";
+  });
+  const [agentInstructions, setAgentInstructions] = useState(() => {
+    if (storagePrefix) { try { return localStorage.getItem(`${storagePrefix}-instructions`) || ""; } catch {} }
+    return "";
+  });
+  const [agentToneOfVoice, setAgentToneOfVoice] = useState(() => {
+    if (storagePrefix) { try { return localStorage.getItem(`${storagePrefix}-toneOfVoice`) || ""; } catch {} }
+    return "";
+  });
+  const [agentGreetingMessage, setAgentGreetingMessage] = useState(() => {
+    if (storagePrefix) { try { return localStorage.getItem(`${storagePrefix}-greetingMessage`) || ""; } catch {} }
+    return "";
+  });
   const [knowledgeFiles, setKnowledgeFiles] = useState<KnowledgeFileLocal[]>(() => {
     if (storagePrefix) { try { const s = localStorage.getItem(`${storagePrefix}-files`); if (s) return JSON.parse(s); } catch {} }
     return [];
