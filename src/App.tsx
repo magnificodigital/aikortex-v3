@@ -33,6 +33,7 @@ const SintonIA = lazy(() => import("./pages/SintonIA"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const ClientRegistration = lazy(() => import("./pages/ClientRegistration"));
 const AppBuilder = lazy(() => import("./pages/AppBuilder"));
+const Apps = lazy(() => import("./pages/Apps"));
 const Templates = lazy(() => import("./pages/Templates"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Meetings = lazy(() => import("./pages/Meetings"));
@@ -62,6 +63,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/home" element={<P><Home /></P>} />
+              <Route path="/apps" element={<P><Apps /></P>} />
               <Route path="/app-builder" element={<P><AppBuilder /></P>} />
               <Route path="/templates" element={<P><Templates /></P>} />
               <Route path="/dashboard" element={<P><Index /></P>} />
