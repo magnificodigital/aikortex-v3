@@ -266,6 +266,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_apps: {
+        Row: {
+          channel: string
+          config: Json
+          created_at: string
+          description: string | null
+          files: Json
+          id: string
+          name: string
+          status: string
+          tables_schema: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channel?: string
+          config?: Json
+          created_at?: string
+          description?: string | null
+          files?: Json
+          id?: string
+          name?: string
+          status?: string
+          tables_schema?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          config?: Json
+          created_at?: string
+          description?: string | null
+          files?: Json
+          id?: string
+          name?: string
+          status?: string
+          tables_schema?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

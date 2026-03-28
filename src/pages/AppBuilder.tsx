@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import {
-  Eye, Code2, Database, RotateCw, ExternalLink, Github, Upload,
+  Eye, Code2, Database, RotateCw, ExternalLink, Github, Upload, Save,
   LayoutDashboard, Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,11 +30,39 @@ const tabs: { id: TabId; label: string; icon: typeof Eye }[] = [
 
 const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
   const navigate = useNavigate();
-  const { channel, setChannel } = useAppBuilder();
+  const { channel, setChannel, saveApp, appName, appId, setFiles, setTables, setAppName, setChannel: setCtxChannel } = useAppBuilder();
+  const { user } = useAuth();
 
   const [activeTab, setActiveTab] = useState<TabId>("preview");
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [showConfig, setShowConfig] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // Load existing app data when editing
+  useEffect(() => {
+    if (!appId) return;
+    supabase
+      .from("user_apps")
+      .select("*")
+      .eq("id", appId)
+      .single()
+      .then(({ data }) => {
+        if (!data) return;
+        setAppName(data.name);
+        setCtxChannel(data.channel as "whatsapp" | "web");
+        if (Array.isArray(data.files)) setFiles(data.files as any);
+        if (Array.isArray(data.tables_schema)) setTables(data.tables_schema as any);
+      });
+  }, [appId]);
+
+  const handleSave = async () => {
+    if (!user) { toast.error("Faça login para salvar."); return; }
+    setSaving(true);
+    const id = await saveApp(user.id);
+    setSaving(false);
+    if (id) toast.success("App salvo!");
+    else toast.error("Erro ao salvar.");
+  };
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
@@ -76,8 +107,9 @@ const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
             <Button variant="ghost" size="icon" className="h-7 w-7" title="GitHub">
               <Github className="w-3.5 h-3.5" />
             </Button>
-            <Button variant="outline" size="sm" className="h-7 text-xs gap-1 rounded-full">
-              Upgrade
+            <Button variant="outline" size="sm" className="h-7 text-xs gap-1 rounded-full" onClick={handleSave} disabled={saving}>
+              <Save className="w-3 h-3" />
+              {saving ? "Salvando..." : "Salvar"}
             </Button>
             <Button size="sm" className="h-7 text-xs gap-1 rounded-full bg-primary hover:bg-primary/90">
               <Upload className="w-3 h-3" />
@@ -115,9 +147,10 @@ const AppBuilder = () => {
   const state = location.state as any;
   const initialPrompt = state?.initialPrompt || "";
   const initialChannel = (state?.channel as AppChannel) || "web";
+  const existingAppId = state?.appId || null;
 
   return (
-    <AppBuilderProvider initialChannel={initialChannel}>
+    <AppBuilderProvider initialChannel={initialChannel} existingAppId={existingAppId}>
       <AppBuilderInner initialPrompt={initialPrompt} />
     </AppBuilderProvider>
   );

@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface GeneratedFile {
   name: string;
@@ -46,6 +47,9 @@ interface AppBuilderContextType extends AppBuilderState {
   setAppName: (name: string) => void;
   setIsGenerating: (v: boolean) => void;
   initializeProject: (channel: "whatsapp" | "web", prompt: string) => void;
+  saveApp: (userId: string) => Promise<string | null>;
+  appId: string | null;
+  setAppId: (id: string | null) => void;
 }
 
 const AppBuilderContext = createContext<AppBuilderContextType | null>(null);
@@ -118,7 +122,8 @@ function generateWhatsAppMetrics(): DashboardMetric[] {
 
 /* ── Provider ── */
 
-export function AppBuilderProvider({ children, initialChannel = "web" }: { children: ReactNode; initialChannel?: "whatsapp" | "web" }) {
+export function AppBuilderProvider({ children, initialChannel = "web", existingAppId }: { children: ReactNode; initialChannel?: "whatsapp" | "web"; existingAppId?: string | null }) {
+  const [appId, setAppId] = useState<string | null>(existingAppId || null);
   const [state, setState] = useState<AppBuilderState>({
     channel: initialChannel,
     files: [],
@@ -181,12 +186,42 @@ export function AppBuilderProvider({ children, initialChannel = "web" }: { child
     }));
   }, []);
 
+  const saveApp = useCallback(async (userId: string): Promise<string | null> => {
+    const payload = {
+      user_id: userId,
+      name: state.appName,
+      description: '',
+      channel: state.channel,
+      files: JSON.parse(JSON.stringify(state.files)),
+      tables_schema: JSON.parse(JSON.stringify(state.tables)),
+      status: 'draft',
+    };
+
+    if (appId) {
+      const { error } = await supabase
+        .from('user_apps')
+        .update(payload)
+        .eq('id', appId);
+      if (error) { console.error(error); return null; }
+      return appId;
+    } else {
+      const { data, error } = await supabase
+        .from('user_apps')
+        .insert(payload)
+        .select('id')
+        .single();
+      if (error || !data) { console.error(error); return null; }
+      setAppId(data.id);
+      return data.id;
+    }
+  }, [state, appId]);
+
   return (
     <AppBuilderContext.Provider value={{
       ...state,
       setChannel, addFile, setFiles, addTable, setTables,
       addTerminalLog, setDashboardMetrics, setAppName,
-      setIsGenerating, initializeProject,
+      setIsGenerating, initializeProject, saveApp, appId, setAppId,
     }}>
       {children}
     </AppBuilderContext.Provider>
