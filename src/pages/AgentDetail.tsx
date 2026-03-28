@@ -138,10 +138,15 @@ const AgentDetail = () => {
         model: config.model,
         status: "configuring",
         config: {
+          objective: config.objective,
+          instructions: config.instructions,
+          toneOfVoice: config.toneOfVoice,
+          greetingMessage: config.greetingMessage,
           channels: config.channels,
           integrations: config.integrations,
           knowledgeFiles: config.knowledgeFiles,
           urls: config.urls,
+          apiConfig: config.apiConfig,
         },
       });
       if (result) {
@@ -162,11 +167,24 @@ const AgentDetail = () => {
 
   const hasApiKey = !!keys[currentProvider]?.configured;
 
+  // Check if ANY LLM provider key is configured (required to start)
+  const hasAnyLLMKey = useMemo(() => {
+    return ["openai", "anthropic", "gemini", "openrouter"].some(p => keys[p]?.configured);
+  }, [keys]);
+
   useEffect(() => {
     if (rightPanelTab !== "connectors") {
       refetchKeys();
     }
   }, [rightPanelTab, refetchKeys]);
+
+  // Auto-redirect to Integrações tab if no API key is configured at all
+  useEffect(() => {
+    if (keysLoading) return;
+    if (!hasAnyLLMKey) {
+      setRightPanelTab("connectors");
+    }
+  }, [hasAnyLLMKey, keysLoading]);
 
   useEffect(() => {
     if (chatMode !== "test" || keysLoading) return;
@@ -184,8 +202,15 @@ const AgentDetail = () => {
   const setupSystemPrompt = useMemo(() => buildSetupSystemPrompt(agentConfig, keys, agentModel), [agentConfig, keys, agentModel]);
 
   // Setup mode ALWAYS uses free OpenRouter models
+  const setupInitialMessage = useMemo(() => {
+    if (!hasAnyLLMKey && !keysLoading) {
+      return `⚠️ **Primeiro passo obrigatório:** Configure sua chave de API na aba **Integrações** no painel à direita para começar a construir seu agente.`;
+    }
+    return `Olá! 👋 Sou o assistente de configuração do **${agent.name}**. O que gostaria de configurar?`;
+  }, [hasAnyLLMKey, keysLoading, agent.name]);
+
   const setupChat = useAgentChat(
-    [{ role: "agent", text: `Olá! 👋 Sou o assistente de configuração do **${agent.name}**. O que gostaria de configurar?` }],
+    [{ role: "agent", text: setupInitialMessage }],
     { useGateway: true, gatewayModel: setupModel, systemPrompt: setupSystemPrompt, persistKey: `${storagePrefix}-setup-messages` }
   );
 
@@ -264,7 +289,7 @@ const AgentDetail = () => {
   const activeChat = chatMode === "setup" ? setupChat : testChat;
   const { messages, sendMessage, isStreaming } = activeChat;
 
-  const canSend = chatMode === "setup" || (!keysLoading && hasApiKey);
+  const canSend = chatMode === "setup" ? (!keysLoading && hasAnyLLMKey) : (!keysLoading && hasApiKey);
 
   const handleSend = () => {
     if (!input.trim() || isStreaming || !canSend) return;
@@ -357,8 +382,30 @@ const AgentDetail = () => {
           </div>
         </ScrollArea>
 
-        {/* API Key Warning — only in test mode */}
-        {chatMode === "test" && !keysLoading && !hasApiKey && (
+        {/* API Key Warning — required for both modes */}
+        {!keysLoading && !hasAnyLLMKey && (
+          <div className="px-4 pt-2">
+            <Alert className="border-destructive/30 bg-destructive/5">
+              <KeyRound className="h-4 w-4 text-destructive" />
+              <AlertDescription className="text-xs text-muted-foreground flex items-center justify-between">
+                <span>
+                  <strong className="text-foreground">Passo obrigatório:</strong> Configure pelo menos uma chave de API (OpenAI, Anthropic ou Gemini) na aba <strong className="text-foreground">Integrações</strong> para começar.
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs gap-1 ml-3 shrink-0"
+                  onClick={() => setRightPanelTab("connectors")}
+                >
+                  <KeyRound className="w-3 h-3" /> Configurar API
+                </Button>
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+
+        {/* API Key Warning — test mode specific provider */}
+        {chatMode === "test" && !keysLoading && hasAnyLLMKey && !hasApiKey && (
           <div className="px-4 pt-2">
             <Alert className="border-yellow-500/30 bg-yellow-500/5">
               <AlertTriangle className="h-4 w-4 text-yellow-500" />
@@ -387,11 +434,13 @@ const AgentDetail = () => {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={
-                chatMode === "test" && !hasApiKey && !keysLoading
-                  ? "⚠️ Configure sua chave de API na aba Integrações para testar..."
-                  : chatMode === "setup"
-                    ? "Pergunte sobre a configuração do agente..."
-                    : "Envie uma mensagem para testar o agente..."
+                !hasAnyLLMKey && !keysLoading
+                  ? "🔑 Configure sua chave de API na aba Integrações para começar..."
+                  : chatMode === "test" && !hasApiKey && !keysLoading
+                    ? "⚠️ Configure sua chave de API na aba Integrações para testar..."
+                    : chatMode === "setup"
+                      ? "Pergunte sobre a configuração do agente..."
+                      : "Envie uma mensagem para testar o agente..."
               }
               className="border-0 bg-transparent text-sm min-h-[80px] max-h-[160px] resize-none focus-visible:ring-0 focus-visible:ring-offset-0 p-4"
               disabled={!canSend}
