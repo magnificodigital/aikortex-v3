@@ -127,18 +127,16 @@ serve(async (req) => {
     let apiModel: string;
     let headers: Record<string, string>;
 
-    // If useGateway is true, use OpenRouter free model (Step 3.5 Flash)
+    // If useGateway is true, use Lovable AI gateway (reliable, no strict rate limits)
     if (useGateway) {
-      const OPENROUTER_KEY = Deno.env.get("OPENROUTER_API_KEY");
-      if (!OPENROUTER_KEY) throw new Error("OPENROUTER_API_KEY is not configured");
-      apiUrl = "https://openrouter.ai/api/v1/chat/completions";
-      apiKey = OPENROUTER_KEY;
-      apiModel = gatewayModel || "stepfun/step-3.5-flash:free";
+      const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+      if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+      apiUrl = "https://ai.gateway.lovable.dev/v1/chat/completions";
+      apiKey = LOVABLE_API_KEY;
+      apiModel = gatewayModel || "google/gemini-2.5-flash";
       headers = {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://aikortex.lovable.app",
-        "X-OpenRouter-Title": "Aikortex",
       };
     } else {
       // Try user's own API key first
@@ -247,40 +245,50 @@ serve(async (req) => {
 
     console.log(`Using provider=${selectedProvider}, model=${apiModel}, useGateway=${useGateway}`);
 
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(body),
-    });
+    // Fetch with retry for 429 rate limits
+    let response: Response | null = null;
+    const maxRetries = 3;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      response = await fetch(apiUrl, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+      });
+      if (response.status !== 429 || attempt === maxRetries) break;
+      const retryAfter = parseInt(response.headers.get("retry-after") || "0", 10);
+      const waitMs = Math.max((retryAfter || (attempt + 1) * 2) * 1000, 1000);
+      console.log(`Rate limited (429), retrying in ${waitMs}ms (attempt ${attempt + 1}/${maxRetries})`);
+      await new Promise((r) => setTimeout(r, waitMs));
+    }
 
-    if (!response.ok) {
-      if (response.status === 429) {
+    if (!response!.ok) {
+      if (response!.status === 429) {
         return new Response(JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns segundos." }), {
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response.status === 401) {
+      if (response!.status === 401) {
         return new Response(JSON.stringify({ error: "Chave de API inválida. Verifique sua configuração em Integrações." }), {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response.status === 402) {
+      if (response!.status === 402) {
         return new Response(JSON.stringify({ error: "Créditos insuficientes. Adicione créditos na sua conta." }), {
           status: 402,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const t = await response.text();
-      console.error("AI API error:", response.status, t);
+      const t = await response!.text();
+      console.error("AI API error:", response!.status, t);
       return new Response(JSON.stringify({ error: "Erro no serviço de IA. Verifique sua chave de API." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(response.body, {
+    return new Response(response!.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (e) {
