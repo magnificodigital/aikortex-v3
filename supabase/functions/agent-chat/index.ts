@@ -421,12 +421,18 @@ serve(async (req) => {
               break;
             }
 
+            if (response.status === 429) {
+              console.warn(`OpenRouter model rate limited after retries: ${candidateModel}. Trying next free model.`);
+              break;
+            }
+
             break gatewayAttempt;
           }
 
           if (response?.ok) break;
           if (lastErrorStatus === 404 && lastErrorText.includes("No endpoints found")) break;
           if (lastErrorStatus === 400 && gatewayRejectedDeveloperInstruction(lastErrorText)) break;
+          if (lastErrorStatus === 429) break;
         }
 
         if (response?.ok) break;
