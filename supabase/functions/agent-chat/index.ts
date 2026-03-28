@@ -20,9 +20,15 @@ const MODEL_MAP: Record<string, { gateway: string; openai?: string; anthropic?: 
   "gpt-5": { gateway: "openai/gpt-5", openai: "gpt-5" },
   "gpt-5-mini": { gateway: "openai/gpt-5-mini", openai: "gpt-5-mini" },
   "gpt-5-nano": { gateway: "openai/gpt-5-nano", openai: "gpt-5-nano" },
+  "gpt-4o": { gateway: "openai/gpt-5", openai: "gpt-4o" },
+  "gpt-4o-mini": { gateway: "openai/gpt-5-mini", openai: "gpt-4o-mini" },
+  "gpt-4-turbo": { gateway: "openai/gpt-5", openai: "gpt-4-turbo" },
+  "gpt-4": { gateway: "openai/gpt-5", openai: "gpt-4" },
+  "gpt-3.5-turbo": { gateway: "openai/gpt-5-mini", openai: "gpt-3.5-turbo" },
   // Anthropic models
   "claude-4-sonnet": { gateway: "openai/gpt-5", anthropic: "claude-sonnet-4-20250514" },
   "claude-3.5-sonnet": { gateway: "openai/gpt-5", anthropic: "claude-3-5-sonnet-20241022" },
+  "claude-3-opus": { gateway: "openai/gpt-5", anthropic: "claude-3-opus-20240229" },
   "claude-3-haiku": { gateway: "openai/gpt-5-mini", anthropic: "claude-3-haiku-20240307" },
 };
 

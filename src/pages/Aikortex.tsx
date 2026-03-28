@@ -55,6 +55,15 @@ const LLM_MODELS = [
   { value: "gpt-5", label: "GPT-5", provider: "openai" },
   { value: "gpt-5-mini", label: "GPT-5 Mini", provider: "openai" },
   { value: "gpt-5-nano", label: "GPT-5 Nano", provider: "openai" },
+  { value: "gpt-4o", label: "GPT-4o", provider: "openai" },
+  { value: "gpt-4o-mini", label: "GPT-4o Mini", provider: "openai" },
+  { value: "gpt-4-turbo", label: "GPT-4 Turbo", provider: "openai" },
+  { value: "gpt-4", label: "GPT-4", provider: "openai" },
+  { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo", provider: "openai" },
+  { value: "claude-4-sonnet", label: "Claude 4 Sonnet", provider: "anthropic" },
+  { value: "claude-3.5-sonnet", label: "Claude 3.5 Sonnet", provider: "anthropic" },
+  { value: "claude-3-opus", label: "Claude 3 Opus", provider: "anthropic" },
+  { value: "claude-3-haiku", label: "Claude 3 Haiku", provider: "anthropic" },
 ] as const;
 
 // Free models available via OpenRouter for the setup assistant
