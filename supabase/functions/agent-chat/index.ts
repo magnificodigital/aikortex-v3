@@ -127,17 +127,16 @@ serve(async (req) => {
     let apiModel: string;
     let headers: Record<string, string>;
 
-    // If useGateway is true, use OpenRouter
+    // If useGateway is true, use OpenRouter with stable free assistant defaults
     if (useGateway) {
       apiUrl = "https://openrouter.ai/api/v1/chat/completions";
-      apiModel = gatewayModel || "openai/gpt-4o-mini";
+      apiModel = gatewayModel || "deepseek/deepseek-chat-v3-0324:free";
       headers = {
         "Content-Type": "application/json",
         "HTTP-Referer": "https://aikortex.lovable.app",
         "X-OpenRouter-Title": "Aikortex",
       };
 
-      // Try user's OpenRouter key first, then env secret fallback
       let orKey = "";
       const { data: orKeyData } = await supabase
         .from("user_api_keys")
