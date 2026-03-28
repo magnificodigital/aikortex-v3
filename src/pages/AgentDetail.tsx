@@ -334,7 +334,7 @@ const AgentDetail = () => {
       </div>
 
       {/* RIGHT — Panel */}
-      <AgentRightPanel agent={agent} agentType={agent.agentType} agentModel={agentModel} onModelChange={setAgentModel} activeTab={rightPanelTab} onTabChange={setRightPanelTab} onApiKeysChanged={refetchKeys} />
+      <AgentRightPanel agent={agent} agentType={agent.agentType} agentModel={agentModel} onModelChange={setAgentModel} activeTab={rightPanelTab} onTabChange={setRightPanelTab} onApiKeysChanged={refetchKeys} onConfigChange={handleConfigChange} />
     </div>
   );
 };
