@@ -75,13 +75,19 @@ const AgentDetail = () => {
   const { agentId } = useParams();
   const agent = AGENTS_MAP[agentId || "sdr-1"] || AGENTS_MAP["sdr-1"];
 
+  const storagePrefix = `agent-detail-${agentId || "sdr-1"}`;
+
   const [input, setInput] = useState("");
-  const [agentModel, setAgentModel] = useState(agent.model);
-  const [setupModel, setSetupModel] = useState<string>(FREE_MODELS[0].value);
+  const [agentModel, setAgentModel] = useState(() => {
+    try { return localStorage.getItem(`${storagePrefix}-model`) || agent.model; } catch { return agent.model; }
+  });
+  const [setupModel, setSetupModel] = useState<string>(() => {
+    try { return localStorage.getItem(`${storagePrefix}-setupModel`) || FREE_MODELS[0].value; } catch { return FREE_MODELS[0].value; }
+  });
   const [rightPanelTab, setRightPanelTab] = useState("agent");
-  // "setup" = uses free OpenRouter models to help configure
-  // "test" = uses the user's configured LLM to test the agent
-  const [chatMode, setChatMode] = useState<"setup" | "test">("setup");
+  const [chatMode, setChatMode] = useState<"setup" | "test">(() => {
+    try { return (localStorage.getItem(`${storagePrefix}-chatMode`) as "setup" | "test") || "setup"; } catch { return "setup"; }
+  });
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
