@@ -106,6 +106,8 @@ interface Props {
   onConfigChange?: (config: AgentConfig) => void;
   onSaveAgent?: (config: AgentConfig & { model: string; agentType: string }) => void | Promise<void>;
   isSaving?: boolean;
+  /** Storage key prefix for persisting config across reloads */
+  storagePrefix?: string;
 }
 
 interface KnowledgeFileLocal {
