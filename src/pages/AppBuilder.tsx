@@ -13,6 +13,7 @@ import DatabasePanel from "@/components/app-builder/DatabasePanel";
 import DashboardPanel from "@/components/app-builder/DashboardPanel";
 import TerminalPanel from "@/components/app-builder/TerminalPanel";
 import AppConfigPanel from "@/components/app-builder/AppConfigPanel";
+import { AppBuilderProvider, useAppBuilder } from "@/contexts/AppBuilderContext";
 
 type TabId = "preview" | "dashboard" | "code" | "database";
 type AppChannel = "whatsapp" | "web";
@@ -24,16 +25,12 @@ const tabs: { id: TabId; label: string; icon: typeof Eye }[] = [
   { id: "database", label: "Database", icon: Database },
 ];
 
-const AppBuilder = () => {
-  const location = useLocation();
+const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
   const navigate = useNavigate();
-  const state = location.state as any;
-  const initialPrompt = state?.initialPrompt || "";
-  const initialChannel = (state?.channel as AppChannel) || "web";
+  const { channel, setChannel } = useAppBuilder();
 
   const [activeTab, setActiveTab] = useState<TabId>("preview");
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
-  const [channel, setChannel] = useState<AppChannel>(initialChannel);
   const [showConfig, setShowConfig] = useState(true);
 
   return (
@@ -110,6 +107,19 @@ const AppBuilder = () => {
 
       {showConfig && <AppConfigPanel channel={channel} onChannelChange={setChannel} />}
     </div>
+  );
+};
+
+const AppBuilder = () => {
+  const location = useLocation();
+  const state = location.state as any;
+  const initialPrompt = state?.initialPrompt || "";
+  const initialChannel = (state?.channel as AppChannel) || "web";
+
+  return (
+    <AppBuilderProvider initialChannel={initialChannel}>
+      <AppBuilderInner initialPrompt={initialPrompt} />
+    </AppBuilderProvider>
   );
 };
 

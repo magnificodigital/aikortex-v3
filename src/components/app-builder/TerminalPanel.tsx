@@ -1,8 +1,10 @@
 import { Terminal as TerminalIcon, ChevronUp, ChevronDown } from "lucide-react";
 import { useState } from "react";
+import { useAppBuilder } from "@/contexts/AppBuilderContext";
 
 const TerminalPanel = () => {
   const [expanded, setExpanded] = useState(false);
+  const { terminalLogs } = useAppBuilder();
 
   if (!expanded) {
     return (
@@ -12,6 +14,9 @@ const TerminalPanel = () => {
       >
         <TerminalIcon className="w-3.5 h-3.5" />
         <span>Terminal</span>
+        {terminalLogs.length > 0 && (
+          <span className="text-[10px] text-muted-foreground/60">({terminalLogs.length})</span>
+        )}
         <ChevronUp className="w-3 h-3 ml-1" />
       </button>
     );
@@ -27,10 +32,21 @@ const TerminalPanel = () => {
         <span>Terminal</span>
         <ChevronDown className="w-3 h-3 ml-1" />
       </button>
-      <div className="h-32 overflow-auto px-4 py-2 font-mono text-xs text-muted-foreground">
-        <div>$ <span className="text-foreground">npm run dev</span></div>
-        <div className="text-green-500">➜ Local: http://localhost:5173/</div>
-        <div className="text-muted-foreground">ready in 320ms</div>
+      <div className="h-32 overflow-auto px-4 py-2 font-mono text-xs space-y-0.5">
+        {terminalLogs.length === 0 ? (
+          <div className="text-muted-foreground">Aguardando...</div>
+        ) : (
+          terminalLogs.map((log, i) => (
+            <div key={i} className={
+              log.type === "command" ? "text-foreground" :
+              log.type === "success" ? "text-green-500" :
+              log.type === "error" ? "text-destructive" :
+              "text-muted-foreground"
+            }>
+              {log.text}
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
