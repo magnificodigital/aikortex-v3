@@ -97,6 +97,15 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
           model: options.model,
           useGateway: options.useGateway ?? false,
           gatewayModel: options.gatewayModel,
+          ...(options.apiConfig && {
+            temperature: options.apiConfig.temperature,
+            max_tokens: options.apiConfig.maxTokens,
+            top_p: options.apiConfig.topP,
+            frequency_penalty: options.apiConfig.frequencyPenalty,
+            presence_penalty: options.apiConfig.presencePenalty,
+            response_format: options.apiConfig.responseFormat === "json" ? { type: "json_object" } : undefined,
+            stop: options.apiConfig.stopSequences?.length ? options.apiConfig.stopSequences : undefined,
+          }),
         }),
       });
 

@@ -140,6 +140,14 @@ serve(async (req) => {
       messages: finalMessages,
       stream: true,
     };
+    // Add optional API config params
+    if (temperature !== undefined) body.temperature = temperature;
+    if (max_tokens !== undefined) body.max_tokens = max_tokens;
+    if (top_p !== undefined) body.top_p = top_p;
+    if (frequency_penalty !== undefined) body.frequency_penalty = frequency_penalty;
+    if (presence_penalty !== undefined) body.presence_penalty = presence_penalty;
+    if (response_format) body.response_format = response_format;
+    if (stop) body.stop = stop;
 
     console.log(`Using provider=${selectedProvider}, model=${apiModel}, useGateway=${useGateway}`);
 
