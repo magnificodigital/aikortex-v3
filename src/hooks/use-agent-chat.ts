@@ -127,37 +127,44 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
       const { data: { session } } = await supabase.auth.getSession();
       const accessToken = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-      const resp = await fetch(CHAT_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          messages: apiMessages,
-          provider: options.provider || inferredProvider,
-          model: options.model,
-          useGateway: options.useGateway ?? false,
-          gatewayModel: options.gatewayModel,
-          agentContext: options.agentContext,
-          ...(options.apiConfig && {
-            temperature: options.apiConfig.temperature,
-            max_tokens: options.apiConfig.maxTokens,
-            top_p: options.apiConfig.topP,
-            frequency_penalty: options.apiConfig.frequencyPenalty,
-            presence_penalty: options.apiConfig.presencePenalty,
-            response_format: options.apiConfig.responseFormat === "json" ? { type: "json_object" } : undefined,
-            stop: options.apiConfig.stopSequences?.length ? options.apiConfig.stopSequences : undefined,
+      let resp: Response | null = null;
+      const maxRetries = 2;
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        resp = await fetch(CHAT_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            messages: apiMessages,
+            provider: options.provider || inferredProvider,
+            model: options.model,
+            useGateway: options.useGateway ?? false,
+            gatewayModel: options.gatewayModel,
+            agentContext: options.agentContext,
+            ...(options.apiConfig && {
+              temperature: options.apiConfig.temperature,
+              max_tokens: options.apiConfig.maxTokens,
+              top_p: options.apiConfig.topP,
+              frequency_penalty: options.apiConfig.frequencyPenalty,
+              presence_penalty: options.apiConfig.presencePenalty,
+              response_format: options.apiConfig.responseFormat === "json" ? { type: "json_object" } : undefined,
+              stop: options.apiConfig.stopSequences?.length ? options.apiConfig.stopSequences : undefined,
+            }),
           }),
-        }),
-      });
-
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => ({ error: "Erro desconhecido" }));
-        throw new Error(err.error || `Erro ${resp.status}`);
+        });
+        if (resp.status !== 429 || attempt === maxRetries) break;
+        const waitMs = (attempt + 1) * 2000;
+        await new Promise((r) => setTimeout(r, waitMs));
       }
 
-      if (!resp.body) throw new Error("Sem resposta do servidor");
+      if (!resp!.ok) {
+        const err = await resp!.json().catch(() => ({ error: "Erro desconhecido" }));
+        throw new Error(err.error || `Erro ${resp!.status}`);
+      }
+
+      if (!resp!.body) throw new Error("Sem resposta do servidor");
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
