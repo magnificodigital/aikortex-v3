@@ -41,6 +41,8 @@ const FREE_GATEWAY_MODELS = [
 
 const DEFAULT_FREE_GATEWAY_MODEL = FREE_GATEWAY_MODELS[0];
 
+type ChatCompletionMessage = { role: string; content: string };
+
 const PROVIDER_PREFIX_RULES: Record<string, string[]> = {
   openai: ["gpt-", "openai/"],
   anthropic: ["claude-", "anthropic/"],
@@ -61,6 +63,35 @@ function normalizeGatewayModel(model?: string | null) {
   return FREE_GATEWAY_MODELS.includes(model as typeof DEFAULT_FREE_GATEWAY_MODEL)
     ? model
     : DEFAULT_FREE_GATEWAY_MODEL;
+}
+
+function flattenSystemMessagesForGateway(messages: ChatCompletionMessage[]) {
+  const systemInstructions = messages
+    .filter((message) => message.role === "system" && typeof message.content === "string" && message.content.trim())
+    .map((message) => message.content.trim());
+
+  if (systemInstructions.length === 0) return messages;
+
+  const mergedInstructions = `Siga estas instruções durante toda a conversa:\n${systemInstructions.join("\n\n")}`;
+  const nonSystemMessages = messages.filter((message) => message.role !== "system");
+  const firstUserIndex = nonSystemMessages.findIndex((message) => message.role === "user");
+
+  if (firstUserIndex === -1) {
+    return [{ role: "user", content: mergedInstructions }, ...nonSystemMessages];
+  }
+
+  return nonSystemMessages.map((message, index) =>
+    index === firstUserIndex
+      ? {
+          ...message,
+          content: `${mergedInstructions}\n\nMensagem do usuário:\n${message.content}`,
+        }
+      : message,
+  );
+}
+
+function gatewayRejectedDeveloperInstruction(errorText: string) {
+  return errorText.toLowerCase().includes("developer instruction");
 }
 
 function validateOpenRouterApiKey(apiKey?: string | null) {
@@ -173,7 +204,7 @@ serve(async (req) => {
     let apiKey = "";
     let apiModel = modelMapping?.gateway || model || "google/gemini-3-flash-preview";
     let headers: Record<string, string>;
-    let openRouterKeyCandidates: string[] = [];
+    let openRouterKeyCandidates: Array<string | null> = [];
     let gatewayModelCandidates: string[] = [];
 
     // If useGateway is true, use OpenRouter with stable free assistant defaults
@@ -210,14 +241,13 @@ serve(async (req) => {
       ];
 
       if (openRouterKeyCandidates.length === 0) {
-        return new Response(JSON.stringify({ error: "Nenhuma chave válida do OpenRouter foi encontrada para o assistente de configuração." }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        openRouterKeyCandidates = [null];
       }
 
-      apiKey = openRouterKeyCandidates[0];
-      headers["Authorization"] = `Bearer ${apiKey}`;
+      apiKey = openRouterKeyCandidates[0] ?? "";
+      if (apiKey) {
+        headers["Authorization"] = `Bearer ${apiKey}`;
+      }
     } else {
       // Try user's own API key first
       const { data: keyData } = await supabase
@@ -308,7 +338,7 @@ serve(async (req) => {
 
     // If messages already contain a system prompt, use it; otherwise prepend default
     const hasSystemPrompt = messages.some((m: { role: string }) => m.role === "system");
-    const finalMessages = hasSystemPrompt
+    const finalMessages: ChatCompletionMessage[] = hasSystemPrompt
       ? agentSystemPrompt
         ? messages.map((message: { role: string; content: string }, index: number) => index === 0 && message.role === "system"
           ? { ...message, content: `${agentSystemPrompt}\n\n${message.content}` }
@@ -316,9 +346,13 @@ serve(async (req) => {
         : messages
       : [{ role: "system", content: agentSystemPrompt || defaultSystemPrompt }, ...messages];
 
+    const requestMessages = useGateway
+      ? flattenSystemMessagesForGateway(finalMessages)
+      : finalMessages;
+
     const body: Record<string, unknown> = {
       model: apiModel,
-      messages: finalMessages,
+      messages: requestMessages,
       stream: true,
     };
     // Add optional API config params
@@ -342,7 +376,9 @@ serve(async (req) => {
       for (const candidateModel of gatewayModelCandidates) {
         for (let keyIndex = 0; keyIndex < openRouterKeyCandidates.length; keyIndex += 1) {
           const candidateKey = openRouterKeyCandidates[keyIndex];
-          const requestHeaders = { ...headers, Authorization: `Bearer ${candidateKey}` };
+          const requestHeaders = candidateKey
+            ? { ...headers, Authorization: `Bearer ${candidateKey}` }
+            : { ...headers };
 
           for (let attempt = 0; attempt <= maxRetries; attempt++) {
             response = await fetch(apiUrl, {
@@ -380,11 +416,17 @@ serve(async (req) => {
               break;
             }
 
+            if (response.status === 400 && gatewayRejectedDeveloperInstruction(lastErrorText)) {
+              console.warn(`OpenRouter model rejected developer instructions: ${candidateModel}. Trying next free model.`);
+              break;
+            }
+
             break gatewayAttempt;
           }
 
           if (response?.ok) break;
           if (lastErrorStatus === 404 && lastErrorText.includes("No endpoints found")) break;
+          if (lastErrorStatus === 400 && gatewayRejectedDeveloperInstruction(lastErrorText)) break;
         }
 
         if (response?.ok) break;
