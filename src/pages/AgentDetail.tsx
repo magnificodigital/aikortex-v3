@@ -147,10 +147,15 @@ const AgentDetail = () => {
     }
   }, [agentModel, chatMode, keys, keysLoading]);
 
+  // Persist chatMode, agentModel, setupModel to localStorage
+  useEffect(() => { try { localStorage.setItem(`${storagePrefix}-chatMode`, chatMode); } catch {} }, [chatMode, storagePrefix]);
+  useEffect(() => { try { localStorage.setItem(`${storagePrefix}-model`, agentModel); } catch {} }, [agentModel, storagePrefix]);
+  useEffect(() => { try { localStorage.setItem(`${storagePrefix}-setupModel`, setupModel); } catch {} }, [setupModel, storagePrefix]);
+
   // Setup mode ALWAYS uses free OpenRouter models
   const setupChat = useAgentChat(
     [{ role: "agent", text: `Olá! 👋 Sou o assistente de configuração do **${agent.name}**. O que gostaria de configurar?` }],
-    { useGateway: true, gatewayModel: setupModel, systemPrompt: SETUP_SYSTEM_PROMPT }
+    { useGateway: true, gatewayModel: setupModel, systemPrompt: SETUP_SYSTEM_PROMPT, persistKey: `${storagePrefix}-setup-messages` }
   );
 
   // Build dynamic system prompt from agent configuration for test mode
@@ -179,17 +184,8 @@ const AgentDetail = () => {
 
   const testChat = useAgentChat(
     [{ role: "agent", text: `🧪 Modo de Teste ativado! Agora estou respondendo como o **${agent.name}** usando o modelo ${LLM_MODELS.find(m => m.value === agentModel)?.label || agentModel}. Envie uma mensagem para testar.` }],
-    { model: agentModel, systemPrompt: testSystemPrompt }
+    { model: agentModel, systemPrompt: testSystemPrompt, persistKey: `${storagePrefix}-test-messages` }
   );
-
-  useEffect(() => {
-    testChat.setMessages([
-      {
-        role: "agent",
-        text: `🧪 Modo de Teste ativado! Agora estou respondendo como o **${agent.name}** usando o modelo ${LLM_MODELS.find((m) => m.value === agentModel)?.label || agentModel}. Envie uma mensagem para testar.`,
-      },
-    ]);
-  }, [agent.name, agentModel, testChat.setMessages]);
 
   const activeChat = chatMode === "setup" ? setupChat : testChat;
   const { messages, sendMessage, isStreaming } = activeChat;
