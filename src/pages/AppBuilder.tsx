@@ -10,6 +10,7 @@ import FileTree from "@/components/app-builder/FileTree";
 import CodeEditor from "@/components/app-builder/CodeEditor";
 import PreviewPanel from "@/components/app-builder/PreviewPanel";
 import DatabasePanel from "@/components/app-builder/DatabasePanel";
+import DashboardPanel from "@/components/app-builder/DashboardPanel";
 import TerminalPanel from "@/components/app-builder/TerminalPanel";
 import AppConfigPanel from "@/components/app-builder/AppConfigPanel";
 
@@ -28,21 +29,18 @@ const AppBuilder = () => {
   const navigate = useNavigate();
   const state = location.state as any;
   const initialPrompt = state?.initialPrompt || "";
-  const initialChannel = (state?.channel as AppChannel) || "whatsapp";
+  const initialChannel = (state?.channel as AppChannel) || "web";
 
   const [activeTab, setActiveTab] = useState<TabId>("preview");
-  const [selectedFile, setSelectedFile] = useState<string | null>("index.html");
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [channel, setChannel] = useState<AppChannel>(initialChannel);
   const [showConfig, setShowConfig] = useState(true);
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
-      {/* ===== LEFT — CHAT ===== */}
       <ChatPanel onBack={() => navigate("/home")} initialPrompt={initialPrompt} />
 
-      {/* ===== CENTER — WORKSPACE ===== */}
       <div className="flex-1 flex flex-col min-w-0 bg-background">
-        {/* Top toolbar */}
         <div className="h-11 border-b border-border flex items-center justify-between px-3 shrink-0">
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="h-7 w-7">
@@ -94,38 +92,23 @@ const AppBuilder = () => {
           </div>
         </div>
 
-        {/* Content area */}
         <div className="flex-1 flex flex-col min-h-0">
           <div className="flex-1 flex min-h-0">
-            {activeTab === "preview" && <PreviewPanel />}
-
-            {activeTab === "dashboard" && (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="text-center space-y-2">
-                  <LayoutDashboard className="w-10 h-10 text-muted-foreground mx-auto" />
-                  <p className="text-sm text-muted-foreground">Dashboard do projeto</p>
-                </div>
-              </div>
-            )}
-
+            {activeTab === "preview" && <PreviewPanel channel={channel} />}
+            {activeTab === "dashboard" && <DashboardPanel channel={channel} />}
             {activeTab === "code" && (
               <>
-                <FileTree selectedFile={selectedFile} onSelectFile={setSelectedFile} />
-                <CodeEditor fileName={selectedFile} />
+                <FileTree selectedFile={selectedFile} onSelectFile={setSelectedFile} channel={channel} />
+                <CodeEditor fileName={selectedFile} channel={channel} />
               </>
             )}
-
             {activeTab === "database" && <DatabasePanel />}
           </div>
-
           <TerminalPanel />
         </div>
       </div>
 
-      {/* ===== RIGHT — CONFIG PANEL ===== */}
-      {showConfig && (
-        <AppConfigPanel channel={channel} onChannelChange={setChannel} />
-      )}
+      {showConfig && <AppConfigPanel channel={channel} onChannelChange={setChannel} />}
     </div>
   );
 };
