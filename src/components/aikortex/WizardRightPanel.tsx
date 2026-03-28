@@ -388,7 +388,7 @@ const WizardRightPanel = ({
               onClick={() => onSaveAgent?.()}
               disabled={!context.agentName?.trim() || isSaving}
             >
-              {isSaving ? "Salvando..." : "💾 Salvar"}
+              {isSaving ? "Salvando..." : "Salvar"}
             </Button>
           </TabsList>
         </div>
