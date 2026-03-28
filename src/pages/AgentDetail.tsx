@@ -116,9 +116,33 @@ const AgentDetail = () => {
     { useGateway: true, gatewayModel: setupModel, systemPrompt: SETUP_SYSTEM_PROMPT }
   );
 
+  // Build dynamic system prompt from agent configuration for test mode
+  const testSystemPrompt = useMemo(() => {
+    if (!agentConfig) return undefined;
+    const parts: string[] = [];
+    parts.push(`Você é o agente "${agentConfig.name}".`);
+    if (agentConfig.description) {
+      parts.push(`\n\nDescrição e instruções:\n${agentConfig.description}`);
+    }
+    if (agentConfig.channels.length > 0) {
+      parts.push(`\n\nCanais ativos: ${agentConfig.channels.join(", ")}`);
+    }
+    if (agentConfig.integrations.length > 0) {
+      parts.push(`\n\nIntegrações configuradas: ${agentConfig.integrations.join(", ")}`);
+    }
+    if (agentConfig.knowledgeFiles.length > 0) {
+      parts.push(`\n\nArquivos de conhecimento: ${agentConfig.knowledgeFiles.join(", ")}`);
+    }
+    if (agentConfig.urls.length > 0) {
+      parts.push(`\n\nURLs de referência: ${agentConfig.urls.join(", ")}`);
+    }
+    parts.push(`\n\nResponda sempre em português brasileiro. Seja profissional e direto.`);
+    return parts.join("");
+  }, [agentConfig]);
+
   const testChat = useAgentChat(
     [{ role: "agent", text: `🧪 Modo de Teste ativado! Agora estou respondendo como o **${agent.name}** usando o modelo ${LLM_MODELS.find(m => m.value === agentModel)?.label || agentModel}. Envie uma mensagem para testar.` }],
-    { model: agentModel }
+    { model: agentModel, systemPrompt: testSystemPrompt }
   );
 
   useEffect(() => {
