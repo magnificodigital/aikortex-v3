@@ -199,6 +199,7 @@ const AgentDetail = () => {
   const testChat = useAgentChat(
     [{ role: "agent", text: `🧪 Modo de Teste ativado! Agora estou respondendo como o **${agent.name}** usando o modelo ${LLM_MODELS.find(m => m.value === agentModel)?.label || agentModel}. Envie uma mensagem para testar.` }],
     {
+      provider: currentProvider,
       model: agentModel,
       systemPrompt: testSystemPrompt,
       persistKey: `${storagePrefix}-test-messages`,
