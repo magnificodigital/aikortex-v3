@@ -85,6 +85,16 @@ const SETTINGS_NAV = [
   ]},
 ];
 
+export interface AgentConfig {
+  name: string;
+  description: string;
+  avatarUrl: string;
+  channels: string[];
+  integrations: string[];
+  knowledgeFiles: string[];
+  urls: string[];
+}
+
 interface Props {
   agent: { name: string; avatar: string };
   agentType: AgentType;
@@ -93,6 +103,7 @@ interface Props {
   activeTab?: string;
   onTabChange?: (tab: string) => void;
   onApiKeysChanged?: () => void | Promise<void>;
+  onConfigChange?: (config: AgentConfig) => void;
 }
 
 interface KnowledgeFileLocal {
