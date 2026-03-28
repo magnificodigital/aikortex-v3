@@ -268,13 +268,13 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response.status === 401) {
+      if (response!.status === 401) {
         return new Response(JSON.stringify({ error: "Chave de API inválida. Verifique sua configuração em Integrações." }), {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response.status === 402) {
+      if (response!.status === 402) {
         return new Response(JSON.stringify({ error: "Créditos insuficientes. Adicione créditos na sua conta." }), {
           status: 402,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
