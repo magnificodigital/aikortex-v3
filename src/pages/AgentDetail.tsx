@@ -75,13 +75,19 @@ const AgentDetail = () => {
   const { agentId } = useParams();
   const agent = AGENTS_MAP[agentId || "sdr-1"] || AGENTS_MAP["sdr-1"];
 
+  const storagePrefix = `agent-detail-${agentId || "sdr-1"}`;
+
   const [input, setInput] = useState("");
-  const [agentModel, setAgentModel] = useState(agent.model);
-  const [setupModel, setSetupModel] = useState<string>(FREE_MODELS[0].value);
+  const [agentModel, setAgentModel] = useState(() => {
+    try { return localStorage.getItem(`${storagePrefix}-model`) || agent.model; } catch { return agent.model; }
+  });
+  const [setupModel, setSetupModel] = useState<string>(() => {
+    try { return localStorage.getItem(`${storagePrefix}-setupModel`) || FREE_MODELS[0].value; } catch { return FREE_MODELS[0].value; }
+  });
   const [rightPanelTab, setRightPanelTab] = useState("agent");
-  // "setup" = uses free OpenRouter models to help configure
-  // "test" = uses the user's configured LLM to test the agent
-  const [chatMode, setChatMode] = useState<"setup" | "test">("setup");
+  const [chatMode, setChatMode] = useState<"setup" | "test">(() => {
+    try { return (localStorage.getItem(`${storagePrefix}-chatMode`) as "setup" | "test") || "setup"; } catch { return "setup"; }
+  });
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -141,10 +147,15 @@ const AgentDetail = () => {
     }
   }, [agentModel, chatMode, keys, keysLoading]);
 
+  // Persist chatMode, agentModel, setupModel to localStorage
+  useEffect(() => { try { localStorage.setItem(`${storagePrefix}-chatMode`, chatMode); } catch {} }, [chatMode, storagePrefix]);
+  useEffect(() => { try { localStorage.setItem(`${storagePrefix}-model`, agentModel); } catch {} }, [agentModel, storagePrefix]);
+  useEffect(() => { try { localStorage.setItem(`${storagePrefix}-setupModel`, setupModel); } catch {} }, [setupModel, storagePrefix]);
+
   // Setup mode ALWAYS uses free OpenRouter models
   const setupChat = useAgentChat(
     [{ role: "agent", text: `Olá! 👋 Sou o assistente de configuração do **${agent.name}**. O que gostaria de configurar?` }],
-    { useGateway: true, gatewayModel: setupModel, systemPrompt: SETUP_SYSTEM_PROMPT }
+    { useGateway: true, gatewayModel: setupModel, systemPrompt: SETUP_SYSTEM_PROMPT, persistKey: `${storagePrefix}-setup-messages` }
   );
 
   // Build dynamic system prompt from agent configuration for test mode
@@ -173,17 +184,8 @@ const AgentDetail = () => {
 
   const testChat = useAgentChat(
     [{ role: "agent", text: `🧪 Modo de Teste ativado! Agora estou respondendo como o **${agent.name}** usando o modelo ${LLM_MODELS.find(m => m.value === agentModel)?.label || agentModel}. Envie uma mensagem para testar.` }],
-    { model: agentModel, systemPrompt: testSystemPrompt }
+    { model: agentModel, systemPrompt: testSystemPrompt, persistKey: `${storagePrefix}-test-messages` }
   );
-
-  useEffect(() => {
-    testChat.setMessages([
-      {
-        role: "agent",
-        text: `🧪 Modo de Teste ativado! Agora estou respondendo como o **${agent.name}** usando o modelo ${LLM_MODELS.find((m) => m.value === agentModel)?.label || agentModel}. Envie uma mensagem para testar.`,
-      },
-    ]);
-  }, [agent.name, agentModel, testChat.setMessages]);
 
   const activeChat = chatMode === "setup" ? setupChat : testChat;
   const { messages, sendMessage, isStreaming } = activeChat;
@@ -365,7 +367,7 @@ const AgentDetail = () => {
       </div>
 
       {/* RIGHT — Panel */}
-      <AgentRightPanel agent={agent} agentType={agent.agentType} agentModel={agentModel} onModelChange={setAgentModel} activeTab={rightPanelTab} onTabChange={setRightPanelTab} onApiKeysChanged={refetchKeys} onConfigChange={handleConfigChange} onSaveAgent={handleSaveAgent} isSaving={isSaving} />
+      <AgentRightPanel agent={agent} agentType={agent.agentType} agentModel={agentModel} onModelChange={setAgentModel} activeTab={rightPanelTab} onTabChange={setRightPanelTab} onApiKeysChanged={refetchKeys} onConfigChange={handleConfigChange} onSaveAgent={handleSaveAgent} isSaving={isSaving} storagePrefix={storagePrefix} />
     </div>
   );
 };

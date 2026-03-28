@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-chat`;
@@ -17,6 +17,8 @@ interface UseAgentChatOptions {
   gatewayModel?: string;
   /** System prompt override */
   systemPrompt?: string;
+  /** localStorage key to persist messages across reloads */
+  persistKey?: string;
 }
 
 function deriveProvider(model?: string): string {
@@ -27,8 +29,26 @@ function deriveProvider(model?: string): string {
 }
 
 export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAgentChatOptions = {}) {
-  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    if (options.persistKey) {
+      try {
+        const stored = localStorage.getItem(options.persistKey);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch { /* ignore */ }
+    }
+    return initialMessages;
+  });
   const [isStreaming, setIsStreaming] = useState(false);
+
+  // Persist messages to localStorage on change
+  useEffect(() => {
+    if (options.persistKey && messages.length > 0) {
+      localStorage.setItem(options.persistKey, JSON.stringify(messages));
+    }
+  }, [messages, options.persistKey]);
 
   const sendMessage = useCallback(async (userText: string) => {
     if (!userText.trim() || isStreaming) return;
