@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import {
   ArrowUp, Bot, ChevronDown, ChevronLeft, Mic, Wrench,
-  CheckCircle2, AlertCircle, ChevronUp,
+  CheckCircle2, AlertCircle, ChevronUp, FileCode,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
@@ -57,20 +57,69 @@ async function streamChat({
   onDone();
 }
 
-/** Extract code blocks from markdown: ```filename.ext ... ``` */
-function parseCodeBlocks(content: string): { fileName: string; code: string }[] {
+/** Parse [FILE:path]...[/FILE] blocks */
+function parseFileBlocks(content: string): { filePath: string; code: string }[] {
+  const regex = /\[FILE:(.*?)\]\n([\s\S]*?)\[\/FILE\]/g;
+  const results: { filePath: string; code: string }[] = [];
+  let match;
+  while ((match = regex.exec(content)) !== null) {
+    results.push({ filePath: match[1].trim(), code: match[2].trim() });
+  }
+  return results;
+}
+
+/** Parse [TABLE:name]...[/TABLE] blocks */
+function parseTableBlocks(content: string): { name: string; columns: { name: string; type: string; isPK?: boolean }[] }[] {
+  const regex = /\[TABLE:(\w+)\]\n([\s\S]*?)\[\/TABLE\]/g;
+  const results: { name: string; columns: { name: string; type: string; isPK?: boolean }[] }[] = [];
+  let match;
+  while ((match = regex.exec(content)) !== null) {
+    const name = match[1].trim();
+    const lines = match[2].trim().split("\n");
+    const columns = lines.map(line => {
+      const parts = line.split(":");
+      return {
+        name: parts[0]?.trim() || "",
+        type: parts[1]?.trim() || "TEXT",
+        isPK: parts[2]?.trim() === "PK" || undefined,
+      };
+    }).filter(c => c.name);
+    results.push({ name, columns });
+  }
+  return results;
+}
+
+/** Also parse legacy ```filename.ext ... ``` blocks as fallback */
+function parseLegacyCodeBlocks(content: string): { filePath: string; code: string }[] {
   const regex = /```(\S+)\n([\s\S]*?)```/g;
-  const results: { fileName: string; code: string }[] = [];
+  const results: { filePath: string; code: string }[] = [];
   let match;
   while ((match = regex.exec(content)) !== null) {
     const lang = match[1];
     const code = match[2].trim();
-    // Only treat as file if it has an extension
     if (lang.includes(".")) {
-      results.push({ fileName: lang, code });
+      const ext = lang.split(".").pop() || "";
+      let path = `/src/${lang}`;
+      if (ext === "html") path = `/${lang}`;
+      else if (lang.includes("agent") || lang.includes("qualifier") || lang.includes("scheduler"))
+        path = `/src/agents/${lang}`;
+      else if (lang.includes("api") || lang.includes("webhook"))
+        path = `/src/integrations/${lang}`;
+      else if (ext === "tsx" && lang.startsWith("use"))
+        path = `/src/hooks/${lang}`;
+      results.push({ filePath: path, code });
     }
   }
   return results;
+}
+
+/** Strip all structured blocks from message to show clean text */
+function stripStructuredBlocks(content: string): string {
+  return content
+    .replace(/\[FILE:.*?\]\n[\s\S]*?\[\/FILE\]/g, "")
+    .replace(/\[TABLE:\w+\]\n[\s\S]*?\[\/TABLE\]/g, "")
+    .replace(/```\S+\n[\s\S]*?```/g, "")
+    .trim();
 }
 
 interface ChatPanelProps {
@@ -85,6 +134,7 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
   const [toolsUsed, setToolsUsed] = useState(0);
   const [toolsExpanded, setToolsExpanded] = useState(true);
   const [toolLogs, setToolLogs] = useState<ToolLog[]>([]);
+  const [filesGenerated, setFilesGenerated] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const sentInitial = useRef(false);
   const initializedProject = useRef(false);
@@ -97,7 +147,6 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
   useEffect(() => {
     if (initialPrompt && !sentInitial.current) {
       sentInitial.current = true;
-      // Initialize the project scaffold on first message
       if (!initializedProject.current) {
         initializedProject.current = true;
         initializeProject(channel, initialPrompt);
@@ -111,37 +160,52 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
   }, [messages]);
 
   const processAIResponse = (content: string) => {
-    // Parse code blocks from the AI response and add to files
-    const codeBlocks = parseCodeBlocks(content);
-    codeBlocks.forEach(({ fileName, code }) => {
-      const ext = fileName.split(".").pop() || "";
-      let path = `/src/${fileName}`;
-      if (ext === "html") path = `/${fileName}`;
-      else if (fileName.includes("agent") || fileName.includes("qualifier") || fileName.includes("scheduler"))
-        path = `/src/agents/${fileName}`;
-      else if (fileName.includes("api") || fileName.includes("webhook"))
-        path = `/src/integrations/${fileName}`;
-      else if (ext === "tsx" && fileName.startsWith("use"))
-        path = `/src/hooks/${fileName}`;
+    // Parse new [FILE:...] format
+    let fileBlocks = parseFileBlocks(content);
+    
+    // Fallback to legacy ```filename.ext``` format
+    if (fileBlocks.length === 0) {
+      fileBlocks = parseLegacyCodeBlocks(content);
+    }
 
-      addFile({ name: fileName, path, content: code });
-      addTerminalLog({ text: `✓ Arquivo atualizado: ${fileName}`, type: "success", timestamp: Date.now() });
+    let newFilesCount = 0;
+    fileBlocks.forEach(({ filePath, code }) => {
+      const fileName = filePath.split("/").pop() || filePath;
+      addFile({ name: fileName, path: filePath, content: code });
+      addTerminalLog({ text: `✓ ${fileName}`, type: "success", timestamp: Date.now() });
+      newFilesCount++;
     });
 
-    // Check for table-related content
-    const tableRegex = /(?:tabela|table)\s+[`"]?(\w+)[`"]?/gi;
-    let tableMatch;
-    while ((tableMatch = tableRegex.exec(content)) !== null) {
-      const tableName = tableMatch[1].toLowerCase();
-      addTable({
-        name: tableName,
-        columns: [
-          { name: "id", type: "UUID", isPK: true },
-          { name: "created_at", type: "TIMESTAMP" },
-        ],
-        rows: [],
-      });
-      addTerminalLog({ text: `✓ Tabela detectada: ${tableName}`, type: "success", timestamp: Date.now() });
+    // Parse table blocks
+    const tableBlocks = parseTableBlocks(content);
+    tableBlocks.forEach(({ name, columns }) => {
+      addTable({ name, columns, rows: [] });
+      addTerminalLog({ text: `✓ Tabela: ${name}`, type: "success", timestamp: Date.now() });
+    });
+
+    // Legacy table detection
+    if (tableBlocks.length === 0) {
+      const tableRegex = /(?:tabela|table)\s+[`"]?(\w+)[`"]?/gi;
+      let tableMatch;
+      while ((tableMatch = tableRegex.exec(content)) !== null) {
+        const tableName = tableMatch[1].toLowerCase();
+        addTable({
+          name: tableName,
+          columns: [
+            { name: "id", type: "UUID", isPK: true },
+            { name: "created_at", type: "TIMESTAMP" },
+          ],
+          rows: [],
+        });
+      }
+    }
+
+    if (newFilesCount > 0) {
+      setFilesGenerated(prev => prev + newFilesCount);
+      setToolLogs(prev => [
+        ...prev,
+        { label: `${newFilesCount} arquivo(s) gerado(s)`, status: "success" },
+      ]);
     }
   };
 
@@ -154,7 +218,6 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
     setIsGenerating(true);
     setToolsUsed((p) => p + 1);
 
-    // Initialize project on first message if not done
     if (!initializedProject.current) {
       initializedProject.current = true;
       initializeProject(channel, text.trim());
@@ -165,7 +228,7 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
       { label: `Processando: "${text.trim().slice(0, 40)}..."`, status: "success" },
     ]);
 
-    addTerminalLog({ text: `$ Processando solicitação...`, type: "command", timestamp: Date.now() });
+    addTerminalLog({ text: `$ Processando...`, type: "command", timestamp: Date.now() });
 
     let assistantSoFar = "";
     const upsert = (chunk: string) => {
@@ -186,11 +249,7 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
           setIsLoading(false);
           setIsGenerating(false);
           processAIResponse(assistantSoFar);
-          setToolLogs((prev) => [
-            ...prev,
-            { label: "Resposta gerada com sucesso", status: "success" },
-          ]);
-          addTerminalLog({ text: "✓ Geração concluída", type: "success", timestamp: Date.now() });
+          addTerminalLog({ text: "✓ Concluído", type: "success", timestamp: Date.now() });
         },
       });
     } catch {
@@ -217,25 +276,25 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onBack}>
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <span className="text-sm font-semibold tracking-tight">Webedit</span>
+          <span className="text-sm font-semibold tracking-tight">Studio</span>
         </div>
       </div>
 
-      {/* Bot avatar */}
-      <div className="px-4 pt-3 pb-1 flex items-center gap-2">
-        <div className="w-6 h-6 rounded bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">S</div>
-        <span className="text-sm font-medium">Studio</span>
-      </div>
-
-      {/* Tools used collapsible */}
+      {/* Tools + files indicator */}
       {toolsUsed > 0 && (
-        <div className="px-4 pb-2">
+        <div className="px-4 py-2">
           <button
             onClick={() => setToolsExpanded(!toolsExpanded)}
             className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors bg-muted/40 rounded-md px-2.5 py-1.5 w-full"
           >
             <Wrench className="w-3 h-3" />
-            <span>Usou ferramentas {toolsUsed} vezes</span>
+            <span>{toolsUsed} ações</span>
+            {filesGenerated > 0 && (
+              <span className="flex items-center gap-1 ml-2 text-primary">
+                <FileCode className="w-3 h-3" />
+                {filesGenerated} arquivos
+              </span>
+            )}
             {toolsExpanded ? (
               <ChevronUp className="w-3 h-3 ml-auto" />
             ) : (
@@ -259,34 +318,37 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
         </div>
       )}
 
-      {/* Messages */}
+      {/* Messages — code blocks are stripped, only clean text shown */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-2 space-y-4">
-        {messages.map((m, i) => (
-          <div key={i}>
-            {m.role === "user" ? (
-              <div className="flex justify-end">
-                <div className="bg-muted rounded-2xl rounded-br-sm px-4 py-2.5 max-w-[90%] text-sm">
-                  <p className="whitespace-pre-wrap">{m.content}</p>
+        {messages.map((m, i) => {
+          const displayContent = m.role === "assistant" ? stripStructuredBlocks(m.content) : m.content;
+          if (m.role === "assistant" && !displayContent) return null;
+
+          return (
+            <div key={i}>
+              {m.role === "user" ? (
+                <div className="flex justify-end">
+                  <div className="bg-muted rounded-2xl rounded-br-sm px-4 py-2.5 max-w-[90%] text-sm">
+                    <p className="whitespace-pre-wrap">{displayContent}</p>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="text-sm leading-relaxed text-foreground">
-                <div className="prose prose-sm dark:prose-invert max-w-none
-                  [&_p]:mb-2.5 [&_ul]:mb-2 [&_ol]:mb-2 [&_li]:mb-0.5
-                  [&_strong]:text-foreground
-                  [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono
-                  [&_pre]:bg-muted [&_pre]:rounded-lg [&_pre]:p-3 [&_pre]:text-xs
-                  [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm">
-                  <ReactMarkdown>{m.content}</ReactMarkdown>
+              ) : (
+                <div className="text-sm leading-relaxed text-foreground">
+                  <div className="prose prose-sm dark:prose-invert max-w-none
+                    [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_li]:mb-0.5
+                    [&_strong]:text-foreground
+                    [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm">
+                    <ReactMarkdown>{displayContent}</ReactMarkdown>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        ))}
+              )}
+            </div>
+          );
+        })}
         {isLoading && messages[messages.length - 1]?.role === "user" && (
           <div className="text-sm text-muted-foreground animate-pulse flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            Pensando...
+            Gerando...
           </div>
         )}
       </div>
@@ -295,7 +357,7 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
       <div className="px-4 py-2 border-t border-border flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <span>⚡</span>
-          <span>Créditos gratuitos disponíveis</span>
+          <span>Créditos disponíveis</span>
         </div>
         <Button variant="default" size="sm" className="h-7 text-xs rounded-full px-3 bg-primary hover:bg-primary/90">
           Upgrade
@@ -309,20 +371,14 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Peça ao Studio para construir..."
+            placeholder="Descreva o que quer construir..."
             rows={1}
             className="w-full bg-transparent border-none outline-none resize-none text-sm text-foreground placeholder:text-muted-foreground px-3 py-2 min-h-[36px] max-h-[120px]"
           />
           <div className="flex items-center justify-between px-2 pb-1">
-            <div className="flex items-center gap-3">
-              <button className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                <Bot className="w-3.5 h-3.5" />
-                <span>Agente</span>
-              </button>
-              <button className="text-muted-foreground hover:text-foreground transition-colors">
-                <Mic className="w-3.5 h-3.5" />
-              </button>
-            </div>
+            <button className="text-muted-foreground hover:text-foreground transition-colors">
+              <Mic className="w-3.5 h-3.5" />
+            </button>
             <Button
               size="icon"
               onClick={() => sendMessage(input)}
