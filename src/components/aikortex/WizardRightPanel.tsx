@@ -958,6 +958,17 @@ const WizardRightPanel = ({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Persistent Save Button */}
+      <div className="border-t border-border px-4 py-3 shrink-0 bg-background">
+        <Button
+          className="w-full gap-2 h-10"
+          onClick={() => onSaveAgent?.()}
+          disabled={!context.agentName?.trim() || isSaving}
+        >
+          {isSaving ? "Salvando..." : "💾 Salvar Agente"}
+        </Button>
+      </div>
     </div>
   );
 };
