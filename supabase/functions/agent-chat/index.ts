@@ -97,11 +97,21 @@ serve(async (req) => {
         } else if (selectedProvider === "anthropic") {
           apiUrl = "https://api.anthropic.com/v1/messages";
           apiKey = keyData.api_key;
-          apiModel = model || "claude-3-haiku-20240307";
+          apiModel = modelMapping?.anthropic || model || "claude-3-haiku-20240307";
           headers = {
             "x-api-key": apiKey,
             "Content-Type": "application/json",
             "anthropic-version": "2023-06-01",
+          };
+        } else if (selectedProvider === "gemini") {
+          // Google Gemini uses generativelanguage API with API key
+          const geminiModel = model?.replace("gemini-", "gemini-") || "gemini-2.5-flash";
+          apiUrl = `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`;
+          apiKey = keyData.api_key;
+          apiModel = geminiModel;
+          headers = {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
           };
         } else {
           const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
