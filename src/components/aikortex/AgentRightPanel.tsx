@@ -85,6 +85,16 @@ const SETTINGS_NAV = [
   ]},
 ];
 
+export interface AgentConfig {
+  name: string;
+  description: string;
+  avatarUrl: string;
+  channels: string[];
+  integrations: string[];
+  knowledgeFiles: string[];
+  urls: string[];
+}
+
 interface Props {
   agent: { name: string; avatar: string };
   agentType: AgentType;
@@ -93,6 +103,7 @@ interface Props {
   activeTab?: string;
   onTabChange?: (tab: string) => void;
   onApiKeysChanged?: () => void | Promise<void>;
+  onConfigChange?: (config: AgentConfig) => void;
 }
 
 interface KnowledgeFileLocal {
@@ -119,7 +130,7 @@ const PROVIDER_MAP: Record<string, string> = {
   "RD Station": "rdstation",
 };
 
-const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTab, onTabChange, onApiKeysChanged }: Props) => {
+const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTab, onTabChange, onApiKeysChanged, onConfigChange }: Props) => {
   const [rightTab, setRightTab] = useState(activeTab || "agent");
 
   // Filter integrations and channels by agent type
@@ -285,6 +296,19 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
   const fileInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+
+  // Emit config changes to parent
+  useEffect(() => {
+    onConfigChange?.({
+      name: agentName,
+      description: agentDesc,
+      avatarUrl: avatarPreview || agent.avatar || "",
+      channels: connectedChannels,
+      integrations: Object.entries(connectorKeys).filter(([, v]) => v.configured).map(([k]) => k),
+      knowledgeFiles: knowledgeFiles.map(f => f.name),
+      urls,
+    });
+  }, [agentName, agentDesc, avatarPreview, connectedChannels, connectorKeys, knowledgeFiles, urls]);
 
   const handleFiles = (files: FileList) => {
     const newFiles: KnowledgeFileLocal[] = Array.from(files)

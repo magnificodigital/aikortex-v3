@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Send, Paperclip, HelpCircle, AlertTriangle, KeyRound, Bot, TestTube } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import AgentRightPanel from "@/components/aikortex/AgentRightPanel";
+import AgentRightPanel, { type AgentConfig } from "@/components/aikortex/AgentRightPanel";
 import { useAgentChat } from "@/hooks/use-agent-chat";
 import { useApiKeys } from "@/hooks/use-api-keys";
 import ReactMarkdown from "react-markdown";
@@ -80,6 +80,11 @@ const AgentDetail = () => {
   // "setup" = uses free OpenRouter models to help configure
   // "test" = uses the user's configured LLM to test the agent
   const [chatMode, setChatMode] = useState<"setup" | "test">("setup");
+  const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null);
+
+  const handleConfigChange = useCallback((config: AgentConfig) => {
+    setAgentConfig(config);
+  }, []);
 
   const { keys, loading: keysLoading, refetch: refetchKeys } = useApiKeys();
 
@@ -111,9 +116,33 @@ const AgentDetail = () => {
     { useGateway: true, gatewayModel: setupModel, systemPrompt: SETUP_SYSTEM_PROMPT }
   );
 
+  // Build dynamic system prompt from agent configuration for test mode
+  const testSystemPrompt = useMemo(() => {
+    if (!agentConfig) return undefined;
+    const parts: string[] = [];
+    parts.push(`Você é o agente "${agentConfig.name}".`);
+    if (agentConfig.description) {
+      parts.push(`\n\nDescrição e instruções:\n${agentConfig.description}`);
+    }
+    if (agentConfig.channels.length > 0) {
+      parts.push(`\n\nCanais ativos: ${agentConfig.channels.join(", ")}`);
+    }
+    if (agentConfig.integrations.length > 0) {
+      parts.push(`\n\nIntegrações configuradas: ${agentConfig.integrations.join(", ")}`);
+    }
+    if (agentConfig.knowledgeFiles.length > 0) {
+      parts.push(`\n\nArquivos de conhecimento: ${agentConfig.knowledgeFiles.join(", ")}`);
+    }
+    if (agentConfig.urls.length > 0) {
+      parts.push(`\n\nURLs de referência: ${agentConfig.urls.join(", ")}`);
+    }
+    parts.push(`\n\nResponda sempre em português brasileiro. Seja profissional e direto.`);
+    return parts.join("");
+  }, [agentConfig]);
+
   const testChat = useAgentChat(
     [{ role: "agent", text: `🧪 Modo de Teste ativado! Agora estou respondendo como o **${agent.name}** usando o modelo ${LLM_MODELS.find(m => m.value === agentModel)?.label || agentModel}. Envie uma mensagem para testar.` }],
-    { model: agentModel }
+    { model: agentModel, systemPrompt: testSystemPrompt }
   );
 
   useEffect(() => {
@@ -305,7 +334,7 @@ const AgentDetail = () => {
       </div>
 
       {/* RIGHT — Panel */}
-      <AgentRightPanel agent={agent} agentType={agent.agentType} agentModel={agentModel} onModelChange={setAgentModel} activeTab={rightPanelTab} onTabChange={setRightPanelTab} onApiKeysChanged={refetchKeys} />
+      <AgentRightPanel agent={agent} agentType={agent.agentType} agentModel={agentModel} onModelChange={setAgentModel} activeTab={rightPanelTab} onTabChange={setRightPanelTab} onApiKeysChanged={refetchKeys} onConfigChange={handleConfigChange} />
     </div>
   );
 };
