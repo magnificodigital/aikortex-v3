@@ -46,11 +46,15 @@ const AVATARS_MAP: Record<string, string> = {
 };
 
 const LLM_MODELS = [
-  { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash", provider: "gemini" },
-  { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro", provider: "gemini" },
+  { value: "gemini-3.1-pro-preview", label: "Gemini 3.1 Pro", provider: "gemini" },
   { value: "gemini-3-flash-preview", label: "Gemini 3 Flash", provider: "gemini" },
+  { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro", provider: "gemini" },
+  { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash", provider: "gemini" },
+  { value: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite", provider: "gemini" },
+  { value: "gpt-5.2", label: "GPT-5.2", provider: "openai" },
   { value: "gpt-5", label: "GPT-5", provider: "openai" },
   { value: "gpt-5-mini", label: "GPT-5 Mini", provider: "openai" },
+  { value: "gpt-5-nano", label: "GPT-5 Nano", provider: "openai" },
 ] as const;
 
 // Free models available via OpenRouter for the setup assistant

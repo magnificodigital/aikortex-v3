@@ -82,17 +82,21 @@ function renderConfigFields(
   // ── Agent ──
   if (nodeType === "agent") {
     const LLM_MODELS = [
-      { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
-      { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+      { value: "gemini-3.1-pro-preview", label: "Gemini 3.1 Pro" },
       { value: "gemini-3-flash-preview", label: "Gemini 3 Flash" },
+      { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+      { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+      { value: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite" },
+      { value: "gpt-5.2", label: "GPT-5.2" },
       { value: "gpt-5", label: "GPT-5" },
       { value: "gpt-5-mini", label: "GPT-5 Mini" },
+      { value: "gpt-5-nano", label: "GPT-5 Nano" },
     ];
     return (
       <>
         <div className="space-y-2">
           <Label className="text-xs">Model</Label>
-          <Select value={(config.model as string) || "gemini-2.5-flash"} onValueChange={(v) => updateConfig("model", v)}>
+          <Select value={(config.model as string) || "gemini-3-flash-preview"} onValueChange={(v) => updateConfig("model", v)}>
             <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
               {LLM_MODELS.map((m) => (
@@ -116,11 +120,15 @@ function renderConfigFields(
   // ── Agent IA (user's configured agents) ──
   if (nodeType === "agent_ai") {
     const LLM_MODELS = [
-      { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
-      { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+      { value: "gemini-3.1-pro-preview", label: "Gemini 3.1 Pro" },
       { value: "gemini-3-flash-preview", label: "Gemini 3 Flash" },
+      { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+      { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+      { value: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite" },
+      { value: "gpt-5.2", label: "GPT-5.2" },
       { value: "gpt-5", label: "GPT-5" },
       { value: "gpt-5-mini", label: "GPT-5 Mini" },
+      { value: "gpt-5-nano", label: "GPT-5 Nano" },
     ];
     return (
       <>
