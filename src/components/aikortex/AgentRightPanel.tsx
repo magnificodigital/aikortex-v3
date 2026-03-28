@@ -750,6 +750,7 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
                           integrations: Object.entries(connectorKeys).filter(([, v]) => v.configured).map(([k]) => k),
                           knowledgeFiles: knowledgeFiles.map(f => f.name),
                           urls,
+                          apiConfig,
                           model: agentModel,
                           agentType: agentType,
                         })}
