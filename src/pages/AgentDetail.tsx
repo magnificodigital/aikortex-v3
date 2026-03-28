@@ -9,7 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import AgentRightPanel, { type AgentConfig } from "@/components/aikortex/AgentRightPanel";
 import { useAgentChat } from "@/hooks/use-agent-chat";
 import { useApiKeys } from "@/hooks/use-api-keys";
+import { useUserAgents } from "@/hooks/use-user-agents";
 import ReactMarkdown from "react-markdown";
+import { toast } from "sonner";
 import type { AgentType } from "@/types/agent-builder";
 
 import avatar1 from "@/assets/avatars/avatar-1.png";
@@ -81,10 +83,39 @@ const AgentDetail = () => {
   // "test" = uses the user's configured LLM to test the agent
   const [chatMode, setChatMode] = useState<"setup" | "test">("setup");
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleConfigChange = useCallback((config: AgentConfig) => {
     setAgentConfig(config);
   }, []);
+
+  const { saveAgent } = useUserAgents();
+
+  const handleSaveAgent = useCallback(async (config: AgentConfig & { model: string; agentType: string }) => {
+    setIsSaving(true);
+    try {
+      const result = await saveAgent({
+        id: agentId && !AGENTS_MAP[agentId] ? agentId : undefined,
+        name: config.name,
+        agent_type: config.agentType,
+        description: config.description,
+        avatar_url: config.avatarUrl,
+        model: config.model,
+        status: "configuring",
+        config: {
+          channels: config.channels,
+          integrations: config.integrations,
+          knowledgeFiles: config.knowledgeFiles,
+          urls: config.urls,
+        },
+      });
+      if (result) {
+        toast.success("Agente salvo com sucesso!");
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  }, [agentId, saveAgent]);
 
   const { keys, loading: keysLoading, refetch: refetchKeys } = useApiKeys();
 
@@ -334,7 +365,7 @@ const AgentDetail = () => {
       </div>
 
       {/* RIGHT — Panel */}
-      <AgentRightPanel agent={agent} agentType={agent.agentType} agentModel={agentModel} onModelChange={setAgentModel} activeTab={rightPanelTab} onTabChange={setRightPanelTab} onApiKeysChanged={refetchKeys} onConfigChange={handleConfigChange} />
+      <AgentRightPanel agent={agent} agentType={agent.agentType} agentModel={agentModel} onModelChange={setAgentModel} activeTab={rightPanelTab} onTabChange={setRightPanelTab} onApiKeysChanged={refetchKeys} onConfigChange={handleConfigChange} onSaveAgent={handleSaveAgent} isSaving={isSaving} />
     </div>
   );
 };
