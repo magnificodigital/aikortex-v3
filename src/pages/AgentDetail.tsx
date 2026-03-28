@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import AgentRightPanel from "@/components/aikortex/AgentRightPanel";
+import AgentRightPanel, { type AgentConfig } from "@/components/aikortex/AgentRightPanel";
 import { useAgentChat } from "@/hooks/use-agent-chat";
 import { useApiKeys } from "@/hooks/use-api-keys";
 import ReactMarkdown from "react-markdown";
