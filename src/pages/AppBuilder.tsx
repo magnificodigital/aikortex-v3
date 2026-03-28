@@ -89,8 +89,9 @@ const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
             <Button variant="ghost" size="icon" className="h-7 w-7" title="GitHub">
               <Github className="w-3.5 h-3.5" />
             </Button>
-            <Button variant="outline" size="sm" className="h-7 text-xs gap-1 rounded-full">
-              Upgrade
+            <Button variant="outline" size="sm" className="h-7 text-xs gap-1 rounded-full" onClick={handleSave} disabled={saving}>
+              <Save className="w-3 h-3" />
+              {saving ? "Salvando..." : "Salvar"}
             </Button>
             <Button size="sm" className="h-7 text-xs gap-1 rounded-full bg-primary hover:bg-primary/90">
               <Upload className="w-3 h-3" />
