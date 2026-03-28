@@ -39,6 +39,7 @@ const LLM_PROVIDER_MODELS: Record<string, { models: { value: string; label: stri
     models: [
       { value: "claude-4-sonnet", label: "Claude 4 Sonnet", desc: "Mais inteligente e versátil." },
       { value: "claude-3.5-sonnet", label: "Claude 3.5 Sonnet", desc: "Excelente raciocínio e código." },
+      { value: "claude-3-opus", label: "Claude 3 Opus", desc: "Mais poderoso da família Claude 3." },
       { value: "claude-3-haiku", label: "Claude 3 Haiku", desc: "Rápido e econômico." },
     ],
     capabilities: ["Chat e completions", "Visão (imagens)", "Function calling", "Contexto de 200K tokens"],
