@@ -162,11 +162,24 @@ const AgentDetail = () => {
 
   const hasApiKey = !!keys[currentProvider]?.configured;
 
+  // Check if ANY LLM provider key is configured (required to start)
+  const hasAnyLLMKey = useMemo(() => {
+    return ["openai", "anthropic", "gemini", "openrouter"].some(p => keys[p]?.configured);
+  }, [keys]);
+
   useEffect(() => {
     if (rightPanelTab !== "connectors") {
       refetchKeys();
     }
   }, [rightPanelTab, refetchKeys]);
+
+  // Auto-redirect to Integrações tab if no API key is configured at all
+  useEffect(() => {
+    if (keysLoading) return;
+    if (!hasAnyLLMKey) {
+      setRightPanelTab("connectors");
+    }
+  }, [hasAnyLLMKey, keysLoading]);
 
   useEffect(() => {
     if (chatMode !== "test" || keysLoading) return;
