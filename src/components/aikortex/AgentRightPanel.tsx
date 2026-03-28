@@ -382,13 +382,17 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
     try {
       localStorage.setItem(`${storagePrefix}-name`, agentName);
       localStorage.setItem(`${storagePrefix}-desc`, agentDesc);
+      localStorage.setItem(`${storagePrefix}-objective`, agentObjective);
+      localStorage.setItem(`${storagePrefix}-instructions`, agentInstructions);
+      localStorage.setItem(`${storagePrefix}-toneOfVoice`, agentToneOfVoice);
+      localStorage.setItem(`${storagePrefix}-greetingMessage`, agentGreetingMessage);
       localStorage.setItem(`${storagePrefix}-files`, JSON.stringify(knowledgeFiles));
       localStorage.setItem(`${storagePrefix}-urls`, JSON.stringify(urls));
       localStorage.setItem(`${storagePrefix}-channels`, JSON.stringify(connectedChannels));
       localStorage.setItem(`${storagePrefix}-apiConfig`, JSON.stringify(apiConfig));
       if (avatarPreview) localStorage.setItem(`${storagePrefix}-avatar`, avatarPreview);
     } catch {}
-  }, [storagePrefix, agentName, agentDesc, knowledgeFiles, urls, connectedChannels, avatarPreview, apiConfig]);
+  }, [storagePrefix, agentName, agentDesc, agentObjective, agentInstructions, agentToneOfVoice, agentGreetingMessage, knowledgeFiles, urls, connectedChannels, avatarPreview, apiConfig]);
 
   // Emit config changes to parent
   useEffect(() => {
