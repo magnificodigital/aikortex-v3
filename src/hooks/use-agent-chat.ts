@@ -166,7 +166,7 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
 
       if (!resp!.body) throw new Error("Sem resposta do servidor");
 
-      const reader = resp.body.getReader();
+      const reader = resp!.body!.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
       let assistantText = "";
