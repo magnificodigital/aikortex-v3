@@ -67,11 +67,12 @@ const StepTesting = ({ context, agents, channels, crm }: Props) => {
 
   const systemPrompt = buildSystemPrompt(context, agents, channels, crm);
 
+  // Use Lovable AI gateway (no user API key needed) for wizard testing
   const { messages, sendMessage, isStreaming } = useAgentChat(
     [{ role: "agent", text: context.greetingMessage || `Olá! Sou o ${agentName} da ${context.companyName}. Como posso ajudar?` }],
     {
-      useGateway: true,
       systemPrompt,
+      // No useGateway, no provider/model = falls back to Lovable AI gateway with default model
     }
   );
 

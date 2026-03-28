@@ -37,6 +37,7 @@ function deriveProvider(model?: string): string {
   if (!model) return "openai";
   if (model.startsWith("gemini")) return "gemini";
   if (model.startsWith("gpt")) return "openai";
+  if (model.startsWith("claude")) return "anthropic";
   return "openai";
 }
 

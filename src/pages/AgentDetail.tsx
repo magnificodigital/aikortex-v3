@@ -55,9 +55,10 @@ const FREE_MODELS = [
   { value: "meta-llama/llama-4-maverick:free", label: "Llama 4 Maverick" },
 ] as const;
 
-const getProviderForModel = (model: string) => {
+const getProviderForModel = (model: string): string => {
   if (model.startsWith("gemini")) return "gemini";
   if (model.startsWith("gpt")) return "openai";
+  if (model.startsWith("claude")) return "anthropic";
   return "openai";
 };
 
@@ -199,6 +200,7 @@ const AgentDetail = () => {
   const testChat = useAgentChat(
     [{ role: "agent", text: `🧪 Modo de Teste ativado! Agora estou respondendo como o **${agent.name}** usando o modelo ${LLM_MODELS.find(m => m.value === agentModel)?.label || agentModel}. Envie uma mensagem para testar.` }],
     {
+      provider: currentProvider,
       model: agentModel,
       systemPrompt: testSystemPrompt,
       persistKey: `${storagePrefix}-test-messages`,
@@ -317,7 +319,7 @@ const AgentDetail = () => {
               <AlertTriangle className="h-4 w-4 text-yellow-500" />
               <AlertDescription className="text-xs text-muted-foreground flex items-center justify-between">
                 <span>
-                  Configure sua chave de API do provedor <strong className="text-foreground">{currentProvider === "openai" ? "OpenAI" : "Gemini"}</strong> na aba Integrações para testar com o modelo <strong className="text-foreground">{LLM_MODELS.find((m) => m.value === agentModel)?.label || agentModel}</strong>.
+                  Configure sua chave de API do provedor <strong className="text-foreground">{currentProvider === "openai" ? "OpenAI" : currentProvider === "anthropic" ? "Anthropic" : "Gemini"}</strong> na aba Integrações para testar com o modelo <strong className="text-foreground">{LLM_MODELS.find((m) => m.value === agentModel)?.label || agentModel}</strong>.
                 </span>
                 <Button
                   variant="outline"

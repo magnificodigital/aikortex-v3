@@ -94,7 +94,7 @@ serve(async (req) => {
         if (selectedProvider === "openai") {
           apiUrl = "https://api.openai.com/v1/chat/completions";
           apiKey = keyData.api_key;
-          apiModel = modelMapping?.openai || model || "gpt-5.4-mini";
+          apiModel = modelMapping?.openai || model || "gpt-4o-mini";
           headers = {
             Authorization: `Bearer ${apiKey}`,
             "Content-Type": "application/json",
@@ -130,7 +130,12 @@ serve(async (req) => {
           };
         }
       } else {
-        // No user key — use Lovable AI gateway
+        // No user key for the selected provider
+        // If a specific provider was requested (not default), warn in logs
+        if (provider && ["openai", "anthropic", "gemini"].includes(provider)) {
+          console.warn(`No API key found for provider "${provider}" (user: ${user.id}). Falling back to Lovable AI gateway.`);
+        }
+        // Fallback to Lovable AI gateway
         const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
         if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
         apiUrl = "https://ai.gateway.lovable.dev/v1/chat/completions";
