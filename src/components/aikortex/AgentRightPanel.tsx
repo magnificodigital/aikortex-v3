@@ -806,16 +806,68 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
                   </>
                 )}
 
-                {settingsNav === "status" && (
-                  <div>
-                    <h2 className="text-lg font-bold text-foreground">Status</h2>
-                    <p className="text-sm text-muted-foreground mt-1">O agente está em execução.</p>
-                    <div className="mt-4 flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                      <span className="text-sm text-foreground font-medium">Online</span>
+                {settingsNav === "objective" && (
+                  <div className="space-y-6">
+                    <div>
+                      <h2 className="text-lg font-bold text-foreground">Objetivo</h2>
+                      <p className="text-sm text-muted-foreground mt-1">Defina a missão principal do agente.</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-semibold text-foreground">Missão / Objetivo</h3>
+                      <p className="text-xs text-muted-foreground">O que o agente deve alcançar em cada interação.</p>
+                      <Textarea
+                        value={agentObjective}
+                        onChange={(e) => setAgentObjective(e.target.value)}
+                        placeholder="Ex: Qualificar leads e agendar reuniões com decisores."
+                        className="text-sm min-h-[100px]"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-semibold text-foreground">Mensagem de Saudação</h3>
+                      <p className="text-xs text-muted-foreground">A primeira mensagem que o agente envia ao iniciar uma conversa.</p>
+                      <Textarea
+                        value={agentGreetingMessage}
+                        onChange={(e) => setAgentGreetingMessage(e.target.value)}
+                        placeholder="Ex: Olá! Sou o assistente da [empresa]. Como posso ajudar?"
+                        className="text-sm min-h-[80px]"
+                      />
                     </div>
                   </div>
                 )}
+
+                {settingsNav === "instructions" && (
+                  <div className="space-y-6">
+                    <div>
+                      <h2 className="text-lg font-bold text-foreground">Instruções</h2>
+                      <p className="text-sm text-muted-foreground mt-1">Regras e comportamento do agente.</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-semibold text-foreground">Instruções / Regras</h3>
+                      <p className="text-xs text-muted-foreground">Regras que o agente deve seguir. Ex: não dar descontos, sempre pedir e-mail.</p>
+                      <Textarea
+                        value={agentInstructions}
+                        onChange={(e) => setAgentInstructions(e.target.value)}
+                        placeholder="Ex: Sempre pergunte o nome e e-mail do lead antes de agendar. Nunca ofereça descontos sem aprovação."
+                        className="text-sm min-h-[120px]"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-semibold text-foreground">Tom de Voz</h3>
+                      <p className="text-xs text-muted-foreground">Como o agente se comunica.</p>
+                      <Textarea
+                        value={agentToneOfVoice}
+                        onChange={(e) => setAgentToneOfVoice(e.target.value)}
+                        placeholder="Ex: Profissional, amigável, direto e empático."
+                        className="text-sm min-h-[80px]"
+                      />
+                    </div>
+                  </div>
+                )}
+
 
                 {settingsNav === "channels" && (
                   <div className="space-y-4">
