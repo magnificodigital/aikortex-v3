@@ -108,25 +108,28 @@ const Home = () => {
         </p>
 
         {/* Prompt Box */}
-        <div className="w-full max-w-2xl rounded-xl border border-border bg-card p-1 mb-8">
+        <div className="w-full max-w-2xl rounded-2xl border border-border bg-card shadow-xl shadow-black/5 overflow-hidden mb-8">
           {/* Creation tabs */}
-          <div className="flex items-center gap-1 px-3 pt-2 pb-1">
-            {(["app", "agentes", "flows"] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => handleTabChange(tab)}
-                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  activeCreationTab === tab
-                    ? "bg-primary/15 text-primary"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {tab === "app" && <Monitor className="w-4 h-4" />}
-                {tab === "agentes" && <Sparkles className="w-4 h-4" />}
-                {tab === "flows" && <Globe className="w-4 h-4" />}
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
-            ))}
+          <div className="flex items-center gap-1 px-4 pt-3 pb-1">
+            {(["app", "agentes", "flows"] as const).map((tab) => {
+              const labels = { app: "App", agentes: "Agentes", flows: "Flows" };
+              return (
+                <button
+                  key={tab}
+                  onClick={() => handleTabChange(tab)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    activeCreationTab === tab
+                      ? "bg-primary/10 text-primary shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                  }`}
+                >
+                  {tab === "app" && <Monitor className="w-4 h-4" />}
+                  {tab === "agentes" && <Sparkles className="w-4 h-4" />}
+                  {tab === "flows" && <Globe className="w-4 h-4" />}
+                  {labels[tab]}
+                </button>
+              );
+            })}
           </div>
 
           {/* Text area */}
@@ -142,12 +145,21 @@ const Home = () => {
                 }
               }
             }}
-            placeholder="Crie um app que..."
-            className="w-full bg-transparent border-none outline-none resize-none text-sm text-foreground placeholder:text-muted-foreground px-4 py-3 min-h-[80px]"
+            placeholder={
+              activeCreationTab === "app"
+                ? "Descreva o app que você quer criar..."
+                : activeCreationTab === "agentes"
+                ? "Descreva o agente que você precisa..."
+                : "Descreva o fluxo que você quer automatizar..."
+            }
+            className="w-full bg-transparent border-none outline-none resize-none text-sm text-foreground placeholder:text-muted-foreground/50 px-5 py-3 min-h-[90px]"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(); }
+            }}
           />
 
           {/* Bottom bar */}
-          <div className="flex items-center justify-between px-3 pb-2">
+          <div className="flex items-center justify-between px-4 pb-3">
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                 <Plus className="w-4 h-4" />
@@ -159,8 +171,8 @@ const Home = () => {
               </button>
             </div>
             <Button
-              size="icon"
-              className="h-9 w-9 rounded-full bg-primary hover:bg-primary/90"
+              size="sm"
+              className="h-9 px-5 rounded-full bg-primary hover:bg-primary/90 gap-1.5"
               disabled={!prompt.trim()}
               onClick={() => handleSubmit()}
             >
