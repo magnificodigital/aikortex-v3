@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { ChevronRight, ChevronDown, File, Folder, FolderOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAppBuilder, GeneratedFile } from "@/contexts/AppBuilderContext";
 
 interface FileNode {
   name: string;
@@ -8,131 +9,37 @@ interface FileNode {
   children?: FileNode[];
 }
 
-const WEB_TREE: FileNode[] = [
-  {
-    name: "src",
-    type: "folder",
-    children: [
-      {
-        name: "components",
-        type: "folder",
-        children: [
-          { name: "App.tsx", type: "file" },
-          { name: "Header.tsx", type: "file" },
-          { name: "Sidebar.tsx", type: "file" },
-          { name: "Dashboard.tsx", type: "file" },
-          { name: "DataTable.tsx", type: "file" },
-          { name: "MetricCard.tsx", type: "file" },
-          { name: "ChartWidget.tsx", type: "file" },
-          { name: "LoginForm.tsx", type: "file" },
-        ],
-      },
-      {
-        name: "pages",
-        type: "folder",
-        children: [
-          { name: "Home.tsx", type: "file" },
-          { name: "Dashboard.tsx", type: "file" },
-          { name: "Settings.tsx", type: "file" },
-          { name: "Auth.tsx", type: "file" },
-        ],
-      },
-      {
-        name: "hooks",
-        type: "folder",
-        children: [
-          { name: "useAuth.ts", type: "file" },
-          { name: "useData.ts", type: "file" },
-        ],
-      },
-      {
-        name: "lib",
-        type: "folder",
-        children: [
-          { name: "supabase.ts", type: "file" },
-          { name: "utils.ts", type: "file" },
-        ],
-      },
-      { name: "main.tsx", type: "file" },
-      { name: "index.css", type: "file" },
-    ],
-  },
-  { name: "index.html", type: "file" },
-  { name: "package.json", type: "file" },
-  { name: "tailwind.config.ts", type: "file" },
-  { name: "vite.config.ts", type: "file" },
-];
+/** Build a tree from flat file list */
+function buildTree(files: GeneratedFile[]): FileNode[] {
+  const root: Record<string, any> = {};
 
-const WHATSAPP_TREE: FileNode[] = [
-  {
-    name: "src",
-    type: "folder",
-    children: [
-      {
-        name: "agents",
-        type: "folder",
-        children: [
-          { name: "main-agent.ts", type: "file" },
-          { name: "qualifier.ts", type: "file" },
-          { name: "scheduler.ts", type: "file" },
-          { name: "follow-up.ts", type: "file" },
-        ],
-      },
-      {
-        name: "flows",
-        type: "folder",
-        children: [
-          { name: "onboarding.ts", type: "file" },
-          { name: "qualification.ts", type: "file" },
-          { name: "appointment.ts", type: "file" },
-          { name: "follow-up.ts", type: "file" },
-        ],
-      },
-      {
-        name: "handlers",
-        type: "folder",
-        children: [
-          { name: "message-handler.ts", type: "file" },
-          { name: "webhook.ts", type: "file" },
-          { name: "media-handler.ts", type: "file" },
-        ],
-      },
-      {
-        name: "integrations",
-        type: "folder",
-        children: [
-          { name: "whatsapp-api.ts", type: "file" },
-          { name: "crm.ts", type: "file" },
-          { name: "calendar.ts", type: "file" },
-        ],
-      },
-      {
-        name: "utils",
-        type: "folder",
-        children: [
-          { name: "prompts.ts", type: "file" },
-          { name: "templates.ts", type: "file" },
-          { name: "validators.ts", type: "file" },
-        ],
-      },
-      { name: "config.ts", type: "file" },
-      { name: "index.ts", type: "file" },
-    ],
-  },
-  {
-    name: "dashboard",
-    type: "folder",
-    children: [
-      { name: "App.tsx", type: "file" },
-      { name: "ConversationView.tsx", type: "file" },
-      { name: "Analytics.tsx", type: "file" },
-      { name: "Settings.tsx", type: "file" },
-    ],
-  },
-  { name: ".env", type: "file" },
-  { name: "package.json", type: "file" },
-  { name: "tsconfig.json", type: "file" },
-];
+  files.forEach((f) => {
+    const parts = f.path.replace(/^\//, "").split("/");
+    let current = root;
+    parts.forEach((part, i) => {
+      if (!current[part]) {
+        current[part] = i === parts.length - 1 ? { __file: true } : {};
+      }
+      current = current[part];
+    });
+  });
+
+  function toNodes(obj: Record<string, any>): FileNode[] {
+    return Object.entries(obj)
+      .filter(([k]) => k !== "__file")
+      .map(([name, val]) => {
+        if (val.__file) return { name, type: "file" as const };
+        const children = toNodes(val);
+        return { name, type: "folder" as const, children };
+      })
+      .sort((a, b) => {
+        if (a.type !== b.type) return a.type === "folder" ? -1 : 1;
+        return a.name.localeCompare(b.name);
+      });
+  }
+
+  return toNodes(root);
+}
 
 interface FileTreeItemProps {
   node: FileNode;
@@ -185,14 +92,24 @@ interface FileTreeProps {
   channel?: "whatsapp" | "web";
 }
 
-const FileTree = ({ selectedFile, onSelectFile, channel = "web" }: FileTreeProps) => {
-  const tree = channel === "whatsapp" ? WHATSAPP_TREE : WEB_TREE;
+const FileTree = ({ selectedFile, onSelectFile }: FileTreeProps) => {
+  const { files } = useAppBuilder();
+
+  const tree = useMemo(() => buildTree(files), [files]);
+
+  if (files.length === 0) {
+    return (
+      <div className="w-[220px] min-w-[180px] border-r border-border bg-card/50 flex items-center justify-center text-xs text-muted-foreground p-4 text-center">
+        Envie uma mensagem no Studio para gerar os arquivos do projeto
+      </div>
+    );
+  }
 
   return (
     <div className="w-[220px] min-w-[180px] border-r border-border bg-card/50 flex flex-col overflow-hidden">
       <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
         <File className="w-3.5 h-3.5 text-muted-foreground" />
-        <span className="text-xs text-muted-foreground ml-auto">⬇ Download</span>
+        <span className="text-xs text-muted-foreground ml-auto">{files.length} arquivos</span>
       </div>
       <div className="flex-1 overflow-y-auto py-1">
         {tree.map((node) => (

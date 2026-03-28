@@ -6,6 +6,7 @@ import {
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
+import { useAppBuilder } from "@/contexts/AppBuilderContext";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -56,6 +57,22 @@ async function streamChat({
   onDone();
 }
 
+/** Extract code blocks from markdown: ```filename.ext ... ``` */
+function parseCodeBlocks(content: string): { fileName: string; code: string }[] {
+  const regex = /```(\S+)\n([\s\S]*?)```/g;
+  const results: { fileName: string; code: string }[] = [];
+  let match;
+  while ((match = regex.exec(content)) !== null) {
+    const lang = match[1];
+    const code = match[2].trim();
+    // Only treat as file if it has an extension
+    if (lang.includes(".")) {
+      results.push({ fileName: lang, code });
+    }
+  }
+  return results;
+}
+
 interface ChatPanelProps {
   onBack: () => void;
   initialPrompt?: string;
@@ -70,10 +87,21 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
   const [toolLogs, setToolLogs] = useState<ToolLog[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const sentInitial = useRef(false);
+  const initializedProject = useRef(false);
+
+  const {
+    channel, initializeProject, addFile, addTable, addTerminalLog,
+    setIsGenerating,
+  } = useAppBuilder();
 
   useEffect(() => {
     if (initialPrompt && !sentInitial.current) {
       sentInitial.current = true;
+      // Initialize the project scaffold on first message
+      if (!initializedProject.current) {
+        initializedProject.current = true;
+        initializeProject(channel, initialPrompt);
+      }
       sendMessage(initialPrompt);
     }
   }, [initialPrompt]);
@@ -82,19 +110,62 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
+  const processAIResponse = (content: string) => {
+    // Parse code blocks from the AI response and add to files
+    const codeBlocks = parseCodeBlocks(content);
+    codeBlocks.forEach(({ fileName, code }) => {
+      const ext = fileName.split(".").pop() || "";
+      let path = `/src/${fileName}`;
+      if (ext === "html") path = `/${fileName}`;
+      else if (fileName.includes("agent") || fileName.includes("qualifier") || fileName.includes("scheduler"))
+        path = `/src/agents/${fileName}`;
+      else if (fileName.includes("api") || fileName.includes("webhook"))
+        path = `/src/integrations/${fileName}`;
+      else if (ext === "tsx" && fileName.startsWith("use"))
+        path = `/src/hooks/${fileName}`;
+
+      addFile({ name: fileName, path, content: code });
+      addTerminalLog({ text: `✓ Arquivo atualizado: ${fileName}`, type: "success", timestamp: Date.now() });
+    });
+
+    // Check for table-related content
+    const tableRegex = /(?:tabela|table)\s+[`"]?(\w+)[`"]?/gi;
+    let tableMatch;
+    while ((tableMatch = tableRegex.exec(content)) !== null) {
+      const tableName = tableMatch[1].toLowerCase();
+      addTable({
+        name: tableName,
+        columns: [
+          { name: "id", type: "UUID", isPK: true },
+          { name: "created_at", type: "TIMESTAMP" },
+        ],
+        rows: [],
+      });
+      addTerminalLog({ text: `✓ Tabela detectada: ${tableName}`, type: "success", timestamp: Date.now() });
+    }
+  };
+
   const sendMessage = async (text: string) => {
     if (!text.trim() || isLoading) return;
     const userMsg: Msg = { role: "user", content: text.trim() };
     setMessages((p) => [...p, userMsg]);
     setInput("");
     setIsLoading(true);
+    setIsGenerating(true);
     setToolsUsed((p) => p + 1);
 
-    // Add fake tool logs for realism
+    // Initialize project on first message if not done
+    if (!initializedProject.current) {
+      initializedProject.current = true;
+      initializeProject(channel, text.trim());
+    }
+
     setToolLogs((prev) => [
       ...prev,
       { label: `Processando: "${text.trim().slice(0, 40)}..."`, status: "success" },
     ]);
+
+    addTerminalLog({ text: `$ Processando solicitação...`, type: "command", timestamp: Date.now() });
 
     let assistantSoFar = "";
     const upsert = (chunk: string) => {
@@ -113,19 +184,24 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
         onDelta: upsert,
         onDone: () => {
           setIsLoading(false);
+          setIsGenerating(false);
+          processAIResponse(assistantSoFar);
           setToolLogs((prev) => [
             ...prev,
             { label: "Resposta gerada com sucesso", status: "success" },
           ]);
+          addTerminalLog({ text: "✓ Geração concluída", type: "success", timestamp: Date.now() });
         },
       });
     } catch {
       toast.error("Erro ao se comunicar com a IA");
       setIsLoading(false);
+      setIsGenerating(false);
       setToolLogs((prev) => [
         ...prev,
         { label: "Falha na comunicação", status: "error" },
       ]);
+      addTerminalLog({ text: "✗ Erro na comunicação", type: "error", timestamp: Date.now() });
     }
   };
 
