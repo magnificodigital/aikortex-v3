@@ -148,6 +148,7 @@ const WizardRightPanel = ({
   activeTab, onTabChange,
   activeSection, onSectionChange,
   onApiKeysChanged,
+  onSaveAgent, isSaving,
 }: Props) => {
   const [rightTab, setRightTab] = useState(activeTab || "agent");
 
