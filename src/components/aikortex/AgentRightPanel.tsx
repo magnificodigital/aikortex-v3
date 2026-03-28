@@ -333,6 +333,10 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
     if (storagePrefix) { try { const s = localStorage.getItem(`${storagePrefix}-channels`); if (s) return JSON.parse(s); } catch {} }
     return [];
   });
+  const [apiConfig, setApiConfig] = useState<ApiConfig>(() => {
+    if (storagePrefix) { try { const s = localStorage.getItem(`${storagePrefix}-apiConfig`); if (s) return JSON.parse(s); } catch {} }
+    return DEFAULT_API_CONFIG;
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(() => {
