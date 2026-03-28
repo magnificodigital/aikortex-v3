@@ -410,7 +410,7 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
       urls,
       apiConfig,
     });
-  }, [agentName, agentDesc, avatarPreview, connectedChannels, connectorKeys, knowledgeFiles, urls, apiConfig]);
+  }, [agentName, agentDesc, agentObjective, agentInstructions, agentToneOfVoice, agentGreetingMessage, avatarPreview, connectedChannels, connectorKeys, knowledgeFiles, urls, apiConfig]);
 
   const handleFiles = (files: FileList) => {
     const newFiles: KnowledgeFileLocal[] = Array.from(files)
