@@ -816,7 +816,153 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
                   </div>
                 )}
 
-                {!["general", "status", "channels", "danger"].includes(settingsNav) && (
+                {settingsNav === "advanced" && (
+                  <div className="space-y-6">
+                    <div>
+                      <h2 className="text-lg font-bold text-foreground">Configurações da API</h2>
+                      <p className="text-sm text-muted-foreground mt-1">Parâmetros avançados para controlar o comportamento do LLM.</p>
+                    </div>
+
+                    {/* Temperature */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-foreground">Temperature</label>
+                        <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">{apiConfig.temperature}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="2"
+                        step="0.1"
+                        value={apiConfig.temperature}
+                        onChange={(e) => setApiConfig(prev => ({ ...prev, temperature: parseFloat(e.target.value) }))}
+                        className="w-full accent-primary"
+                      />
+                      <div className="flex justify-between text-[10px] text-muted-foreground">
+                        <span>Preciso (0)</span>
+                        <span>Equilibrado (0.7)</span>
+                        <span>Criativo (2)</span>
+                      </div>
+                    </div>
+
+                    {/* Max Tokens */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">Max Tokens</label>
+                      <p className="text-[11px] text-muted-foreground">Número máximo de tokens na resposta.</p>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={128000}
+                        value={apiConfig.maxTokens}
+                        onChange={(e) => setApiConfig(prev => ({ ...prev, maxTokens: parseInt(e.target.value) || 2048 }))}
+                        className="text-sm font-mono"
+                      />
+                    </div>
+
+                    {/* Top P */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-foreground">Top P (Nucleus Sampling)</label>
+                        <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">{apiConfig.topP}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.05"
+                        value={apiConfig.topP}
+                        onChange={(e) => setApiConfig(prev => ({ ...prev, topP: parseFloat(e.target.value) }))}
+                        className="w-full accent-primary"
+                      />
+                      <p className="text-[11px] text-muted-foreground">Controla a diversidade das respostas. Menor = mais focado.</p>
+                    </div>
+
+                    {/* Frequency Penalty */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-foreground">Frequency Penalty</label>
+                        <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">{apiConfig.frequencyPenalty}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="-2"
+                        max="2"
+                        step="0.1"
+                        value={apiConfig.frequencyPenalty}
+                        onChange={(e) => setApiConfig(prev => ({ ...prev, frequencyPenalty: parseFloat(e.target.value) }))}
+                        className="w-full accent-primary"
+                      />
+                      <p className="text-[11px] text-muted-foreground">Penaliza repetição de tokens frequentes. Positivo = menos repetição.</p>
+                    </div>
+
+                    {/* Presence Penalty */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-foreground">Presence Penalty</label>
+                        <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">{apiConfig.presencePenalty}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="-2"
+                        max="2"
+                        step="0.1"
+                        value={apiConfig.presencePenalty}
+                        onChange={(e) => setApiConfig(prev => ({ ...prev, presencePenalty: parseFloat(e.target.value) }))}
+                        className="w-full accent-primary"
+                      />
+                      <p className="text-[11px] text-muted-foreground">Incentiva novos tópicos. Positivo = mais diversidade temática.</p>
+                    </div>
+
+                    {/* Response Format */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">Formato de Resposta</label>
+                      <Select value={apiConfig.responseFormat} onValueChange={(v) => setApiConfig(prev => ({ ...prev, responseFormat: v as "text" | "json" }))}>
+                        <SelectTrigger className="text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="text">Texto</SelectItem>
+                          <SelectItem value="json">JSON</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-[11px] text-muted-foreground">JSON mode força a saída em formato JSON válido.</p>
+                    </div>
+
+                    {/* Stop Sequences */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">Stop Sequences</label>
+                      <p className="text-[11px] text-muted-foreground">Sequências que encerram a geração. Separe por vírgulas.</p>
+                      <Input
+                        value={apiConfig.stopSequences.join(", ")}
+                        onChange={(e) => setApiConfig(prev => ({
+                          ...prev,
+                          stopSequences: e.target.value ? e.target.value.split(",").map(s => s.trim()).filter(Boolean) : [],
+                        }))}
+                        placeholder='Ex: "###", "FIM"'
+                        className="text-sm font-mono"
+                      />
+                    </div>
+
+                    {/* Reset */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => setApiConfig(DEFAULT_API_CONFIG)}
+                    >
+                      Restaurar padrões
+                    </Button>
+                  </div>
+                )}
+
+                {settingsNav === "machine" && (
+                  <div>
+                    <h2 className="text-lg font-bold text-foreground">Machine</h2>
+                    <p className="text-sm text-muted-foreground mt-1">Configuração em breve.</p>
+                  </div>
+                )}
+
+                {!["general", "status", "channels", "danger", "advanced", "machine"].includes(settingsNav) && (
                   <div>
                     <h2 className="text-lg font-bold text-foreground capitalize">{settingsNav}</h2>
                     <p className="text-sm text-muted-foreground mt-1">Configuração em breve.</p>
