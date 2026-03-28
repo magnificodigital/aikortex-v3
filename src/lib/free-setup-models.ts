@@ -1,8 +1,8 @@
 export const GATEWAY_MODELS = [
-  { value: "deepseek/deepseek-chat-v3-0324:free", label: "DeepSeek V3 (Grátis)" },
-  { value: "meta-llama/llama-4-maverick:free", label: "Llama 4 Maverick (Grátis)" },
-  { value: "qwen/qwen3-8b:free", label: "Qwen3 8B (Grátis)" },
-  { value: "mistralai/mistral-7b-instruct:free", label: "Mistral 7B (Grátis)" },
+  { value: "google/gemma-3-12b-it:free", label: "Gemma 3 12B (Grátis)" },
+  { value: "meta-llama/llama-3.3-70b-instruct:free", label: "Llama 3.3 70B (Grátis)" },
+  { value: "mistralai/mistral-small-3.1-24b-instruct:free", label: "Mistral Small 3.1 (Grátis)" },
+  { value: "openai/gpt-oss-20b:free", label: "GPT OSS 20B (Grátis)" },
 ] as const;
 
 export const DEFAULT_FREE_SETUP_MODEL = GATEWAY_MODELS[0].value;
