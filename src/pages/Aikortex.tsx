@@ -557,6 +557,8 @@ const Aikortex = () => {
         activeSection={rightPanelSection}
         onSectionChange={setRightPanelSection}
         onApiKeysChanged={refetchKeys}
+        onSaveAgent={handleSaveAgent}
+        isSaving={isSaving}
       />
     </div>
   );
