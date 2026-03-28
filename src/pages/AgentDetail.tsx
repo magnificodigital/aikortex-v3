@@ -83,10 +83,39 @@ const AgentDetail = () => {
   // "test" = uses the user's configured LLM to test the agent
   const [chatMode, setChatMode] = useState<"setup" | "test">("setup");
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleConfigChange = useCallback((config: AgentConfig) => {
     setAgentConfig(config);
   }, []);
+
+  const { saveAgent } = useUserAgents();
+
+  const handleSaveAgent = useCallback(async (config: AgentConfig & { model: string; agentType: string }) => {
+    setIsSaving(true);
+    try {
+      const result = await saveAgent({
+        id: agentId && !AGENTS_MAP[agentId] ? agentId : undefined,
+        name: config.name,
+        agent_type: config.agentType,
+        description: config.description,
+        avatar_url: config.avatarUrl,
+        model: config.model,
+        status: "configuring",
+        config: {
+          channels: config.channels,
+          integrations: config.integrations,
+          knowledgeFiles: config.knowledgeFiles,
+          urls: config.urls,
+        },
+      });
+      if (result) {
+        toast.success("Agente salvo com sucesso!");
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  }, [agentId, saveAgent]);
 
   const { keys, loading: keysLoading, refetch: refetchKeys } = useApiKeys();
 
