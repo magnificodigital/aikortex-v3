@@ -231,6 +231,10 @@ const AgentDetail = () => {
       agentContext: agentConfig ? {
         name: agentConfig.name,
         description: agentConfig.description,
+        objective: agentConfig.objective,
+        instructions: agentConfig.instructions,
+        toneOfVoice: agentConfig.toneOfVoice,
+        greetingMessage: agentConfig.greetingMessage,
         channels: agentConfig.channels,
         integrations: agentConfig.integrations,
         knowledgeFiles: agentConfig.knowledgeFiles,
