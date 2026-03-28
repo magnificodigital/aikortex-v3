@@ -365,7 +365,8 @@ const WizardRightPanel = ({
     <div className="flex-1 flex flex-col min-w-0 h-full">
       <Tabs value={rightTab} onValueChange={handleTabChange} className="flex flex-col flex-1 overflow-hidden">
         <div className="border-b border-border px-4">
-          <TabsList className="bg-transparent h-11 gap-0 p-0">
+          <TabsList className="bg-transparent h-11 gap-0 p-0 w-full justify-between">
+            <div className="flex">
             {[
               { value: "agent", label: "Agente" },
               { value: "connectors", label: "Integrações" },
@@ -380,6 +381,15 @@ const WizardRightPanel = ({
                 {tab.label}
               </TabsTrigger>
             ))}
+            </div>
+            <Button
+              size="sm"
+              className="gap-1.5 h-7 text-xs my-auto"
+              onClick={() => onSaveAgent?.()}
+              disabled={!context.agentName?.trim() || isSaving}
+            >
+              {isSaving ? "Salvando..." : "💾 Salvar"}
+            </Button>
           </TabsList>
         </div>
 
@@ -973,16 +983,6 @@ const WizardRightPanel = ({
         </DialogContent>
       </Dialog>
 
-      {/* Persistent Save Button */}
-      <div className="border-t border-border px-4 py-3 shrink-0 bg-background">
-        <Button
-          className="w-full gap-2 h-10"
-          onClick={() => onSaveAgent?.()}
-          disabled={!context.agentName?.trim() || isSaving}
-        >
-          {isSaving ? "Salvando..." : "💾 Salvar Agente"}
-        </Button>
-      </div>
     </div>
   );
 };
