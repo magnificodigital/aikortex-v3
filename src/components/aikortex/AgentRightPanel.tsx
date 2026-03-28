@@ -368,8 +368,9 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
       integrations: Object.entries(connectorKeys).filter(([, v]) => v.configured).map(([k]) => k),
       knowledgeFiles: knowledgeFiles.map(f => f.name),
       urls,
+      apiConfig,
     });
-  }, [agentName, agentDesc, avatarPreview, connectedChannels, connectorKeys, knowledgeFiles, urls]);
+  }, [agentName, agentDesc, avatarPreview, connectedChannels, connectorKeys, knowledgeFiles, urls, apiConfig]);
 
   const handleFiles = (files: FileList) => {
     const newFiles: KnowledgeFileLocal[] = Array.from(files)
