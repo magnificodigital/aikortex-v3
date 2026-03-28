@@ -284,7 +284,7 @@ const AgentDetail = () => {
   const activeChat = chatMode === "setup" ? setupChat : testChat;
   const { messages, sendMessage, isStreaming } = activeChat;
 
-  const canSend = chatMode === "setup" || (!keysLoading && hasApiKey);
+  const canSend = chatMode === "setup" ? (!keysLoading && hasAnyLLMKey) : (!keysLoading && hasApiKey);
 
   const handleSend = () => {
     if (!input.trim() || isStreaming || !canSend) return;
