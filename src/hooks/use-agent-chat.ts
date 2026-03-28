@@ -8,6 +8,16 @@ export interface ChatMessage {
   text: string;
 }
 
+export interface ApiConfigParams {
+  temperature?: number;
+  maxTokens?: number;
+  topP?: number;
+  frequencyPenalty?: number;
+  presencePenalty?: number;
+  responseFormat?: "text" | "json";
+  stopSequences?: string[];
+}
+
 interface UseAgentChatOptions {
   provider?: string;
   model?: string;
@@ -19,6 +29,8 @@ interface UseAgentChatOptions {
   systemPrompt?: string;
   /** localStorage key to persist messages across reloads */
   persistKey?: string;
+  /** Advanced API configuration */
+  apiConfig?: ApiConfigParams;
 }
 
 function deriveProvider(model?: string): string {

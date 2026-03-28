@@ -85,6 +85,26 @@ const SETTINGS_NAV = [
   ]},
 ];
 
+export interface ApiConfig {
+  temperature: number;
+  maxTokens: number;
+  topP: number;
+  frequencyPenalty: number;
+  presencePenalty: number;
+  responseFormat: "text" | "json";
+  stopSequences: string[];
+}
+
+export const DEFAULT_API_CONFIG: ApiConfig = {
+  temperature: 0.7,
+  maxTokens: 2048,
+  topP: 1,
+  frequencyPenalty: 0,
+  presencePenalty: 0,
+  responseFormat: "text",
+  stopSequences: [],
+};
+
 export interface AgentConfig {
   name: string;
   description: string;
@@ -93,6 +113,7 @@ export interface AgentConfig {
   integrations: string[];
   knowledgeFiles: string[];
   urls: string[];
+  apiConfig: ApiConfig;
 }
 
 interface Props {
