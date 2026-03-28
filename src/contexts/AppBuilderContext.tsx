@@ -47,6 +47,9 @@ interface AppBuilderContextType extends AppBuilderState {
   setAppName: (name: string) => void;
   setIsGenerating: (v: boolean) => void;
   initializeProject: (channel: "whatsapp" | "web", prompt: string) => void;
+  saveApp: (userId: string) => Promise<string | null>;
+  appId: string | null;
+  setAppId: (id: string | null) => void;
 }
 
 const AppBuilderContext = createContext<AppBuilderContextType | null>(null);
