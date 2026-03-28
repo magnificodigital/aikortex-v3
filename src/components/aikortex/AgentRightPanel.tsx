@@ -116,6 +116,10 @@ export const DEFAULT_API_CONFIG: ApiConfig = {
 export interface AgentConfig {
   name: string;
   description: string;
+  objective: string;
+  instructions: string;
+  toneOfVoice: string;
+  greetingMessage: string;
   avatarUrl: string;
   channels: string[];
   integrations: string[];
