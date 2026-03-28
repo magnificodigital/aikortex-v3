@@ -133,6 +133,8 @@ interface Props {
   activeSection?: string;
   onSectionChange?: (section: string) => void;
   onApiKeysChanged?: () => void | Promise<void>;
+  onSaveAgent?: () => void | Promise<void>;
+  isSaving?: boolean;
 }
 
 const WizardRightPanel = ({
