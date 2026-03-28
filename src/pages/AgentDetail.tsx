@@ -138,10 +138,15 @@ const AgentDetail = () => {
         model: config.model,
         status: "configuring",
         config: {
+          objective: config.objective,
+          instructions: config.instructions,
+          toneOfVoice: config.toneOfVoice,
+          greetingMessage: config.greetingMessage,
           channels: config.channels,
           integrations: config.integrations,
           knowledgeFiles: config.knowledgeFiles,
           urls: config.urls,
+          apiConfig: config.apiConfig,
         },
       });
       if (result) {
