@@ -55,9 +55,10 @@ const FREE_MODELS = [
   { value: "meta-llama/llama-4-maverick:free", label: "Llama 4 Maverick" },
 ] as const;
 
-const getProviderForModel = (model: string) => {
+const getProviderForModel = (model: string): string => {
   if (model.startsWith("gemini")) return "gemini";
   if (model.startsWith("gpt")) return "openai";
+  if (model.startsWith("claude")) return "anthropic";
   return "openai";
 };
 
