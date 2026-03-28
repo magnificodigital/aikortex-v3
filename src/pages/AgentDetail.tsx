@@ -196,6 +196,10 @@ const AgentDetail = () => {
     parts.push(`Você é o agente "${agentConfig.name}".`);
     parts.push(`\n\nVocê deve agir de forma totalmente coerente com a configuração operacional recebida.`);
     if (agentConfig.description) parts.push(`\n\nDescrição, papel e instruções principais:\n${agentConfig.description}`);
+    if (agentConfig.objective) parts.push(`\n\nObjetivo/Missão:\n${agentConfig.objective}`);
+    if (agentConfig.instructions) parts.push(`\n\nRegras e instruções específicas:\n${agentConfig.instructions}`);
+    if (agentConfig.toneOfVoice) parts.push(`\n\nTom de voz: ${agentConfig.toneOfVoice}`);
+    if (agentConfig.greetingMessage) parts.push(`\n\nMensagem de saudação padrão: ${agentConfig.greetingMessage}`);
     if (agentConfig.channels.length > 0) {
       parts.push(`\n\nCanais ativos: ${agentConfig.channels.join(", ")}`);
     }
