@@ -127,18 +127,18 @@ serve(async (req) => {
     let apiModel: string;
     let headers: Record<string, string>;
 
-    // If useGateway is true, use OpenRouter (free models, no user key required)
+    // If useGateway is true, use OpenRouter
     if (useGateway) {
       apiUrl = "https://openrouter.ai/api/v1/chat/completions";
-      apiKey = ""; // OpenRouter free models work without API key
-      apiModel = gatewayModel || "google/gemma-3-4b-it:free";
+      apiModel = gatewayModel || "openai/gpt-4o-mini";
       headers = {
         "Content-Type": "application/json",
         "HTTP-Referer": "https://aikortex.lovable.app",
         "X-OpenRouter-Title": "Aikortex",
       };
 
-      // Try user's OpenRouter key first for better rate limits
+      // Try user's OpenRouter key first, then env secret fallback
+      let orKey = "";
       const { data: orKeyData } = await supabase
         .from("user_api_keys")
         .select("api_key")
@@ -147,8 +147,13 @@ serve(async (req) => {
         .maybeSingle();
 
       if (orKeyData?.api_key) {
-        apiKey = orKeyData.api_key;
-        headers["Authorization"] = `Bearer ${apiKey}`;
+        orKey = orKeyData.api_key;
+      } else {
+        orKey = Deno.env.get("OPENROUTER_API_KEY") || "";
+      }
+
+      if (orKey) {
+        headers["Authorization"] = `Bearer ${orKey}`;
       }
     } else {
       // Try user's own API key first
