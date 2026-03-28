@@ -370,6 +370,7 @@ serve(async (req) => {
     let lastErrorStatus = 0;
     let lastErrorText = "";
     const maxRetries = 3;
+    const gatewayMaxRetries = 1;
 
     if (useGateway) {
       gatewayAttempt:
@@ -380,7 +381,7 @@ serve(async (req) => {
             ? { ...headers, Authorization: `Bearer ${candidateKey}` }
             : { ...headers };
 
-          for (let attempt = 0; attempt <= maxRetries; attempt++) {
+          for (let attempt = 0; attempt <= gatewayMaxRetries; attempt++) {
             response = await fetch(apiUrl, {
               method: "POST",
               headers: requestHeaders,
@@ -394,10 +395,10 @@ serve(async (req) => {
               break gatewayAttempt;
             }
 
-            if (response.status === 429 && attempt < maxRetries) {
+            if (response.status === 429 && attempt < gatewayMaxRetries) {
               const retryAfter = parseInt(response.headers.get("retry-after") || "0", 10);
               const waitMs = Math.max((retryAfter || (attempt + 1) * 2) * 1000, 1000);
-              console.log(`Rate limited (429), retrying in ${waitMs}ms (attempt ${attempt + 1}/${maxRetries})`);
+              console.log(`Rate limited (429), retrying in ${waitMs}ms (attempt ${attempt + 1}/${gatewayMaxRetries})`);
               await new Promise((r) => setTimeout(r, waitMs));
               continue;
             }
@@ -413,6 +414,11 @@ serve(async (req) => {
 
             if (response.status === 404 && lastErrorText.includes("No endpoints found")) {
               console.warn(`OpenRouter model unavailable: ${candidateModel}. Trying next free model.`);
+              break;
+            }
+
+            if (response.status === 404) {
+              console.warn(`OpenRouter 404 for model: ${candidateModel}. Trying next free model.`);
               break;
             }
 
@@ -436,6 +442,33 @@ serve(async (req) => {
         }
 
         if (response?.ok) break;
+      }
+
+      // Lovable AI Gateway fallback when all OpenRouter free models fail
+      if (!response?.ok) {
+        console.log("All OpenRouter free models failed. Falling back to Lovable AI Gateway.");
+        const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+        if (LOVABLE_API_KEY) {
+          const lovableResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "google/gemini-2.5-flash-lite",
+              messages: finalMessages,
+              stream: true,
+            }),
+          });
+          if (lovableResponse.ok) {
+            console.log("Lovable AI Gateway fallback succeeded.");
+            response = lovableResponse;
+          } else {
+            const errText = await lovableResponse.text();
+            console.error("Lovable AI Gateway fallback failed:", lovableResponse.status, errText);
+          }
+        }
       }
     } else {
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
