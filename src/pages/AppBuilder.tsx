@@ -129,9 +129,10 @@ const AppBuilder = () => {
   const state = location.state as any;
   const initialPrompt = state?.initialPrompt || "";
   const initialChannel = (state?.channel as AppChannel) || "web";
+  const existingAppId = state?.appId || null;
 
   return (
-    <AppBuilderProvider initialChannel={initialChannel}>
+    <AppBuilderProvider initialChannel={initialChannel} existingAppId={existingAppId}>
       <AppBuilderInner initialPrompt={initialPrompt} />
     </AppBuilderProvider>
   );
