@@ -89,7 +89,7 @@ const AgentDetail = () => {
     try { return localStorage.getItem(`${storagePrefix}-model`) || agent.model; } catch { return agent.model; }
   });
   const [setupModel, setSetupModel] = useState<string>(() => {
-    try { return localStorage.getItem(`${storagePrefix}-setupModel`) || FREE_MODELS[0].value; } catch { return FREE_MODELS[0].value; }
+    try { return localStorage.getItem(`${storagePrefix}-setupModel`) || GATEWAY_MODELS[0].value; } catch { return GATEWAY_MODELS[0].value; }
   });
   const [rightPanelTab, setRightPanelTab] = useState("agent");
   const [chatMode, setChatMode] = useState<"setup" | "test">(() => {
@@ -288,7 +288,7 @@ const AgentDetail = () => {
           {chatMode === "setup" ? (
             <Badge variant="secondary" className="text-xs gap-1">
               <Bot className="w-3 h-3" />
-              Assistente de Configuração — {FREE_MODELS.find(m => m.value === setupModel)?.label || "IA Gratuita"}
+              Assistente de Configuração — {GATEWAY_MODELS.find(m => m.value === setupModel)?.label || "IA Gratuita"}
             </Badge>
           ) : (
             <Badge variant="outline" className="text-xs gap-1">
@@ -375,7 +375,7 @@ const AgentDetail = () => {
                     onChange={(e) => setSetupModel(e.target.value)}
                     className="text-xs text-muted-foreground hover:text-foreground bg-transparent border border-border rounded-md px-2 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary/40"
                   >
-                    {FREE_MODELS.map((m) => (
+                    {GATEWAY_MODELS.map((m) => (
                       <option key={m.value} value={m.value}>{m.label}</option>
                     ))}
                   </select>

@@ -150,7 +150,7 @@ const Aikortex = () => {
 
   const [input, setInput] = useState("");
   const [agentModel, setAgentModel] = useState("gemini-2.5-flash");
-  const [setupModel, setSetupModel] = useState<string>(FREE_MODELS[0].value);
+  const [setupModel, setSetupModel] = useState<string>(GATEWAY_MODELS[0].value);
   const [rightPanelTab, setRightPanelTab] = useState("agent");
   const [rightPanelSection, setRightPanelSection] = useState<string | undefined>(undefined);
   const [didAutoRoute, setDidAutoRoute] = useState(false);
@@ -430,7 +430,7 @@ const Aikortex = () => {
           {chatMode === "setup" ? (
             <Badge variant="secondary" className="text-xs gap-1">
               <Bot className="w-3 h-3" />
-              Assistente de Configuração — {FREE_MODELS.find(m => m.value === setupModel)?.label || "IA Gratuita"}
+              Assistente de Configuração — {GATEWAY_MODELS.find(m => m.value === setupModel)?.label || "IA Gratuita"}
             </Badge>
           ) : (
             <Badge variant="outline" className="text-xs gap-1">
@@ -515,7 +515,7 @@ const Aikortex = () => {
                     onChange={(e) => setSetupModel(e.target.value)}
                     className="text-xs text-muted-foreground hover:text-foreground bg-transparent border border-border rounded-md px-2 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary/40"
                   >
-                    {FREE_MODELS.map((m) => (
+                    {GATEWAY_MODELS.map((m) => (
                       <option key={m.value} value={m.value}>{m.label}</option>
                     ))}
                   </select>
