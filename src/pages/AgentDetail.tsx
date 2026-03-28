@@ -177,10 +177,12 @@ const AgentDetail = () => {
   useEffect(() => { try { localStorage.setItem(`${storagePrefix}-model`, agentModel); } catch {} }, [agentModel, storagePrefix]);
   useEffect(() => { try { localStorage.setItem(`${storagePrefix}-setupModel`, setupModel); } catch {} }, [setupModel, storagePrefix]);
 
+  const setupSystemPrompt = useMemo(() => buildSetupSystemPrompt(agentConfig, keys, agentModel), [agentConfig, keys, agentModel]);
+
   // Setup mode ALWAYS uses free OpenRouter models
   const setupChat = useAgentChat(
     [{ role: "agent", text: `Olá! 👋 Sou o assistente de configuração do **${agent.name}**. O que gostaria de configurar?` }],
-    { useGateway: true, gatewayModel: setupModel, systemPrompt: SETUP_SYSTEM_PROMPT, persistKey: `${storagePrefix}-setup-messages` }
+    { useGateway: true, gatewayModel: setupModel, systemPrompt: setupSystemPrompt, persistKey: `${storagePrefix}-setup-messages` }
   );
 
   // Build dynamic system prompt from agent configuration for test mode
