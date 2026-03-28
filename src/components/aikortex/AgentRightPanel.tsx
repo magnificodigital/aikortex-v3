@@ -82,7 +82,8 @@ const CHANNELS = [
 const SETTINGS_NAV = [
   { section: "AGENTE", items: [
     { key: "general", icon: User, label: "Identidade" },
-    { key: "status", icon: Zap, label: "Status" },
+    { key: "objective", icon: Zap, label: "Objetivo" },
+    { key: "instructions", icon: Settings2, label: "Instruções" },
     { key: "machine", icon: Monitor, label: "Machine" },
   ]},
   { section: "CONFIGURAÇÃO", items: [
