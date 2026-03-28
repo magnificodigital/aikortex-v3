@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Eye, Code2, Database, RotateCw, ExternalLink, Github, Upload,
-  LayoutDashboard,
+  LayoutDashboard, Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ChatPanel from "@/components/app-builder/ChatPanel";
@@ -11,8 +11,10 @@ import CodeEditor from "@/components/app-builder/CodeEditor";
 import PreviewPanel from "@/components/app-builder/PreviewPanel";
 import DatabasePanel from "@/components/app-builder/DatabasePanel";
 import TerminalPanel from "@/components/app-builder/TerminalPanel";
+import AppConfigPanel from "@/components/app-builder/AppConfigPanel";
 
 type TabId = "preview" | "dashboard" | "code" | "database";
+type AppChannel = "whatsapp" | "web";
 
 const tabs: { id: TabId; label: string; icon: typeof Eye }[] = [
   { id: "preview", label: "Preview", icon: Eye },
@@ -24,20 +26,24 @@ const tabs: { id: TabId; label: string; icon: typeof Eye }[] = [
 const AppBuilder = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const initialPrompt = (location.state as any)?.initialPrompt || "";
+  const state = location.state as any;
+  const initialPrompt = state?.initialPrompt || "";
+  const initialChannel = (state?.channel as AppChannel) || "whatsapp";
+
   const [activeTab, setActiveTab] = useState<TabId>("preview");
   const [selectedFile, setSelectedFile] = useState<string | null>("index.html");
+  const [channel, setChannel] = useState<AppChannel>(initialChannel);
+  const [showConfig, setShowConfig] = useState(true);
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
       {/* ===== LEFT — CHAT ===== */}
       <ChatPanel onBack={() => navigate("/home")} initialPrompt={initialPrompt} />
 
-      {/* ===== RIGHT — WORKSPACE ===== */}
+      {/* ===== CENTER — WORKSPACE ===== */}
       <div className="flex-1 flex flex-col min-w-0 bg-background">
         {/* Top toolbar */}
         <div className="h-11 border-b border-border flex items-center justify-between px-3 shrink-0">
-          {/* Left: refresh + URL hint */}
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="h-7 w-7">
               <RotateCw className="w-3.5 h-3.5" />
@@ -45,7 +51,6 @@ const AppBuilder = () => {
             <span className="text-xs text-muted-foreground">/</span>
           </div>
 
-          {/* Center tabs */}
           <div className="flex items-center gap-0.5 bg-muted/50 rounded-lg p-0.5">
             {tabs.map((tab) => (
               <button
@@ -63,8 +68,16 @@ const AppBuilder = () => {
             ))}
           </div>
 
-          {/* Right: GitHub, Upgrade, Publish */}
           <div className="flex items-center gap-1.5">
+            <Button
+              variant={showConfig ? "default" : "ghost"}
+              size="icon"
+              className="h-7 w-7"
+              title="Configurações do App"
+              onClick={() => setShowConfig(!showConfig)}
+            >
+              <Settings className="w-3.5 h-3.5" />
+            </Button>
             <Button variant="ghost" size="icon" className="h-7 w-7" title="GitHub">
               <Github className="w-3.5 h-3.5" />
             </Button>
@@ -105,10 +118,14 @@ const AppBuilder = () => {
             {activeTab === "database" && <DatabasePanel />}
           </div>
 
-          {/* Terminal */}
           <TerminalPanel />
         </div>
       </div>
+
+      {/* ===== RIGHT — CONFIG PANEL ===== */}
+      {showConfig && (
+        <AppConfigPanel channel={channel} onChannelChange={setChannel} />
+      )}
     </div>
   );
 };
