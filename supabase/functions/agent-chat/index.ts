@@ -32,6 +32,15 @@ const MODEL_MAP: Record<string, { gateway: string; openai?: string; anthropic?: 
   "claude-3-haiku": { gateway: "openai/gpt-5-mini", anthropic: "claude-3-haiku-20240307" },
 };
 
+const FREE_GATEWAY_MODELS = [
+  "google/gemma-3-12b-it:free",
+  "meta-llama/llama-3.3-70b-instruct:free",
+  "mistralai/mistral-small-3.1-24b-instruct:free",
+  "openai/gpt-oss-20b:free",
+] as const;
+
+const DEFAULT_FREE_GATEWAY_MODEL = FREE_GATEWAY_MODELS[0];
+
 const PROVIDER_PREFIX_RULES: Record<string, string[]> = {
   openai: ["gpt-", "openai/"],
   anthropic: ["claude-", "anthropic/"],
@@ -45,6 +54,44 @@ function modelBelongsToProvider(provider: string, model?: string | null) {
   if (!prefixes) return true;
   if (provider === "openrouter") return model.includes("/");
   return prefixes.some((prefix) => model.startsWith(prefix));
+}
+
+function normalizeGatewayModel(model?: string | null) {
+  if (!model) return DEFAULT_FREE_GATEWAY_MODEL;
+  return FREE_GATEWAY_MODELS.includes(model as typeof DEFAULT_FREE_GATEWAY_MODEL)
+    ? model
+    : DEFAULT_FREE_GATEWAY_MODEL;
+}
+
+function validateOpenRouterApiKey(apiKey?: string | null) {
+  const normalized = typeof apiKey === "string" ? apiKey.trim() : "";
+  if (!normalized) {
+    return { valid: false, normalized: "", error: "OpenRouter API key is required." };
+  }
+
+  if (!normalized.startsWith("sk-or-")) {
+    return {
+      valid: false,
+      normalized,
+      error: "Invalid OpenRouter API key format. Keys should start with 'sk-or-'.",
+    };
+  }
+
+  return { valid: true, normalized };
+}
+
+function collectOpenRouterKeys(...keys: Array<string | null | undefined>) {
+  const uniqueKeys: string[] = [];
+
+  for (const key of keys) {
+    const validation = validateOpenRouterApiKey(key);
+    if (!validation.valid) continue;
+    if (!uniqueKeys.includes(validation.normalized)) {
+      uniqueKeys.push(validation.normalized);
+    }
+  }
+
+  return uniqueKeys;
 }
 
 function buildAgentSystemPrompt(agentContext?: Record<string, unknown>) {
@@ -123,21 +170,22 @@ serve(async (req) => {
     const modelMapping = MODEL_MAP[model] || null;
 
     let apiUrl: string;
-    let apiKey: string;
-    let apiModel: string;
+    let apiKey = "";
+    let apiModel = modelMapping?.gateway || model || "google/gemini-3-flash-preview";
     let headers: Record<string, string>;
+    let openRouterKeyCandidates: string[] = [];
+    let gatewayModelCandidates: string[] = [];
 
     // If useGateway is true, use OpenRouter with stable free assistant defaults
     if (useGateway) {
       apiUrl = "https://openrouter.ai/api/v1/chat/completions";
-      apiModel = gatewayModel || "deepseek/deepseek-chat-v3-0324:free";
+      apiModel = normalizeGatewayModel(gatewayModel);
       headers = {
         "Content-Type": "application/json",
         "HTTP-Referer": "https://aikortex.lovable.app",
         "X-OpenRouter-Title": "Aikortex",
       };
 
-      let orKey = "";
       const { data: orKeyData } = await supabase
         .from("user_api_keys")
         .select("api_key")
@@ -145,15 +193,31 @@ serve(async (req) => {
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (orKeyData?.api_key) {
-        orKey = orKeyData.api_key;
-      } else {
-        orKey = Deno.env.get("OPENROUTER_API_KEY") || "";
+      const userOpenRouterKey = orKeyData?.api_key ?? "";
+      const projectOpenRouterKey = Deno.env.get("OPENROUTER_API_KEY") || "";
+
+      if (userOpenRouterKey) {
+        const validation = validateOpenRouterApiKey(userOpenRouterKey);
+        if (!validation.valid) {
+          console.warn(`Ignoring invalid user OpenRouter key for user ${user.id}: ${validation.error}`);
+        }
       }
 
-      if (orKey) {
-        headers["Authorization"] = `Bearer ${orKey}`;
+      openRouterKeyCandidates = collectOpenRouterKeys(userOpenRouterKey, projectOpenRouterKey);
+      gatewayModelCandidates = [
+        apiModel,
+        ...FREE_GATEWAY_MODELS.filter((candidate) => candidate !== apiModel),
+      ];
+
+      if (openRouterKeyCandidates.length === 0) {
+        return new Response(JSON.stringify({ error: "Nenhuma chave válida do OpenRouter foi encontrada para o assistente de configuração." }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
+
+      apiKey = openRouterKeyCandidates[0];
+      headers["Authorization"] = `Bearer ${apiKey}`;
     } else {
       // Try user's own API key first
       const { data: keyData } = await supabase
@@ -192,8 +256,15 @@ serve(async (req) => {
             Authorization: `Bearer ${apiKey}`,
           };
         } else if (selectedProvider === "openrouter") {
+          const validation = validateOpenRouterApiKey(keyData.api_key);
+          if (!validation.valid) {
+            return new Response(JSON.stringify({ error: "A chave do OpenRouter configurada é inválida. Ela deve começar com sk-or-." }), {
+              status: 400,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
           apiUrl = "https://openrouter.ai/api/v1/chat/completions";
-          apiKey = keyData.api_key;
+          apiKey = validation.normalized;
           apiModel = model || gatewayModel || "openai/gpt-5-mini";
           headers = {
             Authorization: `Bearer ${apiKey}`,
@@ -261,44 +332,111 @@ serve(async (req) => {
 
     console.log(`Using provider=${selectedProvider}, model=${apiModel}, useGateway=${useGateway}`);
 
-    // Fetch with retry for 429 rate limits
     let response: Response | null = null;
+    let lastErrorStatus = 0;
+    let lastErrorText = "";
     const maxRetries = 3;
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      response = await fetch(apiUrl, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(body),
-      });
-      if (response.status !== 429 || attempt === maxRetries) break;
-      const retryAfter = parseInt(response.headers.get("retry-after") || "0", 10);
-      const waitMs = Math.max((retryAfter || (attempt + 1) * 2) * 1000, 1000);
-      console.log(`Rate limited (429), retrying in ${waitMs}ms (attempt ${attempt + 1}/${maxRetries})`);
-      await new Promise((r) => setTimeout(r, waitMs));
+
+    if (useGateway) {
+      gatewayAttempt:
+      for (const candidateModel of gatewayModelCandidates) {
+        for (let keyIndex = 0; keyIndex < openRouterKeyCandidates.length; keyIndex += 1) {
+          const candidateKey = openRouterKeyCandidates[keyIndex];
+          const requestHeaders = { ...headers, Authorization: `Bearer ${candidateKey}` };
+
+          for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            response = await fetch(apiUrl, {
+              method: "POST",
+              headers: requestHeaders,
+              body: JSON.stringify({ ...body, model: candidateModel }),
+            });
+
+            if (response.ok) {
+              apiModel = candidateModel;
+              apiKey = candidateKey;
+              headers = requestHeaders;
+              break gatewayAttempt;
+            }
+
+            if (response.status === 429 && attempt < maxRetries) {
+              const retryAfter = parseInt(response.headers.get("retry-after") || "0", 10);
+              const waitMs = Math.max((retryAfter || (attempt + 1) * 2) * 1000, 1000);
+              console.log(`Rate limited (429), retrying in ${waitMs}ms (attempt ${attempt + 1}/${maxRetries})`);
+              await new Promise((r) => setTimeout(r, waitMs));
+              continue;
+            }
+
+            lastErrorStatus = response.status;
+            lastErrorText = await response.text();
+            console.error(`AI API error for model=${candidateModel}:`, response.status, lastErrorText);
+
+            if (response.status === 401 && keyIndex < openRouterKeyCandidates.length - 1) {
+              console.warn(`OpenRouter key failed for candidate ${keyIndex + 1}, trying fallback key`);
+              break;
+            }
+
+            if (response.status === 404 && lastErrorText.includes("No endpoints found")) {
+              console.warn(`OpenRouter model unavailable: ${candidateModel}. Trying next free model.`);
+              break;
+            }
+
+            break gatewayAttempt;
+          }
+
+          if (response?.ok) break;
+          if (lastErrorStatus === 404 && lastErrorText.includes("No endpoints found")) break;
+        }
+
+        if (response?.ok) break;
+      }
+    } else {
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        response = await fetch(apiUrl, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(body),
+        });
+        if (response.status !== 429 || attempt === maxRetries) break;
+        const retryAfter = parseInt(response.headers.get("retry-after") || "0", 10);
+        const waitMs = Math.max((retryAfter || (attempt + 1) * 2) * 1000, 1000);
+        console.log(`Rate limited (429), retrying in ${waitMs}ms (attempt ${attempt + 1}/${maxRetries})`);
+        await new Promise((r) => setTimeout(r, waitMs));
+      }
     }
 
-    if (!response!.ok) {
-      if (response!.status === 429) {
+    if (!response?.ok) {
+      const errorText = lastErrorText || await response?.text?.() || "";
+
+      if (response?.status === 429) {
         return new Response(JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns segundos." }), {
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response!.status === 401) {
-        return new Response(JSON.stringify({ error: "Chave de API inválida. Verifique sua configuração em Integrações." }), {
+
+      if (response?.status === 401) {
+        return new Response(JSON.stringify({ error: useGateway ? "Falha ao autenticar no OpenRouter. Atualize a chave configurada em Integrações." : "Chave de API inválida. Verifique sua configuração em Integrações." }), {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response!.status === 402) {
+
+      if (response?.status === 402) {
         return new Response(JSON.stringify({ error: "Créditos insuficientes. Adicione créditos na sua conta." }), {
           status: 402,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const t = await response!.text();
-      console.error("AI API error:", response!.status, t);
-      return new Response(JSON.stringify({ error: "Erro no serviço de IA. Verifique sua chave de API." }), {
+
+      if (response?.status === 404 && errorText.includes("No endpoints found")) {
+        return new Response(JSON.stringify({ error: "Os modelos gratuitos do OpenRouter ficaram indisponíveis no momento. O assistente tentou alternativas automaticamente. Tente novamente em instantes." }), {
+          status: 503,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      console.error("AI API error:", response?.status, errorText);
+      return new Response(JSON.stringify({ error: "Erro no serviço de IA. Tente novamente em instantes." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
