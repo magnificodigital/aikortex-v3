@@ -295,6 +295,7 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
   const [connectedChannels, setConnectedChannels] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   // Emit config changes to parent
   useEffect(() => {
