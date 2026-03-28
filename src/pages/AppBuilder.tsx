@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import {
-  Eye, Code2, Database, RotateCw, ExternalLink, Github, Upload,
+  Eye, Code2, Database, RotateCw, ExternalLink, Github, Upload, Save,
   LayoutDashboard, Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
