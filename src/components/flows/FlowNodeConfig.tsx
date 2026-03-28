@@ -138,6 +138,15 @@ function renderConfigFields(
       { value: "gpt-5", label: "GPT-5" },
       { value: "gpt-5-mini", label: "GPT-5 Mini" },
       { value: "gpt-5-nano", label: "GPT-5 Nano" },
+      { value: "gpt-4o", label: "GPT-4o" },
+      { value: "gpt-4o-mini", label: "GPT-4o Mini" },
+      { value: "gpt-4-turbo", label: "GPT-4 Turbo" },
+      { value: "gpt-4", label: "GPT-4" },
+      { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo" },
+      { value: "claude-4-sonnet", label: "Claude 4 Sonnet" },
+      { value: "claude-3.5-sonnet", label: "Claude 3.5 Sonnet" },
+      { value: "claude-3-opus", label: "Claude 3 Opus" },
+      { value: "claude-3-haiku", label: "Claude 3 Haiku" },
     ];
     return (
       <>
