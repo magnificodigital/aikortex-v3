@@ -59,15 +59,8 @@ const getProviderForModel = (model: string): string => {
   if (model.startsWith("gemini")) return "gemini";
   if (model.startsWith("gpt")) return "openai";
   if (model.startsWith("claude")) return "anthropic";
+  if (model.includes("/")) return "openrouter";
   return "openai";
-};
-
-const getBestAvailableModel = (currentModel: string, keys: Record<string, { configured: boolean }>) => {
-  const currentProvider = getProviderForModel(currentModel);
-  if (keys[currentProvider]?.configured) return currentModel;
-  if (keys.openai?.configured) return "gpt-5-mini";
-  if (keys.gemini?.configured) return "gemini-2.5-flash";
-  return currentModel;
 };
 
 const SETUP_SYSTEM_PROMPT = `Você é um assistente especializado em configuração de agentes de IA na plataforma Aikortex. 
@@ -155,9 +148,9 @@ const AgentDetail = () => {
 
   useEffect(() => {
     if (chatMode !== "test" || keysLoading) return;
-    const nextModel = getBestAvailableModel(agentModel, keys);
-    if (nextModel !== agentModel) {
-      setAgentModel(nextModel);
+    const providerForModel = getProviderForModel(agentModel);
+    if (providerForModel && !keys[providerForModel]?.configured) {
+      setRightPanelTab("connectors");
     }
   }, [agentModel, chatMode, keys, keysLoading]);
 
@@ -177,9 +170,8 @@ const AgentDetail = () => {
     if (!agentConfig) return undefined;
     const parts: string[] = [];
     parts.push(`Você é o agente "${agentConfig.name}".`);
-    if (agentConfig.description) {
-      parts.push(`\n\nDescrição e instruções:\n${agentConfig.description}`);
-    }
+    parts.push(`\n\nVocê deve agir de forma totalmente coerente com a configuração operacional recebida.`);
+    if (agentConfig.description) parts.push(`\n\nDescrição, papel e instruções principais:\n${agentConfig.description}`);
     if (agentConfig.channels.length > 0) {
       parts.push(`\n\nCanais ativos: ${agentConfig.channels.join(", ")}`);
     }
@@ -192,7 +184,11 @@ const AgentDetail = () => {
     if (agentConfig.urls.length > 0) {
       parts.push(`\n\nURLs de referência: ${agentConfig.urls.join(", ")}`);
     }
-    parts.push(`\n\nResponda sempre em português brasileiro. Seja profissional e direto.`);
+    parts.push(`\n\nRegras obrigatórias:`);
+    parts.push(`\n- Nunca diga que você é um assistente genérico sem nome se um nome foi configurado.`);
+    parts.push(`\n- Responda como o agente configurado, mantendo persona, função e contexto.`);
+    parts.push(`\n- Se faltar alguma informação operacional, assuma apenas o mínimo necessário sem contradizer a configuração.`);
+    parts.push(`\n\nResponda sempre em português brasileiro. Seja profissional, direto e coerente com o agente configurado.`);
     return parts.join("");
   }, [agentConfig]);
 
@@ -204,6 +200,23 @@ const AgentDetail = () => {
       model: agentModel,
       systemPrompt: testSystemPrompt,
       persistKey: `${storagePrefix}-test-messages`,
+      agentContext: agentConfig ? {
+        name: agentConfig.name,
+        description: agentConfig.description,
+        channels: agentConfig.channels,
+        integrations: agentConfig.integrations,
+        knowledgeFiles: agentConfig.knowledgeFiles,
+        urls: agentConfig.urls,
+        provider: currentProvider,
+        model: agentModel,
+        temperature: testApiConfig?.temperature,
+        maxTokens: testApiConfig?.maxTokens,
+        topP: testApiConfig?.topP,
+        frequencyPenalty: testApiConfig?.frequencyPenalty,
+        presencePenalty: testApiConfig?.presencePenalty,
+        responseFormat: testApiConfig?.responseFormat,
+        stopSequences: testApiConfig?.stopSequences,
+      } : undefined,
       apiConfig: testApiConfig ? {
         temperature: testApiConfig.temperature,
         maxTokens: testApiConfig.maxTokens,

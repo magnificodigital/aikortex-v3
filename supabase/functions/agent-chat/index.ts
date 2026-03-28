@@ -32,11 +32,64 @@ const MODEL_MAP: Record<string, { gateway: string; openai?: string; anthropic?: 
   "claude-3-haiku": { gateway: "openai/gpt-5-mini", anthropic: "claude-3-haiku-20240307" },
 };
 
+const PROVIDER_PREFIX_RULES: Record<string, string[]> = {
+  openai: ["gpt-", "openai/"],
+  anthropic: ["claude-", "anthropic/"],
+  gemini: ["gemini-", "google/"],
+  openrouter: ["/"],
+};
+
+function modelBelongsToProvider(provider: string, model?: string | null) {
+  if (!model) return true;
+  const prefixes = PROVIDER_PREFIX_RULES[provider];
+  if (!prefixes) return true;
+  if (provider === "openrouter") return model.includes("/");
+  return prefixes.some((prefix) => model.startsWith(prefix));
+}
+
+function buildAgentSystemPrompt(agentContext?: Record<string, unknown>) {
+  if (!agentContext || typeof agentContext !== "object") return null;
+  const name = typeof agentContext.name === "string" ? agentContext.name : "Agente";
+  const description = typeof agentContext.description === "string" ? agentContext.description : "";
+  const role = typeof agentContext.role === "string" ? agentContext.role : "";
+  const objective = typeof agentContext.objective === "string" ? agentContext.objective : "";
+  const instructions = typeof agentContext.instructions === "string" ? agentContext.instructions : "";
+  const toneOfVoice = typeof agentContext.toneOfVoice === "string" ? agentContext.toneOfVoice : "";
+  const greetingMessage = typeof agentContext.greetingMessage === "string" ? agentContext.greetingMessage : "";
+  const memory = typeof agentContext.memory === "string" ? agentContext.memory : "";
+  const channels = Array.isArray(agentContext.channels) ? agentContext.channels.join(", ") : "";
+  const integrations = Array.isArray(agentContext.integrations) ? agentContext.integrations.join(", ") : "";
+  const tools = Array.isArray(agentContext.tools) ? agentContext.tools.join(", ") : "";
+  const knowledgeFiles = Array.isArray(agentContext.knowledgeFiles) ? agentContext.knowledgeFiles.join(", ") : "";
+  const urls = Array.isArray(agentContext.urls) ? agentContext.urls.join(", ") : "";
+
+  const sections = [
+    `Você é o agente "${name}" e deve responder exatamente conforme a configuração recebida.`,
+    role ? `Função: ${role}` : null,
+    objective ? `Objetivo: ${objective}` : null,
+    description ? `Descrição e instruções: ${description}` : null,
+    instructions ? `Regras adicionais: ${instructions}` : null,
+    toneOfVoice ? `Tom de voz: ${toneOfVoice}` : null,
+    greetingMessage ? `Mensagem de saudação: ${greetingMessage}` : null,
+    memory ? `Memória/contexto persistente: ${memory}` : null,
+    channels ? `Canais habilitados: ${channels}` : null,
+    integrations ? `Integrações habilitadas: ${integrations}` : null,
+    tools ? `Ferramentas habilitadas: ${tools}` : null,
+    knowledgeFiles ? `Arquivos de conhecimento: ${knowledgeFiles}` : null,
+    urls ? `URLs de referência: ${urls}` : null,
+    "Nunca responda como um assistente genérico se houver identidade configurada.",
+    "Seja coerente com nome, papel, objetivo, tom e contexto do agente.",
+    "Responda sempre em português brasileiro.",
+  ].filter(Boolean);
+
+  return sections.join("\n\n");
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages, provider, model, useGateway, gatewayModel, temperature, max_tokens, top_p, frequency_penalty, presence_penalty, response_format, stop } = await req.json();
+    const { messages, provider, model, useGateway, gatewayModel, temperature, max_tokens, top_p, frequency_penalty, presence_penalty, response_format, stop, agentContext } = await req.json();
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
@@ -61,6 +114,12 @@ serve(async (req) => {
     }
 
     const selectedProvider = provider || "openai";
+    if (!useGateway && !modelBelongsToProvider(selectedProvider, model)) {
+      return new Response(JSON.stringify({ error: `O modelo \"${model}\" não pertence ao provider \"${selectedProvider}\".` }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const modelMapping = MODEL_MAP[model] || null;
 
     let apiUrl: string;
@@ -118,6 +177,16 @@ serve(async (req) => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${apiKey}`,
           };
+        } else if (selectedProvider === "openrouter") {
+          apiUrl = "https://openrouter.ai/api/v1/chat/completions";
+          apiKey = keyData.api_key;
+          apiModel = model || gatewayModel || "openai/gpt-5-mini";
+          headers = {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://aikortex.lovable.app",
+            "X-OpenRouter-Title": "Aikortex",
+          };
         } else {
           const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
           if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
@@ -130,12 +199,13 @@ serve(async (req) => {
           };
         }
       } else {
-        // No user key for the selected provider
-        // If a specific provider was requested (not default), warn in logs
-        if (provider && ["openai", "anthropic", "gemini"].includes(provider)) {
-          console.warn(`No API key found for provider "${provider}" (user: ${user.id}). Falling back to Lovable AI gateway.`);
+        if (provider && ["openai", "anthropic", "gemini", "openrouter"].includes(provider)) {
+          return new Response(JSON.stringify({ error: `Nenhuma chave de API foi configurada para o provider \"${provider}\".` }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
         }
-        // Fallback to Lovable AI gateway
+
         const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
         if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
         apiUrl = "https://ai.gateway.lovable.dev/v1/chat/completions";
@@ -149,12 +219,17 @@ serve(async (req) => {
     }
 
     const defaultSystemPrompt = `Você é um agente de IA inteligente e prestativo. Responda sempre em português brasileiro. Seja direto, profissional e use markdown quando apropriado.`;
+    const agentSystemPrompt = buildAgentSystemPrompt(agentContext);
 
     // If messages already contain a system prompt, use it; otherwise prepend default
     const hasSystemPrompt = messages.some((m: { role: string }) => m.role === "system");
     const finalMessages = hasSystemPrompt
-      ? messages
-      : [{ role: "system", content: defaultSystemPrompt }, ...messages];
+      ? agentSystemPrompt
+        ? messages.map((message: { role: string; content: string }, index: number) => index === 0 && message.role === "system"
+          ? { ...message, content: `${agentSystemPrompt}\n\n${message.content}` }
+          : message)
+        : messages
+      : [{ role: "system", content: agentSystemPrompt || defaultSystemPrompt }, ...messages];
 
     const body: Record<string, unknown> = {
       model: apiModel,

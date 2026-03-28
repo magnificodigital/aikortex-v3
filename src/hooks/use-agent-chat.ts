@@ -18,6 +18,32 @@ export interface ApiConfigParams {
   stopSequences?: string[];
 }
 
+export interface AgentChatContext {
+  name: string;
+  role?: string;
+  companyName?: string;
+  description?: string;
+  objective?: string;
+  instructions?: string;
+  toneOfVoice?: string;
+  greetingMessage?: string;
+  memory?: string;
+  channels?: string[];
+  integrations?: string[];
+  tools?: string[];
+  knowledgeFiles?: string[];
+  urls?: string[];
+  provider?: string;
+  model?: string;
+  temperature?: number;
+  maxTokens?: number;
+  topP?: number;
+  frequencyPenalty?: number;
+  presencePenalty?: number;
+  responseFormat?: "text" | "json";
+  stopSequences?: string[];
+}
+
 interface UseAgentChatOptions {
   provider?: string;
   model?: string;
@@ -31,14 +57,17 @@ interface UseAgentChatOptions {
   persistKey?: string;
   /** Advanced API configuration */
   apiConfig?: ApiConfigParams;
+  /** Agent runtime context mirrored on backend during test mode */
+  agentContext?: AgentChatContext;
 }
 
-function deriveProvider(model?: string): string {
-  if (!model) return "openai";
-  if (model.startsWith("gemini")) return "gemini";
-  if (model.startsWith("gpt")) return "openai";
-  if (model.startsWith("claude")) return "anthropic";
-  return "openai";
+function deriveProvider(model?: string): string | undefined {
+  if (!model) return undefined;
+  if (model.startsWith("google/") || model.startsWith("gemini")) return "gemini";
+  if (model.startsWith("openai/") || model.startsWith("gpt")) return "openai";
+  if (model.startsWith("anthropic/") || model.startsWith("claude")) return "anthropic";
+  if (model.includes("/")) return "openrouter";
+  return undefined;
 }
 
 export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAgentChatOptions = {}) {
@@ -65,6 +94,18 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
 
   const sendMessage = useCallback(async (userText: string) => {
     if (!userText.trim() || isStreaming) return;
+
+    const inferredProvider = deriveProvider(options.model);
+    if (options.provider && inferredProvider && options.provider !== inferredProvider) {
+      setMessages(prev => [
+        ...prev,
+        {
+          role: "agent",
+          text: `⚠️ O modelo **${options.model}** não pertence ao provider **${options.provider}**. Ajuste a configuração antes de testar.`,
+        },
+      ]);
+      return;
+    }
 
     const userMsg: ChatMessage = { role: "user", text: userText };
     setMessages(prev => [...prev, userMsg]);
@@ -94,10 +135,11 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
         },
         body: JSON.stringify({
           messages: apiMessages,
-          provider: options.provider || deriveProvider(options.model),
+          provider: options.provider || inferredProvider,
           model: options.model,
           useGateway: options.useGateway ?? false,
           gatewayModel: options.gatewayModel,
+          agentContext: options.agentContext,
           ...(options.apiConfig && {
             temperature: options.apiConfig.temperature,
             max_tokens: options.apiConfig.maxTokens,
@@ -166,7 +208,7 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
     } finally {
       setIsStreaming(false);
     }
-  }, [messages, isStreaming, options.provider, options.model, options.useGateway, options.gatewayModel, options.systemPrompt]);
+  }, [messages, isStreaming, options.provider, options.model, options.useGateway, options.gatewayModel, options.systemPrompt, options.apiConfig, options.agentContext]);
 
   return { messages, setMessages, sendMessage, isStreaming };
 }
