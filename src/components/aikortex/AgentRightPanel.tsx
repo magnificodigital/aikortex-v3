@@ -291,15 +291,46 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
   };
 
   const [settingsNav, setSettingsNav] = useState("general");
-  const [agentName, setAgentName] = useState(agent.name);
-  const [agentDesc, setAgentDesc] = useState("");
-  const [knowledgeFiles, setKnowledgeFiles] = useState<KnowledgeFileLocal[]>([]);
+  const [agentName, setAgentName] = useState(() => {
+    if (storagePrefix) { try { return localStorage.getItem(`${storagePrefix}-name`) || agent.name; } catch {} }
+    return agent.name;
+  });
+  const [agentDesc, setAgentDesc] = useState(() => {
+    if (storagePrefix) { try { return localStorage.getItem(`${storagePrefix}-desc`) || ""; } catch {} }
+    return "";
+  });
+  const [knowledgeFiles, setKnowledgeFiles] = useState<KnowledgeFileLocal[]>(() => {
+    if (storagePrefix) { try { const s = localStorage.getItem(`${storagePrefix}-files`); if (s) return JSON.parse(s); } catch {} }
+    return [];
+  });
   const [urlInput, setUrlInput] = useState("");
-  const [urls, setUrls] = useState<string[]>([]);
-  const [connectedChannels, setConnectedChannels] = useState<string[]>([]);
+  const [urls, setUrls] = useState<string[]>(() => {
+    if (storagePrefix) { try { const s = localStorage.getItem(`${storagePrefix}-urls`); if (s) return JSON.parse(s); } catch {} }
+    return [];
+  });
+  const [connectedChannels, setConnectedChannels] = useState<string[]>(() => {
+    if (storagePrefix) { try { const s = localStorage.getItem(`${storagePrefix}-channels`); if (s) return JSON.parse(s); } catch {} }
+    return [];
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(() => {
+    if (storagePrefix) { try { return localStorage.getItem(`${storagePrefix}-avatar`) || null; } catch {} }
+    return null;
+  });
+
+  // Persist config to localStorage
+  useEffect(() => {
+    if (!storagePrefix) return;
+    try {
+      localStorage.setItem(`${storagePrefix}-name`, agentName);
+      localStorage.setItem(`${storagePrefix}-desc`, agentDesc);
+      localStorage.setItem(`${storagePrefix}-files`, JSON.stringify(knowledgeFiles));
+      localStorage.setItem(`${storagePrefix}-urls`, JSON.stringify(urls));
+      localStorage.setItem(`${storagePrefix}-channels`, JSON.stringify(connectedChannels));
+      if (avatarPreview) localStorage.setItem(`${storagePrefix}-avatar`, avatarPreview);
+    } catch {}
+  }, [storagePrefix, agentName, agentDesc, knowledgeFiles, urls, connectedChannels, avatarPreview]);
 
   // Emit config changes to parent
   useEffect(() => {
