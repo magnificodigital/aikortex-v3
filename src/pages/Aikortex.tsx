@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
+import { toast } from "sonner";
 
 import DashboardLayout from "@/components/DashboardLayout";
 import {
@@ -142,8 +143,39 @@ const Aikortex = () => {
   const [didAutoRoute, setDidAutoRoute] = useState(false);
   const [chatMode, setChatMode] = useState<"setup" | "test">("setup");
   const [savedAgentId, setSavedAgentId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const { saveAgent: saveUserAgent } = useUserAgents();
+
+  const handleSaveAgent = useCallback(async () => {
+    if (!selectedAgent || !context.agentName?.trim()) return;
+    setIsSaving(true);
+    try {
+      const result = await saveUserAgent({
+        id: savedAgentId || undefined,
+        name: context.agentName || selectedAgent.name,
+        agent_type: selectedAgent.type,
+        description: context.targetAudienceDescription || selectedAgent.objective,
+        avatar_url: "",
+        model: agentModel,
+        status: "configuring",
+        config: {
+          context,
+          channels: selectedChannels,
+          tools: selectedTools,
+          intents,
+          stages,
+          advancedConfig,
+        },
+      });
+      if (result) {
+        setSavedAgentId(result.id || savedAgentId);
+        toast.success("Agente salvo com sucesso!");
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  }, [selectedAgent, context, agentModel, selectedChannels, selectedTools, intents, stages, advancedConfig, savedAgentId, saveUserAgent]);
 
   const { keys, loading: keysLoading, refetch: refetchKeys } = useApiKeys();
 
@@ -525,6 +557,8 @@ const Aikortex = () => {
         activeSection={rightPanelSection}
         onSectionChange={setRightPanelSection}
         onApiKeysChanged={refetchKeys}
+        onSaveAgent={handleSaveAgent}
+        isSaving={isSaving}
       />
     </div>
   );

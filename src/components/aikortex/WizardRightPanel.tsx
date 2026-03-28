@@ -133,6 +133,8 @@ interface Props {
   activeSection?: string;
   onSectionChange?: (section: string) => void;
   onApiKeysChanged?: () => void | Promise<void>;
+  onSaveAgent?: () => void | Promise<void>;
+  isSaving?: boolean;
 }
 
 const WizardRightPanel = ({
@@ -146,6 +148,7 @@ const WizardRightPanel = ({
   activeTab, onTabChange,
   activeSection, onSectionChange,
   onApiKeysChanged,
+  onSaveAgent, isSaving,
 }: Props) => {
   const [rightTab, setRightTab] = useState(activeTab || "agent");
 
@@ -355,8 +358,8 @@ const WizardRightPanel = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col min-w-0">
-      <Tabs value={rightTab} onValueChange={handleTabChange} className="flex flex-col h-full">
+    <div className="flex-1 flex flex-col min-w-0 h-full">
+      <Tabs value={rightTab} onValueChange={handleTabChange} className="flex flex-col flex-1 overflow-hidden">
         <div className="border-b border-border px-4">
           <TabsList className="bg-transparent h-11 gap-0 p-0">
             {[
@@ -955,6 +958,17 @@ const WizardRightPanel = ({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Persistent Save Button */}
+      <div className="border-t border-border px-4 py-3 shrink-0 bg-background">
+        <Button
+          className="w-full gap-2 h-10"
+          onClick={() => onSaveAgent?.()}
+          disabled={!context.agentName?.trim() || isSaving}
+        >
+          {isSaving ? "Salvando..." : "💾 Salvar Agente"}
+        </Button>
+      </div>
     </div>
   );
 };
