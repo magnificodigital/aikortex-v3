@@ -180,25 +180,32 @@ const Home = () => {
 
           {/* Bottom bar */}
           <div className="flex items-center justify-between px-4 pb-3">
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                <Plus className="w-4 h-4" />
-              </Button>
-              <button className="flex items-center gap-1.5 h-8 px-3 text-xs text-muted-foreground border border-border rounded-lg hover:bg-accent transition-colors">
-                <Monitor className="w-3.5 h-3.5" />
-                GPT-5
-                <ChevronDown className="w-3 h-3" />
-              </button>
-              {/* Channel badge - only shows when app tab is active and channel detected */}
-              {activeCreationTab === "app" && detectedChannel && (
-                <span className={`flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium rounded-full border transition-all animate-in fade-in ${
-                  detectedChannel === "whatsapp"
-                    ? "border-green-500/30 bg-green-500/10 text-green-600 dark:text-green-400"
-                    : "border-primary/30 bg-primary/10 text-primary"
-                }`}>
-                  {detectedChannel === "whatsapp" ? <Phone className="w-3 h-3" /> : <Monitor className="w-3 h-3" />}
-                  {detectedChannel === "whatsapp" ? "WhatsApp App" : "Web App"}
-                </span>
+            <div className="flex items-center gap-1.5">
+              {activeCreationTab === "app" && (
+                <>
+                  <button
+                    onClick={() => setDetectedChannel("web")}
+                    className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-lg border transition-all ${
+                      detectedChannel === "web" || !detectedChannel
+                        ? "border-primary/40 bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                    }`}
+                  >
+                    <Monitor className="w-3.5 h-3.5" />
+                    Web App
+                  </button>
+                  <button
+                    onClick={() => setDetectedChannel("whatsapp")}
+                    className={`flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-lg border transition-all ${
+                      detectedChannel === "whatsapp"
+                        ? "border-green-500/40 bg-green-500/10 text-green-600 dark:text-green-400"
+                        : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                    }`}
+                  >
+                    <Phone className="w-3.5 h-3.5" />
+                    WhatsApp
+                  </button>
+                </>
               )}
             </div>
             <Button
