@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { BusinessContext, AgentRecommendation, DeployChannel, CRMProvider } from "@/types/agent-builder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Bot, Send, CheckCircle2, Rocket, User } from "lucide-react";
+import { Bot, Send, CheckCircle2, Rocket, User, Loader2 } from "lucide-react";
+import { useAgentChat } from "@/hooks/use-agent-chat";
 
 interface Props {
   context: BusinessContext;
@@ -12,31 +13,76 @@ interface Props {
   crm: CRMProvider | null;
 }
 
-const MOCK_RESPONSES: Record<string, string> = {
-  default: "Olá! Como posso ajudar você hoje?",
-  oi: "Olá! Que bom te ver por aqui. Como posso ajudar com nossos serviços?",
-  preço: "Nossos planos são flexíveis e se adaptam ao tamanho da sua empresa. Posso agendar uma conversa com nosso especialista para te apresentar a melhor opção?",
-  funciona: "Nosso sistema é super intuitivo! Você configura em minutos e já começa a ver resultados. Quer que eu te mostre como?",
-};
+function buildSystemPrompt(context: BusinessContext, agents: AgentRecommendation[], channels: DeployChannel[], crm: CRMProvider | null): string {
+  const selectedAgents = agents.filter(a => a.selected);
+  const agentType = selectedAgents[0]?.type || "Assistente";
+  const agentName = context.agentName || selectedAgents[0]?.name || "Assistente IA";
+  const objectives = selectedAgents.map(a => a.objective).join("; ");
+
+  return `Você é "${agentName}", um agente de IA do tipo ${agentType} da empresa "${context.companyName}".
+
+## Sobre a empresa
+- Setor: ${context.industry || "Não especificado"}
+- Produto/Serviço principal: ${context.mainProduct || "Não especificado"}
+- Website: ${context.website || "Não informado"}
+- País: ${context.country}, Idioma: ${context.language}
+${context.services.length > 0 ? `- Serviços: ${context.services.join(", ")}` : ""}
+
+## Seu objetivo
+${objectives || "Atender clientes de forma profissional e eficiente."}
+
+## Público-alvo
+${context.targetAudienceDescription || "Clientes e leads interessados nos serviços da empresa."}
+${context.painPoints ? `- Dores do público: ${context.painPoints}` : ""}
+
+## Tom e comportamento
+- Tom de voz: ${context.toneOfVoice || "Profissional e amigável"}
+- Mensagem de saudação: ${context.greetingMessage || `Olá! Sou o ${agentName} da ${context.companyName}. Como posso ajudar?`}
+${context.skills.length > 0 ? `- Habilidades: ${context.skills.join(", ")}` : ""}
+
+## Canais ativos
+${channels.length > 0 ? channels.join(", ") : "Nenhum canal configurado"}
+
+## CRM integrado
+${crm || "Nenhum"}
+
+## Regras operacionais
+- Horário de atendimento: ${context.businessHours || "24/7"}
+${context.escalationRules ? `- Regras de escalonamento: ${context.escalationRules}` : ""}
+${context.averageTicket ? `- Ticket médio: ${context.averageTicket}` : ""}
+
+## Instruções
+- Responda SEMPRE em ${context.language || "Português"}.
+- Mantenha as respostas curtas e diretas (máximo 3 parágrafos).
+- Aja de acordo com seu tipo (${agentType}) e objetivo.
+- Use o conhecimento da empresa para responder. Se não souber, informe educadamente.
+- Não invente informações sobre produtos ou preços que não foram configurados.`;
+}
 
 const StepTesting = ({ context, agents, channels, crm }: Props) => {
-  const [messages, setMessages] = useState<{ role: "user" | "agent"; text: string }[]>([
-    { role: "agent", text: `Olá! Sou o assistente virtual da ${context.companyName}. Como posso ajudar?` },
-  ]);
   const [input, setInput] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
   const selectedAgents = agents.filter((a) => a.selected);
+  const agentName = context.agentName || selectedAgents[0]?.name || "Agente IA";
+
+  const systemPrompt = buildSystemPrompt(context, agents, channels, crm);
+
+  const { messages, sendMessage, isStreaming } = useAgentChat(
+    [{ role: "agent", text: context.greetingMessage || `Olá! Sou o ${agentName} da ${context.companyName}. Como posso ajudar?` }],
+    {
+      useGateway: true,
+      systemPrompt,
+    }
+  );
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages]);
 
   const handleSend = () => {
-    if (!input.trim()) return;
-    const userMsg = input.trim();
-    setMessages((prev) => [...prev, { role: "user", text: userMsg }]);
+    if (!input.trim() || isStreaming) return;
+    sendMessage(input.trim());
     setInput("");
-
-    setTimeout(() => {
-      const key = Object.keys(MOCK_RESPONSES).find((k) => userMsg.toLowerCase().includes(k));
-      const response = MOCK_RESPONSES[key || "default"];
-      setMessages((prev) => [...prev, { role: "agent", text: response }]);
-    }, 800);
   };
 
   return (
@@ -76,27 +122,29 @@ const StepTesting = ({ context, agents, channels, crm }: Props) => {
             <Bot className="w-4 h-4 text-primary-foreground" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-foreground">{selectedAgents[0]?.name || "Agente IA"}</p>
+            <p className="text-sm font-semibold text-foreground">{agentName}</p>
             <p className="text-[10px] text-success flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-success" /> Online
             </p>
           </div>
         </div>
 
-        <div className="p-4 space-y-3 min-h-[250px] max-h-[350px] overflow-y-auto">
+        <div ref={scrollRef} className="p-4 space-y-3 min-h-[250px] max-h-[350px] overflow-y-auto">
           {messages.map((msg, i) => (
             <div key={i} className={`flex gap-2 items-start ${msg.role === "user" ? "justify-end" : ""}`}>
-              {msg.role === "agent" && (
+              {msg.role !== "user" && (
                 <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
                   <Bot className="w-3 h-3 text-primary" />
                 </div>
               )}
               <div className={`rounded-lg px-3 py-2 text-xs max-w-[75%] ${
-                msg.role === "agent"
-                  ? "bg-muted/50 text-foreground rounded-tl-none"
-                  : "bg-primary text-primary-foreground rounded-tr-none"
+                msg.role === "user"
+                  ? "bg-primary text-primary-foreground rounded-tr-none"
+                  : "bg-muted/50 text-foreground rounded-tl-none"
               }`}>
-                {msg.text}
+                {msg.text || (isStreaming && i === messages.length - 1 ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : "")}
               </div>
               {msg.role === "user" && (
                 <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center shrink-0 mt-0.5">
@@ -114,9 +162,10 @@ const StepTesting = ({ context, agents, channels, crm }: Props) => {
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
             placeholder="Digite uma mensagem..."
             className="text-xs"
+            disabled={isStreaming}
           />
-          <Button size="sm" onClick={handleSend} disabled={!input.trim()}>
-            <Send className="w-4 h-4" />
+          <Button size="sm" onClick={handleSend} disabled={!input.trim() || isStreaming}>
+            {isStreaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           </Button>
         </div>
       </div>
