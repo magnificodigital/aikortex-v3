@@ -143,7 +143,7 @@ const Aikortex = () => {
 
   const [input, setInput] = useState("");
   const [agentModel, setAgentModel] = useState("gemini-2.5-flash");
-  const [setupModel, setSetupModel] = useState<string>(GATEWAY_MODELS[0].value);
+  const [setupModel, setSetupModel] = useState<string>(DEFAULT_FREE_SETUP_MODEL);
   const [rightPanelTab, setRightPanelTab] = useState("agent");
   const [rightPanelSection, setRightPanelSection] = useState<string | undefined>(undefined);
   const [didAutoRoute, setDidAutoRoute] = useState(false);

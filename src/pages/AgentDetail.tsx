@@ -83,7 +83,7 @@ const AgentDetail = () => {
     try { return localStorage.getItem(`${storagePrefix}-model`) || agent.model; } catch { return agent.model; }
   });
   const [setupModel, setSetupModel] = useState<string>(() => {
-    try { return localStorage.getItem(`${storagePrefix}-setupModel`) || GATEWAY_MODELS[0].value; } catch { return GATEWAY_MODELS[0].value; }
+    try { return normalizeFreeSetupModel(localStorage.getItem(`${storagePrefix}-setupModel`)); } catch { return DEFAULT_FREE_SETUP_MODEL; }
   });
   const [rightPanelTab, setRightPanelTab] = useState("agent");
   const [chatMode, setChatMode] = useState<"setup" | "test">(() => {
