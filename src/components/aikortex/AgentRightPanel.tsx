@@ -155,6 +155,8 @@ const PROVIDER_MAP: Record<string, string> = {
   "RD Station": "rdstation",
 };
 
+const MODEL_GATED_PROVIDERS = new Set(["OpenAI"]);
+
 const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTab, onTabChange, onApiKeysChanged, onConfigChange, onSaveAgent, isSaving, storagePrefix }: Props) => {
   const [rightTab, setRightTab] = useState(activeTab || "agent");
 
@@ -203,6 +205,8 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
   const [showKey, setShowKey] = useState(false);
   const [savingKey, setSavingKey] = useState(false);
   const [selectedDialogModel, setSelectedDialogModel] = useState("");
+  const currentIntegrationConfigured = connectorDialog ? !!connectorKeys[connectorDialog.label]?.configured : false;
+  const shouldShowDialogModels = !!connectorDialog && !!LLM_PROVIDER_MODELS[connectorDialog.label] && (!MODEL_GATED_PROVIDERS.has(connectorDialog.label) || currentIntegrationConfigured);
 
   // Load existing keys from DB on mount
   useEffect(() => {
@@ -1075,8 +1079,18 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
               </p>
             </div>
 
-            {/* Model Selection — only for LLM providers */}
-            {connectorDialog && LLM_PROVIDER_MODELS[connectorDialog.label] && (
+            {/* Model Selection — gated for providers that require API key first */}
+            {connectorDialog && LLM_PROVIDER_MODELS[connectorDialog.label] && !shouldShowDialogModels && (
+              <div className="space-y-2 rounded-lg border border-dashed border-border bg-muted/30 p-3">
+                <label className="text-sm font-medium text-foreground">Modelo padrão</label>
+                <p className="text-[11px] text-muted-foreground">
+                  Os modelos da {connectorDialog.label} aparecem somente depois que a chave de API for conectada.
+                </p>
+              </div>
+            )}
+
+            {/* Model Selection — only for eligible LLM providers */}
+            {shouldShowDialogModels && (
               <div className="space-y-3">
                 <label className="text-sm font-medium text-foreground">Modelo padrão</label>
                 <p className="text-[11px] text-muted-foreground -mt-1">Escolha o modelo que será usado pelo agente.</p>
