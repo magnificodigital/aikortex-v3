@@ -29,8 +29,26 @@ function deriveProvider(model?: string): string {
 }
 
 export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAgentChatOptions = {}) {
-  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    if (options.persistKey) {
+      try {
+        const stored = localStorage.getItem(options.persistKey);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch { /* ignore */ }
+    }
+    return initialMessages;
+  });
   const [isStreaming, setIsStreaming] = useState(false);
+
+  // Persist messages to localStorage on change
+  useEffect(() => {
+    if (options.persistKey && messages.length > 0) {
+      localStorage.setItem(options.persistKey, JSON.stringify(messages));
+    }
+  }, [messages, options.persistKey]);
 
   const sendMessage = useCallback(async (userText: string) => {
     if (!userText.trim() || isStreaming) return;
