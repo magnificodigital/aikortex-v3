@@ -295,7 +295,19 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
   const [connectedChannels, setConnectedChannels] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+
+  // Emit config changes to parent
+  useEffect(() => {
+    onConfigChange?.({
+      name: agentName,
+      description: agentDesc,
+      avatarUrl: avatarPreview || agent.avatar || "",
+      channels: connectedChannels,
+      integrations: Object.entries(connectorKeys).filter(([, v]) => v.configured).map(([k]) => k),
+      knowledgeFiles: knowledgeFiles.map(f => f.name),
+      urls,
+    });
+  }, [agentName, agentDesc, avatarPreview, connectedChannels, connectorKeys, knowledgeFiles, urls]);
 
   const handleFiles = (files: FileList) => {
     const newFiles: KnowledgeFileLocal[] = Array.from(files)
