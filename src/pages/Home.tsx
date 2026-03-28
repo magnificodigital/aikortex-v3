@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
-import { Monitor, Sparkles, Globe, ArrowUp, Plus, RefreshCw, ChevronDown } from "lucide-react";
+import { Monitor, Sparkles, Globe, ArrowUp, Plus, RefreshCw, ChevronDown, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,11 +26,27 @@ const suggestionsByTab = {
 
 const tabIcons = { app: Monitor, agentes: Sparkles, flows: Globe };
 
+const WHATSAPP_KEYWORDS = ["whatsapp", "wpp", "zap", "zapzap", "mensagem", "conversa", "chat", "atendimento", "sac", "suporte ao cliente", "cliente pelo whatsapp", "whats"];
+const WEB_KEYWORDS = ["web", "site", "website", "dashboard", "portal", "painel", "landing", "página", "pagina", "sistema web", "plataforma", "saas", "aplicativo web", "app web"];
+
+type AppChannel = "whatsapp" | "web" | null;
+
+function detectChannel(text: string): AppChannel {
+  const lower = text.toLowerCase();
+  const hasWa = WHATSAPP_KEYWORDS.some((k) => lower.includes(k));
+  const hasWeb = WEB_KEYWORDS.some((k) => lower.includes(k));
+  if (hasWa && !hasWeb) return "whatsapp";
+  if (hasWeb && !hasWa) return "web";
+  if (hasWa && hasWeb) return "whatsapp"; // default to whatsapp if both
+  return null;
+}
+
 const Home = () => {
   const [prompt, setPrompt] = useState("");
   const [activeCreationTab, setActiveCreationTab] = useState<"app" | "agentes" | "flows">("app");
   const [suggestionIndex, setSuggestionIndex] = useState(0);
   const [userName, setUserName] = useState("Usuário");
+  const [detectedChannel, setDetectedChannel] = useState<AppChannel>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -48,19 +64,16 @@ const Home = () => {
     const text = prompt.trim();
     if (!text) return;
 
-    // Auto-detect category from text, override manual tab if keywords match
     const detected = detectCategory(text);
-    // Switch tab visually before navigating
-    if (detected !== activeCreationTab) {
-      setActiveCreationTab(detected);
-    }
+    if (detected !== activeCreationTab) setActiveCreationTab(detected);
 
     if (detected === "flows") {
       navigate("/aikortex/automations", { state: { initialPrompt: text } });
     } else if (detected === "agentes") {
       navigate("/aikortex/agents", { state: { initialPrompt: text } });
     } else {
-      navigate("/apps", { state: { initialPrompt: text } });
+      const channel = detectedChannel || "web";
+      navigate("/app-builder", { state: { initialPrompt: text, channel } });
     }
   };
 
@@ -93,6 +106,22 @@ const Home = () => {
     if (hour < 12) return "Bom dia";
     if (hour < 18) return "Boa tarde";
     return "Boa noite";
+  };
+
+  const handlePromptChange = (val: string) => {
+    setPrompt(val);
+    if (val.trim().length > 3) {
+      const detected = detectCategory(val);
+      if (detected !== activeCreationTab) setActiveCreationTab(detected);
+      // detect channel only when on app tab
+      if (detected === "app") {
+        setDetectedChannel(detectChannel(val));
+      } else {
+        setDetectedChannel(null);
+      }
+    } else {
+      setDetectedChannel(null);
+    }
   };
 
   return (
@@ -135,16 +164,7 @@ const Home = () => {
           {/* Text area */}
           <textarea
             value={prompt}
-            onChange={(e) => {
-              const val = e.target.value;
-              setPrompt(val);
-              if (val.trim().length > 3) {
-                const detected = detectCategory(val);
-                if (detected !== activeCreationTab) {
-                  setActiveCreationTab(detected);
-                }
-              }
-            }}
+            onChange={(e) => handlePromptChange(e.target.value)}
             placeholder={
               activeCreationTab === "app"
                 ? "Descreva o app que você quer criar..."
@@ -169,6 +189,17 @@ const Home = () => {
                 GPT-5
                 <ChevronDown className="w-3 h-3" />
               </button>
+              {/* Channel badge - only shows when app tab is active and channel detected */}
+              {activeCreationTab === "app" && detectedChannel && (
+                <span className={`flex items-center gap-1.5 h-7 px-2.5 text-[11px] font-medium rounded-full border transition-all animate-in fade-in ${
+                  detectedChannel === "whatsapp"
+                    ? "border-green-500/30 bg-green-500/10 text-green-600 dark:text-green-400"
+                    : "border-primary/30 bg-primary/10 text-primary"
+                }`}>
+                  {detectedChannel === "whatsapp" ? <Phone className="w-3 h-3" /> : <Monitor className="w-3 h-3" />}
+                  {detectedChannel === "whatsapp" ? "WhatsApp App" : "Web App"}
+                </span>
+              )}
             </div>
             <Button
               size="sm"
@@ -186,7 +217,10 @@ const Home = () => {
           {currentSuggestions.map((label) => (
             <button
               key={label}
-              onClick={() => setPrompt(label)}
+              onClick={() => {
+                setPrompt(label);
+                handlePromptChange(label);
+              }}
               className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-border text-sm text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors"
             >
               <SuggestionIcon className="w-4 h-4" />
