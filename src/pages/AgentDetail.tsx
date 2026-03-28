@@ -429,11 +429,13 @@ const AgentDetail = () => {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={
-                chatMode === "test" && !hasApiKey && !keysLoading
-                  ? "⚠️ Configure sua chave de API na aba Integrações para testar..."
-                  : chatMode === "setup"
-                    ? "Pergunte sobre a configuração do agente..."
-                    : "Envie uma mensagem para testar o agente..."
+                !hasAnyLLMKey && !keysLoading
+                  ? "🔑 Configure sua chave de API na aba Integrações para começar..."
+                  : chatMode === "test" && !hasApiKey && !keysLoading
+                    ? "⚠️ Configure sua chave de API na aba Integrações para testar..."
+                    : chatMode === "setup"
+                      ? "Pergunte sobre a configuração do agente..."
+                      : "Envie uma mensagem para testar o agente..."
               }
               className="border-0 bg-transparent text-sm min-h-[80px] max-h-[160px] resize-none focus-visible:ring-0 focus-visible:ring-offset-0 p-4"
               disabled={!canSend}
