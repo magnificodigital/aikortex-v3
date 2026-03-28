@@ -17,6 +17,8 @@ interface UseAgentChatOptions {
   gatewayModel?: string;
   /** System prompt override */
   systemPrompt?: string;
+  /** localStorage key to persist messages across reloads */
+  persistKey?: string;
 }
 
 function deriveProvider(model?: string): string {
