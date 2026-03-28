@@ -57,7 +57,23 @@ const getProviderForModel = (model: string): string => {
   return "openai";
 };
 
-const SETUP_SYSTEM_PROMPT = `Você é um assistente especializado em configuração de agentes de IA na plataforma Aikortex. 
+const buildSetupSystemPrompt = (config: AgentConfig | null, apiKeys: Record<string, { provider: string; configured: boolean }>, currentModel: string) => {
+  const configuredProviders = Object.keys(apiKeys).filter(k => apiKeys[k]?.configured);
+  const apiKeyStatus = configuredProviders.length > 0
+    ? `Chaves de API configuradas: ${configuredProviders.join(", ")}.`
+    : "Nenhuma chave de API configurada ainda.";
+
+  const configStatus = config ? [
+    config.name ? `Nome: ${config.name}` : null,
+    config.description ? `Descrição: ${config.description.slice(0, 200)}` : null,
+    config.channels?.length ? `Canais: ${config.channels.join(", ")}` : null,
+    config.integrations?.length ? `Integrações: ${config.integrations.join(", ")}` : null,
+    config.knowledgeFiles?.length ? `Arquivos: ${config.knowledgeFiles.length} arquivo(s)` : null,
+    config.urls?.length ? `URLs: ${config.urls.join(", ")}` : null,
+    config.avatarUrl ? `Foto: configurada` : null,
+  ].filter(Boolean).join("\n") : "Nenhuma configuração preenchida ainda.";
+
+  return `Você é um assistente especializado em configuração de agentes de IA na plataforma Aikortex.
 Seja BREVE e direto. Faça UMA pergunta por vez (máximo 2 linhas). Quando a resposta for válida, confirme com ✅ e passe ao próximo item.
 
 Áreas de configuração:
@@ -68,8 +84,16 @@ Seja BREVE e direto. Faça UMA pergunta por vez (máximo 2 linhas). Quando a res
 5. **Canais** — WhatsApp, Instagram, Site
 6. **Conhecimento** — Documentos e URLs
 
+=== ESTADO ATUAL DO AGENTE ===
+${configStatus}
+Modelo selecionado para teste: ${currentModel}
+${apiKeyStatus}
+==============================
+
+Use as informações acima para saber o que já foi preenchido e orientar o usuário sobre os próximos passos.
 Quando todas as configurações estiverem completas, sugira mudar para o modo **Teste**.
 IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
+};
 
 const AgentDetail = () => {
   const navigate = useNavigate();
