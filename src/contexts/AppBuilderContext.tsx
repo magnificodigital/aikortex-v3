@@ -122,7 +122,8 @@ function generateWhatsAppMetrics(): DashboardMetric[] {
 
 /* ── Provider ── */
 
-export function AppBuilderProvider({ children, initialChannel = "web" }: { children: ReactNode; initialChannel?: "whatsapp" | "web" }) {
+export function AppBuilderProvider({ children, initialChannel = "web", existingAppId }: { children: ReactNode; initialChannel?: "whatsapp" | "web"; existingAppId?: string | null }) {
+  const [appId, setAppId] = useState<string | null>(existingAppId || null);
   const [state, setState] = useState<AppBuilderState>({
     channel: initialChannel,
     files: [],
