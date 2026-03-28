@@ -182,9 +182,23 @@ const AgentDetail = () => {
     return parts.join("");
   }, [agentConfig]);
 
+  const testApiConfig = agentConfig?.apiConfig;
   const testChat = useAgentChat(
     [{ role: "agent", text: `🧪 Modo de Teste ativado! Agora estou respondendo como o **${agent.name}** usando o modelo ${LLM_MODELS.find(m => m.value === agentModel)?.label || agentModel}. Envie uma mensagem para testar.` }],
-    { model: agentModel, systemPrompt: testSystemPrompt, persistKey: `${storagePrefix}-test-messages` }
+    {
+      model: agentModel,
+      systemPrompt: testSystemPrompt,
+      persistKey: `${storagePrefix}-test-messages`,
+      apiConfig: testApiConfig ? {
+        temperature: testApiConfig.temperature,
+        maxTokens: testApiConfig.maxTokens,
+        topP: testApiConfig.topP,
+        frequencyPenalty: testApiConfig.frequencyPenalty,
+        presencePenalty: testApiConfig.presencePenalty,
+        responseFormat: testApiConfig.responseFormat,
+        stopSequences: testApiConfig.stopSequences,
+      } : undefined,
+    }
   );
 
   const activeChat = chatMode === "setup" ? setupChat : testChat;
