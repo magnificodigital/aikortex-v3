@@ -127,17 +127,29 @@ serve(async (req) => {
     let apiModel: string;
     let headers: Record<string, string>;
 
-    // If useGateway is true, use Lovable AI gateway (reliable, no strict rate limits)
+    // If useGateway is true, use OpenRouter (free models, no user key required)
     if (useGateway) {
-      const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-      if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
-      apiUrl = "https://ai.gateway.lovable.dev/v1/chat/completions";
-      apiKey = LOVABLE_API_KEY;
-      apiModel = gatewayModel || "google/gemini-2.5-flash";
+      apiUrl = "https://openrouter.ai/api/v1/chat/completions";
+      apiKey = ""; // OpenRouter free models work without API key
+      apiModel = gatewayModel || "google/gemma-3-4b-it:free";
       headers = {
-        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
+        "HTTP-Referer": "https://aikortex.lovable.app",
+        "X-OpenRouter-Title": "Aikortex",
       };
+
+      // Try user's OpenRouter key first for better rate limits
+      const { data: orKeyData } = await supabase
+        .from("user_api_keys")
+        .select("api_key")
+        .eq("provider", "openrouter")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (orKeyData?.api_key) {
+        apiKey = orKeyData.api_key;
+        headers["Authorization"] = `Bearer ${apiKey}`;
+      }
     } else {
       // Try user's own API key first
       const { data: keyData } = await supabase

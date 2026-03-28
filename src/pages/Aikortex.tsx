@@ -66,12 +66,12 @@ const LLM_MODELS = [
   { value: "claude-3-haiku", label: "Claude 3 Haiku", provider: "anthropic" },
 ] as const;
 
-// Models available via Lovable AI gateway for the setup assistant
+// Models available via OpenRouter (free tier) for the setup assistant
 const GATEWAY_MODELS = [
-  { value: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash" },
-  { value: "google/gemini-3-flash-preview", label: "Gemini 3 Flash" },
-  { value: "openai/gpt-5-mini", label: "GPT-5 Mini" },
-  { value: "google/gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite" },
+  { value: "google/gemma-3-4b-it:free", label: "Gemma 3 4B (Grátis)" },
+  { value: "deepseek/deepseek-chat-v3-0324:free", label: "DeepSeek V3 (Grátis)" },
+  { value: "meta-llama/llama-4-maverick:free", label: "Llama 4 Maverick (Grátis)" },
+  { value: "qwen/qwen3-8b:free", label: "Qwen3 8B (Grátis)" },
 ] as const;
 
 const getProviderForModel = (model: string) => {
