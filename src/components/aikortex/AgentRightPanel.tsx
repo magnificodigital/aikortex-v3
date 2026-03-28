@@ -104,6 +104,8 @@ interface Props {
   onTabChange?: (tab: string) => void;
   onApiKeysChanged?: () => void | Promise<void>;
   onConfigChange?: (config: AgentConfig) => void;
+  onSaveAgent?: (config: AgentConfig & { model: string; agentType: string }) => void | Promise<void>;
+  isSaving?: boolean;
 }
 
 interface KnowledgeFileLocal {
