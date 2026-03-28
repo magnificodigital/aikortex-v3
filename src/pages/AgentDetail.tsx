@@ -80,6 +80,11 @@ const AgentDetail = () => {
   // "setup" = uses free OpenRouter models to help configure
   // "test" = uses the user's configured LLM to test the agent
   const [chatMode, setChatMode] = useState<"setup" | "test">("setup");
+  const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null);
+
+  const handleConfigChange = useCallback((config: AgentConfig) => {
+    setAgentConfig(config);
+  }, []);
 
   const { keys, loading: keysLoading, refetch: refetchKeys } = useApiKeys();
 
