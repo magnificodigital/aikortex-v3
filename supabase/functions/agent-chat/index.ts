@@ -245,14 +245,24 @@ serve(async (req) => {
 
     console.log(`Using provider=${selectedProvider}, model=${apiModel}, useGateway=${useGateway}`);
 
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(body),
-    });
+    // Fetch with retry for 429 rate limits
+    let response: Response | null = null;
+    const maxRetries = 3;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      response = await fetch(apiUrl, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+      });
+      if (response.status !== 429 || attempt === maxRetries) break;
+      const retryAfter = parseInt(response.headers.get("retry-after") || "0", 10);
+      const waitMs = Math.max((retryAfter || (attempt + 1) * 2) * 1000, 1000);
+      console.log(`Rate limited (429), retrying in ${waitMs}ms (attempt ${attempt + 1}/${maxRetries})`);
+      await new Promise((r) => setTimeout(r, waitMs));
+    }
 
-    if (!response.ok) {
-      if (response.status === 429) {
+    if (!response!.ok) {
+      if (response!.status === 429) {
         return new Response(JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns segundos." }), {
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
