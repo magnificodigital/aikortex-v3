@@ -82,7 +82,8 @@ const CHANNELS = [
 const SETTINGS_NAV = [
   { section: "AGENTE", items: [
     { key: "general", icon: User, label: "Identidade" },
-    { key: "status", icon: Zap, label: "Status" },
+    { key: "objective", icon: Zap, label: "Objetivo" },
+    { key: "instructions", icon: Settings2, label: "Instruções" },
     { key: "machine", icon: Monitor, label: "Machine" },
   ]},
   { section: "CONFIGURAÇÃO", items: [
@@ -115,6 +116,10 @@ export const DEFAULT_API_CONFIG: ApiConfig = {
 export interface AgentConfig {
   name: string;
   description: string;
+  objective: string;
+  instructions: string;
+  toneOfVoice: string;
+  greetingMessage: string;
   avatarUrl: string;
   channels: string[];
   integrations: string[];
@@ -331,6 +336,22 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
     if (storagePrefix) { try { return localStorage.getItem(`${storagePrefix}-desc`) || ""; } catch {} }
     return "";
   });
+  const [agentObjective, setAgentObjective] = useState(() => {
+    if (storagePrefix) { try { return localStorage.getItem(`${storagePrefix}-objective`) || ""; } catch {} }
+    return "";
+  });
+  const [agentInstructions, setAgentInstructions] = useState(() => {
+    if (storagePrefix) { try { return localStorage.getItem(`${storagePrefix}-instructions`) || ""; } catch {} }
+    return "";
+  });
+  const [agentToneOfVoice, setAgentToneOfVoice] = useState(() => {
+    if (storagePrefix) { try { return localStorage.getItem(`${storagePrefix}-toneOfVoice`) || ""; } catch {} }
+    return "";
+  });
+  const [agentGreetingMessage, setAgentGreetingMessage] = useState(() => {
+    if (storagePrefix) { try { return localStorage.getItem(`${storagePrefix}-greetingMessage`) || ""; } catch {} }
+    return "";
+  });
   const [knowledgeFiles, setKnowledgeFiles] = useState<KnowledgeFileLocal[]>(() => {
     if (storagePrefix) { try { const s = localStorage.getItem(`${storagePrefix}-files`); if (s) return JSON.parse(s); } catch {} }
     return [];
@@ -361,19 +382,27 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
     try {
       localStorage.setItem(`${storagePrefix}-name`, agentName);
       localStorage.setItem(`${storagePrefix}-desc`, agentDesc);
+      localStorage.setItem(`${storagePrefix}-objective`, agentObjective);
+      localStorage.setItem(`${storagePrefix}-instructions`, agentInstructions);
+      localStorage.setItem(`${storagePrefix}-toneOfVoice`, agentToneOfVoice);
+      localStorage.setItem(`${storagePrefix}-greetingMessage`, agentGreetingMessage);
       localStorage.setItem(`${storagePrefix}-files`, JSON.stringify(knowledgeFiles));
       localStorage.setItem(`${storagePrefix}-urls`, JSON.stringify(urls));
       localStorage.setItem(`${storagePrefix}-channels`, JSON.stringify(connectedChannels));
       localStorage.setItem(`${storagePrefix}-apiConfig`, JSON.stringify(apiConfig));
       if (avatarPreview) localStorage.setItem(`${storagePrefix}-avatar`, avatarPreview);
     } catch {}
-  }, [storagePrefix, agentName, agentDesc, knowledgeFiles, urls, connectedChannels, avatarPreview, apiConfig]);
+  }, [storagePrefix, agentName, agentDesc, agentObjective, agentInstructions, agentToneOfVoice, agentGreetingMessage, knowledgeFiles, urls, connectedChannels, avatarPreview, apiConfig]);
 
   // Emit config changes to parent
   useEffect(() => {
     onConfigChange?.({
       name: agentName,
       description: agentDesc,
+      objective: agentObjective,
+      instructions: agentInstructions,
+      toneOfVoice: agentToneOfVoice,
+      greetingMessage: agentGreetingMessage,
       avatarUrl: avatarPreview || agent.avatar || "",
       channels: connectedChannels,
       integrations: Object.entries(connectorKeys).filter(([, v]) => v.configured).map(([k]) => k),
@@ -381,7 +410,7 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
       urls,
       apiConfig,
     });
-  }, [agentName, agentDesc, avatarPreview, connectedChannels, connectorKeys, knowledgeFiles, urls, apiConfig]);
+  }, [agentName, agentDesc, agentObjective, agentInstructions, agentToneOfVoice, agentGreetingMessage, avatarPreview, connectedChannels, connectorKeys, knowledgeFiles, urls, apiConfig]);
 
   const handleFiles = (files: FileList) => {
     const newFiles: KnowledgeFileLocal[] = Array.from(files)
@@ -756,6 +785,10 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
                         onClick={() => onSaveAgent?.({
                           name: agentName,
                           description: agentDesc,
+                          objective: agentObjective,
+                          instructions: agentInstructions,
+                          toneOfVoice: agentToneOfVoice,
+                          greetingMessage: agentGreetingMessage,
                           avatarUrl: avatarPreview || agent.avatar || "",
                           channels: connectedChannels,
                           integrations: Object.entries(connectorKeys).filter(([, v]) => v.configured).map(([k]) => k),
@@ -773,16 +806,68 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
                   </>
                 )}
 
-                {settingsNav === "status" && (
-                  <div>
-                    <h2 className="text-lg font-bold text-foreground">Status</h2>
-                    <p className="text-sm text-muted-foreground mt-1">O agente está em execução.</p>
-                    <div className="mt-4 flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                      <span className="text-sm text-foreground font-medium">Online</span>
+                {settingsNav === "objective" && (
+                  <div className="space-y-6">
+                    <div>
+                      <h2 className="text-lg font-bold text-foreground">Objetivo</h2>
+                      <p className="text-sm text-muted-foreground mt-1">Defina a missão principal do agente.</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-semibold text-foreground">Missão / Objetivo</h3>
+                      <p className="text-xs text-muted-foreground">O que o agente deve alcançar em cada interação.</p>
+                      <Textarea
+                        value={agentObjective}
+                        onChange={(e) => setAgentObjective(e.target.value)}
+                        placeholder="Ex: Qualificar leads e agendar reuniões com decisores."
+                        className="text-sm min-h-[100px]"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-semibold text-foreground">Mensagem de Saudação</h3>
+                      <p className="text-xs text-muted-foreground">A primeira mensagem que o agente envia ao iniciar uma conversa.</p>
+                      <Textarea
+                        value={agentGreetingMessage}
+                        onChange={(e) => setAgentGreetingMessage(e.target.value)}
+                        placeholder="Ex: Olá! Sou o assistente da [empresa]. Como posso ajudar?"
+                        className="text-sm min-h-[80px]"
+                      />
                     </div>
                   </div>
                 )}
+
+                {settingsNav === "instructions" && (
+                  <div className="space-y-6">
+                    <div>
+                      <h2 className="text-lg font-bold text-foreground">Instruções</h2>
+                      <p className="text-sm text-muted-foreground mt-1">Regras e comportamento do agente.</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-semibold text-foreground">Instruções / Regras</h3>
+                      <p className="text-xs text-muted-foreground">Regras que o agente deve seguir. Ex: não dar descontos, sempre pedir e-mail.</p>
+                      <Textarea
+                        value={agentInstructions}
+                        onChange={(e) => setAgentInstructions(e.target.value)}
+                        placeholder="Ex: Sempre pergunte o nome e e-mail do lead antes de agendar. Nunca ofereça descontos sem aprovação."
+                        className="text-sm min-h-[120px]"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <h3 className="text-sm font-semibold text-foreground">Tom de Voz</h3>
+                      <p className="text-xs text-muted-foreground">Como o agente se comunica.</p>
+                      <Textarea
+                        value={agentToneOfVoice}
+                        onChange={(e) => setAgentToneOfVoice(e.target.value)}
+                        placeholder="Ex: Profissional, amigável, direto e empático."
+                        className="text-sm min-h-[80px]"
+                      />
+                    </div>
+                  </div>
+                )}
+
 
                 {settingsNav === "channels" && (
                   <div className="space-y-4">
@@ -973,7 +1058,7 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
                   </div>
                 )}
 
-                {!["general", "status", "channels", "danger", "advanced", "machine"].includes(settingsNav) && (
+                {!["general", "objective", "instructions", "channels", "danger", "advanced", "machine"].includes(settingsNav) && (
                   <div>
                     <h2 className="text-lg font-bold text-foreground capitalize">{settingsNav}</h2>
                     <p className="text-sm text-muted-foreground mt-1">Configuração em breve.</p>
@@ -1158,6 +1243,10 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
           onClick={() => onSaveAgent?.({
             name: agentName,
             description: agentDesc,
+            objective: agentObjective,
+            instructions: agentInstructions,
+            toneOfVoice: agentToneOfVoice,
+            greetingMessage: agentGreetingMessage,
             avatarUrl: avatarPreview || agent.avatar || "",
             channels: connectedChannels,
             integrations: Object.entries(connectorKeys).filter(([, v]) => v.configured).map(([k]) => k),

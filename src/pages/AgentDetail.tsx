@@ -66,6 +66,10 @@ const buildSetupSystemPrompt = (config: AgentConfig | null, apiKeys: Record<stri
   const configStatus = config ? [
     config.name ? `Nome: ${config.name}` : null,
     config.description ? `Descrição: ${config.description.slice(0, 200)}` : null,
+    config.objective ? `Objetivo: ${config.objective.slice(0, 200)}` : null,
+    config.instructions ? `Instruções: ${config.instructions.slice(0, 200)}` : null,
+    config.toneOfVoice ? `Tom de voz: ${config.toneOfVoice}` : null,
+    config.greetingMessage ? `Mensagem de saudação: ${config.greetingMessage.slice(0, 100)}` : null,
     config.channels?.length ? `Canais: ${config.channels.join(", ")}` : null,
     config.integrations?.length ? `Integrações: ${config.integrations.join(", ")}` : null,
     config.knowledgeFiles?.length ? `Arquivos: ${config.knowledgeFiles.length} arquivo(s)` : null,
@@ -192,6 +196,10 @@ const AgentDetail = () => {
     parts.push(`Você é o agente "${agentConfig.name}".`);
     parts.push(`\n\nVocê deve agir de forma totalmente coerente com a configuração operacional recebida.`);
     if (agentConfig.description) parts.push(`\n\nDescrição, papel e instruções principais:\n${agentConfig.description}`);
+    if (agentConfig.objective) parts.push(`\n\nObjetivo/Missão:\n${agentConfig.objective}`);
+    if (agentConfig.instructions) parts.push(`\n\nRegras e instruções específicas:\n${agentConfig.instructions}`);
+    if (agentConfig.toneOfVoice) parts.push(`\n\nTom de voz: ${agentConfig.toneOfVoice}`);
+    if (agentConfig.greetingMessage) parts.push(`\n\nMensagem de saudação padrão: ${agentConfig.greetingMessage}`);
     if (agentConfig.channels.length > 0) {
       parts.push(`\n\nCanais ativos: ${agentConfig.channels.join(", ")}`);
     }
@@ -223,6 +231,10 @@ const AgentDetail = () => {
       agentContext: agentConfig ? {
         name: agentConfig.name,
         description: agentConfig.description,
+        objective: agentConfig.objective,
+        instructions: agentConfig.instructions,
+        toneOfVoice: agentConfig.toneOfVoice,
+        greetingMessage: agentConfig.greetingMessage,
         channels: agentConfig.channels,
         integrations: agentConfig.integrations,
         knowledgeFiles: agentConfig.knowledgeFiles,
