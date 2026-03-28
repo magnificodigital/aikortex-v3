@@ -134,7 +134,7 @@ const PROVIDER_MAP: Record<string, string> = {
   "RD Station": "rdstation",
 };
 
-const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTab, onTabChange, onApiKeysChanged, onConfigChange, onSaveAgent, isSaving }: Props) => {
+const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTab, onTabChange, onApiKeysChanged, onConfigChange, onSaveAgent, isSaving, storagePrefix }: Props) => {
   const [rightTab, setRightTab] = useState(activeTab || "agent");
 
   // Filter integrations and channels by agent type
