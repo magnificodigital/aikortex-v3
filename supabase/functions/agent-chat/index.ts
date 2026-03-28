@@ -30,7 +30,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages, provider, model, useGateway, gatewayModel } = await req.json();
+    const { messages, provider, model, useGateway, gatewayModel, temperature, max_tokens, top_p, frequency_penalty, presence_penalty, response_format, stop } = await req.json();
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
