@@ -1129,6 +1129,28 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Persistent Save Button */}
+      <div className="border-t border-border px-4 py-3 shrink-0 bg-background">
+        <Button
+          className="w-full gap-2 h-10"
+          onClick={() => onSaveAgent?.({
+            name: agentName,
+            description: agentDesc,
+            avatarUrl: avatarPreview || agent.avatar || "",
+            channels: connectedChannels,
+            integrations: Object.entries(connectorKeys).filter(([, v]) => v.configured).map(([k]) => k),
+            knowledgeFiles: knowledgeFiles.map(f => f.name),
+            urls,
+            apiConfig,
+            model: agentModel,
+            agentType: agentType,
+          })}
+          disabled={!agentName.trim() || isSaving}
+        >
+          {isSaving ? "Salvando..." : "💾 Salvar Agente"}
+        </Button>
+      </div>
     </div>
   );
 };
