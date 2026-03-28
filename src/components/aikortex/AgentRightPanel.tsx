@@ -1058,7 +1058,7 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
                   </div>
                 )}
 
-                {!["general", "status", "channels", "danger", "advanced", "machine"].includes(settingsNav) && (
+                {!["general", "objective", "instructions", "channels", "danger", "advanced", "machine"].includes(settingsNav) && (
                   <div>
                     <h2 className="text-lg font-bold text-foreground capitalize">{settingsNav}</h2>
                     <p className="text-sm text-muted-foreground mt-1">Configuração em breve.</p>
