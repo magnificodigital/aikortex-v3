@@ -60,7 +60,7 @@ const Home = () => {
     } else if (detected === "agentes") {
       navigate("/aikortex/agents", { state: { initialPrompt: text } });
     } else {
-      navigate("/app-builder", { state: { initialPrompt: text } });
+      navigate("/apps", { state: { initialPrompt: text } });
     }
   };
 
