@@ -15,11 +15,11 @@ const MODEL_MAP: Record<string, { gateway: string; openai?: string; anthropic?: 
   "gemini-2.5-pro": { gateway: "google/gemini-2.5-pro" },
   "gemini-2.5-flash": { gateway: "google/gemini-2.5-flash" },
   "gemini-2.5-flash-lite": { gateway: "google/gemini-2.5-flash-lite" },
-  // OpenAI models
-  "gpt-5.2": { gateway: "openai/gpt-5.2", openai: "gpt-5.2" },
-  "gpt-5": { gateway: "openai/gpt-5", openai: "gpt-5" },
-  "gpt-5-mini": { gateway: "openai/gpt-5-mini", openai: "gpt-5-mini" },
-  "gpt-5-nano": { gateway: "openai/gpt-5-nano", openai: "gpt-5-nano" },
+  // OpenAI models — gateway names map to real OpenAI API model IDs
+  "gpt-5.2": { gateway: "openai/gpt-5.2", openai: "gpt-4o" },
+  "gpt-5": { gateway: "openai/gpt-5", openai: "gpt-4o" },
+  "gpt-5-mini": { gateway: "openai/gpt-5-mini", openai: "gpt-4o-mini" },
+  "gpt-5-nano": { gateway: "openai/gpt-5-nano", openai: "gpt-4o-mini" },
   "gpt-4o": { gateway: "openai/gpt-5", openai: "gpt-4o" },
   "gpt-4o-mini": { gateway: "openai/gpt-5-mini", openai: "gpt-4o-mini" },
   "gpt-4-turbo": { gateway: "openai/gpt-5", openai: "gpt-4-turbo" },
