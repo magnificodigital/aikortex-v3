@@ -48,11 +48,11 @@ const LLM_MODELS = [
   { value: "claude-3-haiku", label: "Claude 3 Haiku", provider: "anthropic" },
 ] as const;
 
-const FREE_MODELS = [
-  { value: "stepfun/step-3.5-flash:free", label: "Step 3.5 Flash" },
-  { value: "deepseek/deepseek-chat-v3-0324:free", label: "DeepSeek V3" },
-  { value: "google/gemma-3-27b-it:free", label: "Gemma 3 27B" },
-  { value: "meta-llama/llama-4-maverick:free", label: "Llama 4 Maverick" },
+const GATEWAY_MODELS = [
+  { value: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+  { value: "google/gemini-3-flash-preview", label: "Gemini 3 Flash" },
+  { value: "openai/gpt-5-mini", label: "GPT-5 Mini" },
+  { value: "google/gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite" },
 ] as const;
 
 const getProviderForModel = (model: string): string => {
