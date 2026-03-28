@@ -9,7 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import AgentRightPanel, { type AgentConfig } from "@/components/aikortex/AgentRightPanel";
 import { useAgentChat } from "@/hooks/use-agent-chat";
 import { useApiKeys } from "@/hooks/use-api-keys";
+import { useUserAgents } from "@/hooks/use-user-agents";
 import ReactMarkdown from "react-markdown";
+import { toast } from "sonner";
 import type { AgentType } from "@/types/agent-builder";
 
 import avatar1 from "@/assets/avatars/avatar-1.png";
