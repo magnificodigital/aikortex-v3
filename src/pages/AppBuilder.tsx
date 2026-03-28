@@ -30,13 +30,30 @@ const tabs: { id: TabId; label: string; icon: typeof Eye }[] = [
 
 const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
   const navigate = useNavigate();
-  const { channel, setChannel, saveApp, appName } = useAppBuilder();
+  const { channel, setChannel, saveApp, appName, appId, setFiles, setTables, setAppName, setChannel: setCtxChannel } = useAppBuilder();
   const { user } = useAuth();
 
   const [activeTab, setActiveTab] = useState<TabId>("preview");
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [showConfig, setShowConfig] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  // Load existing app data when editing
+  useEffect(() => {
+    if (!appId) return;
+    supabase
+      .from("user_apps")
+      .select("*")
+      .eq("id", appId)
+      .single()
+      .then(({ data }) => {
+        if (!data) return;
+        setAppName(data.name);
+        setCtxChannel(data.channel as "whatsapp" | "web");
+        if (Array.isArray(data.files)) setFiles(data.files as any);
+        if (Array.isArray(data.tables_schema)) setTables(data.tables_schema as any);
+      });
+  }, [appId]);
 
   const handleSave = async () => {
     if (!user) { toast.error("Faça login para salvar."); return; }
