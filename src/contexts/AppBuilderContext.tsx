@@ -186,12 +186,42 @@ export function AppBuilderProvider({ children, initialChannel = "web", existingA
     }));
   }, []);
 
+  const saveApp = useCallback(async (userId: string): Promise<string | null> => {
+    const payload = {
+      user_id: userId,
+      name: state.appName,
+      description: '',
+      channel: state.channel,
+      files: JSON.parse(JSON.stringify(state.files)),
+      tables_schema: JSON.parse(JSON.stringify(state.tables)),
+      status: 'draft',
+    };
+
+    if (appId) {
+      const { error } = await supabase
+        .from('user_apps')
+        .update(payload)
+        .eq('id', appId);
+      if (error) { console.error(error); return null; }
+      return appId;
+    } else {
+      const { data, error } = await supabase
+        .from('user_apps')
+        .insert(payload)
+        .select('id')
+        .single();
+      if (error || !data) { console.error(error); return null; }
+      setAppId(data.id);
+      return data.id;
+    }
+  }, [state, appId]);
+
   return (
     <AppBuilderContext.Provider value={{
       ...state,
       setChannel, addFile, setFiles, addTable, setTables,
       addTerminalLog, setDashboardMetrics, setAppName,
-      setIsGenerating, initializeProject,
+      setIsGenerating, initializeProject, saveApp, appId, setAppId,
     }}>
       {children}
     </AppBuilderContext.Provider>
