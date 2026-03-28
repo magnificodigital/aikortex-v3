@@ -318,7 +318,7 @@ const AgentDetail = () => {
               <AlertTriangle className="h-4 w-4 text-yellow-500" />
               <AlertDescription className="text-xs text-muted-foreground flex items-center justify-between">
                 <span>
-                  Configure sua chave de API do provedor <strong className="text-foreground">{currentProvider === "openai" ? "OpenAI" : "Gemini"}</strong> na aba Integrações para testar com o modelo <strong className="text-foreground">{LLM_MODELS.find((m) => m.value === agentModel)?.label || agentModel}</strong>.
+                  Configure sua chave de API do provedor <strong className="text-foreground">{currentProvider === "openai" ? "OpenAI" : currentProvider === "anthropic" ? "Anthropic" : "Gemini"}</strong> na aba Integrações para testar com o modelo <strong className="text-foreground">{LLM_MODELS.find((m) => m.value === agentModel)?.label || agentModel}</strong>.
                 </span>
                 <Button
                   variant="outline"
