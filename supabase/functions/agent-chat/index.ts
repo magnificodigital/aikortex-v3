@@ -280,15 +280,15 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const t = await response.text();
-      console.error("AI API error:", response.status, t);
+      const t = await response!.text();
+      console.error("AI API error:", response!.status, t);
       return new Response(JSON.stringify({ error: "Erro no serviço de IA. Verifique sua chave de API." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(response.body, {
+    return new Response(response!.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (e) {

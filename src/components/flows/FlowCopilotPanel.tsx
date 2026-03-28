@@ -135,7 +135,7 @@ export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, init
         },
         body: JSON.stringify({
           messages: apiMessages,
-          model: "stepfun/step-3.5-flash:free",
+          model: "google/gemini-2.5-flash",
           useGateway: true,
         }),
       });
