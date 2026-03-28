@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
+import { toast } from "sonner";
 
 import DashboardLayout from "@/components/DashboardLayout";
 import {
