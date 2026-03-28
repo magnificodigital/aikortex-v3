@@ -23,11 +23,10 @@ import { toast } from "sonner";
 const LLM_PROVIDER_MODELS: Record<string, { models: { value: string; label: string; desc: string }[]; capabilities: string[] }> = {
   OpenAI: {
     models: [
-      { value: "gpt-5", label: "GPT-5", desc: "Mais poderoso. Raciocínio complexo e contexto longo." },
+      { value: "gpt-5.2", label: "GPT-5.2", desc: "Mais recente. Raciocínio aprimorado e resolução de problemas complexos." },
+      { value: "gpt-5", label: "GPT-5", desc: "Poderoso. Raciocínio complexo, contexto longo e multimodal." },
       { value: "gpt-5-mini", label: "GPT-5 Mini", desc: "Equilíbrio entre custo e desempenho." },
       { value: "gpt-5-nano", label: "GPT-5 Nano", desc: "Mais rápido e econômico para tarefas simples." },
-      { value: "gpt-4o", label: "GPT-4o", desc: "Multimodal com visão e áudio." },
-      { value: "gpt-4o-mini", label: "GPT-4o Mini", desc: "Versão leve do GPT-4o." },
     ],
     capabilities: ["Chat e completions", "Visão (imagens)", "Function calling", "JSON mode", "Embeddings", "Text-to-speech", "Speech-to-text"],
   },
@@ -41,6 +40,8 @@ const LLM_PROVIDER_MODELS: Record<string, { models: { value: string; label: stri
   },
   Gemini: {
     models: [
+      { value: "gemini-3.1-pro-preview", label: "Gemini 3.1 Pro", desc: "Mais recente. Raciocínio de próxima geração." },
+      { value: "gemini-3-flash-preview", label: "Gemini 3 Flash", desc: "Rápido e capaz, próxima geração." },
       { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro", desc: "Top-tier com raciocínio avançado." },
       { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash", desc: "Rápido e equilibrado." },
       { value: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite", desc: "Mais econômico para tarefas simples." },
