@@ -8,6 +8,7 @@ import {
   LayoutDashboard, Settings, PanelLeftClose, PanelLeftOpen, Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import ChatPanel from "@/components/app-builder/ChatPanel";
 import FileTree from "@/components/app-builder/FileTree";
 import CodeEditor from "@/components/app-builder/CodeEditor";
