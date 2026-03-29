@@ -39,6 +39,17 @@ const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
   const [showConfig, setShowConfig] = useState(false);
   const [saving, setSaving] = useState(false);
   const [chatCollapsed, setChatCollapsed] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
+
+  const finishRename = () => {
+    const trimmed = nameDraft.trim();
+    if (trimmed && trimmed !== appName) {
+      setAppName(trimmed);
+      toast.success("Projeto renomeado!");
+    }
+    setEditingName(false);
+  };
 
   useEffect(() => {
     if (!appId) return;
