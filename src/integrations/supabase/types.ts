@@ -308,6 +308,68 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_messages: {
+        Row: {
+          app_id: string | null
+          contact_name: string | null
+          content: string
+          created_at: string
+          direction: string
+          from_number: string
+          id: string
+          message_type: string
+          phone_number_id: string | null
+          raw_payload: Json | null
+          status: string
+          timestamp: string | null
+          to_number: string | null
+          user_id: string | null
+          wamid: string | null
+        }
+        Insert: {
+          app_id?: string | null
+          contact_name?: string | null
+          content?: string
+          created_at?: string
+          direction?: string
+          from_number: string
+          id?: string
+          message_type?: string
+          phone_number_id?: string | null
+          raw_payload?: Json | null
+          status?: string
+          timestamp?: string | null
+          to_number?: string | null
+          user_id?: string | null
+          wamid?: string | null
+        }
+        Update: {
+          app_id?: string | null
+          contact_name?: string | null
+          content?: string
+          created_at?: string
+          direction?: string
+          from_number?: string
+          id?: string
+          message_type?: string
+          phone_number_id?: string | null
+          raw_payload?: Json | null
+          status?: string
+          timestamp?: string | null
+          to_number?: string | null
+          user_id?: string | null
+          wamid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "user_apps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
