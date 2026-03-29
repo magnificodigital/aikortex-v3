@@ -24,10 +24,10 @@ const WhatsAppPreview = () => {
   const { files, appName, isGenerating } = useAppBuilder();
   const hasContent = files.length > 0;
 
-  const greeting = useMemo(() => extractGreeting(files), [files]);
-  const quickReplies = useMemo(() => extractQuickReplies(files), [files]);
-  const botName = useMemo(() => extractBotName(files, appName), [files, appName]);
-  const stages = useMemo(() => extractStages(files), [files]);
+  const greeting = "Olá! 👋 Como posso ajudar você hoje?";
+  const quickReplies = ["Agendar", "Preços", "Suporte"];
+  const botName = appName;
+  const stages = ["Saudação", "Qualificação", "Agendamento"];
 
   const [chatMessages, setChatMessages] = useState<{ role: "user" | "bot"; text: string; time: string }[]>([]);
   const [testInput, setTestInput] = useState("");
