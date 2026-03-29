@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Eye, Code2, Database, RotateCw, ExternalLink, Github, Upload, Save,
-  LayoutDashboard, Settings,
+  LayoutDashboard, Settings, PanelLeftClose, PanelLeftOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ChatPanel from "@/components/app-builder/ChatPanel";
@@ -35,10 +35,10 @@ const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
 
   const [activeTab, setActiveTab] = useState<TabId>("preview");
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
-  const [showConfig, setShowConfig] = useState(true);
+  const [showConfig, setShowConfig] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [chatCollapsed, setChatCollapsed] = useState(false);
 
-  // Load existing app data when editing
   useEffect(() => {
     if (!appId) return;
     supabase
@@ -66,23 +66,37 @@ const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
-      <ChatPanel onBack={() => navigate("/home")} initialPrompt={initialPrompt} />
+      {/* Chat Panel — collapsible */}
+      {!chatCollapsed && (
+        <ChatPanel onBack={() => navigate("/home")} initialPrompt={initialPrompt} />
+      )}
 
+      {/* Main workspace */}
       <div className="flex-1 flex flex-col min-w-0 bg-background">
-        <div className="h-11 border-b border-border flex items-center justify-between px-3 shrink-0">
+        {/* Top bar */}
+        <div className="h-12 border-b border-border flex items-center justify-between px-3 shrink-0 bg-card/30">
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-7 w-7">
-              <RotateCw className="w-3.5 h-3.5" />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setChatCollapsed(!chatCollapsed)}
+              title={chatCollapsed ? "Abrir chat" : "Fechar chat"}
+            >
+              {chatCollapsed ? <PanelLeftOpen className="w-3.5 h-3.5" /> : <PanelLeftClose className="w-3.5 h-3.5" />}
             </Button>
-            <span className="text-xs text-muted-foreground">/</span>
+            <div className="h-5 w-px bg-border" />
+            <span className="text-xs font-semibold text-foreground tracking-tight">{appName}</span>
+            <span className="text-[10px] text-muted-foreground">— {channel === "whatsapp" ? "WhatsApp App" : "Web App"}</span>
           </div>
 
-          <div className="flex items-center gap-0.5 bg-muted/50 rounded-lg p-0.5">
+          {/* Center tabs */}
+          <div className="flex items-center gap-0.5 bg-muted/40 rounded-lg p-0.5">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                   activeTab === tab.id
                     ? "bg-background text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
@@ -94,9 +108,10 @@ const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
             ))}
           </div>
 
+          {/* Right actions */}
           <div className="flex items-center gap-1.5">
             <Button
-              variant={showConfig ? "default" : "ghost"}
+              variant={showConfig ? "secondary" : "ghost"}
               size="icon"
               className="h-7 w-7"
               title="Configurações do App"
@@ -104,9 +119,7 @@ const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
             >
               <Settings className="w-3.5 h-3.5" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7" title="GitHub">
-              <Github className="w-3.5 h-3.5" />
-            </Button>
+            <div className="h-5 w-px bg-border" />
             <Button variant="outline" size="sm" className="h-7 text-xs gap-1 rounded-full" onClick={handleSave} disabled={saving}>
               <Save className="w-3 h-3" />
               {saving ? "Salvando..." : "Salvar"}
@@ -115,12 +128,10 @@ const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
               <Upload className="w-3 h-3" />
               Publicar
             </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7">
-              <ExternalLink className="w-3.5 h-3.5" />
-            </Button>
           </div>
         </div>
 
+        {/* Content area */}
         <div className="flex-1 flex flex-col min-h-0">
           <div className="flex-1 flex min-h-0">
             {activeTab === "preview" && <PreviewPanel channel={channel} />}
