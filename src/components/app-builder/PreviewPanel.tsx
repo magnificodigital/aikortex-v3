@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Phone, Bot, Send, BarChart3, Settings, Users, Calendar, MessageSquare, Home, ShoppingCart, FileText, Bell, Search, Globe, Zap, Monitor, Smartphone, List, Image, ArrowRight } from "lucide-react";
 import { useAppBuilder } from "@/contexts/AppBuilderContext";
 
@@ -88,6 +88,22 @@ function extractStages(files: { content: string }[]): string[] {
 
 /* ── WhatsApp Preview ── */
 
+const MOCK_BOT_RESPONSES: Record<string, string> = {
+  default: "Entendi! Posso te ajudar com isso. O que mais gostaria de saber?",
+  oi: "Olá! Que bom ter você aqui! Como posso ajudar?",
+  olá: "Oi! Tudo bem? Me conta como posso te ajudar 😊",
+  preço: "Nossos planos são bem flexíveis! Posso agendar uma conversa com nosso especialista para encontrar o melhor para você.",
+  agendar: "Claro! Vou verificar os horários disponíveis. Qual dia seria melhor para você?",
+  suporte: "Sem problemas! Me descreva o que está acontecendo e vou te ajudar a resolver.",
+  funciona: "É super simples! Nosso sistema é intuitivo e fácil de usar. Quer que eu te mostre o passo a passo?",
+};
+
+function getBotResponse(userMsg: string): string {
+  const lower = userMsg.toLowerCase();
+  const key = Object.keys(MOCK_BOT_RESPONSES).find(k => k !== "default" && lower.includes(k));
+  return MOCK_BOT_RESPONSES[key || "default"];
+}
+
 const WhatsAppPreview = () => {
   const { files, appName, isGenerating } = useAppBuilder();
   const hasContent = files.length > 0;
@@ -97,32 +113,50 @@ const WhatsAppPreview = () => {
   const botName = useMemo(() => extractBotName(files, appName), [files, appName]);
   const stages = useMemo(() => extractStages(files), [files]);
 
+  const [chatMessages, setChatMessages] = useState<{ role: "user" | "bot"; text: string; time: string }[]>([]);
+  const [testInput, setTestInput] = useState("");
+  const [botTyping, setBotTyping] = useState(false);
+
+  const now = () => {
+    const d = new Date();
+    return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+  };
+
+  const handleSendTest = (text?: string) => {
+    const msg = (text || testInput).trim();
+    if (!msg) return;
+    setTestInput("");
+    setChatMessages(prev => [...prev, { role: "user", text: msg, time: now() }]);
+    setBotTyping(true);
+    setTimeout(() => {
+      setBotTyping(false);
+      setChatMessages(prev => [...prev, { role: "bot", text: getBotResponse(msg), time: now() }]);
+    }, 800 + Math.random() * 600);
+  };
+
   return (
     <div className="flex-1 flex items-center justify-center bg-muted/5 p-8">
       <div className="relative">
-        {/* Phone frame */}
         <div className="w-[380px] rounded-[2.5rem] border-[3px] border-muted/30 bg-card shadow-2xl overflow-hidden">
-          {/* Status bar */}
           <div className="h-7 bg-[#075e54] dark:bg-[#1f2c34] flex items-center justify-center">
             <div className="w-20 h-4 rounded-full bg-black/20" />
           </div>
 
-          {/* Header */}
           <div className="bg-[#075e54] dark:bg-[#1f2c34] px-4 py-2.5 flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center">
               <Bot className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1">
               <p className="text-sm font-semibold text-white">{botName}</p>
-              <p className="text-[10px] text-white/60">{isGenerating ? "digitando..." : "online"}</p>
+              <p className="text-[10px] text-white/60">{isGenerating || botTyping ? "digitando..." : "online"}</p>
             </div>
             <Phone className="w-4 h-4 text-white/70" />
           </div>
 
-          {/* Messages */}
           <div className="bg-[#ece5dd] dark:bg-[#0b141a] p-4 space-y-3 min-h-[400px] max-h-[460px] overflow-y-auto">
             {hasContent ? (
               <>
+                {/* Initial greeting */}
                 <div className="flex gap-2 animate-in fade-in slide-in-from-left-2 duration-300">
                   <div className="bg-white dark:bg-[#202c33] rounded-xl rounded-tl-sm px-3 py-2 max-w-[80%] shadow-sm">
                     <p className="text-xs text-foreground">{greeting}</p>
@@ -130,36 +164,36 @@ const WhatsAppPreview = () => {
                   </div>
                 </div>
 
-                <div className="flex justify-end animate-in fade-in slide-in-from-right-2 duration-300 delay-100">
-                  <div className="bg-[#dcf8c6] dark:bg-[#005c4b] rounded-xl rounded-tr-sm px-3 py-2 max-w-[80%] shadow-sm">
-                    <p className="text-xs text-foreground">Gostaria de saber mais</p>
-                    <p className="text-[9px] text-muted-foreground text-right mt-1">10:31</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-2 animate-in fade-in slide-in-from-left-2 duration-300 delay-200">
-                  <div className="bg-white dark:bg-[#202c33] rounded-xl rounded-tl-sm px-3 py-2 max-w-[80%] shadow-sm">
-                    <p className="text-xs text-foreground mb-1">Claro! Nosso processo:</p>
-                    {stages.slice(0, 3).map((stage, i) => (
-                      <div key={stage} className="flex items-center gap-1.5 mt-1">
-                        <span className="w-4 h-4 rounded-full bg-green-500/15 text-green-600 dark:text-green-400 text-[9px] font-bold flex items-center justify-center shrink-0">{i + 1}</span>
-                        <p className="text-xs text-foreground">{stage}</p>
-                      </div>
+                {/* Quick reply buttons */}
+                {chatMessages.length === 0 && (
+                  <div className="flex gap-1.5 flex-wrap animate-in fade-in duration-300 delay-300">
+                    {quickReplies.map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => handleSendTest(opt)}
+                        className="px-3 py-1.5 rounded-full border border-green-600/30 text-[10px] font-medium text-green-700 dark:text-green-400 bg-white dark:bg-[#202c33] shadow-sm cursor-pointer hover:bg-green-50 dark:hover:bg-[#2a3942] transition-colors"
+                      >
+                        {opt}
+                      </button>
                     ))}
-                    <p className="text-[9px] text-muted-foreground text-right mt-1.5">10:31</p>
                   </div>
-                </div>
+                )}
 
-                {/* Interactive buttons */}
-                <div className="flex gap-1.5 flex-wrap animate-in fade-in duration-300 delay-300">
-                  {quickReplies.map((opt) => (
-                    <span key={opt} className="px-3 py-1.5 rounded-full border border-green-600/30 text-[10px] font-medium text-green-700 dark:text-green-400 bg-white dark:bg-[#202c33] shadow-sm cursor-pointer hover:bg-green-50 dark:hover:bg-[#2a3942] transition-colors">
-                      {opt}
-                    </span>
-                  ))}
-                </div>
+                {/* User test messages */}
+                {chatMessages.map((msg, i) => (
+                  <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "gap-2"} animate-in fade-in duration-200`}>
+                    <div className={`rounded-xl px-3 py-2 max-w-[80%] shadow-sm ${
+                      msg.role === "user"
+                        ? "bg-[#dcf8c6] dark:bg-[#005c4b] rounded-tr-sm"
+                        : "bg-white dark:bg-[#202c33] rounded-tl-sm"
+                    }`}>
+                      <p className="text-xs text-foreground">{msg.text}</p>
+                      <p className="text-[9px] text-muted-foreground text-right mt-1">{msg.time}</p>
+                    </div>
+                  </div>
+                ))}
 
-                {isGenerating && (
+                {(isGenerating || botTyping) && (
                   <div className="flex gap-2 animate-in fade-in duration-200">
                     <div className="bg-white dark:bg-[#202c33] rounded-xl rounded-tl-sm px-4 py-3 shadow-sm">
                       <div className="flex gap-1">
@@ -188,23 +222,30 @@ const WhatsAppPreview = () => {
             )}
           </div>
 
-          {/* Input bar */}
+          {/* Interactive input bar */}
           <div className="bg-[#f0f0f0] dark:bg-[#202c33] px-3 py-2.5 flex items-center gap-2 border-t border-border/30">
-            <div className="flex-1 bg-white dark:bg-[#2a3942] rounded-full px-3 py-2 text-xs text-muted-foreground">
-              Digite uma mensagem...
-            </div>
-            <div className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center shadow-sm">
+            <input
+              type="text"
+              value={testInput}
+              onChange={e => setTestInput(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleSendTest()}
+              placeholder="Teste seu agente..."
+              className="flex-1 bg-white dark:bg-[#2a3942] rounded-full px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground outline-none"
+            />
+            <button
+              onClick={() => handleSendTest()}
+              disabled={!testInput.trim() || botTyping}
+              className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center shadow-sm hover:bg-green-700 transition-colors disabled:opacity-50"
+            >
               <Send className="w-3.5 h-3.5 text-white" />
-            </div>
+            </button>
           </div>
 
-          {/* Home bar */}
           <div className="h-5 bg-[#f0f0f0] dark:bg-[#202c33] flex items-center justify-center">
             <div className="w-24 h-1 rounded-full bg-muted-foreground/20" />
           </div>
         </div>
 
-        {/* File count badge */}
         {hasContent && (
           <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-card border border-border rounded-full px-3 py-1 shadow-lg">
             <span className="text-[10px] text-muted-foreground flex items-center gap-1.5">

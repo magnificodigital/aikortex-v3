@@ -77,7 +77,8 @@ function stripStructuredBlocks(content: string): string {
   return content
     .replace(/\[FILE:.*?\]\n[\s\S]*?\[\/FILE\]/g, "")
     .replace(/\[TABLE:\w+\]\n[\s\S]*?\[\/TABLE\]/g, "")
-    .replace(/```\S+\n[\s\S]*?```/g, "")
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/\[METRIC:.*?\]\n[\s\S]*?\[\/METRIC\]/g, "")
     .trim();
 }
 
