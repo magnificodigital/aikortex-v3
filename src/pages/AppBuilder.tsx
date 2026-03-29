@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Eye, Code2, Database, RotateCw, ExternalLink, Github, Upload, Save,
-  LayoutDashboard, Settings, PanelLeftClose, PanelLeftOpen,
+  LayoutDashboard, Settings, PanelLeftClose, PanelLeftOpen, Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ChatPanel from "@/components/app-builder/ChatPanel";
