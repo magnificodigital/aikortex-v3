@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Phone, Bot, Send, BarChart3, Settings, Users, Calendar, MessageSquare, Home, ShoppingCart, FileText, Bell, Search, Globe, Zap, Monitor, Smartphone, List, Image, ArrowRight } from "lucide-react";
 import { useAppBuilder } from "@/contexts/AppBuilderContext";
 
