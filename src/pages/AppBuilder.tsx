@@ -5,9 +5,10 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Eye, Code2, Database, RotateCw, ExternalLink, Github, Upload, Save,
-  LayoutDashboard, Settings, PanelLeftClose, PanelLeftOpen,
+  LayoutDashboard, Settings, PanelLeftClose, PanelLeftOpen, Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import ChatPanel from "@/components/app-builder/ChatPanel";
 import FileTree from "@/components/app-builder/FileTree";
 import CodeEditor from "@/components/app-builder/CodeEditor";
@@ -38,6 +39,17 @@ const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
   const [showConfig, setShowConfig] = useState(false);
   const [saving, setSaving] = useState(false);
   const [chatCollapsed, setChatCollapsed] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
+
+  const finishRename = () => {
+    const trimmed = nameDraft.trim();
+    if (trimmed && trimmed !== appName) {
+      setAppName(trimmed);
+      toast.success("Projeto renomeado!");
+    }
+    setEditingName(false);
+  };
 
   useEffect(() => {
     if (!appId) return;
@@ -86,7 +98,25 @@ const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
               {chatCollapsed ? <PanelLeftOpen className="w-3.5 h-3.5" /> : <PanelLeftClose className="w-3.5 h-3.5" />}
             </Button>
             <div className="h-5 w-px bg-border" />
-            <span className="text-xs font-semibold text-foreground tracking-tight">{appName}</span>
+            {editingName ? (
+              <form onSubmit={(e) => { e.preventDefault(); finishRename(); }} className="flex items-center gap-1">
+                <Input
+                  autoFocus
+                  value={nameDraft}
+                  onChange={(e) => setNameDraft(e.target.value)}
+                  onBlur={finishRename}
+                  className="h-6 w-40 text-xs px-1.5 py-0"
+                />
+              </form>
+            ) : (
+              <button
+                className="text-xs font-semibold text-foreground tracking-tight hover:text-primary transition-colors cursor-text"
+                onClick={() => { setNameDraft(appName); setEditingName(true); }}
+                title="Clique para renomear"
+              >
+                {appName}
+              </button>
+            )}
             <span className="text-[10px] text-muted-foreground">— {channel === "whatsapp" ? "WhatsApp App" : "Web App"}</span>
           </div>
 
