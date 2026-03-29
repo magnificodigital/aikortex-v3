@@ -50,9 +50,46 @@ coluna3:TIPO
 
 ## PARA WHATSAPP APPS - Estrutura de arquivos:
 - /src/agents/ — agentes (main-agent.ts, qualifier.ts, scheduler.ts)
-- /src/handlers/ — webhooks e handlers
-- /src/integrations/ — APIs externas (whatsapp-api.ts)
-- /src/flows/ — WhatsApp Flows (formulários interativos)
+- /src/handlers/ — webhooks e handlers de mensagens
+- /src/integrations/ — WhatsApp Cloud API client (whatsapp-api.ts)
+- /src/flows/ — WhatsApp Flows (formulários interativos JSON)
+- /src/templates/ — templates de mensagem
+- /src/memory/ — gerenciamento de estado/sessão conversacional
+
+## WHATSAPP CLOUD API (v21.0) — REFERÊNCIA OBRIGATÓRIA
+O código gerado DEVE usar a API oficial do WhatsApp Business (Cloud API):
+- Base URL: https://graph.facebook.com/v21.0
+- Envio: POST /{phone_number_id}/messages
+- Auth: Bearer token no header Authorization
+
+### Tipos de mensagem suportados:
+1. **text** — { type: "text", text: { body: "mensagem" } }
+2. **interactive buttons** — type: "interactive", interactive.type: "button", max 3 botões
+3. **interactive list** — type: "interactive", interactive.type: "list", com sections e rows
+4. **template** — type: "template", template: { name, language: { code: "pt_BR" }, components }
+5. **image/video/audio/document** — type: "image|video|audio|document", com link e caption
+6. **location** — type: "location", com latitude, longitude, name, address
+7. **reaction** — type: "reaction", com message_id e emoji
+8. **contacts** — type: "contacts", array de contatos estruturados
+
+### Webhook (recebimento):
+- Endpoint GET para verificação (hub.mode, hub.verify_token, hub.challenge)
+- Endpoint POST para mensagens: body.entry[0].changes[0].value.messages[]
+- Tipos recebidos: text, image, video, audio, document, location, contacts, interactive, button, sticker, reaction
+
+### WhatsApp Flows (formulários interativos):
+- JSON-based screen definitions
+- Suporte a: TextInput, TextArea, DatePicker, RadioButtons, CheckboxGroup, Dropdown, OptIn
+- Navegação entre telas com data passing
+- Endpoint de dados para preenchimento dinâmico
+
+### Boas práticas:
+- Sempre gere o client wrapper (whatsapp-api.ts) que abstrai as chamadas
+- Use interactive buttons para <= 3 opções, lists para > 3
+- Templates para mensagens proativas (fora da janela de 24h)
+- Implemente gestão de estado/sessão para jornadas multi-etapa
+- Gere handlers separados por tipo de mensagem
+- Sempre inclua fallback para tipos não reconhecidos
 - /src/templates/ — templates de mensagem
 - /src/memory/ — gerenciamento de estado/sessão
 - /src/config.ts — configuração
