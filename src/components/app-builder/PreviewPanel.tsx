@@ -6,10 +6,9 @@ import { useAppBuilder } from "@/contexts/AppBuilderContext";
 
 function extractGreeting(files: { content: string }[]): string {
   for (const f of files) {
-    const match = f.content.match(/(?:greeting|saudação|olá|hello|bem.?vindo)[^"'`]*["'`]([^"'`]{5,80})["'`]/i);
+    // Only match explicit key-value assignments like greeting_message = "..."
+    const match = f.content.match(/(?:greeting_message|saudacao|welcome_message|greeting_text)\s*[=:]\s*["'`]([^"'`]{5,120})["'`]/i);
     if (match) return match[1];
-    const match2 = f.content.match(/sendMessage\([^,]+,\s*\{?\s*(?:text|body)\s*:\s*["'`]([^"'`]{5,80})["'`]/i);
-    if (match2) return match2[1];
   }
   return "Olá! 👋 Como posso ajudar você hoje?";
 }
