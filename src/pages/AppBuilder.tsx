@@ -86,7 +86,25 @@ const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
               {chatCollapsed ? <PanelLeftOpen className="w-3.5 h-3.5" /> : <PanelLeftClose className="w-3.5 h-3.5" />}
             </Button>
             <div className="h-5 w-px bg-border" />
-            <span className="text-xs font-semibold text-foreground tracking-tight">{appName}</span>
+            {editingName ? (
+              <form onSubmit={(e) => { e.preventDefault(); finishRename(); }} className="flex items-center gap-1">
+                <Input
+                  autoFocus
+                  value={nameDraft}
+                  onChange={(e) => setNameDraft(e.target.value)}
+                  onBlur={finishRename}
+                  className="h-6 w-40 text-xs px-1.5 py-0"
+                />
+              </form>
+            ) : (
+              <button
+                className="text-xs font-semibold text-foreground tracking-tight hover:text-primary transition-colors cursor-text"
+                onClick={() => { setNameDraft(appName); setEditingName(true); }}
+                title="Clique para renomear"
+              >
+                {appName}
+              </button>
+            )}
             <span className="text-[10px] text-muted-foreground">— {channel === "whatsapp" ? "WhatsApp App" : "Web App"}</span>
           </div>
 
