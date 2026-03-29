@@ -181,13 +181,23 @@ const WebPreview = () => {
   const { files, appName, isGenerating, dashboardMetrics } = useAppBuilder();
   const hasContent = files.length > 0;
 
-  const navItems = useMemo(() => extractNavItems(files), [files]);
+  const navItems = [
+    { label: "Dashboard", icon: BarChart3 },
+    { label: "Clientes", icon: Users },
+    { label: "Agenda", icon: Calendar },
+    { label: "Mensagens", icon: MessageSquare },
+    { label: "Configurações", icon: Settings },
+  ];
   const metrics = useMemo(() => {
     if (dashboardMetrics.length > 0) {
       return dashboardMetrics.slice(0, 4).map(m => ({ label: m.label, value: m.value, change: m.change }));
     }
-    return extractMetrics(files);
-  }, [files, dashboardMetrics]);
+    return [
+      { label: "Usuários", value: "0" },
+      { label: "Receita", value: "R$ 0" },
+      { label: "Conversão", value: "0%" },
+    ];
+  }, [dashboardMetrics]);
 
   const activeNav = navItems[0]?.label || "Dashboard";
 
