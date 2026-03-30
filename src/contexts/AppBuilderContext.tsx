@@ -157,6 +157,17 @@ function generateWhatsAppMetrics(): DashboardMetric[] {
 /* ── Provider ── */
 
 export function AppBuilderProvider({ children, initialChannel = "web", existingAppId }: { children: ReactNode; initialChannel?: "whatsapp" | "web"; existingAppId?: string | null }) {
+  const defaultWizardData: WizardData = {
+    prompt: "",
+    companyName: "",
+    appName: "",
+    tone: "professional_friendly",
+    language: "pt-BR",
+    introMessage: "",
+    maxMessages: 2,
+    onboarding: "soft",
+  };
+
   const [appId, setAppId] = useState<string | null>(existingAppId || null);
   const [state, setState] = useState<AppBuilderState>({
     channel: initialChannel,
@@ -167,6 +178,9 @@ export function AppBuilderProvider({ children, initialChannel = "web", existingA
     appName: "Meu App",
     isGenerating: false,
     wizardConfig: null,
+    chatMessages: [],
+    wizardStep: "describe",
+    wizardData: defaultWizardData,
   });
 
   const setChannel = useCallback((ch: "whatsapp" | "web") => setState(s => ({ ...s, channel: ch })), []);
