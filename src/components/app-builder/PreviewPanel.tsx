@@ -1,5 +1,9 @@
 import { useMemo, useState, useEffect } from "react";
-import { Phone, Bot, Send, BarChart3, Settings, Users, Calendar, MessageSquare, Search, Globe, Zap, Monitor, Smartphone, FileCode, Database, Layout, Code2, ArrowRight } from "lucide-react";
+import {
+  Phone, Bot, Send, BarChart3, Settings, Users, Calendar,
+  MessageSquare, Search, Globe, Zap, Monitor, Smartphone,
+  FileCode, Database, Layout, Code2, ArrowRight,
+} from "lucide-react";
 import { useAppBuilder, GeneratedFile } from "@/contexts/AppBuilderContext";
 import { Badge } from "@/components/ui/badge";
 
@@ -20,7 +24,6 @@ function extractStringsFromCode(code: string, pattern: RegExp): string[] {
 
 function extractGreeting(files: GeneratedFile[]): string {
   for (const f of files) {
-    // Look for greeting/intro messages in code
     const greetMatch = f.content.match(/(?:greeting|intro|saudação|welcome|olá|oi)[^"]*["'`]([^"'`]{10,}?)["'`]/i);
     if (greetMatch) return greetMatch[1];
     const msgMatch = f.content.match(/sendText\([^,]+,\s*["'`]([^"'`]{10,}?)["'`]/i);
@@ -31,7 +34,7 @@ function extractGreeting(files: GeneratedFile[]): string {
 
 function extractBotName(files: GeneratedFile[], fallback: string): string {
   for (const f of files) {
-    const match = f.content.match(/botName[:\s=]*["'`]([^"'`]+)["'`]/i) 
+    const match = f.content.match(/botName[:\s=]*["'`]([^"'`]+)["'`]/i)
       || f.content.match(/name[:\s=]*["'`]([^"'`]+)["'`]/i);
     if (match && match[1].length > 2 && match[1].length < 40) return match[1];
   }
@@ -44,7 +47,6 @@ function extractQuickReplies(files: GeneratedFile[]): string[] {
     if (match) {
       return extractStringsFromCode(match[1], /["'`]([^"'`]+)["'`]/g).slice(0, 4);
     }
-    // Also try to find sendButtons calls
     const btnMatch = f.content.match(/sendButtons\([^,]+,[^,]+,\s*\[([\s\S]*?)\]/i);
     if (btnMatch) {
       return extractStringsFromCode(btnMatch[1], /["'`]([^"'`]+)["'`]/g).slice(0, 4);
@@ -59,7 +61,6 @@ function extractStages(files: GeneratedFile[]): string[] {
     if (match) {
       return extractStringsFromCode(match[1], /["'`]([^"'`]+)["'`]/g).slice(0, 6);
     }
-    // Try questions array for qualifier
     const qMatch = f.content.match(/questions\s*=\s*\[([\s\S]*?)\]/i);
     if (qMatch) {
       return extractStringsFromCode(qMatch[1], /["'`]([^"'`]{5,})["'`]/g).slice(0, 5);
@@ -70,10 +71,8 @@ function extractStages(files: GeneratedFile[]): string[] {
 
 function extractNavItems(files: GeneratedFile[]): string[] {
   for (const f of files) {
-    // Look for navigation/route definitions
     const routeMatches = extractStringsFromCode(f.content, /path[:\s=]*["'`]\/([^"'`]+)["'`]/g);
     if (routeMatches.length > 1) return routeMatches.map(r => r.charAt(0).toUpperCase() + r.slice(1)).slice(0, 6);
-    // Look for nav items in sidebar/nav components
     const navMatches = extractStringsFromCode(f.content, /(?:label|title|text)[:\s=]*["'`]([^"'`]+)["'`]/g);
     if (navMatches.length > 1) return navMatches.slice(0, 6);
   }
@@ -98,12 +97,13 @@ function extractMetricsFromCode(files: GeneratedFile[]): { label: string; value:
 }
 
 /* ── Mock bot responses from real file content ── */
-function buildMockResponses(files: GeneratedFile[]): Record<string, string> {
+function buildMockResponses(files: GeneratedFile[], wizardIntro?: string): Record<string, string> {
   const defaults: Record<string, string> = {
-    default: "Entendi! Posso te ajudar com isso. O que mais gostaria de saber?",
+    default: wizardIntro
+      ? "Entendi! Posso te ajudar com isso. O que mais gostaria de saber?"
+      : "Entendi! Posso te ajudar com isso. O que mais gostaria de saber?",
   };
-  
-  // Extract responses from agent files
+
   for (const f of files) {
     const responseMatches = f.content.matchAll(/(?:sendText|reply|respond)\s*\([^,]*,\s*["'`]([^"'`]{10,})["'`]/gi);
     for (const m of responseMatches) {
@@ -112,37 +112,64 @@ function buildMockResponses(files: GeneratedFile[]): Record<string, string> {
       defaults[keyword] = text;
     }
   }
-  
+
   return defaults;
 }
+
+const toneEmoji: Record<string, string> = {
+  professional_friendly: "🤝",
+  formal: "👔",
+  casual: "😄",
+  empathetic: "💙",
+  direct: "⚡",
+};
+
+const toneLabels: Record<string, string> = {
+  professional_friendly: "Profissional e Amigável",
+  formal: "Formal",
+  casual: "Casual e Descontraído",
+  empathetic: "Empático e Acolhedor",
+  direct: "Direto e Objetivo",
+};
 
 /* ── WhatsApp Preview ── */
 
 const WhatsAppPreview = () => {
-  const { files, appName, isGenerating, tables } = useAppBuilder();
+  const { files, appName, isGenerating, tables, wizardData, wizardConfig, wizardStep } = useAppBuilder();
   const hasContent = files.length > 0;
+  const isConfiguring = wizardStep !== "done";
 
-  // Extract real data from generated files
-  const greeting = useMemo(() => extractGreeting(files) || `Olá! 👋 Sou o ${appName}. Como posso ajudar?`, [files, appName]);
-  const botName = useMemo(() => extractBotName(files, appName), [files, appName]);
+  // Prefer wizard data, then file extraction, then defaults
+  const effectiveName = wizardData.appName || wizardConfig?.appName || appName;
+  const effectiveIntro = wizardData.introMessage || wizardConfig?.introMessage || "";
+  const effectiveTone = wizardData.tone || wizardConfig?.tone || "professional_friendly";
+
+  const greeting = useMemo(() => {
+    if (effectiveIntro) return effectiveIntro;
+    const fromFiles = extractGreeting(files);
+    return fromFiles || `Olá! 👋 Sou o ${effectiveName}. Como posso ajudar?`;
+  }, [files, effectiveName, effectiveIntro]);
+
+  const botName = useMemo(() => {
+    if (effectiveName && effectiveName !== "Meu App") return effectiveName;
+    return extractBotName(files, effectiveName);
+  }, [files, effectiveName]);
+
   const quickReplies = useMemo(() => {
     const extracted = extractQuickReplies(files);
     return extracted.length > 0 ? extracted : ["Agendar", "Preços", "Suporte"];
   }, [files]);
-  const stages = useMemo(() => {
-    const extracted = extractStages(files);
-    return extracted.length > 0 ? extracted : [];
-  }, [files]);
-  const mockResponses = useMemo(() => buildMockResponses(files), [files]);
+
+  const stages = useMemo(() => extractStages(files), [files]);
+  const mockResponses = useMemo(() => buildMockResponses(files, effectiveIntro), [files, effectiveIntro]);
 
   const [chatMessages, setChatMessages] = useState<{ role: "user" | "bot"; text: string; time: string }[]>([]);
   const [testInput, setTestInput] = useState("");
   const [botTyping, setBotTyping] = useState(false);
 
-  // Reset chat when files change significantly
   useEffect(() => {
     setChatMessages([]);
-  }, [files.length]);
+  }, [files.length, effectiveIntro, botName]);
 
   const now = () => {
     const d = new Date();
@@ -166,6 +193,9 @@ const WhatsAppPreview = () => {
       setChatMessages(prev => [...prev, { role: "bot", text: getBotResponse(msg), time: now() }]);
     }, 800 + Math.random() * 600);
   };
+
+  // Show preview even during wizard configuration
+  const showContent = hasContent || isConfiguring;
 
   return (
     <div className="flex-1 flex items-center justify-center bg-muted/5 p-4 gap-6">
@@ -191,7 +221,7 @@ const WhatsAppPreview = () => {
 
           {/* Chat area */}
           <div className="bg-[#ece5dd] dark:bg-[#0b141a] p-4 space-y-3 min-h-[380px] max-h-[440px] overflow-y-auto">
-            {hasContent ? (
+            {showContent ? (
               <>
                 {/* Greeting bubble */}
                 <div className="flex gap-2 animate-in fade-in slide-in-from-left-2 duration-300">
@@ -200,6 +230,15 @@ const WhatsAppPreview = () => {
                     <p className="text-[9px] text-muted-foreground text-right mt-1">10:30</p>
                   </div>
                 </div>
+
+                {/* Tone badge during config */}
+                {isConfiguring && effectiveTone && (
+                  <div className="flex justify-center animate-in fade-in duration-300">
+                    <span className="px-2.5 py-1 rounded-full bg-white/80 dark:bg-[#202c33]/80 text-[9px] text-muted-foreground border border-border/30 shadow-sm">
+                      {toneEmoji[effectiveTone] || "🤖"} Tom: {toneLabels[effectiveTone] || effectiveTone}
+                    </span>
+                  </div>
+                )}
 
                 {/* Quick reply buttons */}
                 {chatMessages.length === 0 && quickReplies.length > 0 && (
@@ -285,33 +324,79 @@ const WhatsAppPreview = () => {
         </div>
 
         {/* Bottom info badge */}
-        {hasContent && (
+        {(hasContent || isConfiguring) && (
           <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-card border border-border rounded-full px-3 py-1 shadow-lg">
             <span className="text-[10px] text-muted-foreground flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-              {files.length} arquivo(s){stages.length > 0 ? ` • ${stages.length} etapas` : ""}{tables.length > 0 ? ` • ${tables.length} tabelas` : ""}
+              {hasContent
+                ? `${files.length} arquivo(s)${stages.length > 0 ? ` • ${stages.length} etapas` : ""}${tables.length > 0 ? ` • ${tables.length} tabelas` : ""}`
+                : `Configurando...`
+              }
             </span>
           </div>
         )}
       </div>
 
-      {/* Right panel: generated structure overview */}
-      {hasContent && (
+      {/* Right panel: config summary during wizard OR generated structure */}
+      {(hasContent || isConfiguring) && (
         <div className="w-[240px] space-y-3 animate-in fade-in slide-in-from-right-4 duration-500">
+          {/* Wizard config summary */}
+          {isConfiguring && (
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-2">
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-primary uppercase tracking-wider">
+                <Zap className="w-3 h-3" /> Configuração Atual
+              </div>
+              <div className="space-y-1.5 text-[10px]">
+                {wizardData.appName && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Nome</span>
+                    <span className="text-foreground font-medium">{wizardData.appName}</span>
+                  </div>
+                )}
+                {wizardData.companyName && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Empresa</span>
+                    <span className="text-foreground font-medium">{wizardData.companyName}</span>
+                  </div>
+                )}
+                {wizardData.tone && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Tom</span>
+                    <span className="text-foreground font-medium">{toneLabels[wizardData.tone] || wizardData.tone}</span>
+                  </div>
+                )}
+                {wizardData.language && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Idioma</span>
+                    <span className="text-foreground font-medium">{wizardData.language}</span>
+                  </div>
+                )}
+                {wizardData.introMessage && (
+                  <div>
+                    <span className="text-muted-foreground">Intro:</span>
+                    <p className="text-foreground/80 mt-0.5 italic">"{wizardData.introMessage.slice(0, 60)}{wizardData.introMessage.length > 60 ? "..." : ""}"</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Files generated */}
-          <div className="rounded-xl border border-border bg-card/60 p-3 space-y-2">
-            <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-              <FileCode className="w-3 h-3" /> Arquivos
+          {hasContent && (
+            <div className="rounded-xl border border-border bg-card/60 p-3 space-y-2">
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <FileCode className="w-3 h-3" /> Arquivos
+              </div>
+              <div className="space-y-1 max-h-[140px] overflow-y-auto">
+                {files.map((f, i) => (
+                  <div key={i} className="flex items-center gap-2 text-[10px] text-foreground/80 py-0.5">
+                    <Code2 className="w-3 h-3 text-primary/60 shrink-0" />
+                    <span className="truncate">{f.name}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="space-y-1 max-h-[140px] overflow-y-auto">
-              {files.map((f, i) => (
-                <div key={i} className="flex items-center gap-2 text-[10px] text-foreground/80 py-0.5">
-                  <Code2 className="w-3 h-3 text-primary/60 shrink-0" />
-                  <span className="truncate">{f.name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          )}
 
           {/* Tables */}
           {tables.length > 0 && (
@@ -362,10 +447,12 @@ const WhatsAppPreview = () => {
 /* ── Web Preview ── */
 
 const WebPreview = () => {
-  const { files, appName, isGenerating, dashboardMetrics, tables } = useAppBuilder();
+  const { files, appName, isGenerating, dashboardMetrics, tables, wizardData, wizardConfig, wizardStep } = useAppBuilder();
   const hasContent = files.length > 0;
+  const isConfiguring = wizardStep !== "done";
 
-  // Extract real nav items from generated files
+  const effectiveName = wizardData.appName || wizardConfig?.appName || appName;
+
   const navItems = useMemo(() => {
     const extracted = extractNavItems(files);
     if (extracted.length > 1) {
@@ -402,9 +489,9 @@ const WebPreview = () => {
   }, [dashboardMetrics, files]);
 
   const activeNav = navItems[0]?.label || "Dashboard";
-
-  // Extract page names from files
   const pageFiles = useMemo(() => files.filter(f => f.path.includes("/pages/") || f.path.includes("Page")), [files]);
+
+  const showContent = hasContent || isConfiguring;
 
   return (
     <div className="flex-1 flex items-center justify-center bg-muted/5 p-4 gap-6">
@@ -419,18 +506,20 @@ const WebPreview = () => {
           </div>
           <div className="flex-1 mx-8">
             <div className="bg-background rounded-md px-3 py-1 text-[10px] text-muted-foreground text-center border border-border/50">
-              🔒 {appName.toLowerCase().replace(/\s+/g, "")}.aikortex.com
+              🔒 {effectiveName.toLowerCase().replace(/\s+/g, "")}.aikortex.com
             </div>
           </div>
         </div>
 
-        {hasContent ? (
+        {showContent ? (
           <div className="flex h-[420px]">
             {/* Sidebar */}
             <div className="w-[160px] border-r border-border bg-card/80 p-3 space-y-1">
               <div className="px-2 py-2 mb-2">
-                <p className="text-xs font-semibold text-foreground">{appName}</p>
-                <p className="text-[9px] text-muted-foreground">Painel de Gestão</p>
+                <p className="text-xs font-semibold text-foreground">{effectiveName}</p>
+                <p className="text-[9px] text-muted-foreground">
+                  {wizardData.companyName || "Painel de Gestão"}
+                </p>
               </div>
               {navItems.map((item, idx) => (
                 <div
@@ -450,7 +539,9 @@ const WebPreview = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-sm font-semibold text-foreground">{activeNav}</h2>
-                  <p className="text-[10px] text-muted-foreground">Visão geral do sistema</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {isConfiguring ? "Configurando seu app..." : "Visão geral do sistema"}
+                  </p>
                 </div>
                 {isGenerating && (
                   <div className="flex items-center gap-1.5 text-[10px] text-primary animate-pulse">
@@ -459,6 +550,26 @@ const WebPreview = () => {
                   </div>
                 )}
               </div>
+
+              {/* Wizard config banner when configuring */}
+              {isConfiguring && wizardData.prompt && (
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-1.5 animate-in fade-in duration-300">
+                  <p className="text-[10px] font-semibold text-primary">📝 Descrição do App</p>
+                  <p className="text-[10px] text-foreground/80 leading-relaxed">
+                    {wizardData.prompt.slice(0, 150)}{wizardData.prompt.length > 150 ? "..." : ""}
+                  </p>
+                  {wizardData.tone && (
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge variant="secondary" className="text-[8px] h-4">
+                        {toneEmoji[wizardData.tone]} {toneLabels[wizardData.tone] || wizardData.tone}
+                      </Badge>
+                      <Badge variant="secondary" className="text-[8px] h-4">
+                        🌐 {wizardData.language}
+                      </Badge>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Metrics */}
               <div className={`grid gap-3 ${metrics.length <= 3 ? "grid-cols-3" : "grid-cols-4"}`}>
@@ -485,7 +596,7 @@ const WebPreview = () => {
                 </div>
               </div>
 
-              {/* Dynamic table based on real tables */}
+              {/* Dynamic table */}
               {tables.length > 0 && (
                 <div className="rounded-xl border border-border bg-card/50 overflow-hidden">
                   <div className="px-4 py-2.5 border-b border-border flex items-center justify-between">
@@ -496,7 +607,6 @@ const WebPreview = () => {
                     </div>
                   </div>
                   <div className="px-4 py-1">
-                    {/* Column headers */}
                     <div className="flex items-center gap-3 py-1.5 border-b border-border/50">
                       {tables[0].columns.slice(0, 4).map(col => (
                         <div key={col.name} className="flex-1">
@@ -504,7 +614,6 @@ const WebPreview = () => {
                         </div>
                       ))}
                     </div>
-                    {/* Skeleton rows */}
                     {[1, 2, 3].map(i => (
                       <div key={i} className="flex items-center gap-3 py-2">
                         {tables[0].columns.slice(0, 4).map((col, ci) => (
@@ -536,22 +645,53 @@ const WebPreview = () => {
         )}
       </div>
 
-      {/* Right panel: structure overview */}
-      {hasContent && (
+      {/* Right panel */}
+      {(hasContent || isConfiguring) && (
         <div className="w-[220px] space-y-3 animate-in fade-in slide-in-from-right-4 duration-500">
-          <div className="rounded-xl border border-border bg-card/60 p-3 space-y-2">
-            <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-              <FileCode className="w-3 h-3" /> Arquivos ({files.length})
+          {/* Wizard config summary */}
+          {isConfiguring && (
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-2">
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-primary uppercase tracking-wider">
+                <Zap className="w-3 h-3" /> Configuração
+              </div>
+              <div className="space-y-1.5 text-[10px]">
+                {wizardData.appName && wizardData.appName !== "Meu App" && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Nome</span>
+                    <span className="text-foreground font-medium">{wizardData.appName}</span>
+                  </div>
+                )}
+                {wizardData.companyName && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Empresa</span>
+                    <span className="text-foreground font-medium">{wizardData.companyName}</span>
+                  </div>
+                )}
+                {wizardData.tone && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Tom</span>
+                    <span className="text-foreground font-medium">{toneLabels[wizardData.tone] || wizardData.tone}</span>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="space-y-1 max-h-[160px] overflow-y-auto">
-              {files.map((f, i) => (
-                <div key={i} className="flex items-center gap-2 text-[10px] text-foreground/80 py-0.5">
-                  <Code2 className="w-3 h-3 text-primary/60 shrink-0" />
-                  <span className="truncate">{f.name}</span>
-                </div>
-              ))}
+          )}
+
+          {hasContent && (
+            <div className="rounded-xl border border-border bg-card/60 p-3 space-y-2">
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <FileCode className="w-3 h-3" /> Arquivos ({files.length})
+              </div>
+              <div className="space-y-1 max-h-[160px] overflow-y-auto">
+                {files.map((f, i) => (
+                  <div key={i} className="flex items-center gap-2 text-[10px] text-foreground/80 py-0.5">
+                    <Code2 className="w-3 h-3 text-primary/60 shrink-0" />
+                    <span className="truncate">{f.name}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {tables.length > 0 && (
             <div className="rounded-xl border border-border bg-card/60 p-3 space-y-2">
