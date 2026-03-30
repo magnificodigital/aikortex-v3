@@ -641,8 +641,8 @@ const AppConfigPanel = ({ channel, onChannelChange }: AppConfigPanelProps) => {
     <div className="w-[340px] min-w-[300px] border-l border-border flex flex-col bg-card/30 overflow-hidden">
       {/* Header */}
       <div className="px-3 py-2.5 border-b border-border shrink-0">
-        <div className="flex items-center justify-between mb-2.5">
-          <h2 className="text-sm font-semibold text-foreground">Configurações</h2>
+        <div className="flex items-center justify-between gap-2 mb-2.5">
+          <h2 className="text-sm font-semibold text-foreground truncate min-w-0">Configurações</h2>
           <Badge variant="outline" className="text-[10px] gap-1 h-5">
             {channel === "whatsapp" ? <Phone className="w-3 h-3 text-emerald-500" /> : <Monitor className="w-3 h-3 text-primary" />}
             {channel === "whatsapp" ? "WhatsApp" : "Web"}
