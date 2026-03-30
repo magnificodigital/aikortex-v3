@@ -69,8 +69,7 @@ const Apps = () => {
   const filtered = showcaseApps.filter((a) => a.channels.includes(channel));
 
   const handleUseTemplate = (app: typeof showcaseApps[0]) => {
-    const prompt = `Crie um app semelhante ao ${app.name}: ${app.desc}`;
-    navigate("/app-builder", { state: { initialPrompt: prompt, channel: app.channels[0] } });
+    navigate("/create-app", { state: { initialPrompt: app.desc, channel: app.channels[0] } });
   };
 
   const handleEditApp = (app: SavedApp) => {
@@ -105,7 +104,7 @@ const Apps = () => {
             </p>
           </div>
           <Button
-            onClick={() => navigate("/app-builder", { state: { channel } })}
+            onClick={() => navigate("/create-app", { state: { channel } })}
             className="gap-2 rounded-full"
           >
             <Plus className="w-4 h-4" /> Novo App

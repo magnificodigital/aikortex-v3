@@ -34,6 +34,7 @@ const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const ClientRegistration = lazy(() => import("./pages/ClientRegistration"));
 const AppBuilder = lazy(() => import("./pages/AppBuilder"));
 const Apps = lazy(() => import("./pages/Apps"));
+const CreateApp = lazy(() => import("./pages/CreateApp"));
 const Templates = lazy(() => import("./pages/Templates"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Meetings = lazy(() => import("./pages/Meetings"));
@@ -65,6 +66,7 @@ const App = () => (
               <Route path="/home" element={<P><Home /></P>} />
               <Route path="/apps" element={<P><Apps /></P>} />
               <Route path="/app-builder" element={<P><AppBuilder /></P>} />
+              <Route path="/create-app" element={<P><CreateApp /></P>} />
               <Route path="/templates" element={<P><Templates /></P>} />
               <Route path="/dashboard" element={<P><Index /></P>} />
               <Route path="/cadastro-cliente/:token" element={<ClientRegistration />} />
