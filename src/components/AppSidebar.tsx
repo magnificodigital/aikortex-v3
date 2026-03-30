@@ -139,7 +139,7 @@ const AppSidebar = () => {
   };
 
   const linkClasses = (active: boolean) =>
-    `flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+    `flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors overflow-hidden ${
       active
         ? "bg-sidebar-accent text-primary font-medium"
         : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground"
