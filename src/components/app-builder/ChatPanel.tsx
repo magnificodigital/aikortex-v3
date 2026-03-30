@@ -171,6 +171,7 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
       setChatMessages(update);
     }
   }, [setChatMessages]);
+  const messages = chatMessages;
 
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
