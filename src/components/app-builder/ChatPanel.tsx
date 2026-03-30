@@ -185,7 +185,7 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
 
   const {
     channel, initializeProject, addFile, addTable, addTerminalLog,
-    setIsGenerating, setAppName,
+    setIsGenerating, setAppName, setWizardConfig,
   } = useAppBuilder();
 
   // If initialPrompt is provided, skip directly to describe step completion
