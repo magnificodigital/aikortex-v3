@@ -67,7 +67,7 @@ const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
     return () => {
       if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     };
-  }, [files, tables, appName, channel, user, isGenerating]);
+  }, [files, tables, appName, channel, chatMessages, user, isGenerating]);
 
   const finishRename = () => {
     const trimmed = nameDraft.trim();
