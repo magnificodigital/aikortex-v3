@@ -145,6 +145,7 @@ export function AppBuilderProvider({ children, initialChannel = "web", existingA
     dashboardMetrics: [],
     appName: "Meu App",
     isGenerating: false,
+    wizardConfig: null,
   });
 
   const setChannel = useCallback((ch: "whatsapp" | "web") => setState(s => ({ ...s, channel: ch })), []);
