@@ -105,7 +105,7 @@ const Apps = () => {
             </p>
           </div>
           <Button
-            onClick={() => navigate("/app-builder", { state: { channel } })}
+            onClick={() => navigate("/create-app", { state: { channel } })}
             className="gap-2 rounded-full"
           >
             <Plus className="w-4 h-4" /> Novo App
