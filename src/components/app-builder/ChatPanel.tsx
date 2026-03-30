@@ -310,6 +310,9 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
     };
 
     try {
+      // Detect patch mode: if we already have files generated, use incremental mode
+      const hasPriorFiles = processedBlocksRef.current.size > 0 || messages.length > 2;
+
       const appContext: Record<string, string> = {
         app_type: channel,
         app_name: wizardData.appName || "Meu App",
@@ -320,6 +323,7 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
         max_turn_messages: String(wizardData.maxMessages || 2),
         onboarding_level: wizardData.onboarding || "soft",
         business_context: wizardData.companyName || "",
+        is_patch: hasPriorFiles ? "true" : "false",
       };
 
       await streamChat({

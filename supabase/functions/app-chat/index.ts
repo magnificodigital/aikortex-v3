@@ -182,7 +182,8 @@ Trate como um SaaS visual, portal, dashboard ou aplicação web funcional.
 
 Se a ideia estiver incompleta, assuma a interpretação mais útil e gere uma V1 sólida pronta para expansão.
 
-Construa sempre com foco em: funcionalidade + coerência + renderização + evolução futura.`;
+Construa sempre com foco em: funcionalidade + coerência + renderização + evolução futura.
+${buildPatchBlock(isPatch)}`;
 }
 
 serve(async (req) => {
