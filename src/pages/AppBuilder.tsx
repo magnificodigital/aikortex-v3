@@ -31,7 +31,7 @@ const tabs: { id: TabId; label: string; icon: typeof Eye }[] = [
 
 const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
   const navigate = useNavigate();
-  const { channel, setChannel, saveApp, appName, appId, files, tables, isGenerating, setFiles, setTables, setAppName, setChannel: setCtxChannel } = useAppBuilder();
+  const { channel, setChannel, saveApp, appName, appId, files, tables, isGenerating, chatMessages, setFiles, setTables, setAppName, setChannel: setCtxChannel, setChatMessages, setWizardStep, setWizardData, setWizardConfig } = useAppBuilder();
   const { user } = useAuth();
 
   const [activeTab, setActiveTab] = useState<TabId>("preview");
@@ -67,7 +67,7 @@ const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
     return () => {
       if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     };
-  }, [files, tables, appName, channel, user, isGenerating]);
+  }, [files, tables, appName, channel, chatMessages, user, isGenerating]);
 
   const finishRename = () => {
     const trimmed = nameDraft.trim();
@@ -91,6 +91,14 @@ const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
         setCtxChannel(data.channel as "whatsapp" | "web");
         if (Array.isArray(data.files)) setFiles(data.files as any);
         if (Array.isArray(data.tables_schema)) setTables(data.tables_schema as any);
+        // Restore chat history and wizard state from config
+        const cfg = data.config as any;
+        if (cfg && typeof cfg === "object") {
+          if (Array.isArray(cfg.chatMessages)) setChatMessages(cfg.chatMessages);
+          if (cfg.wizardStep) setWizardStep(cfg.wizardStep);
+          if (cfg.wizardData) setWizardData(cfg.wizardData);
+          if (cfg.wizardConfig) setWizardConfig(cfg.wizardConfig);
+        }
       });
   }, [appId]);
 

@@ -37,6 +37,21 @@ export interface WizardConfig {
   onboarding: "none" | "soft" | "strict";
 }
 
+export type ChatMessage = { role: "user" | "assistant"; content: string };
+
+export type WizardStepId = "describe" | "personalize" | "calibrate" | "create" | "done";
+
+export interface WizardData {
+  prompt: string;
+  companyName: string;
+  appName: string;
+  tone: string;
+  language: string;
+  introMessage: string;
+  maxMessages: number;
+  onboarding: "none" | "soft" | "strict";
+}
+
 export interface AppBuilderState {
   channel: "whatsapp" | "web";
   files: GeneratedFile[];
@@ -46,6 +61,9 @@ export interface AppBuilderState {
   appName: string;
   isGenerating: boolean;
   wizardConfig: WizardConfig | null;
+  chatMessages: ChatMessage[];
+  wizardStep: WizardStepId;
+  wizardData: WizardData;
 }
 
 interface AppBuilderContextType extends AppBuilderState {
@@ -59,6 +77,9 @@ interface AppBuilderContextType extends AppBuilderState {
   setAppName: (name: string) => void;
   setIsGenerating: (v: boolean) => void;
   setWizardConfig: (config: WizardConfig) => void;
+  setChatMessages: (msgs: ChatMessage[]) => void;
+  setWizardStep: (step: WizardStepId) => void;
+  setWizardData: (data: WizardData) => void;
   initializeProject: (channel: "whatsapp" | "web", prompt: string) => void;
   saveApp: (userId: string) => Promise<string | null>;
   appId: string | null;
@@ -136,6 +157,17 @@ function generateWhatsAppMetrics(): DashboardMetric[] {
 /* ── Provider ── */
 
 export function AppBuilderProvider({ children, initialChannel = "web", existingAppId }: { children: ReactNode; initialChannel?: "whatsapp" | "web"; existingAppId?: string | null }) {
+  const defaultWizardData: WizardData = {
+    prompt: "",
+    companyName: "",
+    appName: "",
+    tone: "professional_friendly",
+    language: "pt-BR",
+    introMessage: "",
+    maxMessages: 2,
+    onboarding: "soft",
+  };
+
   const [appId, setAppId] = useState<string | null>(existingAppId || null);
   const [state, setState] = useState<AppBuilderState>({
     channel: initialChannel,
@@ -146,6 +178,9 @@ export function AppBuilderProvider({ children, initialChannel = "web", existingA
     appName: "Meu App",
     isGenerating: false,
     wizardConfig: null,
+    chatMessages: [],
+    wizardStep: "describe",
+    wizardData: defaultWizardData,
   });
 
   const setChannel = useCallback((ch: "whatsapp" | "web") => setState(s => ({ ...s, channel: ch })), []);
@@ -173,6 +208,9 @@ export function AppBuilderProvider({ children, initialChannel = "web", existingA
   const setDashboardMetrics = useCallback((metrics: DashboardMetric[]) => setState(s => ({ ...s, dashboardMetrics: metrics })), []);
   const setAppName = useCallback((name: string) => setState(s => ({ ...s, appName: name })), []);
   const setIsGenerating = useCallback((v: boolean) => setState(s => ({ ...s, isGenerating: v })), []);
+  const setChatMessages = useCallback((msgs: ChatMessage[]) => setState(s => ({ ...s, chatMessages: msgs })), []);
+  const setWizardStep = useCallback((step: WizardStepId) => setState(s => ({ ...s, wizardStep: step })), []);
+  const setCtxWizardData = useCallback((data: WizardData) => setState(s => ({ ...s, wizardData: data })), []);
   const setWizardConfig = useCallback((config: WizardConfig) => setState(s => ({ ...s, wizardConfig: config })), []);
 
   const initializeProject = useCallback((channel: "whatsapp" | "web", prompt: string) => {
@@ -202,6 +240,13 @@ export function AppBuilderProvider({ children, initialChannel = "web", existingA
   }, []);
 
   const saveApp = useCallback(async (userId: string): Promise<string | null> => {
+    const configData = {
+      chatMessages: state.chatMessages,
+      wizardStep: state.wizardStep,
+      wizardData: state.wizardData,
+      wizardConfig: state.wizardConfig,
+    };
+
     const payload = {
       user_id: userId,
       name: state.appName,
@@ -209,6 +254,7 @@ export function AppBuilderProvider({ children, initialChannel = "web", existingA
       channel: state.channel,
       files: JSON.parse(JSON.stringify(state.files)),
       tables_schema: JSON.parse(JSON.stringify(state.tables)),
+      config: JSON.parse(JSON.stringify(configData)),
       status: 'draft',
     };
 
@@ -236,7 +282,9 @@ export function AppBuilderProvider({ children, initialChannel = "web", existingA
       ...state,
       setChannel, addFile, setFiles, addTable, setTables,
       addTerminalLog, setDashboardMetrics, setAppName,
-      setIsGenerating, setWizardConfig, initializeProject, saveApp, appId, setAppId,
+      setIsGenerating, setWizardConfig, setChatMessages, setWizardStep,
+      setWizardData: setCtxWizardData,
+      initializeProject, saveApp, appId, setAppId,
     }}>
       {children}
     </AppBuilderContext.Provider>

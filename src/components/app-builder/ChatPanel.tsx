@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
-import { useAppBuilder } from "@/contexts/AppBuilderContext";
+import { useAppBuilder, type ChatMessage } from "@/contexts/AppBuilderContext";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -154,7 +154,25 @@ interface ChatPanelProps {
 }
 
 const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
-  const [messages, setMessages] = useState<Msg[]>([]);
+  const {
+    channel, initializeProject, addFile, addTable, addTerminalLog,
+    setIsGenerating, setAppName, setWizardConfig,
+    chatMessages, setChatMessages,
+    wizardStep: ctxWizardStep, setWizardStep: setCtxWizardStep,
+    wizardData: ctxWizardData, setWizardData: setCtxWizardData,
+  } = useAppBuilder();
+
+  const messagesRef = useRef(chatMessages);
+  messagesRef.current = chatMessages;
+  const setMessages = useCallback((update: ChatMessage[] | ((prev: ChatMessage[]) => ChatMessage[])) => {
+    if (typeof update === "function") {
+      setChatMessages(update(messagesRef.current));
+    } else {
+      setChatMessages(update);
+    }
+  }, [setChatMessages]);
+  const messages = chatMessages;
+
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [toolsUsed, setToolsUsed] = useState(0);
@@ -166,27 +184,30 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
   const initializedProject = useRef(false);
   const processedBlocksRef = useRef(new Set<string>());
 
-  // Wizard state
-  const [wizardStep, setWizardStep] = useState<WizardStep>("describe");
-  const [wizardData, setWizardData] = useState({
-    prompt: "",
-    companyName: "",
-    appName: "",
-    tone: "professional_friendly",
-    language: "pt-BR",
-    introMessage: "",
-    maxMessages: 2,
-    onboarding: "soft" as "none" | "soft" | "strict",
-  });
+  // Wizard state — synced with context
+  const wizardStep = ctxWizardStep;
+  const setWizardStep = setCtxWizardStep;
+  const wizardData = ctxWizardData;
+  const setWizardData = (updater: ((prev: typeof ctxWizardData) => typeof ctxWizardData) | typeof ctxWizardData) => {
+    if (typeof updater === "function") {
+      setCtxWizardData(updater(ctxWizardData));
+    } else {
+      setCtxWizardData(updater);
+    }
+  };
   const [calibrating, setCalibrating] = useState(false);
   const [calibrationEvents, setCalibrationEvents] = useState<CalibrationEvent[]>([]);
   const [calibrationDone, setCalibrationDone] = useState(false);
   const [creating, setCreating] = useState(false);
 
-  const {
-    channel, initializeProject, addFile, addTable, addTerminalLog,
-    setIsGenerating, setAppName, setWizardConfig,
-  } = useAppBuilder();
+
+  // If loading existing app that already went through wizard, mark as initialized
+  useEffect(() => {
+    if (ctxWizardStep === "done" && chatMessages.length > 0) {
+      initializedProject.current = true;
+      sentInitial.current = true;
+    }
+  }, []);
 
   // If initialPrompt is provided, skip directly to describe step completion
   useEffect(() => {
