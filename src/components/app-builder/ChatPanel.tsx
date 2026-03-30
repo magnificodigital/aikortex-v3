@@ -192,10 +192,6 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
   const [calibrationDone, setCalibrationDone] = useState(false);
   const [creating, setCreating] = useState(false);
 
-  const {
-    channel, initializeProject, addFile, addTable, addTerminalLog,
-    setIsGenerating, setAppName, setWizardConfig,
-  } = useAppBuilder();
 
   // If initialPrompt is provided, skip directly to describe step completion
   useEffect(() => {
