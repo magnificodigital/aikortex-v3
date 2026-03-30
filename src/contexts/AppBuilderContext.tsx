@@ -254,7 +254,7 @@ export function AppBuilderProvider({ children, initialChannel = "web", existingA
       channel: state.channel,
       files: JSON.parse(JSON.stringify(state.files)),
       tables_schema: JSON.parse(JSON.stringify(state.tables)),
-      config: configData,
+      config: JSON.parse(JSON.stringify(configData)),
       status: 'draft',
     };
 
