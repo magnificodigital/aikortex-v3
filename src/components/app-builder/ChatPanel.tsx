@@ -96,15 +96,15 @@ function stripStructuredBlocks(content: string): string {
 /* ── Streaming ── */
 
 async function streamChat({
-  messages, onDelta, onDone,
-}: { messages: Msg[]; onDelta: (t: string) => void; onDone: () => void }) {
+  messages, onDelta, onDone, appContext,
+}: { messages: Msg[]; onDelta: (t: string) => void; onDone: () => void; appContext?: Record<string, string> }) {
   const resp = await fetch(CHAT_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
     },
-    body: JSON.stringify({ messages }),
+    body: JSON.stringify({ messages, appContext }),
   });
   if (resp.status === 429) { toast.error("Limite de requisições excedido."); onDone(); return; }
   if (resp.status === 402) { toast.error("Créditos insuficientes."); onDone(); return; }
@@ -310,8 +310,21 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
     };
 
     try {
+      const appContext: Record<string, string> = {
+        app_type: channel,
+        app_name: wizardData.appName || "Meu App",
+        app_description: wizardData.prompt || "",
+        tone: wizardData.tone || "professional_friendly",
+        language: wizardData.language || "pt-BR",
+        intro_message: wizardData.introMessage || "",
+        max_turn_messages: String(wizardData.maxMessages || 2),
+        onboarding_level: wizardData.onboarding || "soft",
+        business_context: wizardData.companyName || "",
+      };
+
       await streamChat({
         messages: [...messages, userMsg],
+        appContext,
         onDelta: upsert,
         onDone: () => {
           if (incrementalTimer) clearTimeout(incrementalTimer);
