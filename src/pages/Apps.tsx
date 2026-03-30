@@ -69,7 +69,7 @@ const Apps = () => {
   const filtered = showcaseApps.filter((a) => a.channels.includes(channel));
 
   const handleUseTemplate = (app: typeof showcaseApps[0]) => {
-    navigate("/create-app", { state: { initialPrompt: app.desc, channel: app.channels[0] } });
+    navigate("/app-builder", { state: { initialPrompt: app.desc, channel: app.channels[0], templateName: app.name } });
   };
 
   const handleEditApp = (app: SavedApp) => {
