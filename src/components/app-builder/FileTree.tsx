@@ -92,7 +92,7 @@ interface FileTreeProps {
   channel?: "whatsapp" | "web";
 }
 
-const FileTree = ({ selectedFile, onSelectFile }: FileTreeProps) => {
+const FileTree = ({ selectedFile, onSelectFile, channel }: FileTreeProps) => {
   const { files } = useAppBuilder();
 
   const tree = useMemo(() => buildTree(files), [files]);
@@ -100,7 +100,9 @@ const FileTree = ({ selectedFile, onSelectFile }: FileTreeProps) => {
   if (files.length === 0) {
     return (
       <div className="w-[220px] min-w-[180px] border-r border-border bg-card/50 flex items-center justify-center text-xs text-muted-foreground p-4 text-center">
-        Envie uma mensagem no Studio para gerar os arquivos do projeto
+        {channel === "whatsapp"
+          ? "Envie uma mensagem no Studio para gerar os fluxos e handlers do bot"
+          : "Envie uma mensagem no Studio para gerar as páginas e componentes do app"}
       </div>
     );
   }

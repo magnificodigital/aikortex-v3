@@ -16,9 +16,13 @@ const DashboardPanel = ({}: DashboardPanelProps) => {
         {isGenerating ? (
           <div className="flex items-center gap-2 animate-pulse">
             <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            Gerando dashboard...
+            {channel === "whatsapp" ? "Gerando dashboard de conversas..." : "Gerando dashboard do app..."}
           </div>
-        ) : "Envie uma mensagem no Studio para gerar o dashboard"}
+        ) : (
+          channel === "whatsapp"
+            ? "Envie uma mensagem no Studio para gerar o dashboard de conversas"
+            : "Envie uma mensagem no Studio para gerar o dashboard do app"
+        )}
       </div>
     );
   }
