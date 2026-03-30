@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Phone, Monitor, MessageSquare, Globe, Webhook, Bell, Users, Shield,
   Layout, Database, Settings, BarChart3, CreditCard, FileText,
@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAppBuilder } from "@/contexts/AppBuilderContext";
 
 type AppChannel = "whatsapp" | "web";
 
