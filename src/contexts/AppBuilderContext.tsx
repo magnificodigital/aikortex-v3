@@ -208,6 +208,9 @@ export function AppBuilderProvider({ children, initialChannel = "web", existingA
   const setDashboardMetrics = useCallback((metrics: DashboardMetric[]) => setState(s => ({ ...s, dashboardMetrics: metrics })), []);
   const setAppName = useCallback((name: string) => setState(s => ({ ...s, appName: name })), []);
   const setIsGenerating = useCallback((v: boolean) => setState(s => ({ ...s, isGenerating: v })), []);
+  const setChatMessages = useCallback((msgs: ChatMessage[]) => setState(s => ({ ...s, chatMessages: msgs })), []);
+  const setWizardStep = useCallback((step: WizardStepId) => setState(s => ({ ...s, wizardStep: step })), []);
+  const setCtxWizardData = useCallback((data: WizardData) => setState(s => ({ ...s, wizardData: data })), []);
   const setWizardConfig = useCallback((config: WizardConfig) => setState(s => ({ ...s, wizardConfig: config })), []);
 
   const initializeProject = useCallback((channel: "whatsapp" | "web", prompt: string) => {
