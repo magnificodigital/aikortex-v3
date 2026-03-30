@@ -154,7 +154,17 @@ interface ChatPanelProps {
 }
 
 const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
-  const [messages, setMessages] = useState<Msg[]>([]);
+  const {
+    channel, initializeProject, addFile, addTable, addTerminalLog,
+    setIsGenerating, setAppName, setWizardConfig,
+    chatMessages, setChatMessages,
+    wizardStep: ctxWizardStep, setWizardStep: setCtxWizardStep,
+    wizardData: ctxWizardData, setWizardData: setCtxWizardData,
+  } = useAppBuilder();
+
+  const messages = chatMessages;
+  const setMessages = setChatMessages;
+
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [toolsUsed, setToolsUsed] = useState(0);
@@ -166,18 +176,17 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
   const initializedProject = useRef(false);
   const processedBlocksRef = useRef(new Set<string>());
 
-  // Wizard state
-  const [wizardStep, setWizardStep] = useState<WizardStep>("describe");
-  const [wizardData, setWizardData] = useState({
-    prompt: "",
-    companyName: "",
-    appName: "",
-    tone: "professional_friendly",
-    language: "pt-BR",
-    introMessage: "",
-    maxMessages: 2,
-    onboarding: "soft" as "none" | "soft" | "strict",
-  });
+  // Wizard state — synced with context
+  const wizardStep = ctxWizardStep;
+  const setWizardStep = setCtxWizardStep;
+  const wizardData = ctxWizardData;
+  const setWizardData = (updater: ((prev: typeof ctxWizardData) => typeof ctxWizardData) | typeof ctxWizardData) => {
+    if (typeof updater === "function") {
+      setCtxWizardData(updater(ctxWizardData));
+    } else {
+      setCtxWizardData(updater);
+    }
+  };
   const [calibrating, setCalibrating] = useState(false);
   const [calibrationEvents, setCalibrationEvents] = useState<CalibrationEvent[]>([]);
   const [calibrationDone, setCalibrationDone] = useState(false);
