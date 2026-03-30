@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -31,7 +31,7 @@ const tabs: { id: TabId; label: string; icon: typeof Eye }[] = [
 
 const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
   const navigate = useNavigate();
-  const { channel, setChannel, saveApp, appName, appId, setFiles, setTables, setAppName, setChannel: setCtxChannel } = useAppBuilder();
+  const { channel, setChannel, saveApp, appName, appId, files, tables, isGenerating, setFiles, setTables, setAppName, setChannel: setCtxChannel } = useAppBuilder();
   const { user } = useAuth();
 
   const [activeTab, setActiveTab] = useState<TabId>("preview");
@@ -41,6 +41,33 @@ const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
   const [chatCollapsed, setChatCollapsed] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasInitialized = useRef(false);
+
+  // Auto-save: debounce 3s after meaningful state changes
+  useEffect(() => {
+    // Skip auto-save if no user, still generating, or no files yet
+    if (!user || isGenerating || files.length === 0) return;
+    // Skip the first render to avoid saving on load
+    if (!hasInitialized.current) {
+      hasInitialized.current = true;
+      return;
+    }
+
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(async () => {
+      setSaving(true);
+      const id = await saveApp(user.id);
+      setSaving(false);
+      if (id) {
+        toast.success("Salvo automaticamente", { duration: 1500 });
+      }
+    }, 3000);
+
+    return () => {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    };
+  }, [files, tables, appName, channel, user, isGenerating]);
 
   const finishRename = () => {
     const trimmed = nameDraft.trim();
