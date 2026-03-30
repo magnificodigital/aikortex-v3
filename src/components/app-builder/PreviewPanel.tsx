@@ -97,24 +97,87 @@ function extractMetricsFromCode(files: GeneratedFile[]): { label: string; value:
 }
 
 /* ── Mock bot responses from real file content ── */
-function buildMockResponses(files: GeneratedFile[], wizardIntro?: string): Record<string, string> {
-  const defaults: Record<string, string> = {
-    default: wizardIntro
-      ? "Entendi! Posso te ajudar com isso. O que mais gostaria de saber?"
-      : "Entendi! Posso te ajudar com isso. O que mais gostaria de saber?",
+function buildMockResponses(
+  files: GeneratedFile[],
+  wizardIntro?: string,
+  features?: string[],
+  botName?: string,
+): Record<string, string> {
+  const name = botName || "Assistente";
+  const featureList = features && features.length > 0 ? features : [];
+
+  // Build contextual default responses
+  const contextualDefaults = [
+    featureList.length > 0
+      ? `Posso te ajudar com: ${featureList.slice(0, 3).join(", ")}. Qual delas você precisa?`
+      : `Ótimo! Como posso te ajudar hoje?`,
+    `Entendido! Deixa eu verificar isso para você. 🔍`,
+    `Perfeito! Vou te guiar nesse processo. Primeiro, preciso de algumas informações.`,
+    `Claro! Esse é um dos meus pontos fortes. Me conta mais detalhes.`,
+    `Sem problemas! Vamos resolver isso juntos. 💪`,
+  ];
+
+  // Feature-specific responses
+  const featureResponses: Record<string, string> = {};
+  const featureKeywords: Record<string, string[]> = {
+    "agendamento": ["agendar", "horário", "agenda", "marcar", "consulta", "reservar"],
+    "triagem": ["triagem", "avaliação", "avaliar", "diagnóstico"],
+    "suporte": ["ajuda", "suporte", "problema", "erro", "dúvida", "help"],
+    "preços": ["preço", "valor", "custo", "quanto", "plano", "tabela"],
+    "check-in": ["check", "checkin", "acompanhamento", "retorno"],
+    "cadastro": ["cadastrar", "registrar", "cadastro", "registro", "conta"],
+    "pedido": ["pedido", "comprar", "compra", "encomendar", "pedir"],
+    "cardápio": ["cardápio", "menu", "opções", "pratos"],
+    "pagamento": ["pagar", "pagamento", "pix", "cartão", "boleto"],
+    "delivery": ["entrega", "delivery", "envio", "frete"],
+    "refeição": ["refeição", "comida", "almoço", "jantar", "lanche"],
+    "nutrição": ["nutrição", "dieta", "alimentação", "nutricional", "calorias"],
   };
 
+  for (const [feature, keywords] of Object.entries(featureKeywords)) {
+    const isRelevant = featureList.some(f => f.toLowerCase().includes(feature)) || featureList.length === 0;
+    if (isRelevant) {
+      for (const kw of keywords) {
+        featureResponses[kw] = `Claro! Vou te ajudar com ${feature}. Me passa os detalhes para eu dar andamento. 📋`;
+      }
+    }
+  }
+
+  // Common greetings
+  const greetingResponses: Record<string, string> = {
+    "oi": `Olá! 😊 Sou o ${name}. Como posso te ajudar?`,
+    "olá": `Oi! 👋 Que bom te ver aqui. Em que posso ajudar?`,
+    "bom dia": `Bom dia! ☀️ Estou aqui para te ajudar. O que precisa?`,
+    "boa tarde": `Boa tarde! 🌤️ Como posso ser útil?`,
+    "boa noite": `Boa noite! 🌙 Em que posso ajudar?`,
+    "obrigado": `De nada! 😊 Precisa de mais alguma coisa?`,
+    "obrigada": `Por nada! 😊 Estou aqui se precisar de algo mais.`,
+    "tchau": `Até logo! 👋 Foi um prazer ajudar. Volte quando precisar!`,
+    "sim": `Ótimo! Vamos lá então. Me conta mais detalhes.`,
+    "não": `Tudo bem! Se mudar de ideia, estou por aqui. 😊`,
+  };
+
+  // Extract from files too
+  const fromFiles: Record<string, string> = {};
   for (const f of files) {
     const responseMatches = f.content.matchAll(/(?:sendText|reply|respond)\s*\([^,]*,\s*["'`]([^"'`]{10,})["'`]/gi);
     for (const m of responseMatches) {
       const text = m[1];
       const keyword = text.split(/\s+/).slice(0, 2).join(" ").toLowerCase();
-      defaults[keyword] = text;
+      fromFiles[keyword] = text;
     }
   }
 
-  return defaults;
+  return {
+    ...featureResponses,
+    ...greetingResponses,
+    ...fromFiles,
+    default: contextualDefaults[0],
+    _contextualDefaults: contextualDefaults as any, // used for rotation
+  };
 }
+
+let responseRotation = 0;
 
 const toneEmoji: Record<string, string> = {
   professional_friendly: "🤝",
@@ -135,7 +198,7 @@ const toneLabels: Record<string, string> = {
 /* ── WhatsApp Preview ── */
 
 const WhatsAppPreview = () => {
-  const { files, appName, isGenerating, tables, wizardData, wizardConfig, wizardStep } = useAppBuilder();
+  const { files, appName, isGenerating, tables, wizardData, wizardConfig, wizardStep, structuredConfig } = useAppBuilder();
   const hasContent = files.length > 0;
   const isConfiguring = wizardStep !== "done";
 
@@ -161,7 +224,20 @@ const WhatsAppPreview = () => {
   }, [files]);
 
   const stages = useMemo(() => extractStages(files), [files]);
-  const mockResponses = useMemo(() => buildMockResponses(files, effectiveIntro), [files, effectiveIntro]);
+
+  const features = useMemo(() => {
+    if (structuredConfig?.selected_features) {
+      return Array.isArray(structuredConfig.selected_features)
+        ? structuredConfig.selected_features
+        : String(structuredConfig.selected_features).split(",").map((s: string) => s.trim());
+    }
+    return [];
+  }, [structuredConfig]);
+
+  const mockResponses = useMemo(
+    () => buildMockResponses(files, effectiveIntro, features, botName),
+    [files, effectiveIntro, features, botName],
+  );
 
   const [chatMessages, setChatMessages] = useState<{ role: "user" | "bot"; text: string; time: string }[]>([]);
   const [testInput, setTestInput] = useState("");
@@ -177,9 +253,21 @@ const WhatsAppPreview = () => {
   };
 
   const getBotResponse = (userMsg: string): string => {
-    const lower = userMsg.toLowerCase();
-    const key = Object.keys(mockResponses).find(k => k !== "default" && lower.includes(k));
-    return mockResponses[key || "default"];
+    const lower = userMsg.toLowerCase().trim();
+    // Check all non-default keys
+    const key = Object.keys(mockResponses).find(
+      k => k !== "default" && k !== "_contextualDefaults" && lower.includes(k),
+    );
+    if (key) return mockResponses[key];
+
+    // Rotate contextual defaults for variety
+    const defaults = (mockResponses as any)._contextualDefaults as string[] | undefined;
+    if (defaults && defaults.length > 0) {
+      const response = defaults[responseRotation % defaults.length];
+      responseRotation++;
+      return response;
+    }
+    return mockResponses["default"];
   };
 
   const handleSendTest = (text?: string) => {
