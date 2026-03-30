@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Phone, Monitor, MessageSquare, Globe, Webhook, Bell, Users, Shield,
   Layout, Database, Settings, BarChart3, CreditCard, FileText,
@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAppBuilder } from "@/contexts/AppBuilderContext";
 
 type AppChannel = "whatsapp" | "web";
 
@@ -57,8 +58,21 @@ function ToggleRow({ label, desc, defaultOn = false }: { label: string; desc?: s
 
 /* ──── Tab: Overview ──── */
 const OverviewTab = ({ channel }: { channel: AppChannel }) => {
-  const [description, setDescription] = useState("");
+  const { wizardConfig, appName } = useAppBuilder();
+  const [description, setDescription] = useState(wizardConfig?.prompt || "");
   const [status, setStatus] = useState<"draft" | "active" | "paused">("draft");
+  const [greeting, setGreeting] = useState(wizardConfig?.introMessage || "Olá! 👋 Como posso ajudar?");
+  const [tone, setTone] = useState(wizardConfig?.tone || "professional_friendly");
+  const [language, setLanguage] = useState(wizardConfig?.language || "pt-BR");
+
+  useEffect(() => {
+    if (wizardConfig) {
+      setDescription(wizardConfig.prompt);
+      setGreeting(wizardConfig.introMessage);
+      setTone(wizardConfig.tone);
+      setLanguage(wizardConfig.language);
+    }
+  }, [wizardConfig]);
 
   return (
     <div className="space-y-5">
@@ -118,12 +132,59 @@ const OverviewTab = ({ channel }: { channel: AppChannel }) => {
         </div>
       </Section>
 
+      <Section title="Perfil do App" icon={Type}>
+        <div className="space-y-3">
+          <div>
+            <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Tom de voz</label>
+            <div className="flex flex-wrap gap-1.5">
+              {Object.entries({
+                professional_friendly: "Profissional e Amigável",
+                formal: "Formal",
+                casual: "Casual e Descontraído",
+                empathetic: "Empático e Acolhedor",
+                direct: "Direto e Objetivo",
+              }).map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => setTone(key)}
+                  className={`px-2.5 py-1.5 rounded-lg text-[10px] font-medium border transition-all ${
+                    tone === key
+                      ? "bg-primary/10 border-primary/30 text-primary"
+                      : "bg-card border-border text-muted-foreground hover:border-border/80"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Idioma</label>
+            <div className="flex gap-1.5">
+              {[["pt-BR", "🇧🇷 Português"], ["en", "🇺🇸 English"], ["es", "🇪🇸 Español"]].map(([k, l]) => (
+                <button
+                  key={k}
+                  onClick={() => setLanguage(k)}
+                  className={`px-2.5 py-1.5 rounded-lg text-[10px] font-medium border transition-all ${
+                    language === k
+                      ? "bg-primary/10 border-primary/30 text-primary"
+                      : "bg-card border-border text-muted-foreground hover:border-border/80"
+                  }`}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Section>
+
       {channel === "whatsapp" && (
         <Section title="Mensagens Padrão" icon={MessageSquare}>
           <div className="space-y-3">
             <div>
               <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Saudação</label>
-              <Textarea defaultValue="Olá! 👋 Como posso ajudar?" className="text-xs min-h-[50px] bg-card/50 resize-none" />
+              <Textarea value={greeting} onChange={(e) => setGreeting(e.target.value)} className="text-xs min-h-[50px] bg-card/50 resize-none" />
             </div>
             <div>
               <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Fallback</label>

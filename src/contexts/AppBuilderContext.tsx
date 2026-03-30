@@ -26,6 +26,17 @@ export interface DashboardMetric {
   up: boolean;
 }
 
+export interface WizardConfig {
+  prompt: string;
+  companyName: string;
+  appName: string;
+  tone: string;
+  language: string;
+  introMessage: string;
+  maxMessages: number;
+  onboarding: "none" | "soft" | "strict";
+}
+
 export interface AppBuilderState {
   channel: "whatsapp" | "web";
   files: GeneratedFile[];
@@ -34,6 +45,7 @@ export interface AppBuilderState {
   dashboardMetrics: DashboardMetric[];
   appName: string;
   isGenerating: boolean;
+  wizardConfig: WizardConfig | null;
 }
 
 interface AppBuilderContextType extends AppBuilderState {
@@ -46,6 +58,7 @@ interface AppBuilderContextType extends AppBuilderState {
   setDashboardMetrics: (metrics: DashboardMetric[]) => void;
   setAppName: (name: string) => void;
   setIsGenerating: (v: boolean) => void;
+  setWizardConfig: (config: WizardConfig) => void;
   initializeProject: (channel: "whatsapp" | "web", prompt: string) => void;
   saveApp: (userId: string) => Promise<string | null>;
   appId: string | null;
@@ -132,6 +145,7 @@ export function AppBuilderProvider({ children, initialChannel = "web", existingA
     dashboardMetrics: [],
     appName: "Meu App",
     isGenerating: false,
+    wizardConfig: null,
   });
 
   const setChannel = useCallback((ch: "whatsapp" | "web") => setState(s => ({ ...s, channel: ch })), []);
@@ -159,6 +173,7 @@ export function AppBuilderProvider({ children, initialChannel = "web", existingA
   const setDashboardMetrics = useCallback((metrics: DashboardMetric[]) => setState(s => ({ ...s, dashboardMetrics: metrics })), []);
   const setAppName = useCallback((name: string) => setState(s => ({ ...s, appName: name })), []);
   const setIsGenerating = useCallback((v: boolean) => setState(s => ({ ...s, isGenerating: v })), []);
+  const setWizardConfig = useCallback((config: WizardConfig) => setState(s => ({ ...s, wizardConfig: config })), []);
 
   const initializeProject = useCallback((channel: "whatsapp" | "web", prompt: string) => {
     const files = channel === "whatsapp" ? generateWhatsAppFiles(prompt) : generateWebFiles(prompt);
@@ -221,7 +236,7 @@ export function AppBuilderProvider({ children, initialChannel = "web", existingA
       ...state,
       setChannel, addFile, setFiles, addTable, setTables,
       addTerminalLog, setDashboardMetrics, setAppName,
-      setIsGenerating, initializeProject, saveApp, appId, setAppId,
+      setIsGenerating, setWizardConfig, initializeProject, saveApp, appId, setAppId,
     }}>
       {children}
     </AppBuilderContext.Provider>
