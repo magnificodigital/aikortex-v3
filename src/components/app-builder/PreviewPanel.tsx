@@ -223,8 +223,19 @@ const WhatsAppPreview = () => {
     return extracted.length > 0 ? extracted : ["Agendar", "Preços", "Suporte"];
   }, [files]);
 
-  const stages = useMemo(() => extractStages(files), [files]);
-  const mockResponses = useMemo(() => buildMockResponses(files, effectiveIntro), [files, effectiveIntro]);
+  const features = useMemo(() => {
+    if (structuredConfig?.selected_features) {
+      return Array.isArray(structuredConfig.selected_features)
+        ? structuredConfig.selected_features
+        : String(structuredConfig.selected_features).split(",").map((s: string) => s.trim());
+    }
+    return [];
+  }, [structuredConfig]);
+
+  const mockResponses = useMemo(
+    () => buildMockResponses(files, effectiveIntro, features, botName),
+    [files, effectiveIntro, features, botName],
+  );
 
   const [chatMessages, setChatMessages] = useState<{ role: "user" | "bot"; text: string; time: string }[]>([]);
   const [testInput, setTestInput] = useState("");
@@ -240,9 +251,21 @@ const WhatsAppPreview = () => {
   };
 
   const getBotResponse = (userMsg: string): string => {
-    const lower = userMsg.toLowerCase();
-    const key = Object.keys(mockResponses).find(k => k !== "default" && lower.includes(k));
-    return mockResponses[key || "default"];
+    const lower = userMsg.toLowerCase().trim();
+    // Check all non-default keys
+    const key = Object.keys(mockResponses).find(
+      k => k !== "default" && k !== "_contextualDefaults" && lower.includes(k),
+    );
+    if (key) return mockResponses[key];
+
+    // Rotate contextual defaults for variety
+    const defaults = (mockResponses as any)._contextualDefaults as string[] | undefined;
+    if (defaults && defaults.length > 0) {
+      const response = defaults[responseRotation % defaults.length];
+      responseRotation++;
+      return response;
+    }
+    return mockResponses["default"];
   };
 
   const handleSendTest = (text?: string) => {
