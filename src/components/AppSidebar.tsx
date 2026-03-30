@@ -286,7 +286,7 @@ const AppSidebar = () => {
           title={theme === "dark" ? "Modo claro" : "Modo escuro"}
         >
           {theme === "dark" ? <Sun className="w-4 h-4 shrink-0" /> : <Moon className="w-4 h-4 shrink-0" />}
-          {!collapsed && <span>{theme === "dark" ? "Modo claro" : "Modo escuro"}</span>}
+          {!collapsed && <span className="truncate">{theme === "dark" ? "Modo claro" : "Modo escuro"}</span>}
         </button>
 
         <button
