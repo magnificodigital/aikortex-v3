@@ -37,6 +37,7 @@ function buildSystemPrompt(ctx?: Record<string, string>) {
   const features = ctx?.selected_features || "";
   const bizContext = ctx?.business_context || "";
   const constraints = ctx?.constraints || "";
+  const isPatch = ctx?.is_patch === "true";
 
   const isWhatsApp = appType === "whatsapp";
 
