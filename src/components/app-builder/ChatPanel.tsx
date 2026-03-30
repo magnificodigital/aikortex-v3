@@ -339,12 +339,14 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
       return;
     }
     const inferredName = wizardData.companyName
-      ? `Assistente ${wizardData.companyName}`
-      : "Meu App";
+      ? (channel === "whatsapp" ? `Assistente ${wizardData.companyName}` : `${wizardData.companyName} App`)
+      : (channel === "whatsapp" ? "Meu Assistente" : "Meu App");
     setWizardData(prev => ({
       ...prev,
       appName: inferredName,
-      introMessage: `Olá! Sou o assistente da ${wizardData.companyName || "sua empresa"}. Como posso ajudar?`,
+      introMessage: channel === "whatsapp"
+        ? `Olá! 👋 Sou o assistente da ${wizardData.companyName || "sua empresa"}. Como posso ajudar?`
+        : `Bem-vindo ao painel da ${wizardData.companyName || "sua empresa"}!`,
     }));
     setMessages(prev => [
       ...prev,
