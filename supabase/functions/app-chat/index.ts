@@ -5,6 +5,44 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+/* ── Structuring prompt: AI generates structured JSON from user description ── */
+
+function buildStructuringPrompt(appType: string, language: string) {
+  return `Você é um arquiteto de produto especializado em apps para ${appType === "whatsapp" ? "WhatsApp" : "Web"}.
+
+Sua ÚNICA tarefa é analisar a descrição do usuário e retornar um JSON estruturado que define completamente o app a ser construído.
+
+REGRAS:
+- Retorne APENAS um bloco JSON válido, sem texto antes ou depois
+- Infira o máximo possível da descrição: nome, funcionalidades, tom, mensagem inicial
+- Se algo não for mencionado, use valores padrão inteligentes
+- O JSON deve seguir EXATAMENTE este formato:
+
+\`\`\`json
+{
+  "app_type": "${appType}",
+  "app_name": "Nome do App",
+  "app_description": "Descrição completa e detalhada",
+  "tone": "professional_friendly",
+  "language": "${language}",
+  "intro_message": "Mensagem de boas-vindas contextual",
+  "max_turn_messages": 2,
+  "onboarding_level": "soft",
+  "selected_features": ["feature1", "feature2", "feature3"],
+  "business_context": "Contexto de negócio inferido",
+  "constraints": "Restrições identificadas ou padrão"
+}
+\`\`\`
+
+Valores válidos para "tone": "professional_friendly", "formal", "casual", "empathetic", "direct"
+Valores válidos para "onboarding_level": "none", "soft", "strict"
+Valores válidos para "language": "pt-BR", "en", "es"
+
+Retorne SOMENTE o JSON.`;
+}
+
+/* ── Patch block for incremental updates ── */
+
 function buildPatchBlock(isPatch: boolean): string {
   if (!isPatch) return "";
   return `
@@ -24,6 +62,8 @@ Sua tarefa é aplicar APENAS as mudanças necessárias no projeto atual, preserv
 - O app deve continuar funcionando no preview após a mudança
 `;
 }
+
+/* ── Master system prompt for building ── */
 
 function buildSystemPrompt(ctx?: Record<string, string>) {
   const appType = ctx?.app_type || "web";
@@ -78,15 +118,10 @@ Tudo que você criar deve fazer o Preview mostrar uma versão funcional e coeren
 Se algo não puder ser implementado completamente, crie uma versão funcional simulada (mock operacional).
 NUNCA deixe tela vazia, botão quebrado ou fluxo inconsistente.
 
-# FLUXO CONSULTIVO
-### Primeira mensagem:
-1. Entenda o objetivo geral
-2. Faça 2-3 perguntas sobre: público-alvo, funcionalidades essenciais, estilo visual
-
-### Mensagens seguintes:
-1. Gere APENAS os arquivos da funcionalidade discutida
-2. Termine SEMPRE com pergunta ou sugestão de próximo passo
-3. Sugira 2-3 funcionalidades que fazem sentido pro contexto
+# FLUXO DE GERAÇÃO
+Gere TODOS os arquivos necessários para uma V1 funcional e completa.
+Inclua: estrutura de código, componentes, páginas, serviços, tabelas de banco e fluxos.
+Termine SEMPRE com pergunta ou sugestão de próximo passo.
 
 # FORMATO DE SAÍDA ESTRUTURADO
 Código EXCLUSIVAMENTE com estes blocos (NUNCA use markdown code blocks):
@@ -103,7 +138,7 @@ coluna3:TIPO
 
 ### Regras dos blocos:
 - Caminhos completos (ex: /src/components/Header.tsx)
-- Gere apenas arquivos da funcionalidade atual, NUNCA tudo de uma vez
+- Gere os arquivos da funcionalidade, organizados por responsabilidade
 - Tabelas devem incluir todas as colunas com tipos adequados
 
 ${isWhatsApp ? `# MODO WHATSAPP APP
@@ -190,11 +225,17 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages, appContext } = await req.json();
+    const { messages, appContext, mode } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const systemPrompt = buildSystemPrompt(appContext);
+    // Mode: "structure" = generate structured JSON from description
+    // Mode: default = build/patch with master prompt
+    const isStructureMode = mode === "structure";
+
+    const systemPrompt = isStructureMode
+      ? buildStructuringPrompt(appContext?.app_type || "web", appContext?.language || "pt-BR")
+      : buildSystemPrompt(appContext);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -208,39 +249,46 @@ serve(async (req) => {
           { role: "system", content: systemPrompt },
           ...messages,
         ],
-        stream: true,
+        stream: !isStructureMode,
+        ...(isStructureMode ? { response_format: { type: "json_object" } } : {}),
       }),
     });
 
     if (!response.ok) {
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns segundos." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (response.status === 402) {
         return new Response(JSON.stringify({ error: "Créditos insuficientes. Adicione créditos em Configurações." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const t = await response.text();
       console.error("AI gateway error:", response.status, t);
       return new Response(JSON.stringify({ error: "Erro no serviço de IA" }), {
-        status: 500,
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (isStructureMode) {
+      // Non-streaming: return parsed JSON response
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content || "{}";
+      return new Response(JSON.stringify({ structuredConfig: content }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    // Streaming response for build/patch mode
     return new Response(response.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (e) {
     console.error("chat error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erro desconhecido" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

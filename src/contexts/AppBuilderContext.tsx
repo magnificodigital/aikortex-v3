@@ -35,11 +35,15 @@ export interface WizardConfig {
   introMessage: string;
   maxMessages: number;
   onboarding: "none" | "soft" | "strict";
+  selectedFeatures: string[];
+  businessContext: string;
+  constraints: string;
 }
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
-export type WizardStepId = "describe" | "personalize" | "calibrate" | "create" | "done";
+// 5-step flow: discover → structure → build → done (preview sync is automatic, patch is done-state)
+export type WizardStepId = "discover" | "structure" | "build" | "done";
 
 export interface WizardData {
   prompt: string;
@@ -50,6 +54,23 @@ export interface WizardData {
   introMessage: string;
   maxMessages: number;
   onboarding: "none" | "soft" | "strict";
+  selectedFeatures: string[];
+  businessContext: string;
+  constraints: string;
+}
+
+export interface StructuredAppConfig {
+  app_type: string;
+  app_name: string;
+  app_description: string;
+  tone: string;
+  language: string;
+  intro_message: string;
+  max_turn_messages: number;
+  onboarding_level: string;
+  selected_features: string[];
+  business_context?: string;
+  constraints?: string;
 }
 
 export interface AppBuilderState {
@@ -64,6 +85,7 @@ export interface AppBuilderState {
   chatMessages: ChatMessage[];
   wizardStep: WizardStepId;
   wizardData: WizardData;
+  structuredConfig: StructuredAppConfig | null;
 }
 
 interface AppBuilderContextType extends AppBuilderState {
@@ -80,6 +102,7 @@ interface AppBuilderContextType extends AppBuilderState {
   setChatMessages: (msgs: ChatMessage[]) => void;
   setWizardStep: (step: WizardStepId) => void;
   setWizardData: (data: WizardData) => void;
+  setStructuredConfig: (config: StructuredAppConfig | null) => void;
   initializeProject: (channel: "whatsapp" | "web", prompt: string) => void;
   saveApp: (userId: string) => Promise<string | null>;
   appId: string | null;
@@ -111,11 +134,11 @@ function generateWebFiles(prompt: string): GeneratedFile[] {
 function generateWhatsAppFiles(prompt: string): GeneratedFile[] {
   const appDesc = prompt.slice(0, 60);
   return [
-    { name: "main-agent.ts", path: "/src/agents/main-agent.ts", content: `// ${appDesc}\n// Agente principal do WhatsApp Bot\n\nimport { WhatsAppAPI } from "../integrations/whatsapp-api";\nimport { config } from "../config";\n\nexport class MainAgent {\n  private api: WhatsAppAPI;\n\n  constructor() {\n    this.api = new WhatsAppAPI(config.token, config.phoneNumberId);\n  }\n\n  async handle(from: string, text: string, stage: string) {\n    // Lógica principal do agente\n    // O agente processa mensagens de acordo com o estágio atual\n  }\n}` },
-    { name: "qualifier.ts", path: "/src/agents/qualifier.ts", content: `// Agente de qualificação de leads\n\nexport class QualifierAgent {\n  private questions = [\n    "Qual é o seu nome completo?",\n    "Qual é o seu principal objetivo?",\n    "Qual o seu orçamento estimado?",\n  ];\n\n  async qualify(from: string, step: number) {\n    // Envia pergunta de qualificação de acordo com o passo\n  }\n}` },
-    { name: "whatsapp-api.ts", path: "/src/integrations/whatsapp-api.ts", content: `// Client wrapper para WhatsApp Cloud API v21.0\n\nconst BASE_URL = "https://graph.facebook.com/v21.0";\n\nexport class WhatsAppAPI {\n  constructor(private token: string, private phoneId: string) {}\n\n  async sendText(to: string, body: string) {\n    // POST /{phoneId}/messages\n  }\n\n  async sendButtons(to: string, body: string, buttons: string[]) {\n    // Envia mensagem interativa com botões\n  }\n\n  async sendList(to: string, body: string, sections: any[]) {\n    // Envia mensagem interativa com lista\n  }\n}` },
-    { name: "webhook.ts", path: "/src/handlers/webhook.ts", content: `// Handler do webhook do WhatsApp\n\nexport async function handleWebhook(req: Request) {\n  const body = await req.json();\n  const entry = body.entry?.[0]?.changes?.[0]?.value;\n  const message = entry?.messages?.[0];\n  if (!message) return new Response("OK");\n\n  // Processa a mensagem recebida\n}` },
-    { name: "config.ts", path: "/src/config.ts", content: `// Configuração do bot WhatsApp\n\nexport const config = {\n  phoneNumberId: "",\n  token: "",\n  botName: "Assistente",\n  language: "pt-BR",\n};` },
+    { name: "main-agent.ts", path: "/src/agents/main-agent.ts", content: `// ${appDesc}\n// Agente principal do WhatsApp Bot\n\nimport { WhatsAppAPI } from "../integrations/whatsapp-api";\nimport { config } from "../config";\n\nexport class MainAgent {\n  private api: WhatsAppAPI;\n\n  constructor() {\n    this.api = new WhatsAppAPI(config.token, config.phoneNumberId);\n  }\n\n  async handle(from: string, text: string, stage: string) {\n    // Lógica principal do agente\n  }\n}` },
+    { name: "qualifier.ts", path: "/src/agents/qualifier.ts", content: `// Agente de qualificação de leads\n\nexport class QualifierAgent {\n  private questions = [\n    "Qual é o seu nome completo?",\n    "Qual é o seu principal objetivo?",\n    "Qual o seu orçamento estimado?",\n  ];\n\n  async qualify(from: string, step: number) {}\n}` },
+    { name: "whatsapp-api.ts", path: "/src/integrations/whatsapp-api.ts", content: `const BASE_URL = "https://graph.facebook.com/v21.0";\n\nexport class WhatsAppAPI {\n  constructor(private token: string, private phoneId: string) {}\n\n  async sendText(to: string, body: string) {}\n  async sendButtons(to: string, body: string, buttons: string[]) {}\n  async sendList(to: string, body: string, sections: any[]) {}\n}` },
+    { name: "webhook.ts", path: "/src/handlers/webhook.ts", content: `export async function handleWebhook(req: Request) {\n  const body = await req.json();\n  const entry = body.entry?.[0]?.changes?.[0]?.value;\n  const message = entry?.messages?.[0];\n  if (!message) return new Response("OK");\n}` },
+    { name: "config.ts", path: "/src/config.ts", content: `export const config = {\n  phoneNumberId: "",\n  token: "",\n  botName: "Assistente",\n  language: "pt-BR",\n};` },
   ];
 }
 
@@ -166,6 +189,9 @@ export function AppBuilderProvider({ children, initialChannel = "web", existingA
     introMessage: "",
     maxMessages: 2,
     onboarding: "soft",
+    selectedFeatures: [],
+    businessContext: "",
+    constraints: "",
   };
 
   const [appId, setAppId] = useState<string | null>(existingAppId || null);
@@ -179,8 +205,9 @@ export function AppBuilderProvider({ children, initialChannel = "web", existingA
     isGenerating: false,
     wizardConfig: null,
     chatMessages: [],
-    wizardStep: "describe",
+    wizardStep: "discover",
     wizardData: defaultWizardData,
+    structuredConfig: null,
   });
 
   const setChannel = useCallback((ch: "whatsapp" | "web") => setState(s => ({ ...s, channel: ch })), []);
@@ -212,6 +239,7 @@ export function AppBuilderProvider({ children, initialChannel = "web", existingA
   const setWizardStep = useCallback((step: WizardStepId) => setState(s => ({ ...s, wizardStep: step })), []);
   const setCtxWizardData = useCallback((data: WizardData) => setState(s => ({ ...s, wizardData: data })), []);
   const setWizardConfig = useCallback((config: WizardConfig) => setState(s => ({ ...s, wizardConfig: config })), []);
+  const setStructuredConfig = useCallback((config: StructuredAppConfig | null) => setState(s => ({ ...s, structuredConfig: config })), []);
 
   const initializeProject = useCallback((channel: "whatsapp" | "web", prompt: string) => {
     const files = channel === "whatsapp" ? generateWhatsAppFiles(prompt) : generateWebFiles(prompt);
@@ -245,6 +273,7 @@ export function AppBuilderProvider({ children, initialChannel = "web", existingA
       wizardStep: state.wizardStep,
       wizardData: state.wizardData,
       wizardConfig: state.wizardConfig,
+      structuredConfig: state.structuredConfig,
     };
 
     const payload = {
@@ -283,7 +312,7 @@ export function AppBuilderProvider({ children, initialChannel = "web", existingA
       setChannel, addFile, setFiles, addTable, setTables,
       addTerminalLog, setDashboardMetrics, setAppName,
       setIsGenerating, setWizardConfig, setChatMessages, setWizardStep,
-      setWizardData: setCtxWizardData,
+      setWizardData: setCtxWizardData, setStructuredConfig,
       initializeProject, saveApp, appId, setAppId,
     }}>
       {children}
