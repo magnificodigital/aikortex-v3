@@ -240,6 +240,13 @@ export function AppBuilderProvider({ children, initialChannel = "web", existingA
   }, []);
 
   const saveApp = useCallback(async (userId: string): Promise<string | null> => {
+    const configData = {
+      chatMessages: state.chatMessages,
+      wizardStep: state.wizardStep,
+      wizardData: state.wizardData,
+      wizardConfig: state.wizardConfig,
+    };
+
     const payload = {
       user_id: userId,
       name: state.appName,
@@ -247,6 +254,7 @@ export function AppBuilderProvider({ children, initialChannel = "web", existingA
       channel: state.channel,
       files: JSON.parse(JSON.stringify(state.files)),
       tables_schema: JSON.parse(JSON.stringify(state.tables)),
+      config: configData,
       status: 'draft',
     };
 
@@ -274,7 +282,9 @@ export function AppBuilderProvider({ children, initialChannel = "web", existingA
       ...state,
       setChannel, addFile, setFiles, addTable, setTables,
       addTerminalLog, setDashboardMetrics, setAppName,
-      setIsGenerating, setWizardConfig, initializeProject, saveApp, appId, setAppId,
+      setIsGenerating, setWizardConfig, setChatMessages, setWizardStep,
+      setWizardData: setCtxWizardData,
+      initializeProject, saveApp, appId, setAppId,
     }}>
       {children}
     </AppBuilderContext.Provider>
