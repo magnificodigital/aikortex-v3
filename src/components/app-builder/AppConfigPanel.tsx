@@ -58,8 +58,21 @@ function ToggleRow({ label, desc, defaultOn = false }: { label: string; desc?: s
 
 /* ──── Tab: Overview ──── */
 const OverviewTab = ({ channel }: { channel: AppChannel }) => {
-  const [description, setDescription] = useState("");
+  const { wizardConfig, appName } = useAppBuilder();
+  const [description, setDescription] = useState(wizardConfig?.prompt || "");
   const [status, setStatus] = useState<"draft" | "active" | "paused">("draft");
+  const [greeting, setGreeting] = useState(wizardConfig?.introMessage || "Olá! 👋 Como posso ajudar?");
+  const [tone, setTone] = useState(wizardConfig?.tone || "professional_friendly");
+  const [language, setLanguage] = useState(wizardConfig?.language || "pt-BR");
+
+  useEffect(() => {
+    if (wizardConfig) {
+      setDescription(wizardConfig.prompt);
+      setGreeting(wizardConfig.introMessage);
+      setTone(wizardConfig.tone);
+      setLanguage(wizardConfig.language);
+    }
+  }, [wizardConfig]);
 
   return (
     <div className="space-y-5">
