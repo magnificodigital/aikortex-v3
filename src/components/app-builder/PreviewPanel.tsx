@@ -198,7 +198,7 @@ const toneLabels: Record<string, string> = {
 /* ── WhatsApp Preview ── */
 
 const WhatsAppPreview = () => {
-  const { files, appName, isGenerating, tables, wizardData, wizardConfig, wizardStep } = useAppBuilder();
+  const { files, appName, isGenerating, tables, wizardData, wizardConfig, wizardStep, structuredConfig } = useAppBuilder();
   const hasContent = files.length > 0;
   const isConfiguring = wizardStep !== "done";
 
