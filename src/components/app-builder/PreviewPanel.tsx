@@ -633,12 +633,12 @@ const WebPreview = () => {
             {isGenerating ? (
               <div className="flex flex-col items-center gap-3">
                 <Zap className="w-6 h-6 animate-pulse text-primary" />
-                <span>Gerando preview...</span>
+                <span>Gerando preview do Web App...</span>
               </div>
             ) : (
               <div className="text-center">
                 <Monitor className="w-10 h-10 mx-auto mb-3 text-muted-foreground/20" />
-                <p className="text-xs">Envie uma mensagem no Studio<br/>para ver o preview aqui</p>
+                <p className="text-xs">Envie uma mensagem no Studio<br/>para ver o preview do seu app aqui</p>
               </div>
             )}
           </div>
