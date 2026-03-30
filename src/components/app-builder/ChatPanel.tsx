@@ -2,14 +2,14 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import {
   ArrowUp, Bot, ChevronDown, ChevronLeft, Mic, Wrench,
   CheckCircle2, AlertCircle, ChevronUp, FileCode, Sparkles,
-  Phone, Monitor, Check, Loader2,
+  Phone, Monitor, Check, Loader2, Pencil, RotateCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
-import { useAppBuilder, type ChatMessage } from "@/contexts/AppBuilderContext";
+import { useAppBuilder, type ChatMessage, type StructuredAppConfig } from "@/contexts/AppBuilderContext";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -18,16 +18,27 @@ interface ToolLog {
   status: "success" | "error";
 }
 
-type WizardStep = "describe" | "personalize" | "calibrate" | "create" | "done";
-
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/app-chat`;
 
-const stepLabels: { id: WizardStep; label: string; num: number }[] = [
-  { id: "describe", label: "Descrever", num: 1 },
-  { id: "personalize", label: "Personalizar", num: 2 },
-  { id: "calibrate", label: "Calibrar", num: 3 },
-  { id: "create", label: "Criar", num: 4 },
+const stepLabels = [
+  { id: "discover" as const, label: "Descobrir", num: 1 },
+  { id: "structure" as const, label: "Estruturar", num: 2 },
+  { id: "build" as const, label: "Construir", num: 3 },
 ];
+
+const toneLabels: Record<string, string> = {
+  professional_friendly: "Profissional e Amigável",
+  formal: "Formal",
+  casual: "Casual e Descontraído",
+  empathetic: "Empático e Acolhedor",
+  direct: "Direto e Objetivo",
+};
+
+const onboardingLabels: Record<string, string> = {
+  none: "Nenhum",
+  soft: "Suave",
+  strict: "Rigoroso",
+};
 
 /* ── Parsers ── */
 
@@ -135,15 +146,29 @@ async function streamChat({
   onDone();
 }
 
-/* ── Calibration ── */
+/* ── Structure request (non-streaming) ── */
 
-interface CalibrationMsg { type: "client" | "agent"; text: string }
-interface CalibrationEvent {
-  kind: "status" | "messages" | "result";
-  label?: string;
-  done?: boolean;
-  messages?: CalibrationMsg[];
-  success?: boolean;
+async function requestStructure(description: string, appType: string, language: string): Promise<StructuredAppConfig | null> {
+  const resp = await fetch(CHAT_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+    },
+    body: JSON.stringify({
+      messages: [{ role: "user", content: description }],
+      appContext: { app_type: appType, language },
+      mode: "structure",
+    }),
+  });
+  if (!resp.ok) return null;
+  const data = await resp.json();
+  try {
+    const raw = typeof data.structuredConfig === "string" ? JSON.parse(data.structuredConfig) : data.structuredConfig;
+    return raw as StructuredAppConfig;
+  } catch {
+    return null;
+  }
 }
 
 /* ── Component ── */
@@ -158,8 +183,9 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
     channel, initializeProject, addFile, addTable, addTerminalLog,
     setIsGenerating, setAppName, setWizardConfig,
     chatMessages, setChatMessages,
-    wizardStep: ctxWizardStep, setWizardStep: setCtxWizardStep,
+    wizardStep, setWizardStep,
     wizardData: ctxWizardData, setWizardData: setCtxWizardData,
+    structuredConfig, setStructuredConfig,
   } = useAppBuilder();
 
   const messagesRef = useRef(chatMessages);
@@ -173,20 +199,6 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
   }, [setChatMessages]);
   const messages = chatMessages;
 
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [toolsUsed, setToolsUsed] = useState(0);
-  const [toolsExpanded, setToolsExpanded] = useState(true);
-  const [toolLogs, setToolLogs] = useState<ToolLog[]>([]);
-  const [filesGenerated, setFilesGenerated] = useState(0);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const sentInitial = useRef(false);
-  const initializedProject = useRef(false);
-  const processedBlocksRef = useRef(new Set<string>());
-
-  // Wizard state — synced with context
-  const wizardStep = ctxWizardStep;
-  const setWizardStep = setCtxWizardStep;
   const wizardData = ctxWizardData;
   const setWizardData = (updater: ((prev: typeof ctxWizardData) => typeof ctxWizardData) | typeof ctxWizardData) => {
     if (typeof updater === "function") {
@@ -195,43 +207,42 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
       setCtxWizardData(updater);
     }
   };
-  const [calibrating, setCalibrating] = useState(false);
-  const [calibrationEvents, setCalibrationEvents] = useState<CalibrationEvent[]>([]);
-  const [calibrationDone, setCalibrationDone] = useState(false);
-  const [creating, setCreating] = useState(false);
 
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [toolsUsed, setToolsUsed] = useState(0);
+  const [toolsExpanded, setToolsExpanded] = useState(true);
+  const [toolLogs, setToolLogs] = useState<ToolLog[]>([]);
+  const [filesGenerated, setFilesGenerated] = useState(0);
+  const [structuring, setStructuring] = useState(false);
+  const [building, setBuilding] = useState(false);
+  const [editingConfig, setEditingConfig] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const sentInitial = useRef(false);
+  const initializedProject = useRef(false);
+  const processedBlocksRef = useRef(new Set<string>());
 
-  // If loading existing app that already went through wizard, mark as initialized
+  // If loading existing app that already went through wizard
   useEffect(() => {
-    if (ctxWizardStep === "done" && chatMessages.length > 0) {
+    if (wizardStep === "done" && chatMessages.length > 0) {
       initializedProject.current = true;
       sentInitial.current = true;
     }
   }, []);
 
-  // If initialPrompt is provided, skip directly to describe step completion
+  // If initialPrompt is provided, skip directly to structuring
   useEffect(() => {
     if (initialPrompt && !sentInitial.current) {
       sentInitial.current = true;
-      // Auto-fill step 1 and move to personalize
-      setWizardData(prev => ({
-        ...prev,
-        prompt: initialPrompt,
-        appName: "Meu App",
-        introMessage: "Olá! Como posso ajudar você hoje?",
-      }));
-      setWizardStep("personalize");
-      // Add system message about the description
-      setMessages([
-        { role: "user", content: initialPrompt },
-        { role: "assistant", content: `Ótimo! Entendi sua ideia: **"${initialPrompt.slice(0, 80)}${initialPrompt.length > 80 ? "..." : ""}"**\n\nAgora vamos personalizar seu app. Ajuste as opções abaixo e clique em **Continuar** quando estiver pronto.` },
-      ]);
+      setWizardData(prev => ({ ...prev, prompt: initialPrompt }));
+      setMessages([{ role: "user", content: initialPrompt }]);
+      handleStructure(initialPrompt);
     }
   }, [initialPrompt]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, calibrationEvents]);
+  }, [messages, structuring]);
 
   /** Process structured blocks incrementally during streaming */
   const processIncrementally = useCallback((content: string) => {
@@ -266,6 +277,127 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
       setToolLogs(prev => [...prev, { label: `${newCount} arquivo(s) gerado(s)`, status: "success" }]);
     }
   }, [addFile, addTable, addTerminalLog]);
+
+  /* ── Step 1: Discovery → Step 2: Structuring ── */
+
+  const handleDiscover = () => {
+    if (wizardData.prompt.length < 10) {
+      toast.error("Descreva com pelo menos 10 caracteres.");
+      return;
+    }
+    setMessages(prev => [
+      ...prev,
+      { role: "user", content: wizardData.prompt },
+    ]);
+    handleStructure(wizardData.prompt);
+  };
+
+  /* ── Step 2: AI Structuring ── */
+
+  const handleStructure = async (description: string) => {
+    setWizardStep("structure");
+    setStructuring(true);
+    setMessages(prev => [
+      ...prev,
+      { role: "assistant", content: "🧠 Analisando sua ideia e estruturando o app..." },
+    ]);
+
+    const result = await requestStructure(description, channel, wizardData.language || "pt-BR");
+
+    if (result) {
+      setStructuredConfig(result);
+      // Sync wizard data from structured config
+      setWizardData(prev => ({
+        ...prev,
+        appName: result.app_name || prev.appName,
+        prompt: result.app_description || prev.prompt,
+        tone: result.tone || prev.tone,
+        language: result.language || prev.language,
+        introMessage: result.intro_message || prev.introMessage,
+        maxMessages: result.max_turn_messages || prev.maxMessages,
+        onboarding: (result.onboarding_level as "none" | "soft" | "strict") || prev.onboarding,
+        selectedFeatures: result.selected_features || prev.selectedFeatures,
+        businessContext: result.business_context || prev.businessContext,
+        constraints: result.constraints || prev.constraints,
+      }));
+      setAppName(result.app_name || "Meu App");
+
+      setMessages(prev => {
+        const filtered = prev.filter(m => m.content !== "🧠 Analisando sua ideia e estruturando o app...");
+        return [
+          ...filtered,
+          { role: "assistant", content: `✅ Estrutura definida para **${result.app_name}**!\n\nRevise a configuração abaixo e clique em **Construir** quando estiver pronto.` },
+        ];
+      });
+    } else {
+      toast.error("Erro ao estruturar. Tente novamente.");
+      setWizardStep("discover");
+      setMessages(prev => prev.filter(m => m.content !== "🧠 Analisando sua ideia e estruturando o app..."));
+    }
+    setStructuring(false);
+  };
+
+  /* ── Step 3: Build ── */
+
+  const handleBuild = async () => {
+    if (!structuredConfig) return;
+    setWizardStep("build");
+    setBuilding(true);
+
+    // Save wizard config
+    setWizardConfig({
+      prompt: wizardData.prompt,
+      companyName: wizardData.companyName,
+      appName: structuredConfig.app_name,
+      tone: structuredConfig.tone,
+      language: structuredConfig.language,
+      introMessage: structuredConfig.intro_message,
+      maxMessages: structuredConfig.max_turn_messages,
+      onboarding: (structuredConfig.onboarding_level as "none" | "soft" | "strict") || "soft",
+      selectedFeatures: structuredConfig.selected_features || [],
+      businessContext: structuredConfig.business_context || "",
+      constraints: structuredConfig.constraints || "",
+    });
+
+    const configSummary = `## 🚀 Iniciando construção
+
+| Config | Valor |
+|---|---|
+| **Canal** | ${channel === "whatsapp" ? "WhatsApp" : "Web App"} |
+| **Nome** | ${structuredConfig.app_name} |
+| **Tom** | ${toneLabels[structuredConfig.tone] || structuredConfig.tone} |
+| **Idioma** | ${structuredConfig.language} |
+| **Features** | ${(structuredConfig.selected_features || []).join(", ")} |
+
+---
+
+Gerando código, banco e preview...`;
+
+    setMessages(prev => [...prev, { role: "assistant", content: configSummary }]);
+
+    if (!initializedProject.current) {
+      initializedProject.current = true;
+      initializeProject(channel, wizardData.prompt);
+    }
+
+    // Build the full context prompt
+    const contextPrompt = `Crie um ${channel === "whatsapp" ? "WhatsApp App" : "Web App"} chamado "${structuredConfig.app_name}".
+Descrição: ${structuredConfig.app_description}
+Tom: ${structuredConfig.tone}
+Idioma: ${structuredConfig.language}
+Mensagem de introdução: ${structuredConfig.intro_message}
+Máx mensagens por turno: ${structuredConfig.max_turn_messages}
+Onboarding: ${structuredConfig.onboarding_level}
+Funcionalidades: ${(structuredConfig.selected_features || []).join(", ")}
+${structuredConfig.business_context ? `Contexto: ${structuredConfig.business_context}` : ""}
+${structuredConfig.constraints ? `Restrições: ${structuredConfig.constraints}` : ""}`;
+
+    setBuilding(false);
+    setWizardStep("done");
+    await sendMessage(contextPrompt);
+  };
+
+  /* ── Send message (build & patch mode) ── */
 
   const sendMessage = async (text: string) => {
     if (!text.trim() || isLoading) return;
@@ -310,19 +442,22 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
     };
 
     try {
-      // Detect patch mode: if we already have files generated, use incremental mode
+      // Patch mode: if we already have files or prior conversation
       const hasPriorFiles = processedBlocksRef.current.size > 0 || messages.length > 2;
 
+      const sc = structuredConfig;
       const appContext: Record<string, string> = {
         app_type: channel,
-        app_name: wizardData.appName || "Meu App",
-        app_description: wizardData.prompt || "",
-        tone: wizardData.tone || "professional_friendly",
-        language: wizardData.language || "pt-BR",
-        intro_message: wizardData.introMessage || "",
-        max_turn_messages: String(wizardData.maxMessages || 2),
-        onboarding_level: wizardData.onboarding || "soft",
-        business_context: wizardData.companyName || "",
+        app_name: sc?.app_name || wizardData.appName || "Meu App",
+        app_description: sc?.app_description || wizardData.prompt || "",
+        tone: sc?.tone || wizardData.tone || "professional_friendly",
+        language: sc?.language || wizardData.language || "pt-BR",
+        intro_message: sc?.intro_message || wizardData.introMessage || "",
+        max_turn_messages: String(sc?.max_turn_messages || wizardData.maxMessages || 2),
+        onboarding_level: sc?.onboarding_level || wizardData.onboarding || "soft",
+        selected_features: (sc?.selected_features || wizardData.selectedFeatures || []).join(", "),
+        business_context: sc?.business_context || wizardData.businessContext || "",
+        constraints: sc?.constraints || wizardData.constraints || "",
         is_patch: hasPriorFiles ? "true" : "false",
       };
 
@@ -348,148 +483,6 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
     }
   };
 
-  /* ── Wizard handlers ── */
-
-  const handleDescribe = () => {
-    if (wizardData.prompt.length < 10) {
-      toast.error("Descreva com pelo menos 10 caracteres.");
-      return;
-    }
-    const inferredName = wizardData.companyName
-      ? (channel === "whatsapp" ? `Assistente ${wizardData.companyName}` : `${wizardData.companyName} App`)
-      : (channel === "whatsapp" ? "Meu Assistente" : "Meu App");
-    setWizardData(prev => ({
-      ...prev,
-      appName: inferredName,
-      introMessage: channel === "whatsapp"
-        ? `Olá! 👋 Sou o assistente da ${wizardData.companyName || "sua empresa"}. Como posso ajudar?`
-        : `Bem-vindo ao painel da ${wizardData.companyName || "sua empresa"}!`,
-    }));
-    setMessages(prev => [
-      ...prev,
-      { role: "user", content: wizardData.prompt },
-      { role: "assistant", content: `Entendi! Vou construir: **"${wizardData.prompt.slice(0, 80)}..."**\n\nAgora personalize os detalhes abaixo.` },
-    ]);
-    setWizardStep("personalize");
-  };
-
-  const handlePersonalize = () => {
-    if (!wizardData.appName.trim()) {
-      toast.error("Informe o nome do app.");
-      return;
-    }
-    setAppName(wizardData.appName);
-    // Save wizard config to context for persistence
-    setWizardConfig({
-      prompt: wizardData.prompt,
-      companyName: wizardData.companyName,
-      appName: wizardData.appName,
-      tone: wizardData.tone,
-      language: wizardData.language,
-      introMessage: wizardData.introMessage,
-      maxMessages: wizardData.maxMessages,
-      onboarding: wizardData.onboarding,
-    });
-    setMessages(prev => [
-      ...prev,
-      { role: "assistant", content: `**${wizardData.appName}** configurado!\n\n🔧 Tom: ${toneLabels[wizardData.tone] || wizardData.tone}\n🌐 Idioma: ${wizardData.language}\n💬 Intro: "${wizardData.introMessage.slice(0, 50)}..."\n\nIniciando calibração...` },
-    ]);
-    setWizardStep("calibrate");
-    runCalibration();
-  };
-
-  const runCalibration = async () => {
-    setCalibrating(true);
-    setCalibrationEvents([]);
-    setCalibrationDone(false);
-
-    const events: CalibrationEvent[] = [
-      { kind: "status", label: "Calibração iniciada", done: true },
-      { kind: "status", label: "Rodada 1 de 2", done: true },
-      {
-        kind: "messages",
-        label: "Teste 1",
-        messages: [
-          { type: "client", text: "Oi, gostaria de saber mais sobre os serviços." },
-          { type: "agent", text: wizardData.introMessage || "Olá! Como posso ajudar?" },
-        ],
-      },
-      { kind: "status", label: "Analisando resposta...", done: true },
-      { kind: "status", label: "Rodada 2 de 2", done: true },
-      {
-        kind: "messages",
-        label: "Teste 2",
-        messages: [
-          { type: "client", text: "Pode me dar mais detalhes?" },
-          { type: "agent", text: "Claro! Posso ajudar com mais informações. O que precisa saber?" },
-        ],
-      },
-      { kind: "status", label: "Verificando consistência...", done: true },
-      { kind: "result", label: "Todos os testes passaram ✓ (2/2)", success: true },
-    ];
-
-    for (let i = 0; i < events.length; i++) {
-      await new Promise((r) => setTimeout(r, 600 + Math.random() * 500));
-      setCalibrationEvents((prev) => [...prev, events[i]]);
-    }
-
-    setCalibrating(false);
-    setCalibrationDone(true);
-  };
-
-  const handleStartCreation = async () => {
-    setWizardStep("create");
-    setCreating(true);
-
-    const onboardingLabels: Record<string, string> = { none: "Nenhum", soft: "Suave", strict: "Rigoroso" };
-
-    // Add detailed config summary to chat history
-    const configSummary = `## 📋 Configuração Completa
-
-| Configuração | Valor |
-|---|---|
-| **Canal** | ${channel === "whatsapp" ? "WhatsApp" : "Web App"} |
-| **Nome do App** | ${wizardData.appName} |
-${wizardData.companyName ? `| **Empresa** | ${wizardData.companyName} |\n` : ""}| **Tom de Voz** | ${toneLabels[wizardData.tone] || wizardData.tone} |
-| **Idioma** | ${wizardData.language === "pt-BR" ? "🇧🇷 Português" : wizardData.language === "en" ? "🇺🇸 English" : "🇪🇸 Español"} |
-| **Msg. Introdução** | ${wizardData.introMessage} |
-| **Máx. Msgs/Turno** | ${wizardData.maxMessages} |
-| **Onboarding** | ${onboardingLabels[wizardData.onboarding] || wizardData.onboarding} |
-
-> **Descrição:** ${wizardData.prompt}
-
----
-
-🚀 Iniciando geração do app com base nessas configurações...`;
-
-    setMessages(prev => [
-      ...prev,
-      { role: "assistant", content: configSummary },
-    ]);
-
-    // Initialize the project
-    if (!initializedProject.current) {
-      initializedProject.current = true;
-      initializeProject(channel, wizardData.prompt);
-    }
-
-    // Now send the full context to AI for actual generation
-    const contextPrompt = `Crie um ${channel === "whatsapp" ? "WhatsApp App" : "Web App"} chamado "${wizardData.appName}".
-Descrição: ${wizardData.prompt}
-Tom: ${wizardData.tone}
-Idioma: ${wizardData.language}
-Mensagem de introdução: ${wizardData.introMessage}
-Máx mensagens por turno: ${wizardData.maxMessages}
-Onboarding: ${wizardData.onboarding}
-${wizardData.companyName ? `Empresa: ${wizardData.companyName}` : ""}`;
-
-    setCreating(false);
-    setWizardStep("done");
-
-    // Send the full prompt to generate code
-    await sendMessage(contextPrompt);
-  };
-
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -500,14 +493,6 @@ ${wizardData.companyName ? `Empresa: ${wizardData.companyName}` : ""}`;
   };
 
   const isEmpty = messages.length === 0;
-
-  const toneLabels: Record<string, string> = {
-    professional_friendly: "Profissional e Amigável",
-    formal: "Formal",
-    casual: "Casual e Descontraído",
-    empathetic: "Empático e Acolhedor",
-    direct: "Direto e Objetivo",
-  };
 
   return (
     <div className="w-[440px] min-w-[360px] max-w-[520px] border-r border-border flex flex-col bg-card/20">
@@ -524,16 +509,14 @@ ${wizardData.companyName ? `Empresa: ${wizardData.companyName}` : ""}`;
             <span className="text-sm font-semibold tracking-tight">Studio</span>
           </div>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium ${
-            channel === "whatsapp"
-              ? "bg-green-500/10 text-green-500 border border-green-500/20"
-              : "bg-primary/10 text-primary border border-primary/20"
-          }`}>
-            {channel === "whatsapp" ? <Phone className="w-3 h-3" /> : <Monitor className="w-3 h-3" />}
-            {channel === "whatsapp" ? "WhatsApp" : "Web"}
-          </span>
-        </div>
+        <span className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium ${
+          channel === "whatsapp"
+            ? "bg-green-500/10 text-green-500 border border-green-500/20"
+            : "bg-primary/10 text-primary border border-primary/20"
+        }`}>
+          {channel === "whatsapp" ? <Phone className="w-3 h-3" /> : <Monitor className="w-3 h-3" />}
+          {channel === "whatsapp" ? "WhatsApp" : "Web"}
+        </span>
       </div>
 
       {/* Wizard Stepper */}
@@ -541,7 +524,7 @@ ${wizardData.companyName ? `Empresa: ${wizardData.companyName}` : ""}`;
         <div className="px-4 py-2.5 border-b border-border bg-card/30">
           <div className="flex items-center gap-1">
             {stepLabels.map((s, i) => {
-              const stepOrder = ["describe", "personalize", "calibrate", "create"];
+              const stepOrder = ["discover", "structure", "build"];
               const currentIdx = stepOrder.indexOf(wizardStep);
               const thisIdx = stepOrder.indexOf(s.id);
               const isDone = thisIdx < currentIdx;
@@ -606,8 +589,9 @@ ${wizardData.companyName ? `Empresa: ${wizardData.companyName}` : ""}`;
 
       {/* Messages + Wizard area */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
-        {/* Step 1: Describe - empty state */}
-        {wizardStep === "describe" && isEmpty && (
+
+        {/* ══ Step 1: Discover ══ */}
+        {wizardStep === "discover" && isEmpty && (
           <div className="flex flex-col items-center justify-center h-full pt-12">
             <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
               <Sparkles className="w-6 h-6 text-primary" />
@@ -615,8 +599,8 @@ ${wizardData.companyName ? `Empresa: ${wizardData.companyName}` : ""}`;
             <h2 className="text-base font-semibold text-foreground mb-1">Descreva seu app</h2>
             <p className="text-xs text-muted-foreground text-center max-w-[280px] mb-6">
               {channel === "whatsapp"
-                ? "Conte o que seu WhatsApp App deve fazer. Pense em fluxos conversacionais, qualificação e automações."
-                : "Conte o que seu Web App deve fazer. Pense em páginas, dashboards e funcionalidades visuais."}
+                ? "Conte o que seu WhatsApp App deve fazer. A IA vai estruturar tudo automaticamente."
+                : "Conte o que seu Web App deve fazer. A IA vai estruturar tudo automaticamente."}
             </p>
 
             <div className="w-full max-w-[340px] space-y-3">
@@ -634,9 +618,9 @@ ${wizardData.companyName ? `Empresa: ${wizardData.companyName}` : ""}`;
                   : "Ex: Um painel de gestão com dashboard de métricas, cadastro de clientes e relatórios..."}
                 className="w-full bg-card/50 border border-border rounded-lg outline-none resize-none text-xs text-foreground placeholder:text-muted-foreground px-3 py-2.5 min-h-[100px] focus:border-primary/30 transition-colors"
               />
-              <Button onClick={handleDescribe} disabled={wizardData.prompt.length < 10} className="w-full gap-2 h-9 text-xs rounded-lg">
+              <Button onClick={handleDiscover} disabled={wizardData.prompt.length < 10} className="w-full gap-2 h-9 text-xs rounded-lg">
                 <Sparkles className="w-3.5 h-3.5" />
-                Continuar
+                Estruturar com IA
               </Button>
             </div>
 
@@ -699,184 +683,174 @@ ${wizardData.companyName ? `Empresa: ${wizardData.companyName}` : ""}`;
           );
         })}
 
-        {/* Step 2: Personalize - inline form */}
-        {wizardStep === "personalize" && (
-          <div className="bg-card/50 border border-border rounded-xl p-4 space-y-3">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-5 h-5 rounded-full bg-primary/15 flex items-center justify-center">
-                <span className="text-[9px] font-bold text-primary">2</span>
-              </div>
-              <h3 className="text-xs font-semibold text-foreground">Personalizar</h3>
-            </div>
-
-            <div>
-              <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Nome do app</label>
-              <Input
-                value={wizardData.appName}
-                onChange={(e) => setWizardData(prev => ({ ...prev, appName: e.target.value }))}
-                className="h-8 text-xs bg-background"
-              />
-            </div>
-
-            <div>
-              <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Tom de voz</label>
-              <div className="flex flex-wrap gap-1.5">
-                {Object.entries(toneLabels).map(([key, label]) => (
-                  <button
-                    key={key}
-                    onClick={() => setWizardData(prev => ({ ...prev, tone: key }))}
-                    className={`px-2.5 py-1.5 rounded-lg text-[10px] font-medium border transition-all ${
-                      wizardData.tone === key
-                        ? "bg-primary/10 border-primary/30 text-primary"
-                        : "bg-card border-border text-muted-foreground hover:border-border/80"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Idioma</label>
-              <div className="flex gap-1.5">
-                {[["pt-BR", "🇧🇷 Português"], ["en", "🇺🇸 English"], ["es", "🇪🇸 Español"]].map(([k, l]) => (
-                  <button
-                    key={k}
-                    onClick={() => setWizardData(prev => ({ ...prev, language: k }))}
-                    className={`px-2.5 py-1.5 rounded-lg text-[10px] font-medium border transition-all ${
-                      wizardData.language === k
-                        ? "bg-primary/10 border-primary/30 text-primary"
-                        : "bg-card border-border text-muted-foreground hover:border-border/80"
-                    }`}
-                  >
-                    {l}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Mensagem de introdução</label>
-              <textarea
-                value={wizardData.introMessage}
-                onChange={(e) => setWizardData(prev => ({ ...prev, introMessage: e.target.value }))}
-                className="w-full bg-background border border-border rounded-lg text-xs px-3 py-2 min-h-[60px] resize-none outline-none focus:border-primary/30 transition-colors"
-              />
-            </div>
-
-            <div>
-              <label className="text-[11px] font-medium text-muted-foreground mb-1.5 block">Máx. mensagens por turno</label>
-              <div className="flex gap-1.5">
-                {[1, 2, 3].map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => setWizardData(prev => ({ ...prev, maxMessages: n }))}
-                    className={`w-8 h-8 rounded-lg border text-xs font-medium transition-all ${
-                      wizardData.maxMessages === n
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border bg-card text-muted-foreground"
-                    }`}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="text-[11px] font-medium text-muted-foreground mb-1.5 block">Onboarding</label>
-              <div className="flex gap-1.5">
-                {([
-                  { v: "none" as const, l: "Nenhum" },
-                  { v: "soft" as const, l: "Suave" },
-                  { v: "strict" as const, l: "Rigoroso" },
-                ]).map(({ v, l }) => (
-                  <button
-                    key={v}
-                    onClick={() => setWizardData(prev => ({ ...prev, onboarding: v }))}
-                    className={`flex-1 px-2 py-1.5 rounded-lg text-[10px] font-medium border transition-all ${
-                      wizardData.onboarding === v
-                        ? "bg-primary/10 border-primary/30 text-primary"
-                        : "bg-card border-border text-muted-foreground"
-                    }`}
-                  >
-                    {l}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <Button onClick={handlePersonalize} className="w-full h-8 text-xs rounded-lg gap-1.5 mt-2">
-              <Check className="w-3.5 h-3.5" />
-              Continuar
-            </Button>
-          </div>
-        )}
-
-        {/* Step 3: Calibrate */}
-        {wizardStep === "calibrate" && (
-          <div className="bg-card/50 border border-border rounded-xl p-4 space-y-2">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-5 h-5 rounded-full bg-primary/15 flex items-center justify-center">
-                <span className="text-[9px] font-bold text-primary">3</span>
-              </div>
-              <h3 className="text-xs font-semibold text-foreground">Calibração</h3>
-              {calibrating && <Loader2 className="w-3.5 h-3.5 text-primary animate-spin ml-auto" />}
-            </div>
-
-            {calibrationEvents.map((ev, i) => (
-              <div key={i}>
-                {ev.kind === "status" && (
-                  <div className="flex items-center gap-2 text-[11px] py-1">
-                    {ev.done ? <CheckCircle2 className="w-3 h-3 text-green-500 shrink-0" /> : <Loader2 className="w-3 h-3 text-muted-foreground animate-spin shrink-0" />}
-                    <span className="text-muted-foreground">{ev.label}</span>
-                  </div>
-                )}
-                {ev.kind === "messages" && ev.messages && (
-                  <div className="ml-5 my-1.5 space-y-1.5 border-l-2 border-border pl-3">
-                    {ev.messages.map((m, j) => (
-                      <div key={j} className={`text-[11px] px-2.5 py-1.5 rounded-lg max-w-[85%] ${
-                        m.type === "client"
-                          ? "bg-muted/50 text-foreground"
-                          : "bg-primary/10 text-primary ml-auto"
-                      }`}>
-                        <span className="text-[9px] font-bold text-muted-foreground block mb-0.5">
-                          {m.type === "client" ? "👤 Cliente" : "🤖 Agente"}
-                        </span>
-                        {m.text}
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {ev.kind === "result" && (
-                  <div className={`flex items-center gap-2 text-xs font-medium py-2 px-3 rounded-lg mt-1 ${
-                    ev.success ? "bg-emerald-500/10 text-emerald-400" : "bg-destructive/10 text-destructive"
-                  }`}>
-                    <CheckCircle2 className="w-4 h-4" />
-                    {ev.label}
-                  </div>
-                )}
-              </div>
-            ))}
-
-            {calibrationDone && (
-              <Button onClick={handleStartCreation} className="w-full h-8 text-xs rounded-lg gap-1.5 mt-3">
-                <Sparkles className="w-3.5 h-3.5" />
-                Criar App
-              </Button>
-            )}
-          </div>
-        )}
-
-        {/* Step 4: Creating */}
-        {wizardStep === "create" && creating && (
+        {/* ══ Step 2: Structuring — loading state ══ */}
+        {structuring && (
           <div className="flex items-center gap-3 bg-card/50 border border-border rounded-xl p-4">
             <Loader2 className="w-5 h-5 text-primary animate-spin" />
             <div>
-              <p className="text-xs font-medium text-foreground">Criando {wizardData.appName}...</p>
+              <p className="text-xs font-medium text-foreground">Estruturando com IA...</p>
+              <p className="text-[10px] text-muted-foreground">Analisando descrição e definindo arquitetura</p>
+            </div>
+          </div>
+        )}
+
+        {/* ══ Step 2: Structured Config Card ══ */}
+        {wizardStep === "structure" && structuredConfig && !structuring && (
+          <div className="bg-card/50 border border-border rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded-full bg-primary/15 flex items-center justify-center">
+                  <Check className="w-3 h-3 text-primary" />
+                </div>
+                <h3 className="text-xs font-semibold text-foreground">Configuração Estruturada</h3>
+              </div>
+              <button
+                onClick={() => setEditingConfig(!editingConfig)}
+                className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+              >
+                <Pencil className="w-3 h-3" />
+                {editingConfig ? "Fechar" : "Editar"}
+              </button>
+            </div>
+
+            {!editingConfig ? (
+              /* Read-only view */
+              <div className="space-y-2 text-[11px]">
+                <div className="flex justify-between py-1 border-b border-border/50">
+                  <span className="text-muted-foreground">Nome</span>
+                  <span className="font-medium text-foreground">{structuredConfig.app_name}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-border/50">
+                  <span className="text-muted-foreground">Tom</span>
+                  <span className="font-medium text-foreground">{toneLabels[structuredConfig.tone] || structuredConfig.tone}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-border/50">
+                  <span className="text-muted-foreground">Idioma</span>
+                  <span className="font-medium text-foreground">{structuredConfig.language}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-border/50">
+                  <span className="text-muted-foreground">Onboarding</span>
+                  <span className="font-medium text-foreground">{onboardingLabels[structuredConfig.onboarding_level] || structuredConfig.onboarding_level}</span>
+                </div>
+                <div className="py-1 border-b border-border/50">
+                  <span className="text-muted-foreground block mb-1">Mensagem inicial</span>
+                  <span className="text-foreground italic">"{structuredConfig.intro_message}"</span>
+                </div>
+                <div className="py-1">
+                  <span className="text-muted-foreground block mb-1">Funcionalidades</span>
+                  <div className="flex flex-wrap gap-1">
+                    {(structuredConfig.selected_features || []).map((f, i) => (
+                      <Badge key={i} variant="secondary" className="text-[9px] px-1.5 py-0.5">{f}</Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* Editable view */
+              <div className="space-y-2.5">
+                <div>
+                  <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Nome</label>
+                  <Input
+                    value={structuredConfig.app_name}
+                    onChange={(e) => setStructuredConfig({ ...structuredConfig, app_name: e.target.value })}
+                    className="h-7 text-xs bg-background"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Tom</label>
+                  <div className="flex flex-wrap gap-1">
+                    {Object.entries(toneLabels).map(([key, label]) => (
+                      <button
+                        key={key}
+                        onClick={() => setStructuredConfig({ ...structuredConfig, tone: key })}
+                        className={`px-2 py-1 rounded-md text-[9px] font-medium border transition-all ${
+                          structuredConfig.tone === key
+                            ? "bg-primary/10 border-primary/30 text-primary"
+                            : "bg-card border-border text-muted-foreground"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Idioma</label>
+                  <div className="flex gap-1">
+                    {[["pt-BR", "🇧🇷 PT"], ["en", "🇺🇸 EN"], ["es", "🇪🇸 ES"]].map(([k, l]) => (
+                      <button
+                        key={k}
+                        onClick={() => setStructuredConfig({ ...structuredConfig, language: k })}
+                        className={`px-2 py-1 rounded-md text-[9px] font-medium border transition-all ${
+                          structuredConfig.language === k
+                            ? "bg-primary/10 border-primary/30 text-primary"
+                            : "bg-card border-border text-muted-foreground"
+                        }`}
+                      >
+                        {l}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Mensagem inicial</label>
+                  <textarea
+                    value={structuredConfig.intro_message}
+                    onChange={(e) => setStructuredConfig({ ...structuredConfig, intro_message: e.target.value })}
+                    className="w-full bg-background border border-border rounded-md text-xs px-2 py-1.5 min-h-[50px] resize-none outline-none focus:border-primary/30 transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Onboarding</label>
+                  <div className="flex gap-1">
+                    {(["none", "soft", "strict"] as const).map(v => (
+                      <button
+                        key={v}
+                        onClick={() => setStructuredConfig({ ...structuredConfig, onboarding_level: v })}
+                        className={`flex-1 px-2 py-1 rounded-md text-[9px] font-medium border transition-all ${
+                          structuredConfig.onboarding_level === v
+                            ? "bg-primary/10 border-primary/30 text-primary"
+                            : "bg-card border-border text-muted-foreground"
+                        }`}
+                      >
+                        {onboardingLabels[v]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-2 pt-1">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 h-8 text-xs rounded-lg gap-1"
+                onClick={() => handleStructure(wizardData.prompt)}
+              >
+                <RotateCw className="w-3 h-3" />
+                Re-estruturar
+              </Button>
+              <Button
+                size="sm"
+                className="flex-1 h-8 text-xs rounded-lg gap-1"
+                onClick={handleBuild}
+              >
+                <Sparkles className="w-3 h-3" />
+                Construir
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* ══ Step 3: Building indicator ══ */}
+        {building && (
+          <div className="flex items-center gap-3 bg-card/50 border border-border rounded-xl p-4">
+            <Loader2 className="w-5 h-5 text-primary animate-spin" />
+            <div>
+              <p className="text-xs font-medium text-foreground">Construindo {wizardData.appName}...</p>
               <p className="text-[10px] text-muted-foreground">
-                {channel === "whatsapp" ? "Gerando fluxos conversacionais e código" : "Gerando páginas, componentes e código"}
+                {channel === "whatsapp" ? "Gerando fluxos, agentes e código" : "Gerando páginas, componentes e código"}
               </p>
             </div>
           </div>
@@ -900,14 +874,14 @@ ${wizardData.companyName ? `Empresa: ${wizardData.companyName}` : ""}`;
         )}
       </div>
 
-      {/* Input - only active after wizard is done */}
+      {/* Input - only active after wizard is done (patch mode) */}
       <div className="p-3 border-t border-border">
         <div className={`rounded-xl border border-border bg-card/50 p-1 transition-colors ${wizardStep === "done" ? "focus-within:border-primary/30" : "opacity-60"}`}>
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={wizardStep === "done" ? "Continue construindo..." : "Complete as etapas acima para começar..."}
+            placeholder={wizardStep === "done" ? "Peça alterações... (modo patch)" : "Complete as etapas acima para começar..."}
             rows={1}
             disabled={wizardStep !== "done"}
             className="w-full bg-transparent border-none outline-none resize-none text-sm text-foreground placeholder:text-muted-foreground px-3 py-2 min-h-[36px] max-h-[120px] disabled:cursor-not-allowed"

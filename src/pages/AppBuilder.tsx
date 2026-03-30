@@ -31,7 +31,7 @@ const tabs: { id: TabId; label: string; icon: typeof Eye }[] = [
 
 const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
   const navigate = useNavigate();
-  const { channel, setChannel, saveApp, appName, appId, files, tables, isGenerating, chatMessages, setFiles, setTables, setAppName, setChannel: setCtxChannel, setChatMessages, setWizardStep, setWizardData, setWizardConfig } = useAppBuilder();
+  const { channel, setChannel, saveApp, appName, appId, files, tables, isGenerating, chatMessages, setFiles, setTables, setAppName, setChannel: setCtxChannel, setChatMessages, setWizardStep, setWizardData, setWizardConfig, setStructuredConfig } = useAppBuilder();
   const { user } = useAuth();
 
   const [activeTab, setActiveTab] = useState<TabId>("preview");
@@ -98,6 +98,7 @@ const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
           if (cfg.wizardStep) setWizardStep(cfg.wizardStep);
           if (cfg.wizardData) setWizardData(cfg.wizardData);
           if (cfg.wizardConfig) setWizardConfig(cfg.wizardConfig);
+          if (cfg.structuredConfig) setStructuredConfig(cfg.structuredConfig);
         }
       });
   }, [appId]);
