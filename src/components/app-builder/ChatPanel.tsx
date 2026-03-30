@@ -162,8 +162,15 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
     wizardData: ctxWizardData, setWizardData: setCtxWizardData,
   } = useAppBuilder();
 
-  const messages = chatMessages;
-  const setMessages = setChatMessages;
+  const messagesRef = useRef(chatMessages);
+  messagesRef.current = chatMessages;
+  const setMessages = useCallback((update: ChatMessage[] | ((prev: ChatMessage[]) => ChatMessage[])) => {
+    if (typeof update === "function") {
+      setChatMessages(update(messagesRef.current));
+    } else {
+      setChatMessages(update);
+    }
+  }, [setChatMessages]);
 
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
