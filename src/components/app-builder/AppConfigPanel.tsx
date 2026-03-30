@@ -1,280 +1,571 @@
 import { useState } from "react";
 import {
   Phone, Monitor, MessageSquare, Globe, Webhook, Bell, Users, Shield,
-  Palette, Layout, Database, Settings, BarChart3, CreditCard, FileText,
+  Layout, Database, Settings, BarChart3, CreditCard, FileText,
   Bot, Zap, Link2, Upload, Image, Type, MousePointer, Smartphone,
-  ChevronRight, Check,
+  ChevronRight, Check, Eye, Lock, Unlock, Brain, BookOpen, Key,
+  Search, Plus, Trash2, GripVertical, Sparkles, Globe2, FileUp,
+  ToggleLeft, Cpu, Layers, X,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type AppChannel = "whatsapp" | "web";
 
-/* ──── WhatsApp config sections ──── */
-const WhatsAppConfig = () => {
-  const [greeting, setGreeting] = useState("Olá! 👋 Como posso ajudar você hoje?");
-  const [fallback, setFallback] = useState("Desculpe, não entendi. Pode reformular?");
+type ConfigTab = "overview" | "intelligence" | "access" | "knowledge" | "channels";
 
+const configTabs: { id: ConfigTab; label: string; icon: typeof Eye }[] = [
+  { id: "overview", label: "Geral", icon: Layers },
+  { id: "intelligence", label: "IA", icon: Brain },
+  { id: "access", label: "Acesso", icon: Shield },
+  { id: "knowledge", label: "Dados", icon: BookOpen },
+  { id: "channels", label: "Canais", icon: Globe2 },
+];
+
+/* ── Section wrapper ── */
+function Section({ title, icon: Icon, children, badge }: { title: string; icon: any; children: React.ReactNode; badge?: string }) {
   return (
-    <div className="space-y-6">
-      {/* Conexão */}
-      <Section title="Conexão WhatsApp" icon={Phone}>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/30">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-green-500/15 flex items-center justify-center">
-                <Phone className="w-4 h-4 text-green-500" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-foreground">WhatsApp Business API</p>
-                <p className="text-[10px] text-muted-foreground">Conecte seu número</p>
-              </div>
-            </div>
-            <Button variant="outline" size="sm" className="h-7 text-xs">Conectar</Button>
-          </div>
-          <Input placeholder="Número do WhatsApp (ex: +5511999999999)" className="h-9 text-xs" />
-          <Input placeholder="Token de acesso da API" type="password" className="h-9 text-xs" />
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
+          <Icon className="w-3.5 h-3.5 text-primary" />
         </div>
-      </Section>
-
-      {/* Mensagens */}
-      <Section title="Mensagens" icon={MessageSquare}>
-        <div className="space-y-3">
-          <div>
-            <label className="text-xs font-medium text-foreground mb-1 block">Mensagem de saudação</label>
-            <Textarea value={greeting} onChange={(e) => setGreeting(e.target.value)} className="text-xs min-h-[60px]" />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-foreground mb-1 block">Mensagem de fallback</label>
-            <Textarea value={fallback} onChange={(e) => setFallback(e.target.value)} className="text-xs min-h-[60px]" />
-          </div>
-        </div>
-      </Section>
-
-      {/* Jornada Conversacional */}
-      <Section title="Jornada Conversacional" icon={Zap}>
-        <div className="space-y-2">
-          {["Qualificação inicial", "Coleta de dados", "Apresentação de oferta", "Follow-up automático", "Encerramento"].map((step, i) => (
-            <div key={step} className="flex items-center gap-2.5 p-2.5 rounded-lg border border-border bg-card hover:border-primary/20 transition-colors cursor-pointer">
-              <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold flex items-center justify-center shrink-0">{i + 1}</span>
-              <span className="text-xs text-foreground">{step}</span>
-              <ChevronRight className="w-3 h-3 text-muted-foreground ml-auto" />
-            </div>
-          ))}
-          <Button variant="outline" size="sm" className="w-full h-8 text-xs mt-1">+ Adicionar etapa</Button>
-        </div>
-      </Section>
-
-      {/* Agentes Internos */}
-      <Section title="Agentes Internos" icon={Bot}>
-        <p className="text-[11px] text-muted-foreground mb-2">Agentes especializados que compõem este app.</p>
-        <div className="space-y-2">
-          {[
-            { name: "Qualificador", desc: "Coleta e qualifica informações do lead" },
-            { name: "Atendente", desc: "Responde dúvidas e fornece informações" },
-          ].map((agent) => (
-            <div key={agent.name} className="flex items-center gap-2.5 p-2.5 rounded-lg border border-border bg-card">
-              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Bot className="w-3.5 h-3.5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-foreground">{agent.name}</p>
-                <p className="text-[10px] text-muted-foreground truncate">{agent.desc}</p>
-              </div>
-              <Settings className="w-3.5 h-3.5 text-muted-foreground" />
-            </div>
-          ))}
-          <Button variant="outline" size="sm" className="w-full h-8 text-xs">+ Adicionar agente</Button>
-        </div>
-      </Section>
-
-      {/* Integrações */}
-      <Section title="Integrações" icon={Link2}>
-        <div className="space-y-2">
-          {[
-            { name: "CRM", desc: "Sincronize leads e contatos", connected: false },
-            { name: "Calendário", desc: "Agendamento automático", connected: false },
-            { name: "Pagamentos", desc: "Cobranças via conversa", connected: false },
-          ].map((int) => (
-            <div key={int.name} className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-card">
-              <div>
-                <p className="text-xs font-medium text-foreground">{int.name}</p>
-                <p className="text-[10px] text-muted-foreground">{int.desc}</p>
-              </div>
-              <Switch />
-            </div>
-          ))}
-        </div>
-      </Section>
-
-      {/* Notificações */}
-      <Section title="Notificações" icon={Bell}>
-        <div className="space-y-2">
-          <ToggleRow label="Notificar ao receber lead qualificado" />
-          <ToggleRow label="Alerta de conversa sem resposta (>5min)" />
-          <ToggleRow label="Resumo diário de conversas" />
-        </div>
-      </Section>
-
-      {/* Horário de Funcionamento */}
-      <Section title="Horário de Funcionamento" icon={Settings}>
-        <div className="space-y-2">
-          <ToggleRow label="Atendimento 24/7" defaultOn />
-          <div>
-            <label className="text-xs font-medium text-foreground mb-1 block">Mensagem fora do horário</label>
-            <Textarea placeholder="Estamos fora do horário. Retornaremos em breve!" className="text-xs min-h-[50px]" />
-          </div>
-        </div>
-      </Section>
-    </div>
-  );
-};
-
-/* ──── Web App config sections ──── */
-const WebAppConfig = () => {
-  return (
-    <div className="space-y-6">
-      {/* Layout & Design */}
-      <Section title="Layout & Design" icon={Layout}>
-        <div className="space-y-3">
-          <div>
-            <label className="text-xs font-medium text-foreground mb-1.5 block">Estilo do layout</label>
-            <div className="grid grid-cols-3 gap-2">
-              {["Dashboard", "Landing Page", "Portal"].map((style) => (
-                <button key={style} className="p-3 rounded-lg border border-border bg-card hover:border-primary/30 transition-colors text-center">
-                  <Layout className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
-                  <span className="text-[10px] text-foreground font-medium">{style}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-foreground mb-1 block">Cor primária</label>
-            <div className="flex gap-2">
-              {["#6366f1", "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"].map((c) => (
-                <button key={c} className="w-7 h-7 rounded-full border-2 border-transparent hover:border-foreground/20 transition-colors" style={{ backgroundColor: c }} />
-              ))}
-            </div>
-          </div>
-        </div>
-      </Section>
-
-      {/* Páginas */}
-      <Section title="Páginas" icon={FileText}>
-        <div className="space-y-2">
-          {["Home", "Dashboard", "Login", "Perfil", "Configurações"].map((page) => (
-            <div key={page} className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-card">
-              <div className="flex items-center gap-2">
-                <FileText className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="text-xs text-foreground">{page}</span>
-              </div>
-              <ChevronRight className="w-3 h-3 text-muted-foreground" />
-            </div>
-          ))}
-          <Button variant="outline" size="sm" className="w-full h-8 text-xs">+ Adicionar página</Button>
-        </div>
-      </Section>
-
-      {/* Componentes */}
-      <Section title="Componentes" icon={MousePointer}>
-        <div className="space-y-2">
-          {[
-            { name: "Tabela de dados", desc: "Listagem com filtros e paginação" },
-            { name: "Formulário", desc: "Entrada de dados com validação" },
-            { name: "Gráficos", desc: "Visualização de métricas" },
-            { name: "Chat widget", desc: "Atendimento integrado" },
-          ].map((comp) => (
-            <div key={comp.name} className="flex items-center gap-2.5 p-2.5 rounded-lg border border-border bg-card hover:border-primary/20 transition-colors cursor-pointer">
-              <MousePointer className="w-3.5 h-3.5 text-primary shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-foreground">{comp.name}</p>
-                <p className="text-[10px] text-muted-foreground">{comp.desc}</p>
-              </div>
-              <Switch />
-            </div>
-          ))}
-        </div>
-      </Section>
-
-      {/* Banco de Dados */}
-      <Section title="Banco de Dados" icon={Database}>
-        <div className="space-y-2">
-          {["users", "products", "orders"].map((table) => (
-            <div key={table} className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-card">
-              <div className="flex items-center gap-2">
-                <Database className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="text-xs font-mono text-foreground">{table}</span>
-              </div>
-              <Badge variant="outline" className="text-[9px]">Auto</Badge>
-            </div>
-          ))}
-          <Button variant="outline" size="sm" className="w-full h-8 text-xs">+ Adicionar tabela</Button>
-        </div>
-      </Section>
-
-      {/* Autenticação */}
-      <Section title="Autenticação" icon={Shield}>
-        <div className="space-y-2">
-          <ToggleRow label="Login com e-mail e senha" defaultOn />
-          <ToggleRow label="Login social (Google)" />
-          <ToggleRow label="Registro de novos usuários" defaultOn />
-          <ToggleRow label="Recuperação de senha" defaultOn />
-        </div>
-      </Section>
-
-      {/* Responsividade */}
-      <Section title="Responsividade" icon={Smartphone}>
-        <div className="space-y-2">
-          <ToggleRow label="Design responsivo mobile" defaultOn />
-          <ToggleRow label="PWA (instalável no celular)" />
-        </div>
-      </Section>
-
-      {/* Analytics */}
-      <Section title="Analytics" icon={BarChart3}>
-        <div className="space-y-2">
-          <ToggleRow label="Dashboard de métricas" />
-          <ToggleRow label="Rastreamento de eventos" />
-        </div>
-      </Section>
-
-      {/* Pagamentos */}
-      <Section title="Pagamentos" icon={CreditCard}>
-        <div className="space-y-2">
-          <ToggleRow label="Integração Stripe" />
-          <ToggleRow label="Planos e assinaturas" />
-        </div>
-      </Section>
-    </div>
-  );
-};
-
-/* ──── Shared sub-components ──── */
-function Section({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) {
-  return (
-    <div>
-      <div className="flex items-center gap-2 mb-3">
-        <Icon className="w-4 h-4 text-primary" />
-        <h3 className="text-xs font-semibold text-foreground">{title}</h3>
+        <h3 className="text-xs font-semibold text-foreground flex-1">{title}</h3>
+        {badge && <Badge variant="outline" className="text-[9px] h-4">{badge}</Badge>}
       </div>
       {children}
     </div>
   );
 }
 
-function ToggleRow({ label, defaultOn = false }: { label: string; defaultOn?: boolean }) {
+function ToggleRow({ label, desc, defaultOn = false }: { label: string; desc?: string; defaultOn?: boolean }) {
   const [on, setOn] = useState(defaultOn);
   return (
-    <div className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-card">
-      <span className="text-xs text-foreground">{label}</span>
-      <Switch checked={on} onCheckedChange={setOn} />
+    <div className="flex items-center justify-between gap-3 p-2.5 rounded-lg border border-border bg-card/50 hover:bg-card transition-colors">
+      <div className="min-w-0">
+        <span className="text-xs text-foreground block">{label}</span>
+        {desc && <span className="text-[10px] text-muted-foreground">{desc}</span>}
+      </div>
+      <Switch checked={on} onCheckedChange={setOn} className="shrink-0" />
     </div>
   );
 }
+
+/* ──── Tab: Overview ──── */
+const OverviewTab = ({ channel }: { channel: AppChannel }) => {
+  const [description, setDescription] = useState("");
+  const [status, setStatus] = useState<"draft" | "active" | "paused">("draft");
+
+  return (
+    <div className="space-y-5">
+      <Section title="Sobre o App" icon={FileText}>
+        <div className="space-y-3">
+          <div>
+            <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Descrição</label>
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Descreva o que seu app faz..."
+              className="text-xs min-h-[70px] bg-card/50 border-border/50 resize-none"
+            />
+          </div>
+          <div>
+            <label className="text-[11px] font-medium text-muted-foreground mb-1.5 block">Status</label>
+            <div className="flex gap-1.5">
+              {(["draft", "active", "paused"] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setStatus(s)}
+                  className={`flex-1 px-2 py-1.5 rounded-md text-[10px] font-medium border transition-all ${
+                    status === s
+                      ? s === "active" ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                      : s === "paused" ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
+                      : "bg-primary/10 text-primary border-primary/30"
+                      : "bg-card/50 text-muted-foreground border-border hover:border-border/80"
+                  }`}
+                >
+                  {s === "draft" ? "Rascunho" : s === "active" ? "Ativo" : "Pausado"}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      <Section title="Identidade Visual" icon={Image}>
+        <div className="space-y-3">
+          <div className="flex items-center gap-3 p-3 rounded-lg border border-dashed border-border bg-card/30 hover:border-primary/30 transition-colors cursor-pointer">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/10">
+              <Upload className="w-5 h-5 text-primary/60" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-foreground">Ícone do App</p>
+              <p className="text-[10px] text-muted-foreground">PNG, SVG · 512x512px</p>
+            </div>
+          </div>
+          <div>
+            <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Cor principal</label>
+            <div className="flex gap-1.5">
+              {["#6366f1", "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4"].map((c) => (
+                <button key={c} className="w-6 h-6 rounded-full border-2 border-transparent hover:border-foreground/20 transition-all hover:scale-110" style={{ backgroundColor: c }} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      {channel === "whatsapp" && (
+        <Section title="Mensagens Padrão" icon={MessageSquare}>
+          <div className="space-y-3">
+            <div>
+              <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Saudação</label>
+              <Textarea defaultValue="Olá! 👋 Como posso ajudar?" className="text-xs min-h-[50px] bg-card/50 resize-none" />
+            </div>
+            <div>
+              <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Fallback</label>
+              <Textarea defaultValue="Desculpe, não entendi. Pode reformular?" className="text-xs min-h-[50px] bg-card/50 resize-none" />
+            </div>
+            <div>
+              <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Fora do horário</label>
+              <Textarea defaultValue="Estamos fora do horário. Retornaremos em breve!" className="text-xs min-h-[50px] bg-card/50 resize-none" />
+            </div>
+          </div>
+        </Section>
+      )}
+
+      <Section title="Notificações" icon={Bell}>
+        <div className="space-y-1.5">
+          <ToggleRow label="Lead qualificado" desc="Notificar ao captar lead" />
+          <ToggleRow label="Conversa sem resposta" desc="Alerta após 5min inativo" />
+          <ToggleRow label="Resumo diário" desc="Relatório por e-mail" />
+        </div>
+      </Section>
+    </div>
+  );
+};
+
+/* ──── Tab: Intelligence (LLM) ──── */
+const IntelligenceTab = () => {
+  const [selectedProvider, setSelectedProvider] = useState("aikortex");
+  const [selectedModel, setSelectedModel] = useState("gemini-2.5-flash");
+  const [temperature, setTemperature] = useState(0.7);
+
+  const providers = [
+    { id: "aikortex", name: "Aikortex AI", desc: "Modelos integrados, sem API key", models: ["gemini-2.5-flash", "gemini-2.5-pro", "gpt-5-mini", "gpt-5"] },
+    { id: "openai", name: "OpenAI", desc: "Requer chave de API", models: ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"] },
+    { id: "anthropic", name: "Anthropic", desc: "Requer chave de API", models: ["claude-sonnet-4", "claude-3.5-haiku"] },
+    { id: "google", name: "Google AI", desc: "Requer chave de API", models: ["gemini-2.5-pro", "gemini-2.5-flash"] },
+  ];
+
+  const current = providers.find(p => p.id === selectedProvider);
+
+  return (
+    <div className="space-y-5">
+      <Section title="Provedor de IA" icon={Cpu} badge="LLM">
+        <div className="space-y-1.5">
+          {providers.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => { setSelectedProvider(p.id); setSelectedModel(p.models[0]); }}
+              className={`w-full flex items-center gap-2.5 p-2.5 rounded-lg border transition-all text-left ${
+                selectedProvider === p.id
+                  ? "bg-primary/10 border-primary/30 shadow-sm"
+                  : "bg-card/50 border-border hover:border-border/80"
+              }`}
+            >
+              <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold ${
+                selectedProvider === p.id ? "bg-primary/20 text-primary" : "bg-muted/50 text-muted-foreground"
+              }`}>
+                {p.id === "aikortex" ? <Sparkles className="w-3.5 h-3.5" /> : <Key className="w-3.5 h-3.5" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-foreground">{p.name}</p>
+                <p className="text-[10px] text-muted-foreground">{p.desc}</p>
+              </div>
+              {selectedProvider === p.id && <Check className="w-3.5 h-3.5 text-primary shrink-0" />}
+            </button>
+          ))}
+        </div>
+      </Section>
+
+      {selectedProvider !== "aikortex" && (
+        <Section title="Chave de API" icon={Key}>
+          <Input type="password" placeholder={`Sua ${current?.name} API Key`} className="h-8 text-xs bg-card/50" />
+          <p className="text-[10px] text-muted-foreground mt-1.5">Armazenada de forma criptografada.</p>
+        </Section>
+      )}
+
+      <Section title="Modelo" icon={Brain}>
+        <div className="space-y-1.5">
+          {current?.models.map((m) => (
+            <button
+              key={m}
+              onClick={() => setSelectedModel(m)}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-all ${
+                selectedModel === m
+                  ? "bg-primary/10 text-primary font-medium border border-primary/20"
+                  : "text-foreground hover:bg-muted/30 border border-transparent"
+              }`}
+            >
+              <div className={`w-1.5 h-1.5 rounded-full ${selectedModel === m ? "bg-primary" : "bg-muted-foreground/30"}`} />
+              <span className="font-mono text-[11px]">{m}</span>
+            </button>
+          ))}
+        </div>
+      </Section>
+
+      <Section title="Parâmetros" icon={Settings}>
+        <div className="space-y-3">
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-[11px] font-medium text-muted-foreground">Temperatura</label>
+              <span className="text-[11px] font-mono text-primary">{temperature}</span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.1}
+              value={temperature}
+              onChange={(e) => setTemperature(parseFloat(e.target.value))}
+              className="w-full h-1.5 rounded-full appearance-none bg-muted/50 accent-primary cursor-pointer"
+            />
+            <div className="flex justify-between mt-1">
+              <span className="text-[9px] text-muted-foreground">Preciso</span>
+              <span className="text-[9px] text-muted-foreground">Criativo</span>
+            </div>
+          </div>
+          <ToggleRow label="Memória de conversa" desc="Manter contexto entre mensagens" defaultOn />
+          <ToggleRow label="Streaming" desc="Respostas em tempo real" defaultOn />
+        </div>
+      </Section>
+    </div>
+  );
+};
+
+/* ──── Tab: Access ──── */
+const AccessTab = () => {
+  const [accessMode, setAccessMode] = useState<"public" | "private">("public");
+  const [users, setUsers] = useState([
+    { email: "admin@empresa.com", role: "admin" },
+  ]);
+  const [newEmail, setNewEmail] = useState("");
+
+  const addUser = () => {
+    if (!newEmail.trim()) return;
+    setUsers([...users, { email: newEmail.trim(), role: "user" }]);
+    setNewEmail("");
+  };
+
+  return (
+    <div className="space-y-5">
+      <Section title="Modo de Acesso" icon={accessMode === "public" ? Unlock : Lock}>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => setAccessMode("public")}
+            className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
+              accessMode === "public"
+                ? "bg-emerald-500/10 border-emerald-500/30 shadow-sm"
+                : "bg-card/50 border-border hover:border-border/80"
+            }`}
+          >
+            <Globe className={`w-5 h-5 ${accessMode === "public" ? "text-emerald-400" : "text-muted-foreground"}`} />
+            <div className="text-center">
+              <p className="text-xs font-medium text-foreground">Público</p>
+              <p className="text-[9px] text-muted-foreground">Qualquer pessoa</p>
+            </div>
+          </button>
+          <button
+            onClick={() => setAccessMode("private")}
+            className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
+              accessMode === "private"
+                ? "bg-amber-500/10 border-amber-500/30 shadow-sm"
+                : "bg-card/50 border-border hover:border-border/80"
+            }`}
+          >
+            <Lock className={`w-5 h-5 ${accessMode === "private" ? "text-amber-400" : "text-muted-foreground"}`} />
+            <div className="text-center">
+              <p className="text-xs font-medium text-foreground">Privado</p>
+              <p className="text-[9px] text-muted-foreground">Apenas autorizados</p>
+            </div>
+          </button>
+        </div>
+      </Section>
+
+      {accessMode === "private" && (
+        <Section title="Usuários Autorizados" icon={Users} badge={`${users.length}`}>
+          <div className="space-y-2">
+            <div className="flex gap-1.5">
+              <Input
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="email@exemplo.com"
+                className="h-8 text-xs bg-card/50 flex-1"
+                onKeyDown={(e) => e.key === "Enter" && addUser()}
+              />
+              <Button size="sm" className="h-8 w-8 p-0 shrink-0" onClick={addUser}>
+                <Plus className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+            {users.map((u, i) => (
+              <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-card/50 border border-border">
+                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                  <span className="text-[9px] font-bold text-primary">{u.email[0].toUpperCase()}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] text-foreground truncate">{u.email}</p>
+                </div>
+                <Badge variant="outline" className="text-[8px] h-4 capitalize">{u.role}</Badge>
+                <button onClick={() => setUsers(users.filter((_, idx) => idx !== i))} className="text-muted-foreground hover:text-destructive transition-colors">
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      <Section title="Autenticação" icon={Shield}>
+        <div className="space-y-1.5">
+          <ToggleRow label="Login obrigatório" desc="Exigir autenticação para usar" />
+          <ToggleRow label="Registro aberto" desc="Permitir novos cadastros" defaultOn />
+          <ToggleRow label="Login social" desc="Google, Apple" />
+        </div>
+      </Section>
+
+      <Section title="Limites de Uso" icon={BarChart3}>
+        <div className="space-y-3">
+          <div>
+            <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Msgs / usuário / dia</label>
+            <Input type="number" defaultValue={100} className="h-8 text-xs bg-card/50" />
+          </div>
+          <ToggleRow label="Rate limiting" desc="Anti-spam automático" defaultOn />
+        </div>
+      </Section>
+    </div>
+  );
+};
+
+/* ──── Tab: Knowledge ──── */
+const KnowledgeTab = () => {
+  const [files, setFiles] = useState<{ name: string; size: string; type: string }[]>([
+    { name: "catalogo-produtos.pdf", size: "2.4 MB", type: "PDF" },
+  ]);
+  const [urls, setUrls] = useState<string[]>(["https://meusite.com.br"]);
+  const [newUrl, setNewUrl] = useState("");
+
+  const addUrl = () => {
+    if (!newUrl.trim()) return;
+    setUrls([...urls, newUrl.trim()]);
+    setNewUrl("");
+  };
+
+  return (
+    <div className="space-y-5">
+      <Section title="Arquivos de Conhecimento" icon={FileUp} badge={`${files.length}`}>
+        <div className="space-y-2">
+          <div className="flex items-center justify-center p-6 rounded-xl border-2 border-dashed border-border bg-card/20 hover:border-primary/30 hover:bg-primary/5 transition-all cursor-pointer group">
+            <div className="text-center">
+              <Upload className="w-6 h-6 mx-auto mb-2 text-muted-foreground group-hover:text-primary transition-colors" />
+              <p className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">Arraste arquivos ou clique para enviar</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">PDF, TXT, CSV, DOCX · até 10MB</p>
+            </div>
+          </div>
+          {files.map((f, i) => (
+            <div key={i} className="flex items-center gap-2 p-2.5 rounded-lg bg-card/50 border border-border">
+              <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center">
+                <FileText className="w-4 h-4 text-red-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-medium text-foreground truncate">{f.name}</p>
+                <p className="text-[9px] text-muted-foreground">{f.size} · {f.type}</p>
+              </div>
+              <button onClick={() => setFiles(files.filter((_, idx) => idx !== i))} className="text-muted-foreground hover:text-destructive transition-colors">
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      <Section title="Fontes Web" icon={Search} badge={`${urls.length}`}>
+        <div className="space-y-2">
+          <div className="flex gap-1.5">
+            <Input
+              value={newUrl}
+              onChange={(e) => setNewUrl(e.target.value)}
+              placeholder="https://meusite.com.br/docs"
+              className="h-8 text-xs bg-card/50 flex-1"
+              onKeyDown={(e) => e.key === "Enter" && addUrl()}
+            />
+            <Button size="sm" className="h-8 w-8 p-0 shrink-0" onClick={addUrl}>
+              <Plus className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+          {urls.map((url, i) => (
+            <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-card/50 border border-border">
+              <Globe2 className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+              <span className="text-[11px] text-foreground truncate flex-1">{url}</span>
+              <button onClick={() => setUrls(urls.filter((_, idx) => idx !== i))} className="text-muted-foreground hover:text-destructive transition-colors">
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
+          <p className="text-[10px] text-muted-foreground">O conteúdo será indexado automaticamente para consulta da IA.</p>
+        </div>
+      </Section>
+
+      <Section title="Configurações de Busca" icon={Sparkles}>
+        <div className="space-y-1.5">
+          <ToggleRow label="Busca semântica" desc="Busca por similaridade de significado" defaultOn />
+          <ToggleRow label="Web search" desc="Pesquisar na internet em tempo real" />
+          <ToggleRow label="Auto-indexação" desc="Re-indexar ao atualizar arquivos" defaultOn />
+        </div>
+      </Section>
+    </div>
+  );
+};
+
+/* ──── Tab: Channels ──── */
+const ChannelsTab = ({ channel, onChannelChange }: { channel: AppChannel; onChannelChange: (ch: AppChannel) => void }) => {
+  return (
+    <div className="space-y-5">
+      <Section title="Canal Principal" icon={Globe2}>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => onChannelChange("whatsapp")}
+            className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
+              channel === "whatsapp"
+                ? "bg-emerald-500/10 border-emerald-500/30 shadow-sm"
+                : "bg-card/50 border-border hover:border-border/80"
+            }`}
+          >
+            <Phone className={`w-5 h-5 ${channel === "whatsapp" ? "text-emerald-400" : "text-muted-foreground"}`} />
+            <div className="text-center">
+              <p className="text-xs font-medium text-foreground">WhatsApp</p>
+              <p className="text-[9px] text-muted-foreground">Chatbot conversacional</p>
+            </div>
+          </button>
+          <button
+            onClick={() => onChannelChange("web")}
+            className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${
+              channel === "web"
+                ? "bg-primary/10 border-primary/30 shadow-sm"
+                : "bg-card/50 border-border hover:border-border/80"
+            }`}
+          >
+            <Monitor className={`w-5 h-5 ${channel === "web" ? "text-primary" : "text-muted-foreground"}`} />
+            <div className="text-center">
+              <p className="text-xs font-medium text-foreground">Web App</p>
+              <p className="text-[9px] text-muted-foreground">Interface visual</p>
+            </div>
+          </button>
+        </div>
+      </Section>
+
+      {channel === "whatsapp" && (
+        <>
+          <Section title="WhatsApp Business API" icon={Phone}>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2.5 p-3 rounded-lg border border-border bg-card/50">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center">
+                  <Phone className="w-4 h-4 text-emerald-500" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-medium text-foreground">WABA</p>
+                  <p className="text-[10px] text-muted-foreground">Não conectado</p>
+                </div>
+                <Button variant="outline" size="sm" className="h-7 text-[10px]">Conectar</Button>
+              </div>
+              <Input placeholder="Phone Number ID" className="h-8 text-xs bg-card/50" />
+              <Input placeholder="Access Token" type="password" className="h-8 text-xs bg-card/50" />
+              <Input placeholder="Verify Token" className="h-8 text-xs bg-card/50" />
+            </div>
+          </Section>
+
+          <Section title="Jornada Conversacional" icon={Zap}>
+            <div className="space-y-1.5">
+              {["Saudação", "Qualificação", "Atendimento", "Follow-up", "Encerramento"].map((step, i) => (
+                <div key={step} className="flex items-center gap-2 p-2.5 rounded-lg border border-border bg-card/50 hover:border-primary/20 transition-colors cursor-pointer group">
+                  <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+                  <span className="text-xs text-foreground flex-1">{step}</span>
+                  <ChevronRight className="w-3 h-3 text-muted-foreground group-hover:text-primary transition-colors" />
+                </div>
+              ))}
+              <Button variant="outline" size="sm" className="w-full h-7 text-[10px] mt-1">+ Adicionar etapa</Button>
+            </div>
+          </Section>
+
+          <Section title="Agentes" icon={Bot}>
+            <div className="space-y-1.5">
+              {[
+                { name: "Qualificador", desc: "Coleta e qualifica leads" },
+                { name: "Atendente", desc: "Responde dúvidas gerais" },
+              ].map((agent) => (
+                <div key={agent.name} className="flex items-center gap-2 p-2.5 rounded-lg border border-border bg-card/50 cursor-pointer hover:border-primary/20 transition-colors">
+                  <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Bot className="w-3.5 h-3.5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-medium text-foreground">{agent.name}</p>
+                    <p className="text-[9px] text-muted-foreground">{agent.desc}</p>
+                  </div>
+                  <Settings className="w-3 h-3 text-muted-foreground" />
+                </div>
+              ))}
+              <Button variant="outline" size="sm" className="w-full h-7 text-[10px]">+ Adicionar agente</Button>
+            </div>
+          </Section>
+        </>
+      )}
+
+      {channel === "web" && (
+        <>
+          <Section title="Configurações Web" icon={Layout}>
+            <div className="space-y-1.5">
+              <ToggleRow label="Design responsivo" desc="Adaptar para mobile" defaultOn />
+              <ToggleRow label="PWA" desc="Instalável no celular" />
+              <ToggleRow label="SEO" desc="Otimização para buscadores" defaultOn />
+            </div>
+          </Section>
+
+          <Section title="Widget de Chat" icon={MessageSquare}>
+            <div className="space-y-1.5">
+              <ToggleRow label="Chat integrado" desc="Widget flutuante no site" />
+              <ToggleRow label="Chat WhatsApp" desc="Redirecionar para WhatsApp" />
+            </div>
+          </Section>
+        </>
+      )}
+
+      <Section title="Integrações" icon={Link2}>
+        <div className="space-y-1.5">
+          {[
+            { name: "CRM", desc: "Sincronizar leads", icon: Users },
+            { name: "Calendário", desc: "Agendamentos", icon: BarChart3 },
+            { name: "Pagamentos", desc: "Cobranças", icon: CreditCard },
+            { name: "Webhook", desc: "Eventos externos", icon: Webhook },
+          ].map((int) => (
+            <div key={int.name} className="flex items-center justify-between gap-2 p-2.5 rounded-lg border border-border bg-card/50">
+              <div className="flex items-center gap-2">
+                <int.icon className="w-3.5 h-3.5 text-muted-foreground" />
+                <div>
+                  <p className="text-[11px] font-medium text-foreground">{int.name}</p>
+                  <p className="text-[9px] text-muted-foreground">{int.desc}</p>
+                </div>
+              </div>
+              <Switch />
+            </div>
+          ))}
+        </div>
+      </Section>
+    </div>
+  );
+};
 
 /* ──── Main Config Panel ──── */
 interface AppConfigPanelProps {
@@ -283,47 +574,52 @@ interface AppConfigPanelProps {
 }
 
 const AppConfigPanel = ({ channel, onChannelChange }: AppConfigPanelProps) => {
+  const [activeTab, setActiveTab] = useState<ConfigTab>("overview");
+
   return (
     <div className="w-[340px] min-w-[300px] border-l border-border flex flex-col bg-card/30 overflow-hidden">
-      {/* Header with channel toggle */}
-      <div className="px-4 py-3 border-b border-border shrink-0">
-        <div className="flex items-center justify-between mb-3">
+      {/* Header */}
+      <div className="px-3 py-2.5 border-b border-border shrink-0">
+        <div className="flex items-center justify-between mb-2.5">
           <h2 className="text-sm font-semibold text-foreground">Configurações</h2>
-          <Badge variant="outline" className="text-[10px] gap-1">
-            {channel === "whatsapp" ? <Phone className="w-3 h-3 text-green-500" /> : <Monitor className="w-3 h-3 text-primary" />}
+          <Badge variant="outline" className="text-[10px] gap-1 h-5">
+            {channel === "whatsapp" ? <Phone className="w-3 h-3 text-emerald-500" /> : <Monitor className="w-3 h-3 text-primary" />}
             {channel === "whatsapp" ? "WhatsApp" : "Web"}
           </Badge>
         </div>
-        <div className="flex gap-1.5 p-0.5 bg-muted/50 rounded-lg">
-          <button
-            onClick={() => onChannelChange("whatsapp")}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-all ${
-              channel === "whatsapp" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Phone className="w-3.5 h-3.5" />
-            WhatsApp
-          </button>
-          <button
-            onClick={() => onChannelChange("web")}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-all ${
-              channel === "web" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Monitor className="w-3.5 h-3.5" />
-            Web App
-          </button>
+        {/* Tab bar */}
+        <div className="flex gap-0.5 p-0.5 bg-muted/40 rounded-lg">
+          {configTabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 flex items-center justify-center gap-1 py-1.5 rounded-md text-[10px] font-medium transition-all ${
+                activeTab === tab.id
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <tab.icon className="w-3 h-3" />
+              <span className="hidden xl:inline">{tab.label}</span>
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Scrollable config content */}
-      <div className="flex-1 overflow-y-auto px-4 py-4">
-        {channel === "whatsapp" ? <WhatsAppConfig /> : <WebAppConfig />}
-      </div>
+      {/* Content */}
+      <ScrollArea className="flex-1">
+        <div className="px-3 py-4">
+          {activeTab === "overview" && <OverviewTab channel={channel} />}
+          {activeTab === "intelligence" && <IntelligenceTab />}
+          {activeTab === "access" && <AccessTab />}
+          {activeTab === "knowledge" && <KnowledgeTab />}
+          {activeTab === "channels" && <ChannelsTab channel={channel} onChannelChange={onChannelChange} />}
+        </div>
+      </ScrollArea>
 
-      {/* Save button */}
-      <div className="px-4 py-3 border-t border-border shrink-0">
-        <Button className="w-full h-9 text-xs rounded-lg gap-1.5">
+      {/* Save */}
+      <div className="px-3 py-2.5 border-t border-border shrink-0">
+        <Button className="w-full h-8 text-xs rounded-lg gap-1.5">
           <Check className="w-3.5 h-3.5" />
           Salvar Configurações
         </Button>
