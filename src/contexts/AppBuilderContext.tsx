@@ -236,7 +236,7 @@ export function AppBuilderProvider({ children, initialChannel = "web", existingA
       ...state,
       setChannel, addFile, setFiles, addTable, setTables,
       addTerminalLog, setDashboardMetrics, setAppName,
-      setIsGenerating, initializeProject, saveApp, appId, setAppId,
+      setIsGenerating, setWizardConfig, initializeProject, saveApp, appId, setAppId,
     }}>
       {children}
     </AppBuilderContext.Provider>
