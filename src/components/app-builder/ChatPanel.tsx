@@ -595,7 +595,9 @@ ${wizardData.companyName ? `Empresa: ${wizardData.companyName}` : ""}`;
             </div>
             <h2 className="text-base font-semibold text-foreground mb-1">Descreva seu app</h2>
             <p className="text-xs text-muted-foreground text-center max-w-[280px] mb-6">
-              Conte o que seu {channel === "whatsapp" ? "WhatsApp" : "Web"} app deve fazer. Quanto mais detalhes, melhor o resultado.
+              {channel === "whatsapp"
+                ? "Conte o que seu WhatsApp App deve fazer. Pense em fluxos conversacionais, qualificação e automações."
+                : "Conte o que seu Web App deve fazer. Pense em páginas, dashboards e funcionalidades visuais."}
             </p>
 
             <div className="w-full max-w-[340px] space-y-3">
@@ -608,7 +610,9 @@ ${wizardData.companyName ? `Empresa: ${wizardData.companyName}` : ""}`;
               <textarea
                 value={wizardData.prompt}
                 onChange={(e) => setWizardData(prev => ({ ...prev, prompt: e.target.value }))}
-                placeholder="Ex: Um bot de qualificação de leads que coleta nome, email e interesse..."
+                placeholder={channel === "whatsapp"
+                  ? "Ex: Um bot de qualificação de leads que coleta nome, email e interesse via WhatsApp..."
+                  : "Ex: Um painel de gestão com dashboard de métricas, cadastro de clientes e relatórios..."}
                 className="w-full bg-card/50 border border-border rounded-lg outline-none resize-none text-xs text-foreground placeholder:text-muted-foreground px-3 py-2.5 min-h-[100px] focus:border-primary/30 transition-colors"
               />
               <Button onClick={handleDescribe} disabled={wizardData.prompt.length < 10} className="w-full gap-2 h-9 text-xs rounded-lg">
@@ -621,12 +625,17 @@ ${wizardData.companyName ? `Empresa: ${wizardData.companyName}` : ""}`;
             <div className="mt-6 w-full max-w-[340px]">
               <p className="text-[10px] text-muted-foreground mb-2 text-center">ou comece com uma ideia:</p>
               <div className="space-y-1.5">
-                {[
+                {(channel === "whatsapp" ? [
                   "Bot de qualificação de leads via WhatsApp",
-                  "Sistema de agendamento para clínicas",
+                  "Sistema de agendamento para clínicas por WhatsApp",
                   "CRM conversacional com follow-up automático",
-                  "Onboarding guiado com dashboard de gestão",
-                ].map((s) => (
+                  "Onboarding guiado com coleta de dados via chat",
+                ] : [
+                  "Dashboard de gestão com métricas e relatórios",
+                  "Sistema de cadastro de clientes com CRM visual",
+                  "Plataforma de agendamento com calendário interativo",
+                  "Painel administrativo com controle de equipe e tarefas",
+                ]).map((s) => (
                   <button
                     key={s}
                     onClick={() => setWizardData(prev => ({ ...prev, prompt: s }))}
