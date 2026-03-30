@@ -339,6 +339,17 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
       return;
     }
     setAppName(wizardData.appName);
+    // Save wizard config to context for persistence
+    setWizardConfig({
+      prompt: wizardData.prompt,
+      companyName: wizardData.companyName,
+      appName: wizardData.appName,
+      tone: wizardData.tone,
+      language: wizardData.language,
+      introMessage: wizardData.introMessage,
+      maxMessages: wizardData.maxMessages,
+      onboarding: wizardData.onboarding,
+    });
     setMessages(prev => [
       ...prev,
       { role: "assistant", content: `**${wizardData.appName}** configurado!\n\n🔧 Tom: ${toneLabels[wizardData.tone] || wizardData.tone}\n🌐 Idioma: ${wizardData.language}\n💬 Intro: "${wizardData.introMessage.slice(0, 50)}..."\n\nIniciando calibração...` },
