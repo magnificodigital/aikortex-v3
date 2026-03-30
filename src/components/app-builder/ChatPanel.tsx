@@ -401,9 +401,30 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
     setWizardStep("create");
     setCreating(true);
 
+    const onboardingLabels: Record<string, string> = { none: "Nenhum", soft: "Suave", strict: "Rigoroso" };
+
+    // Add detailed config summary to chat history
+    const configSummary = `## 📋 Configuração Completa
+
+| Configuração | Valor |
+|---|---|
+| **Canal** | ${channel === "whatsapp" ? "WhatsApp" : "Web App"} |
+| **Nome do App** | ${wizardData.appName} |
+${wizardData.companyName ? `| **Empresa** | ${wizardData.companyName} |\n` : ""}| **Tom de Voz** | ${toneLabels[wizardData.tone] || wizardData.tone} |
+| **Idioma** | ${wizardData.language === "pt-BR" ? "🇧🇷 Português" : wizardData.language === "en" ? "🇺🇸 English" : "🇪🇸 Español"} |
+| **Msg. Introdução** | ${wizardData.introMessage} |
+| **Máx. Msgs/Turno** | ${wizardData.maxMessages} |
+| **Onboarding** | ${onboardingLabels[wizardData.onboarding] || wizardData.onboarding} |
+
+> **Descrição:** ${wizardData.prompt}
+
+---
+
+🚀 Iniciando geração do app com base nessas configurações...`;
+
     setMessages(prev => [
       ...prev,
-      { role: "assistant", content: `🚀 Criando **${wizardData.appName}**...\n\nGerando arquivos, banco de dados e lógica do app.` },
+      { role: "assistant", content: configSummary },
     ]);
 
     // Initialize the project
