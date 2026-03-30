@@ -223,6 +223,8 @@ const WhatsAppPreview = () => {
     return extracted.length > 0 ? extracted : ["Agendar", "Preços", "Suporte"];
   }, [files]);
 
+  const stages = useMemo(() => extractStages(files), [files]);
+
   const features = useMemo(() => {
     if (structuredConfig?.selected_features) {
       return Array.isArray(structuredConfig.selected_features)
