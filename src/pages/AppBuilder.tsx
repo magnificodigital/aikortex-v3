@@ -91,6 +91,14 @@ const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
         setCtxChannel(data.channel as "whatsapp" | "web");
         if (Array.isArray(data.files)) setFiles(data.files as any);
         if (Array.isArray(data.tables_schema)) setTables(data.tables_schema as any);
+        // Restore chat history and wizard state from config
+        const cfg = data.config as any;
+        if (cfg && typeof cfg === "object") {
+          if (Array.isArray(cfg.chatMessages)) setChatMessages(cfg.chatMessages);
+          if (cfg.wizardStep) setWizardStep(cfg.wizardStep);
+          if (cfg.wizardData) setWizardData(cfg.wizardData);
+          if (cfg.wizardConfig) setWizardConfig(cfg.wizardConfig);
+        }
       });
   }, [appId]);
 
