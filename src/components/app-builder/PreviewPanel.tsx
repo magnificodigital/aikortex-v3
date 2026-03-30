@@ -287,12 +287,12 @@ const WhatsAppPreview = () => {
                 {isGenerating ? (
                   <div className="flex flex-col items-center gap-3">
                     <Zap className="w-6 h-6 animate-pulse text-green-500" />
-                    <span>Gerando preview...</span>
+                    <span>Gerando preview do WhatsApp App...</span>
                   </div>
                 ) : (
                   <div className="text-center">
                     <Smartphone className="w-8 h-8 mx-auto mb-2 text-muted-foreground/30" />
-                    <p>Envie uma mensagem no Studio<br/>para ver o preview aqui</p>
+                    <p>Envie uma mensagem no Studio<br/>para ver o preview do seu bot aqui</p>
                   </div>
                 )}
               </div>
