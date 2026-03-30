@@ -98,6 +98,7 @@ const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
           if (cfg.wizardStep) setWizardStep(cfg.wizardStep);
           if (cfg.wizardData) setWizardData(cfg.wizardData);
           if (cfg.wizardConfig) setWizardConfig(cfg.wizardConfig);
+          if (cfg.structuredConfig) setStructuredConfig(cfg.structuredConfig);
         }
       });
   }, [appId]);
