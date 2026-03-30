@@ -37,6 +37,21 @@ export interface WizardConfig {
   onboarding: "none" | "soft" | "strict";
 }
 
+export type ChatMessage = { role: "user" | "assistant"; content: string };
+
+export type WizardStepId = "describe" | "personalize" | "calibrate" | "create" | "done";
+
+export interface WizardData {
+  prompt: string;
+  companyName: string;
+  appName: string;
+  tone: string;
+  language: string;
+  introMessage: string;
+  maxMessages: number;
+  onboarding: "none" | "soft" | "strict";
+}
+
 export interface AppBuilderState {
   channel: "whatsapp" | "web";
   files: GeneratedFile[];
@@ -46,6 +61,9 @@ export interface AppBuilderState {
   appName: string;
   isGenerating: boolean;
   wizardConfig: WizardConfig | null;
+  chatMessages: ChatMessage[];
+  wizardStep: WizardStepId;
+  wizardData: WizardData;
 }
 
 interface AppBuilderContextType extends AppBuilderState {
