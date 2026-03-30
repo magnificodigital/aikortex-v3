@@ -77,6 +77,9 @@ interface AppBuilderContextType extends AppBuilderState {
   setAppName: (name: string) => void;
   setIsGenerating: (v: boolean) => void;
   setWizardConfig: (config: WizardConfig) => void;
+  setChatMessages: (msgs: ChatMessage[]) => void;
+  setWizardStep: (step: WizardStepId) => void;
+  setWizardData: (data: WizardData) => void;
   initializeProject: (channel: "whatsapp" | "web", prompt: string) => void;
   saveApp: (userId: string) => Promise<string | null>;
   appId: string | null;
