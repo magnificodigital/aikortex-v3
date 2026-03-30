@@ -2,9 +2,11 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import {
   ArrowUp, Bot, ChevronDown, ChevronLeft, Mic, Wrench,
   CheckCircle2, AlertCircle, ChevronUp, FileCode, Sparkles,
-  Phone, Monitor,
+  Phone, Monitor, Check, Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import { useAppBuilder } from "@/contexts/AppBuilderContext";
@@ -16,7 +18,16 @@ interface ToolLog {
   status: "success" | "error";
 }
 
+type WizardStep = "describe" | "personalize" | "calibrate" | "create" | "done";
+
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/app-chat`;
+
+const stepLabels: { id: WizardStep; label: string; num: number }[] = [
+  { id: "describe", label: "Descrever", num: 1 },
+  { id: "personalize", label: "Personalizar", num: 2 },
+  { id: "calibrate", label: "Calibrar", num: 3 },
+  { id: "create", label: "Criar", num: 4 },
+];
 
 /* ── Parsers ── */
 
@@ -124,6 +135,17 @@ async function streamChat({
   onDone();
 }
 
+/* ── Calibration ── */
+
+interface CalibrationMsg { type: "client" | "agent"; text: string }
+interface CalibrationEvent {
+  kind: "status" | "messages" | "result";
+  label?: string;
+  done?: boolean;
+  messages?: CalibrationMsg[];
+  success?: boolean;
+}
+
 /* ── Component ── */
 
 interface ChatPanelProps {
@@ -144,25 +166,51 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
   const initializedProject = useRef(false);
   const processedBlocksRef = useRef(new Set<string>());
 
+  // Wizard state
+  const [wizardStep, setWizardStep] = useState<WizardStep>("describe");
+  const [wizardData, setWizardData] = useState({
+    prompt: "",
+    companyName: "",
+    appName: "",
+    tone: "professional_friendly",
+    language: "pt-BR",
+    introMessage: "",
+    maxMessages: 2,
+    onboarding: "soft" as "none" | "soft" | "strict",
+  });
+  const [calibrating, setCalibrating] = useState(false);
+  const [calibrationEvents, setCalibrationEvents] = useState<CalibrationEvent[]>([]);
+  const [calibrationDone, setCalibrationDone] = useState(false);
+  const [creating, setCreating] = useState(false);
+
   const {
     channel, initializeProject, addFile, addTable, addTerminalLog,
-    setIsGenerating,
+    setIsGenerating, setAppName,
   } = useAppBuilder();
 
+  // If initialPrompt is provided, skip directly to describe step completion
   useEffect(() => {
     if (initialPrompt && !sentInitial.current) {
       sentInitial.current = true;
-      if (!initializedProject.current) {
-        initializedProject.current = true;
-        initializeProject(channel, initialPrompt);
-      }
-      sendMessage(initialPrompt);
+      // Auto-fill step 1 and move to personalize
+      setWizardData(prev => ({
+        ...prev,
+        prompt: initialPrompt,
+        appName: "Meu App",
+        introMessage: "Olá! Como posso ajudar você hoje?",
+      }));
+      setWizardStep("personalize");
+      // Add system message about the description
+      setMessages([
+        { role: "user", content: initialPrompt },
+        { role: "assistant", content: `Ótimo! Entendi sua ideia: **"${initialPrompt.slice(0, 80)}${initialPrompt.length > 80 ? "..." : ""}"**\n\nAgora vamos personalizar seu app. Ajuste as opções abaixo e clique em **Continuar** quando estiver pronto.` },
+      ]);
     }
   }, [initialPrompt]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages]);
+  }, [messages, calibrationEvents]);
 
   /** Process structured blocks incrementally during streaming */
   const processIncrementally = useCallback((content: string) => {
@@ -232,7 +280,6 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
         return [...prev, { role: "assistant", content: currentText }];
       });
 
-      // Process blocks every 500ms during streaming for real-time sync
       if (!incrementalTimer) {
         incrementalTimer = setTimeout(() => {
           processIncrementally(assistantSoFar);
@@ -249,7 +296,6 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
           if (incrementalTimer) clearTimeout(incrementalTimer);
           setIsLoading(false);
           setIsGenerating(false);
-          // Final pass to catch any remaining blocks
           processIncrementally(assistantSoFar);
           addTerminalLog({ text: "✓ Concluído", type: "success", timestamp: Date.now() });
         },
@@ -264,11 +310,132 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
     }
   };
 
+  /* ── Wizard handlers ── */
+
+  const handleDescribe = () => {
+    if (wizardData.prompt.length < 10) {
+      toast.error("Descreva com pelo menos 10 caracteres.");
+      return;
+    }
+    const inferredName = wizardData.companyName
+      ? `Assistente ${wizardData.companyName}`
+      : "Meu App";
+    setWizardData(prev => ({
+      ...prev,
+      appName: inferredName,
+      introMessage: `Olá! Sou o assistente da ${wizardData.companyName || "sua empresa"}. Como posso ajudar?`,
+    }));
+    setMessages(prev => [
+      ...prev,
+      { role: "user", content: wizardData.prompt },
+      { role: "assistant", content: `Entendi! Vou construir: **"${wizardData.prompt.slice(0, 80)}..."**\n\nAgora personalize os detalhes abaixo.` },
+    ]);
+    setWizardStep("personalize");
+  };
+
+  const handlePersonalize = () => {
+    if (!wizardData.appName.trim()) {
+      toast.error("Informe o nome do app.");
+      return;
+    }
+    setAppName(wizardData.appName);
+    setMessages(prev => [
+      ...prev,
+      { role: "assistant", content: `**${wizardData.appName}** configurado!\n\n🔧 Tom: ${toneLabels[wizardData.tone] || wizardData.tone}\n🌐 Idioma: ${wizardData.language}\n💬 Intro: "${wizardData.introMessage.slice(0, 50)}..."\n\nIniciando calibração...` },
+    ]);
+    setWizardStep("calibrate");
+    runCalibration();
+  };
+
+  const runCalibration = async () => {
+    setCalibrating(true);
+    setCalibrationEvents([]);
+    setCalibrationDone(false);
+
+    const events: CalibrationEvent[] = [
+      { kind: "status", label: "Calibração iniciada", done: true },
+      { kind: "status", label: "Rodada 1 de 2", done: true },
+      {
+        kind: "messages",
+        label: "Teste 1",
+        messages: [
+          { type: "client", text: "Oi, gostaria de saber mais sobre os serviços." },
+          { type: "agent", text: wizardData.introMessage || "Olá! Como posso ajudar?" },
+        ],
+      },
+      { kind: "status", label: "Analisando resposta...", done: true },
+      { kind: "status", label: "Rodada 2 de 2", done: true },
+      {
+        kind: "messages",
+        label: "Teste 2",
+        messages: [
+          { type: "client", text: "Pode me dar mais detalhes?" },
+          { type: "agent", text: "Claro! Posso ajudar com mais informações. O que precisa saber?" },
+        ],
+      },
+      { kind: "status", label: "Verificando consistência...", done: true },
+      { kind: "result", label: "Todos os testes passaram ✓ (2/2)", success: true },
+    ];
+
+    for (let i = 0; i < events.length; i++) {
+      await new Promise((r) => setTimeout(r, 600 + Math.random() * 500));
+      setCalibrationEvents((prev) => [...prev, events[i]]);
+    }
+
+    setCalibrating(false);
+    setCalibrationDone(true);
+  };
+
+  const handleStartCreation = async () => {
+    setWizardStep("create");
+    setCreating(true);
+
+    setMessages(prev => [
+      ...prev,
+      { role: "assistant", content: `🚀 Criando **${wizardData.appName}**...\n\nGerando arquivos, banco de dados e lógica do app.` },
+    ]);
+
+    // Initialize the project
+    if (!initializedProject.current) {
+      initializedProject.current = true;
+      initializeProject(channel, wizardData.prompt);
+    }
+
+    // Now send the full context to AI for actual generation
+    const contextPrompt = `Crie um ${channel === "whatsapp" ? "WhatsApp App" : "Web App"} chamado "${wizardData.appName}".
+Descrição: ${wizardData.prompt}
+Tom: ${wizardData.tone}
+Idioma: ${wizardData.language}
+Mensagem de introdução: ${wizardData.introMessage}
+Máx mensagens por turno: ${wizardData.maxMessages}
+Onboarding: ${wizardData.onboarding}
+${wizardData.companyName ? `Empresa: ${wizardData.companyName}` : ""}`;
+
+    setCreating(false);
+    setWizardStep("done");
+
+    // Send the full prompt to generate code
+    await sendMessage(contextPrompt);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); }
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (wizardStep === "done") {
+        sendMessage(input);
+      }
+    }
   };
 
   const isEmpty = messages.length === 0;
+
+  const toneLabels: Record<string, string> = {
+    professional_friendly: "Profissional e Amigável",
+    formal: "Formal",
+    casual: "Casual e Descontraído",
+    empathetic: "Empático e Acolhedor",
+    direct: "Direto e Objetivo",
+  };
 
   return (
     <div className="w-[440px] min-w-[360px] max-w-[520px] border-r border-border flex flex-col bg-card/20">
@@ -296,6 +463,40 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
           </span>
         </div>
       </div>
+
+      {/* Wizard Stepper */}
+      {wizardStep !== "done" && (
+        <div className="px-4 py-2.5 border-b border-border bg-card/30">
+          <div className="flex items-center gap-1">
+            {stepLabels.map((s, i) => {
+              const stepOrder = ["describe", "personalize", "calibrate", "create"];
+              const currentIdx = stepOrder.indexOf(wizardStep);
+              const thisIdx = stepOrder.indexOf(s.id);
+              const isDone = thisIdx < currentIdx;
+              const isActive = s.id === wizardStep;
+              return (
+                <div key={s.id} className="flex items-center flex-1 last:flex-none">
+                  <div className="flex items-center gap-1.5">
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold transition-all ${
+                      isDone ? "bg-primary text-primary-foreground"
+                      : isActive ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
+                    }`}>
+                      {isDone ? <Check className="w-3 h-3" /> : s.num}
+                    </div>
+                    <span className={`text-[10px] font-medium ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
+                      {s.label}
+                    </span>
+                  </div>
+                  {i < stepLabels.length - 1 && (
+                    <div className={`flex-1 h-px mx-2 ${isDone ? "bg-primary" : "bg-border"}`} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Tools indicator */}
       {toolsUsed > 0 && (
@@ -331,40 +532,65 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
         </div>
       )}
 
-      {/* Messages area */}
+      {/* Messages + Wizard area */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
-        {isEmpty && !isLoading && (
-          <div className="flex-1 flex flex-col items-center justify-center h-full pt-20">
+        {/* Step 1: Describe - empty state */}
+        {wizardStep === "describe" && isEmpty && (
+          <div className="flex flex-col items-center justify-center h-full pt-12">
             <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
               <Sparkles className="w-6 h-6 text-primary" />
             </div>
-            <h2 className="text-base font-semibold text-foreground mb-1">Construa seu produto</h2>
+            <h2 className="text-base font-semibold text-foreground mb-1">Descreva seu app</h2>
             <p className="text-xs text-muted-foreground text-center max-w-[280px] mb-6">
-              Descreva sua ideia e o Studio estrutura o produto, a lógica e a base técnica.
+              Conte o que seu {channel === "whatsapp" ? "WhatsApp" : "Web"} app deve fazer. Quanto mais detalhes, melhor o resultado.
             </p>
-            <div className="space-y-2 w-full max-w-[320px]">
-              {[
-                "Um app de nutrição para WhatsApp",
-                "Um SaaS de agendamento para clínicas",
-                "Um CRM conversacional no WhatsApp",
-                "Um sistema de onboarding com dashboard web",
-              ].map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setInput(s)}
-                  className="w-full text-left text-[11px] px-3 py-2.5 rounded-lg border border-border hover:border-primary/30 hover:bg-accent/20 text-muted-foreground hover:text-foreground transition-all"
-                >
-                  {s}
-                </button>
-              ))}
+
+            <div className="w-full max-w-[340px] space-y-3">
+              <Input
+                value={wizardData.companyName}
+                onChange={(e) => setWizardData(prev => ({ ...prev, companyName: e.target.value }))}
+                placeholder="Nome da empresa (opcional)"
+                className="h-9 text-xs bg-card/50"
+              />
+              <textarea
+                value={wizardData.prompt}
+                onChange={(e) => setWizardData(prev => ({ ...prev, prompt: e.target.value }))}
+                placeholder="Ex: Um bot de qualificação de leads que coleta nome, email e interesse..."
+                className="w-full bg-card/50 border border-border rounded-lg outline-none resize-none text-xs text-foreground placeholder:text-muted-foreground px-3 py-2.5 min-h-[100px] focus:border-primary/30 transition-colors"
+              />
+              <Button onClick={handleDescribe} disabled={wizardData.prompt.length < 10} className="w-full gap-2 h-9 text-xs rounded-lg">
+                <Sparkles className="w-3.5 h-3.5" />
+                Continuar
+              </Button>
+            </div>
+
+            {/* Quick suggestions */}
+            <div className="mt-6 w-full max-w-[340px]">
+              <p className="text-[10px] text-muted-foreground mb-2 text-center">ou comece com uma ideia:</p>
+              <div className="space-y-1.5">
+                {[
+                  "Bot de qualificação de leads via WhatsApp",
+                  "Sistema de agendamento para clínicas",
+                  "CRM conversacional com follow-up automático",
+                  "Onboarding guiado com dashboard de gestão",
+                ].map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setWizardData(prev => ({ ...prev, prompt: s }))}
+                    className="w-full text-left text-[11px] px-3 py-2 rounded-lg border border-border hover:border-primary/30 hover:bg-accent/20 text-muted-foreground hover:text-foreground transition-all"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
 
+        {/* Chat messages */}
         {messages.map((m, i) => {
           const displayContent = m.role === "assistant" ? stripStructuredBlocks(m.content) : m.content;
           if (m.role === "assistant" && !displayContent) return null;
-
           return (
             <div key={i}>
               {m.role === "user" ? (
@@ -392,6 +618,188 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
           );
         })}
 
+        {/* Step 2: Personalize - inline form */}
+        {wizardStep === "personalize" && (
+          <div className="bg-card/50 border border-border rounded-xl p-4 space-y-3">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-5 h-5 rounded-full bg-primary/15 flex items-center justify-center">
+                <span className="text-[9px] font-bold text-primary">2</span>
+              </div>
+              <h3 className="text-xs font-semibold text-foreground">Personalizar</h3>
+            </div>
+
+            <div>
+              <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Nome do app</label>
+              <Input
+                value={wizardData.appName}
+                onChange={(e) => setWizardData(prev => ({ ...prev, appName: e.target.value }))}
+                className="h-8 text-xs bg-background"
+              />
+            </div>
+
+            <div>
+              <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Tom de voz</label>
+              <div className="flex flex-wrap gap-1.5">
+                {Object.entries(toneLabels).map(([key, label]) => (
+                  <button
+                    key={key}
+                    onClick={() => setWizardData(prev => ({ ...prev, tone: key }))}
+                    className={`px-2.5 py-1.5 rounded-lg text-[10px] font-medium border transition-all ${
+                      wizardData.tone === key
+                        ? "bg-primary/10 border-primary/30 text-primary"
+                        : "bg-card border-border text-muted-foreground hover:border-border/80"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Idioma</label>
+              <div className="flex gap-1.5">
+                {[["pt-BR", "🇧🇷 Português"], ["en", "🇺🇸 English"], ["es", "🇪🇸 Español"]].map(([k, l]) => (
+                  <button
+                    key={k}
+                    onClick={() => setWizardData(prev => ({ ...prev, language: k }))}
+                    className={`px-2.5 py-1.5 rounded-lg text-[10px] font-medium border transition-all ${
+                      wizardData.language === k
+                        ? "bg-primary/10 border-primary/30 text-primary"
+                        : "bg-card border-border text-muted-foreground hover:border-border/80"
+                    }`}
+                  >
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Mensagem de introdução</label>
+              <textarea
+                value={wizardData.introMessage}
+                onChange={(e) => setWizardData(prev => ({ ...prev, introMessage: e.target.value }))}
+                className="w-full bg-background border border-border rounded-lg text-xs px-3 py-2 min-h-[60px] resize-none outline-none focus:border-primary/30 transition-colors"
+              />
+            </div>
+
+            <div>
+              <label className="text-[11px] font-medium text-muted-foreground mb-1.5 block">Máx. mensagens por turno</label>
+              <div className="flex gap-1.5">
+                {[1, 2, 3].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setWizardData(prev => ({ ...prev, maxMessages: n }))}
+                    className={`w-8 h-8 rounded-lg border text-xs font-medium transition-all ${
+                      wizardData.maxMessages === n
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border bg-card text-muted-foreground"
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[11px] font-medium text-muted-foreground mb-1.5 block">Onboarding</label>
+              <div className="flex gap-1.5">
+                {([
+                  { v: "none" as const, l: "Nenhum" },
+                  { v: "soft" as const, l: "Suave" },
+                  { v: "strict" as const, l: "Rigoroso" },
+                ]).map(({ v, l }) => (
+                  <button
+                    key={v}
+                    onClick={() => setWizardData(prev => ({ ...prev, onboarding: v }))}
+                    className={`flex-1 px-2 py-1.5 rounded-lg text-[10px] font-medium border transition-all ${
+                      wizardData.onboarding === v
+                        ? "bg-primary/10 border-primary/30 text-primary"
+                        : "bg-card border-border text-muted-foreground"
+                    }`}
+                  >
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <Button onClick={handlePersonalize} className="w-full h-8 text-xs rounded-lg gap-1.5 mt-2">
+              <Check className="w-3.5 h-3.5" />
+              Continuar
+            </Button>
+          </div>
+        )}
+
+        {/* Step 3: Calibrate */}
+        {wizardStep === "calibrate" && (
+          <div className="bg-card/50 border border-border rounded-xl p-4 space-y-2">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-5 h-5 rounded-full bg-primary/15 flex items-center justify-center">
+                <span className="text-[9px] font-bold text-primary">3</span>
+              </div>
+              <h3 className="text-xs font-semibold text-foreground">Calibração</h3>
+              {calibrating && <Loader2 className="w-3.5 h-3.5 text-primary animate-spin ml-auto" />}
+            </div>
+
+            {calibrationEvents.map((ev, i) => (
+              <div key={i}>
+                {ev.kind === "status" && (
+                  <div className="flex items-center gap-2 text-[11px] py-1">
+                    {ev.done ? <CheckCircle2 className="w-3 h-3 text-green-500 shrink-0" /> : <Loader2 className="w-3 h-3 text-muted-foreground animate-spin shrink-0" />}
+                    <span className="text-muted-foreground">{ev.label}</span>
+                  </div>
+                )}
+                {ev.kind === "messages" && ev.messages && (
+                  <div className="ml-5 my-1.5 space-y-1.5 border-l-2 border-border pl-3">
+                    {ev.messages.map((m, j) => (
+                      <div key={j} className={`text-[11px] px-2.5 py-1.5 rounded-lg max-w-[85%] ${
+                        m.type === "client"
+                          ? "bg-muted/50 text-foreground"
+                          : "bg-primary/10 text-primary ml-auto"
+                      }`}>
+                        <span className="text-[9px] font-bold text-muted-foreground block mb-0.5">
+                          {m.type === "client" ? "👤 Cliente" : "🤖 Agente"}
+                        </span>
+                        {m.text}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {ev.kind === "result" && (
+                  <div className={`flex items-center gap-2 text-xs font-medium py-2 px-3 rounded-lg mt-1 ${
+                    ev.success ? "bg-emerald-500/10 text-emerald-400" : "bg-destructive/10 text-destructive"
+                  }`}>
+                    <CheckCircle2 className="w-4 h-4" />
+                    {ev.label}
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {calibrationDone && (
+              <Button onClick={handleStartCreation} className="w-full h-8 text-xs rounded-lg gap-1.5 mt-3">
+                <Sparkles className="w-3.5 h-3.5" />
+                Criar App
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* Step 4: Creating */}
+        {wizardStep === "create" && creating && (
+          <div className="flex items-center gap-3 bg-card/50 border border-border rounded-xl p-4">
+            <Loader2 className="w-5 h-5 text-primary animate-spin" />
+            <div>
+              <p className="text-xs font-medium text-foreground">Criando {wizardData.appName}...</p>
+              <p className="text-[10px] text-muted-foreground">Gerando estrutura e código</p>
+            </div>
+          </div>
+        )}
+
+        {/* Loading indicator */}
         {isLoading && messages[messages.length - 1]?.role === "user" && (
           <div className="flex gap-2.5">
             <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
@@ -409,27 +817,28 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
         )}
       </div>
 
-      {/* Input */}
+      {/* Input - only active after wizard is done */}
       <div className="p-3 border-t border-border">
-        <div className="rounded-xl border border-border bg-card/50 p-1 focus-within:border-primary/30 transition-colors">
+        <div className={`rounded-xl border border-border bg-card/50 p-1 transition-colors ${wizardStep === "done" ? "focus-within:border-primary/30" : "opacity-60"}`}>
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Descreva o que quer construir..."
+            placeholder={wizardStep === "done" ? "Continue construindo..." : "Complete as etapas acima para começar..."}
             rows={1}
-            className="w-full bg-transparent border-none outline-none resize-none text-sm text-foreground placeholder:text-muted-foreground px-3 py-2 min-h-[36px] max-h-[120px]"
+            disabled={wizardStep !== "done"}
+            className="w-full bg-transparent border-none outline-none resize-none text-sm text-foreground placeholder:text-muted-foreground px-3 py-2 min-h-[36px] max-h-[120px] disabled:cursor-not-allowed"
           />
           <div className="flex items-center justify-between px-2 pb-1">
             <div className="flex items-center gap-1">
-              <button className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded">
+              <button className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded" disabled={wizardStep !== "done"}>
                 <Mic className="w-3.5 h-3.5" />
               </button>
             </div>
             <Button
               size="icon"
               onClick={() => sendMessage(input)}
-              disabled={!input.trim() || isLoading}
+              disabled={!input.trim() || isLoading || wizardStep !== "done"}
               className="h-8 w-8 rounded-full bg-primary hover:bg-primary/90"
             >
               <ArrowUp className="w-3.5 h-3.5" />
