@@ -277,7 +277,7 @@ const AppSidebar = () => {
           title={collapsed ? "Tutoriais" : undefined}
         >
           <BookOpen className={`w-4 h-4 shrink-0 ${isItemActive("/tutorials") ? "text-primary" : ""}`} />
-          {!collapsed && <span>Tutoriais</span>}
+          {!collapsed && <span className="truncate">Tutoriais</span>}
         </Link>
 
         <button
