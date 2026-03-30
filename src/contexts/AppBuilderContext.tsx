@@ -26,6 +26,17 @@ export interface DashboardMetric {
   up: boolean;
 }
 
+export interface WizardConfig {
+  prompt: string;
+  companyName: string;
+  appName: string;
+  tone: string;
+  language: string;
+  introMessage: string;
+  maxMessages: number;
+  onboarding: "none" | "soft" | "strict";
+}
+
 export interface AppBuilderState {
   channel: "whatsapp" | "web";
   files: GeneratedFile[];
@@ -34,6 +45,7 @@ export interface AppBuilderState {
   dashboardMetrics: DashboardMetric[];
   appName: string;
   isGenerating: boolean;
+  wizardConfig: WizardConfig | null;
 }
 
 interface AppBuilderContextType extends AppBuilderState {
