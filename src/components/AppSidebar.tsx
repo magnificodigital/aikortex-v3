@@ -139,7 +139,7 @@ const AppSidebar = () => {
   };
 
   const linkClasses = (active: boolean) =>
-    `flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+    `flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors overflow-hidden ${
       active
         ? "bg-sidebar-accent text-primary font-medium"
         : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-foreground"
@@ -160,7 +160,7 @@ const AppSidebar = () => {
             title={collapsed ? item.label : undefined}
           >
             <item.icon className={`w-4 h-4 shrink-0 ${isActive ? "text-primary" : ""}`} />
-            {!collapsed && <span className="flex-1">{item.label}</span>}
+            {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
           </Link>
           {hasChildren && !collapsed && (
             <button
@@ -269,7 +269,7 @@ const AppSidebar = () => {
           title={collapsed ? "Configurações" : undefined}
         >
           <Settings className={`w-4 h-4 shrink-0 ${isItemActive("/settings") ? "text-primary" : ""}`} />
-          {!collapsed && <span>Configurações</span>}
+          {!collapsed && <span className="truncate">Configurações</span>}
         </Link>
         <Link
           to="/tutorials"
@@ -277,7 +277,7 @@ const AppSidebar = () => {
           title={collapsed ? "Tutoriais" : undefined}
         >
           <BookOpen className={`w-4 h-4 shrink-0 ${isItemActive("/tutorials") ? "text-primary" : ""}`} />
-          {!collapsed && <span>Tutoriais</span>}
+          {!collapsed && <span className="truncate">Tutoriais</span>}
         </Link>
 
         <button
@@ -286,7 +286,7 @@ const AppSidebar = () => {
           title={theme === "dark" ? "Modo claro" : "Modo escuro"}
         >
           {theme === "dark" ? <Sun className="w-4 h-4 shrink-0" /> : <Moon className="w-4 h-4 shrink-0" />}
-          {!collapsed && <span>{theme === "dark" ? "Modo claro" : "Modo escuro"}</span>}
+          {!collapsed && <span className="truncate">{theme === "dark" ? "Modo claro" : "Modo escuro"}</span>}
         </button>
 
         <button
@@ -298,7 +298,7 @@ const AppSidebar = () => {
           title={collapsed ? "Sair" : undefined}
         >
           <LogOut className="w-4 h-4 shrink-0 text-destructive" />
-          {!collapsed && <span className="text-destructive">Sair</span>}
+          {!collapsed && <span className="truncate text-destructive">Sair</span>}
         </button>
 
         <button
