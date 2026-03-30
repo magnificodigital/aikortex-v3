@@ -269,7 +269,7 @@ const AppSidebar = () => {
           title={collapsed ? "Configurações" : undefined}
         >
           <Settings className={`w-4 h-4 shrink-0 ${isItemActive("/settings") ? "text-primary" : ""}`} />
-          {!collapsed && <span>Configurações</span>}
+          {!collapsed && <span className="truncate">Configurações</span>}
         </Link>
         <Link
           to="/tutorials"
