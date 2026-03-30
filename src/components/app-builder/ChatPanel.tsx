@@ -201,6 +201,14 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
   const [creating, setCreating] = useState(false);
 
 
+  // If loading existing app that already went through wizard, mark as initialized
+  useEffect(() => {
+    if (ctxWizardStep === "done" && chatMessages.length > 0) {
+      initializedProject.current = true;
+      sentInitial.current = true;
+    }
+  }, []);
+
   // If initialPrompt is provided, skip directly to describe step completion
   useEffect(() => {
     if (initialPrompt && !sentInitial.current) {
