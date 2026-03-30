@@ -160,7 +160,7 @@ const AppSidebar = () => {
             title={collapsed ? item.label : undefined}
           >
             <item.icon className={`w-4 h-4 shrink-0 ${isActive ? "text-primary" : ""}`} />
-            {!collapsed && <span className="flex-1">{item.label}</span>}
+            {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
           </Link>
           {hasChildren && !collapsed && (
             <button
