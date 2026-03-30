@@ -298,7 +298,7 @@ const AppSidebar = () => {
           title={collapsed ? "Sair" : undefined}
         >
           <LogOut className="w-4 h-4 shrink-0 text-destructive" />
-          {!collapsed && <span className="text-destructive">Sair</span>}
+          {!collapsed && <span className="truncate text-destructive">Sair</span>}
         </button>
 
         <button
