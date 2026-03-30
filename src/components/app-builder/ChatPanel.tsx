@@ -858,7 +858,9 @@ ${wizardData.companyName ? `Empresa: ${wizardData.companyName}` : ""}`;
             <Loader2 className="w-5 h-5 text-primary animate-spin" />
             <div>
               <p className="text-xs font-medium text-foreground">Criando {wizardData.appName}...</p>
-              <p className="text-[10px] text-muted-foreground">Gerando estrutura e código</p>
+              <p className="text-[10px] text-muted-foreground">
+                {channel === "whatsapp" ? "Gerando fluxos conversacionais e código" : "Gerando páginas, componentes e código"}
+              </p>
             </div>
           </div>
         )}
