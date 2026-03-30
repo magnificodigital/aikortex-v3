@@ -1,41 +1,158 @@
-import { useMemo, useState } from "react";
-import { Phone, Bot, Send, BarChart3, Settings, Users, Calendar, MessageSquare, Search, Globe, Zap, Monitor, Smartphone } from "lucide-react";
-import { useAppBuilder } from "@/contexts/AppBuilderContext";
+import { useMemo, useState, useEffect } from "react";
+import { Phone, Bot, Send, BarChart3, Settings, Users, Calendar, MessageSquare, Search, Globe, Zap, Monitor, Smartphone, FileCode, Database, Layout, Code2, ArrowRight } from "lucide-react";
+import { useAppBuilder, GeneratedFile } from "@/contexts/AppBuilderContext";
+import { Badge } from "@/components/ui/badge";
+
+/* ── Helpers to extract real content from generated files ── */
+
+function extractFromFile(files: GeneratedFile[], pathIncludes: string): GeneratedFile | undefined {
+  return files.find(f => f.path.toLowerCase().includes(pathIncludes.toLowerCase()) || f.name.toLowerCase().includes(pathIncludes.toLowerCase()));
+}
+
+function extractStringsFromCode(code: string, pattern: RegExp): string[] {
+  const results: string[] = [];
+  let match;
+  while ((match = pattern.exec(code)) !== null) {
+    results.push(match[1]);
+  }
+  return results;
+}
+
+function extractGreeting(files: GeneratedFile[]): string {
+  for (const f of files) {
+    // Look for greeting/intro messages in code
+    const greetMatch = f.content.match(/(?:greeting|intro|saudação|welcome|olá|oi)[^"]*["'`]([^"'`]{10,}?)["'`]/i);
+    if (greetMatch) return greetMatch[1];
+    const msgMatch = f.content.match(/sendText\([^,]+,\s*["'`]([^"'`]{10,}?)["'`]/i);
+    if (msgMatch) return msgMatch[1];
+  }
+  return "";
+}
+
+function extractBotName(files: GeneratedFile[], fallback: string): string {
+  for (const f of files) {
+    const match = f.content.match(/botName[:\s=]*["'`]([^"'`]+)["'`]/i) 
+      || f.content.match(/name[:\s=]*["'`]([^"'`]+)["'`]/i);
+    if (match && match[1].length > 2 && match[1].length < 40) return match[1];
+  }
+  return fallback;
+}
+
+function extractQuickReplies(files: GeneratedFile[]): string[] {
+  for (const f of files) {
+    const match = f.content.match(/(?:buttons|quick_?replies|options|botões)\s*[:=]\s*\[([\s\S]*?)\]/i);
+    if (match) {
+      return extractStringsFromCode(match[1], /["'`]([^"'`]+)["'`]/g).slice(0, 4);
+    }
+    // Also try to find sendButtons calls
+    const btnMatch = f.content.match(/sendButtons\([^,]+,[^,]+,\s*\[([\s\S]*?)\]/i);
+    if (btnMatch) {
+      return extractStringsFromCode(btnMatch[1], /["'`]([^"'`]+)["'`]/g).slice(0, 4);
+    }
+  }
+  return [];
+}
+
+function extractStages(files: GeneratedFile[]): string[] {
+  for (const f of files) {
+    const match = f.content.match(/(?:stages|etapas|steps|fluxo|jornada)\s*[:=]\s*\[([\s\S]*?)\]/i);
+    if (match) {
+      return extractStringsFromCode(match[1], /["'`]([^"'`]+)["'`]/g).slice(0, 6);
+    }
+    // Try questions array for qualifier
+    const qMatch = f.content.match(/questions\s*=\s*\[([\s\S]*?)\]/i);
+    if (qMatch) {
+      return extractStringsFromCode(qMatch[1], /["'`]([^"'`]{5,})["'`]/g).slice(0, 5);
+    }
+  }
+  return [];
+}
+
+function extractNavItems(files: GeneratedFile[]): string[] {
+  for (const f of files) {
+    // Look for navigation/route definitions
+    const routeMatches = extractStringsFromCode(f.content, /path[:\s=]*["'`]\/([^"'`]+)["'`]/g);
+    if (routeMatches.length > 1) return routeMatches.map(r => r.charAt(0).toUpperCase() + r.slice(1)).slice(0, 6);
+    // Look for nav items in sidebar/nav components
+    const navMatches = extractStringsFromCode(f.content, /(?:label|title|text)[:\s=]*["'`]([^"'`]+)["'`]/g);
+    if (navMatches.length > 1) return navMatches.slice(0, 6);
+  }
+  return [];
+}
+
+function extractMetricsFromCode(files: GeneratedFile[]): { label: string; value: string }[] {
+  const results: { label: string; value: string }[] = [];
+  for (const f of files) {
+    const match = f.content.match(/(?:title|label)[:\s=]*["'`]([^"'`]+)["'`][\s\S]*?(?:value)[:\s=]*["'`]([^"'`]+)["'`]/gi);
+    if (match) {
+      for (const m of match) {
+        const titleMatch = m.match(/(?:title|label)[:\s=]*["'`]([^"'`]+)["'`]/i);
+        const valueMatch = m.match(/value[:\s=]*["'`]([^"'`]+)["'`]/i);
+        if (titleMatch && valueMatch) {
+          results.push({ label: titleMatch[1], value: valueMatch[1] });
+        }
+      }
+    }
+  }
+  return results.slice(0, 4);
+}
+
+/* ── Mock bot responses from real file content ── */
+function buildMockResponses(files: GeneratedFile[]): Record<string, string> {
+  const defaults: Record<string, string> = {
+    default: "Entendi! Posso te ajudar com isso. O que mais gostaria de saber?",
+  };
+  
+  // Extract responses from agent files
+  for (const f of files) {
+    const responseMatches = f.content.matchAll(/(?:sendText|reply|respond)\s*\([^,]*,\s*["'`]([^"'`]{10,})["'`]/gi);
+    for (const m of responseMatches) {
+      const text = m[1];
+      const keyword = text.split(/\s+/).slice(0, 2).join(" ").toLowerCase();
+      defaults[keyword] = text;
+    }
+  }
+  
+  return defaults;
+}
 
 /* ── WhatsApp Preview ── */
 
-const MOCK_BOT_RESPONSES: Record<string, string> = {
-  default: "Entendi! Posso te ajudar com isso. O que mais gostaria de saber?",
-  oi: "Olá! Que bom ter você aqui! Como posso ajudar?",
-  olá: "Oi! Tudo bem? Me conta como posso te ajudar 😊",
-  preço: "Nossos planos são bem flexíveis! Posso agendar uma conversa com nosso especialista para encontrar o melhor para você.",
-  agendar: "Claro! Vou verificar os horários disponíveis. Qual dia seria melhor para você?",
-  suporte: "Sem problemas! Me descreva o que está acontecendo e vou te ajudar a resolver.",
-  funciona: "É super simples! Nosso sistema é intuitivo e fácil de usar. Quer que eu te mostre o passo a passo?",
-};
-
-function getBotResponse(userMsg: string): string {
-  const lower = userMsg.toLowerCase();
-  const key = Object.keys(MOCK_BOT_RESPONSES).find(k => k !== "default" && lower.includes(k));
-  return MOCK_BOT_RESPONSES[key || "default"];
-}
-
 const WhatsAppPreview = () => {
-  const { files, appName, isGenerating } = useAppBuilder();
+  const { files, appName, isGenerating, tables } = useAppBuilder();
   const hasContent = files.length > 0;
 
-  const greeting = "Olá! 👋 Como posso ajudar você hoje?";
-  const quickReplies = ["Agendar", "Preços", "Suporte"];
-  const botName = appName;
-  const stages = ["Saudação", "Qualificação", "Agendamento"];
+  // Extract real data from generated files
+  const greeting = useMemo(() => extractGreeting(files) || `Olá! 👋 Sou o ${appName}. Como posso ajudar?`, [files, appName]);
+  const botName = useMemo(() => extractBotName(files, appName), [files, appName]);
+  const quickReplies = useMemo(() => {
+    const extracted = extractQuickReplies(files);
+    return extracted.length > 0 ? extracted : ["Agendar", "Preços", "Suporte"];
+  }, [files]);
+  const stages = useMemo(() => {
+    const extracted = extractStages(files);
+    return extracted.length > 0 ? extracted : [];
+  }, [files]);
+  const mockResponses = useMemo(() => buildMockResponses(files), [files]);
 
   const [chatMessages, setChatMessages] = useState<{ role: "user" | "bot"; text: string; time: string }[]>([]);
   const [testInput, setTestInput] = useState("");
   const [botTyping, setBotTyping] = useState(false);
 
+  // Reset chat when files change significantly
+  useEffect(() => {
+    setChatMessages([]);
+  }, [files.length]);
+
   const now = () => {
     const d = new Date();
     return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+  };
+
+  const getBotResponse = (userMsg: string): string => {
+    const lower = userMsg.toLowerCase();
+    const key = Object.keys(mockResponses).find(k => k !== "default" && lower.includes(k));
+    return mockResponses[key || "default"];
   };
 
   const handleSendTest = (text?: string) => {
@@ -51,13 +168,16 @@ const WhatsAppPreview = () => {
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center bg-muted/5 p-8">
+    <div className="flex-1 flex items-center justify-center bg-muted/5 p-4 gap-6">
+      {/* Phone mock */}
       <div className="relative">
-        <div className="w-[380px] rounded-[2.5rem] border-[3px] border-muted/30 bg-card shadow-2xl overflow-hidden">
+        <div className="w-[370px] rounded-[2.5rem] border-[3px] border-muted/30 bg-card shadow-2xl overflow-hidden">
+          {/* Status bar */}
           <div className="h-7 bg-[#075e54] dark:bg-[#1f2c34] flex items-center justify-center">
             <div className="w-20 h-4 rounded-full bg-black/20" />
           </div>
 
+          {/* WhatsApp header */}
           <div className="bg-[#075e54] dark:bg-[#1f2c34] px-4 py-2.5 flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center">
               <Bot className="w-5 h-5 text-white" />
@@ -69,10 +189,11 @@ const WhatsAppPreview = () => {
             <Phone className="w-4 h-4 text-white/70" />
           </div>
 
-          <div className="bg-[#ece5dd] dark:bg-[#0b141a] p-4 space-y-3 min-h-[400px] max-h-[460px] overflow-y-auto">
+          {/* Chat area */}
+          <div className="bg-[#ece5dd] dark:bg-[#0b141a] p-4 space-y-3 min-h-[380px] max-h-[440px] overflow-y-auto">
             {hasContent ? (
               <>
-                {/* Initial greeting */}
+                {/* Greeting bubble */}
                 <div className="flex gap-2 animate-in fade-in slide-in-from-left-2 duration-300">
                   <div className="bg-white dark:bg-[#202c33] rounded-xl rounded-tl-sm px-3 py-2 max-w-[80%] shadow-sm">
                     <p className="text-xs text-foreground">{greeting}</p>
@@ -81,7 +202,7 @@ const WhatsAppPreview = () => {
                 </div>
 
                 {/* Quick reply buttons */}
-                {chatMessages.length === 0 && (
+                {chatMessages.length === 0 && quickReplies.length > 0 && (
                   <div className="flex gap-1.5 flex-wrap animate-in fade-in duration-300 delay-300">
                     {quickReplies.map((opt) => (
                       <button
@@ -95,7 +216,7 @@ const WhatsAppPreview = () => {
                   </div>
                 )}
 
-                {/* User test messages */}
+                {/* Chat messages */}
                 {chatMessages.map((msg, i) => (
                   <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "gap-2"} animate-in fade-in duration-200`}>
                     <div className={`rounded-xl px-3 py-2 max-w-[80%] shadow-sm ${
@@ -109,6 +230,7 @@ const WhatsAppPreview = () => {
                   </div>
                 ))}
 
+                {/* Typing indicator */}
                 {(isGenerating || botTyping) && (
                   <div className="flex gap-2 animate-in fade-in duration-200">
                     <div className="bg-white dark:bg-[#202c33] rounded-xl rounded-tl-sm px-4 py-3 shadow-sm">
@@ -138,7 +260,7 @@ const WhatsAppPreview = () => {
             )}
           </div>
 
-          {/* Interactive input bar */}
+          {/* Input bar */}
           <div className="bg-[#f0f0f0] dark:bg-[#202c33] px-3 py-2.5 flex items-center gap-2 border-t border-border/30">
             <input
               type="text"
@@ -162,15 +284,77 @@ const WhatsAppPreview = () => {
           </div>
         </div>
 
+        {/* Bottom info badge */}
         {hasContent && (
           <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-card border border-border rounded-full px-3 py-1 shadow-lg">
             <span className="text-[10px] text-muted-foreground flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-              {files.length} arquivo(s) • {stages.length} etapas
+              {files.length} arquivo(s){stages.length > 0 ? ` • ${stages.length} etapas` : ""}{tables.length > 0 ? ` • ${tables.length} tabelas` : ""}
             </span>
           </div>
         )}
       </div>
+
+      {/* Right panel: generated structure overview */}
+      {hasContent && (
+        <div className="w-[240px] space-y-3 animate-in fade-in slide-in-from-right-4 duration-500">
+          {/* Files generated */}
+          <div className="rounded-xl border border-border bg-card/60 p-3 space-y-2">
+            <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+              <FileCode className="w-3 h-3" /> Arquivos
+            </div>
+            <div className="space-y-1 max-h-[140px] overflow-y-auto">
+              {files.map((f, i) => (
+                <div key={i} className="flex items-center gap-2 text-[10px] text-foreground/80 py-0.5">
+                  <Code2 className="w-3 h-3 text-primary/60 shrink-0" />
+                  <span className="truncate">{f.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Tables */}
+          {tables.length > 0 && (
+            <div className="rounded-xl border border-border bg-card/60 p-3 space-y-2">
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <Database className="w-3 h-3" /> Tabelas
+              </div>
+              <div className="space-y-1">
+                {tables.map((t, i) => (
+                  <div key={i} className="flex items-center justify-between text-[10px] py-0.5">
+                    <span className="text-foreground/80">{t.name}</span>
+                    <Badge variant="secondary" className="text-[8px] h-4 px-1.5">{t.columns.length} cols</Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Conversation flow (stages) */}
+          {stages.length > 0 && (
+            <div className="rounded-xl border border-border bg-card/60 p-3 space-y-2">
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <MessageSquare className="w-3 h-3" /> Fluxo
+              </div>
+              <div className="space-y-1">
+                {stages.map((s, i) => (
+                  <div key={i} className="flex items-center gap-2 text-[10px] py-0.5">
+                    <span className="w-4 h-4 rounded-full bg-primary/10 text-primary text-[8px] font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+                    <span className="text-foreground/80 truncate">{s}</span>
+                    {i < stages.length - 1 && <ArrowRight className="w-2.5 h-2.5 text-muted-foreground/40 shrink-0" />}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {isGenerating && (
+            <div className="flex items-center gap-2 text-[10px] text-primary animate-pulse px-1">
+              <Zap className="w-3 h-3" /> Atualizando em tempo real...
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
@@ -178,32 +362,54 @@ const WhatsAppPreview = () => {
 /* ── Web Preview ── */
 
 const WebPreview = () => {
-  const { files, appName, isGenerating, dashboardMetrics } = useAppBuilder();
+  const { files, appName, isGenerating, dashboardMetrics, tables } = useAppBuilder();
   const hasContent = files.length > 0;
 
-  const navItems = [
-    { label: "Dashboard", icon: BarChart3 },
-    { label: "Clientes", icon: Users },
-    { label: "Agenda", icon: Calendar },
-    { label: "Mensagens", icon: MessageSquare },
-    { label: "Configurações", icon: Settings },
-  ];
+  // Extract real nav items from generated files
+  const navItems = useMemo(() => {
+    const extracted = extractNavItems(files);
+    if (extracted.length > 1) {
+      const iconMap: Record<string, typeof BarChart3> = {
+        dashboard: BarChart3, clientes: Users, clients: Users, users: Users,
+        agenda: Calendar, calendar: Calendar, mensagens: MessageSquare,
+        messages: MessageSquare, config: Settings, settings: Settings, home: Layout,
+      };
+      return extracted.map(label => ({
+        label,
+        icon: iconMap[label.toLowerCase()] || Layout,
+      }));
+    }
+    return [
+      { label: "Dashboard", icon: BarChart3 },
+      { label: "Clientes", icon: Users },
+      { label: "Agenda", icon: Calendar },
+      { label: "Mensagens", icon: MessageSquare },
+      { label: "Configurações", icon: Settings },
+    ];
+  }, [files]);
+
   const metrics = useMemo(() => {
     if (dashboardMetrics.length > 0) {
       return dashboardMetrics.slice(0, 4).map(m => ({ label: m.label, value: m.value, change: m.change }));
     }
+    const fromCode = extractMetricsFromCode(files);
+    if (fromCode.length > 0) return fromCode;
     return [
       { label: "Usuários", value: "0" },
       { label: "Receita", value: "R$ 0" },
       { label: "Conversão", value: "0%" },
     ];
-  }, [dashboardMetrics]);
+  }, [dashboardMetrics, files]);
 
   const activeNav = navItems[0]?.label || "Dashboard";
 
+  // Extract page names from files
+  const pageFiles = useMemo(() => files.filter(f => f.path.includes("/pages/") || f.path.includes("Page")), [files]);
+
   return (
-    <div className="flex-1 flex items-center justify-center bg-muted/5 p-8">
-      <div className="w-full max-w-[820px] rounded-xl border border-border bg-card shadow-2xl overflow-hidden transition-all duration-500">
+    <div className="flex-1 flex items-center justify-center bg-muted/5 p-4 gap-6">
+      {/* Browser window */}
+      <div className="w-full max-w-[780px] rounded-xl border border-border bg-card shadow-2xl overflow-hidden transition-all duration-500">
         {/* Browser chrome */}
         <div className="bg-muted/40 px-3 py-2 flex items-center gap-2 border-b border-border">
           <div className="flex gap-1.5">
@@ -219,9 +425,9 @@ const WebPreview = () => {
         </div>
 
         {hasContent ? (
-          <div className="flex h-[440px]">
+          <div className="flex h-[420px]">
             {/* Sidebar */}
-            <div className="w-[170px] border-r border-border bg-card/80 p-3 space-y-1">
+            <div className="w-[160px] border-r border-border bg-card/80 p-3 space-y-1">
               <div className="px-2 py-2 mb-2">
                 <p className="text-xs font-semibold text-foreground">{appName}</p>
                 <p className="text-[9px] text-muted-foreground">Painel de Gestão</p>
@@ -270,7 +476,7 @@ const WebPreview = () => {
               {/* Chart */}
               <div className="rounded-xl border border-border p-4 bg-card/50">
                 <p className="text-[10px] font-medium text-foreground mb-3">Atividade recente</p>
-                <div className="flex items-end gap-1.5 h-[90px]">
+                <div className="flex items-end gap-1.5 h-[80px]">
                   {[40, 65, 45, 80, 55, 90, 70, 95, 60, 85, 75, 100].map((h, i) => (
                     <div key={i} className="flex-1 rounded-sm transition-all duration-500 overflow-hidden" style={{ height: `${h}%` }}>
                       <div className="w-full h-full bg-gradient-to-t from-primary/60 to-primary/20 rounded-sm" />
@@ -279,29 +485,42 @@ const WebPreview = () => {
                 </div>
               </div>
 
-              {/* Table preview */}
-              <div className="rounded-xl border border-border bg-card/50 overflow-hidden">
-                <div className="px-4 py-2.5 border-b border-border flex items-center justify-between">
-                  <p className="text-[10px] font-medium text-foreground">Registros recentes</p>
-                  <Search className="w-3 h-3 text-muted-foreground" />
-                </div>
-                <div className="px-4 py-3 space-y-2">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="flex items-center gap-3">
-                      <div className="w-6 h-6 rounded-full bg-muted/50" />
-                      <div className="flex-1">
-                        <div className="h-2.5 bg-muted/40 rounded w-24" />
-                        <div className="h-2 bg-muted/20 rounded w-16 mt-1" />
-                      </div>
-                      <div className="h-2 bg-muted/30 rounded w-12" />
+              {/* Dynamic table based on real tables */}
+              {tables.length > 0 && (
+                <div className="rounded-xl border border-border bg-card/50 overflow-hidden">
+                  <div className="px-4 py-2.5 border-b border-border flex items-center justify-between">
+                    <p className="text-[10px] font-medium text-foreground">{tables[0].name}</p>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="text-[8px] h-4">{tables[0].columns.length} colunas</Badge>
+                      <Search className="w-3 h-3 text-muted-foreground" />
                     </div>
-                  ))}
+                  </div>
+                  <div className="px-4 py-1">
+                    {/* Column headers */}
+                    <div className="flex items-center gap-3 py-1.5 border-b border-border/50">
+                      {tables[0].columns.slice(0, 4).map(col => (
+                        <div key={col.name} className="flex-1">
+                          <span className="text-[8px] font-semibold text-muted-foreground uppercase">{col.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Skeleton rows */}
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="flex items-center gap-3 py-2">
+                        {tables[0].columns.slice(0, 4).map((col, ci) => (
+                          <div key={col.name} className="flex-1">
+                            <div className={`h-2 bg-muted/40 rounded ${ci === 0 ? "w-16" : "w-12"}`} />
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         ) : (
-          <div className="h-[440px] flex items-center justify-center text-sm text-muted-foreground">
+          <div className="h-[420px] flex items-center justify-center text-sm text-muted-foreground">
             {isGenerating ? (
               <div className="flex flex-col items-center gap-3">
                 <Zap className="w-6 h-6 animate-pulse text-primary" />
@@ -316,6 +535,60 @@ const WebPreview = () => {
           </div>
         )}
       </div>
+
+      {/* Right panel: structure overview */}
+      {hasContent && (
+        <div className="w-[220px] space-y-3 animate-in fade-in slide-in-from-right-4 duration-500">
+          <div className="rounded-xl border border-border bg-card/60 p-3 space-y-2">
+            <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+              <FileCode className="w-3 h-3" /> Arquivos ({files.length})
+            </div>
+            <div className="space-y-1 max-h-[160px] overflow-y-auto">
+              {files.map((f, i) => (
+                <div key={i} className="flex items-center gap-2 text-[10px] text-foreground/80 py-0.5">
+                  <Code2 className="w-3 h-3 text-primary/60 shrink-0" />
+                  <span className="truncate">{f.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {tables.length > 0 && (
+            <div className="rounded-xl border border-border bg-card/60 p-3 space-y-2">
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <Database className="w-3 h-3" /> Tabelas ({tables.length})
+              </div>
+              <div className="space-y-1">
+                {tables.map((t, i) => (
+                  <div key={i} className="flex items-center justify-between text-[10px] py-0.5">
+                    <span className="text-foreground/80">{t.name}</span>
+                    <Badge variant="secondary" className="text-[8px] h-4 px-1.5">{t.columns.length} cols</Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {pageFiles.length > 0 && (
+            <div className="rounded-xl border border-border bg-card/60 p-3 space-y-2">
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <Layout className="w-3 h-3" /> Páginas
+              </div>
+              <div className="space-y-1">
+                {pageFiles.map((f, i) => (
+                  <div key={i} className="text-[10px] text-foreground/80 py-0.5 truncate">{f.name}</div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {isGenerating && (
+            <div className="flex items-center gap-2 text-[10px] text-primary animate-pulse px-1">
+              <Zap className="w-3 h-3" /> Atualizando em tempo real...
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
