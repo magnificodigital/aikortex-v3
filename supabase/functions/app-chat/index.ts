@@ -5,6 +5,26 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function buildPatchBlock(isPatch: boolean): string {
+  if (!isPatch) return "";
+  return `
+
+# MODO PATCH — ATUALIZAÇÃO INCREMENTAL
+Você NÃO deve reconstruir o app do zero.
+Sua tarefa é aplicar APENAS as mudanças necessárias no projeto atual, preservando tudo que já estiver consistente e funcional.
+
+## Regras obrigatórias do Modo Patch:
+- Preserve a arquitetura existente sempre que ela estiver coerente
+- Atualize apenas os arquivos, componentes, fluxos e tabelas realmente impactados
+- Não remova funcionalidades existentes sem necessidade
+- Não quebre o preview
+- Não transforme o app em outro produto
+- Não regenere a base inteira sem motivo
+- Aplique uma atualização incremental, segura, consistente e renderizável
+- O app deve continuar funcionando no preview após a mudança
+`;
+}
+
 function buildSystemPrompt(ctx?: Record<string, string>) {
   const appType = ctx?.app_type || "web";
   const appName = ctx?.app_name || "Meu App";
@@ -17,6 +37,7 @@ function buildSystemPrompt(ctx?: Record<string, string>) {
   const features = ctx?.selected_features || "";
   const bizContext = ctx?.business_context || "";
   const constraints = ctx?.constraints || "";
+  const isPatch = ctx?.is_patch === "true";
 
   const isWhatsApp = appType === "whatsapp";
 
@@ -161,7 +182,8 @@ Trate como um SaaS visual, portal, dashboard ou aplicação web funcional.
 
 Se a ideia estiver incompleta, assuma a interpretação mais útil e gere uma V1 sólida pronta para expansão.
 
-Construa sempre com foco em: funcionalidade + coerência + renderização + evolução futura.`;
+Construa sempre com foco em: funcionalidade + coerência + renderização + evolução futura.
+${buildPatchBlock(isPatch)}`;
 }
 
 serve(async (req) => {
