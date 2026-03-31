@@ -40,6 +40,34 @@ const onboardingLabels: Record<string, string> = {
   strict: "Rigoroso",
 };
 
+/* ── Robust JSON extraction ── */
+
+function extractJson(raw: string): any {
+  // Strip markdown code fences
+  let cleaned = raw.replace(/^```(?:json)?\s*\n?/gm, "").replace(/\n?```\s*$/gm, "").trim();
+  // Remove control characters (except newlines/tabs)
+  cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "");
+  // Remove trailing commas before } or ]
+  cleaned = cleaned.replace(/,\s*([}\]])/g, "$1");
+  return JSON.parse(cleaned);
+}
+
+function validateAppState(obj: any): AppState | null {
+  const state = obj?.app_state || obj;
+  if (!state?.app_meta && !state?.preview) return null;
+  // Ensure required top-level fields exist with defaults
+  return {
+    app_meta: state.app_meta || { type: "web", name: "App", description: "", tone: "", language: "pt-BR", status: "draft" },
+    preview: state.preview || { type: "web", title: "", subtitle: "", layout: {}, screen_data: {}, interactions: [] },
+    agent_config: state.agent_config || { intro_message: "", max_turn_messages: 2, onboarding_level: "soft", personality_rules: [], conversation_rules: [], cta_primary: "", quick_replies: [] },
+    flows: state.flows || [],
+    database: state.database || { tables: [] },
+    files: state.files || [],
+    ui_modules: state.ui_modules || [],
+    runtime: state.runtime || { render_ready: true, mocked: true, warnings: [], next_build_targets: [] },
+  } as AppState;
+}
+
 /* ── API request (non-streaming) ── */
 
 async function requestAppState(
@@ -63,11 +91,16 @@ async function requestAppState(
   if (data.error) return { appState: null, chatSummary: "", error: data.error };
 
   try {
-    const raw = typeof data.appStateRaw === "string" ? JSON.parse(data.appStateRaw) : data.appStateRaw;
-    const state = raw?.app_state || raw;
+    const raw = typeof data.appStateRaw === "string" ? extractJson(data.appStateRaw) : data.appStateRaw;
+    const state = validateAppState(raw);
+    if (!state) {
+      console.error("Invalid app_state schema:", raw);
+      return { appState: null, chatSummary: "", error: "Resposta da IA não contém um app_state válido." };
+    }
     const summary = raw?.chat_summary || "";
-    return { appState: state as AppState, chatSummary: summary };
-  } catch {
+    return { appState: state, chatSummary: summary };
+  } catch (e) {
+    console.error("JSON parse error:", e, data.appStateRaw?.slice?.(0, 200));
     return { appState: null, chatSummary: "", error: "Erro ao processar resposta da IA" };
   }
 }
@@ -88,7 +121,7 @@ async function requestStructure(description: string, appType: string, language: 
   if (!resp.ok) return null;
   const data = await resp.json();
   try {
-    const raw = typeof data.structuredConfig === "string" ? JSON.parse(data.structuredConfig) : data.structuredConfig;
+    const raw = typeof data.structuredConfig === "string" ? extractJson(data.structuredConfig) : data.structuredConfig;
     return raw as StructuredAppConfig;
   } catch {
     return null;
