@@ -31,7 +31,7 @@ const tabs: { id: TabId; label: string; icon: typeof Eye }[] = [
 
 const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
   const navigate = useNavigate();
-  const { channel, setChannel, saveApp, appName, appId, files, tables, isGenerating, chatMessages, setFiles, setTables, setAppName, setChannel: setCtxChannel, setChatMessages, setWizardStep, setWizardData, setWizardConfig, setStructuredConfig } = useAppBuilder();
+  const { channel, setChannel, saveApp, appName, appId, files, tables, isGenerating, chatMessages, setFiles, setTables, setAppName, setChannel: setCtxChannel, setChatMessages, setWizardStep, setWizardData, setWizardConfig, setStructuredConfig, setAppState } = useAppBuilder();
   const { user } = useAuth();
 
   const [activeTab, setActiveTab] = useState<TabId>("preview");
