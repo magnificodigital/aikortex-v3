@@ -279,9 +279,9 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
 
     const formatFeature = (f: string) => f.replace(/[_-]+/g, " ").replace(/\b\w/g, c => c.toUpperCase());
     const featuresFormatted = (structuredConfig.selected_features || []).map(formatFeature).join(", ");
-    const configSummary = `🚀 **Iniciando construção de ${structuredConfig.app_name}**\n\nCanal: ${channel === "whatsapp" ? "WhatsApp" : "Web App"} · Tom: ${toneLabels[structuredConfig.tone] || structuredConfig.tone} · Idioma: ${structuredConfig.language}\n\nFuncionalidades: ${featuresFormatted}\n\nGerando app state...`;
+    const buildLoadingMessage = `🚀 **Iniciando construção de ${structuredConfig.app_name}**\n\nCanal: ${channel === "whatsapp" ? "WhatsApp" : "Web App"} · Tom: ${toneLabels[structuredConfig.tone] || structuredConfig.tone} · Idioma: ${structuredConfig.language}\n\nFuncionalidades: ${featuresFormatted}\n\nGerando app state...`;
 
-    setMessages(prev => [...prev, { role: "assistant", content: configSummary }]);
+    setMessages(prev => [...prev, { role: "assistant", content: buildLoadingMessage }]);
 
     if (!initializedProject.current) {
       initializedProject.current = true;
@@ -329,8 +329,21 @@ ${structuredConfig.constraints ? `Restrições: ${structuredConfig.constraints}`
       toast.error(error);
       setToolLogs(prev => [...prev, { label: error, status: "error" }]);
       addTerminalLog({ text: `✗ ${error}`, type: "error", timestamp: Date.now() });
-    } else if (newState) {
+      setMessages(prev => [
+        ...prev.filter(m => m.content !== buildLoadingMessage),
+        { role: "assistant", content: `❌ ${error}` },
+      ]);
+      setBuilding(false);
+      setIsGenerating(false);
+      return;
+    }
+
+    if (newState) {
       setAppState(newState);
+      setBuilding(false);
+      setIsGenerating(false);
+      setWizardStep("done");
+
       const filesCount = newState.files?.length || 0;
       const tablesCount = newState.database?.tables?.length || 0;
       setToolLogs(prev => [
@@ -341,14 +354,18 @@ ${structuredConfig.constraints ? `Restrições: ${structuredConfig.constraints}`
       addTerminalLog({ text: `✓ ${filesCount} arquivos gerados`, type: "success", timestamp: Date.now() });
       addTerminalLog({ text: `✓ ${tablesCount} tabelas criadas`, type: "success", timestamp: Date.now() });
       addTerminalLog({ text: "✓ Preview atualizado", type: "success", timestamp: Date.now() });
+      addTerminalLog({ text: "✓ Dashboard atualizado", type: "success", timestamp: Date.now() });
 
-      const summary = chatSummary || `✅ **${newState.app_meta?.name || sc.app_name}** criado com sucesso!\n\nO preview está pronto. Use o chat para fazer ajustes.`;
-      setMessages(prev => [...prev, { role: "assistant", content: summary }]);
+      const summary = chatSummary || `✅ **${newState.app_meta?.name || sc.app_name}** criado com sucesso!\n\nO preview e o dashboard já foram atualizados.`;
+      setMessages(prev => [
+        ...prev.filter(m => m.content !== buildLoadingMessage),
+        { role: "assistant", content: summary },
+      ]);
+      return;
     }
 
     setBuilding(false);
     setIsGenerating(false);
-    setWizardStep("done");
   };
 
   /* ── Send message (patch mode) ── */

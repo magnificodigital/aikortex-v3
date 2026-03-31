@@ -1,4 +1,4 @@
-import { BarChart3, Users, MessageSquare, TrendingUp, Clock, Phone, Monitor, ArrowUp, ArrowDown, Activity } from "lucide-react";
+import { BarChart3, Users, MessageSquare, TrendingUp, Clock, Phone, Monitor, ArrowUp, ArrowDown, Activity, Database } from "lucide-react";
 import { useAppBuilder } from "@/contexts/AppBuilderContext";
 
 interface DashboardPanelProps {
@@ -6,11 +6,37 @@ interface DashboardPanelProps {
 }
 
 const DashboardPanel = ({}: DashboardPanelProps) => {
-  const { channel, dashboardMetrics, tables, files, isGenerating } = useAppBuilder();
+  const { channel, dashboardMetrics, tables, isGenerating, appState } = useAppBuilder();
 
   const iconMap: Record<string, any> = { "Conversas Ativas": MessageSquare, "Leads Qualificados": Users, "Taxa de Resposta": Activity, "Tempo Médio": Clock, "Usuários Ativos": Users, "Pageviews": BarChart3, "Conversão": TrendingUp, "Bounce Rate": Activity };
+  const appType = appState?.app_meta?.type || channel;
+  const appName = appState?.app_meta?.name || "Meu App";
+  const effectiveMetrics = dashboardMetrics.length > 0
+    ? dashboardMetrics
+    : appType === "whatsapp"
+      ? [
+          { label: "Usuários", value: "0", change: "placeholder", up: true },
+          { label: "Conversas", value: "0", change: "placeholder", up: true },
+          { label: "Sessões", value: "0", change: "placeholder", up: true },
+        ]
+      : [
+          { label: "Usuários", value: "0", change: "placeholder", up: true },
+          { label: "Sessões", value: "0", change: "placeholder", up: true },
+          { label: "Conversões", value: "0", change: "placeholder", up: true },
+        ];
+  const effectiveTables = appState?.database?.tables?.length
+    ? appState.database.tables.map((table) => ({
+        name: table.name,
+        columns: table.columns.map((column) => ({
+          name: column.name,
+          type: column.type,
+          isPK: column.name === "id",
+          required: column.required,
+        })),
+      }))
+    : tables;
 
-  if (dashboardMetrics.length === 0) {
+  if (!appState && dashboardMetrics.length === 0 && effectiveTables.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
         {isGenerating ? (
@@ -33,28 +59,28 @@ const DashboardPanel = ({}: DashboardPanelProps) => {
         <div>
           <h2 className="text-lg font-semibold text-foreground">Painel de Gestão</h2>
           <p className="text-xs text-muted-foreground">
-            {channel === "whatsapp" ? "WhatsApp App" : "Web App"} — Gerado automaticamente
+            {appName} · {appType === "whatsapp" ? "WhatsApp App" : "Web App"}
           </p>
         </div>
         <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border ${
-          channel === "whatsapp"
-            ? "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20"
+          appType === "whatsapp"
+            ? "bg-primary/10 text-primary border-primary/20"
             : "bg-primary/10 text-primary border-primary/20"
         }`}>
-          {channel === "whatsapp" ? <Phone className="w-3 h-3" /> : <Monitor className="w-3 h-3" />}
-          {channel === "whatsapp" ? "WhatsApp" : "Web App"}
+          {appType === "whatsapp" ? <Phone className="w-3 h-3" /> : <Monitor className="w-3 h-3" />}
+          {appType === "whatsapp" ? "WhatsApp" : "Web App"}
         </span>
       </div>
 
       {/* Metrics */}
-      <div className="grid grid-cols-4 gap-4">
-        {dashboardMetrics.map((m) => {
+      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
+        {effectiveMetrics.map((m) => {
           const Icon = iconMap[m.label] || BarChart3;
           return (
             <div key={m.label} className="rounded-xl border border-border p-4 bg-card">
               <div className="flex items-center justify-between mb-2">
                 <Icon className="w-4 h-4 text-muted-foreground" />
-                <span className={`flex items-center gap-0.5 text-[10px] font-medium ${m.up ? "text-green-500" : "text-red-500"}`}>
+                <span className={`flex items-center gap-0.5 text-[10px] font-medium ${m.up ? "text-primary" : "text-destructive"}`}>
                   {m.up ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
                   {m.change}
                 </span>
@@ -66,31 +92,28 @@ const DashboardPanel = ({}: DashboardPanelProps) => {
         })}
       </div>
 
-      {/* Project summary */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="rounded-xl border border-border p-5 bg-card">
-          <h3 className="text-sm font-semibold text-foreground mb-4">Arquivos do Projeto</h3>
-          <div className="space-y-2">
-            {files.slice(0, 6).map((f) => (
-              <div key={f.name} className="flex items-center justify-between text-xs">
-                <span className="font-mono text-foreground">{f.name}</span>
-                <span className="text-muted-foreground">{f.content.split("\n").length} linhas</span>
-              </div>
-            ))}
-            {files.length > 6 && <p className="text-[10px] text-muted-foreground">+{files.length - 6} mais</p>}
-          </div>
+      <div className="rounded-xl border border-border p-5 bg-card space-y-4">
+        <div className="flex items-center gap-2">
+          <Database className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-semibold text-foreground">Tabelas do Banco</h3>
         </div>
-
-        <div className="rounded-xl border border-border p-5 bg-card">
-          <h3 className="text-sm font-semibold text-foreground mb-4">Tabelas do Banco</h3>
-          <div className="space-y-2">
-            {tables.map((t) => (
-              <div key={t.name} className="flex items-center justify-between text-xs">
-                <span className="font-mono text-foreground">{t.name}</span>
-                <span className="text-muted-foreground">{t.columns.length} colunas</span>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          {effectiveTables.map((t) => (
+            <div key={t.name} className="rounded-lg border border-border bg-background/50 p-4 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-mono text-sm text-foreground">{t.name}</span>
+                <span className="text-[10px] text-muted-foreground">{t.columns.length} colunas</span>
               </div>
-            ))}
-          </div>
+              <div className="space-y-2">
+                {t.columns.map((column) => (
+                  <div key={`${t.name}-${column.name}`} className="rounded-md border border-border/70 px-3 py-2 text-xs bg-card">
+                    <span className="font-mono text-foreground">{column.name}</span>
+                    <span className="text-muted-foreground">:{String(column.type).toUpperCase()}{("required" in column && column.required) ? " • obrigatório" : ""}{column.isPK ? " • PK" : ""}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

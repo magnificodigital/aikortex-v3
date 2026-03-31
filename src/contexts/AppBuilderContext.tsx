@@ -252,6 +252,31 @@ function generateWhatsAppMetrics(): DashboardMetric[] {
   ];
 }
 
+function buildPlaceholderMetrics(appType: "whatsapp" | "web", screenData?: Record<string, any>): DashboardMetric[] {
+  if (screenData?.metrics && Array.isArray(screenData.metrics) && screenData.metrics.length > 0) {
+    return screenData.metrics.map((m: any) => ({
+      label: m.label || m.title || "Métrica",
+      value: String(m.value ?? "0"),
+      change: m.change || "--",
+      up: m.up ?? true,
+    }));
+  }
+
+  if (appType === "whatsapp") {
+    return [
+      { label: "Usuários", value: "0", change: "placeholder", up: true },
+      { label: "Conversas", value: "0", change: "placeholder", up: true },
+      { label: "Sessões", value: "0", change: "placeholder", up: true },
+    ];
+  }
+
+  return [
+    { label: "Usuários", value: "0", change: "placeholder", up: true },
+    { label: "Sessões", value: "0", change: "placeholder", up: true },
+    { label: "Conversões", value: "0", change: "placeholder", up: true },
+  ];
+}
+
 /* ── Helper: Sync AppState → legacy structures ── */
 
 function syncAppStateToLegacy(
@@ -277,19 +302,8 @@ function syncAppStateToLegacy(
     rows: [],
   }));
 
-  // Extract metrics from preview screen_data
-  const metrics: DashboardMetric[] = [];
   const sd = appState.preview.screen_data;
-  if (sd?.metrics && Array.isArray(sd.metrics)) {
-    for (const m of sd.metrics) {
-      metrics.push({
-        label: m.label || m.title || "",
-        value: String(m.value || "0"),
-        change: m.change || "--",
-        up: true,
-      });
-    }
-  }
+  const metrics = buildPlaceholderMetrics(appState.app_meta.type, sd);
 
   return {
     files: files.length > 0 ? files : existingFiles,
@@ -365,15 +379,27 @@ export function AppBuilderProvider({ children, initialChannel = "web", existingA
   const setAppState = useCallback((appState: AppState | null) => {
     setState(s => {
       if (!appState) return { ...s, appState: null };
+      const normalizedAppState: AppState = {
+        ...appState,
+        runtime: {
+          render_ready: true,
+          mocked: appState.runtime?.mocked ?? true,
+          warnings: appState.runtime?.warnings ?? [],
+          next_build_targets: appState.runtime?.next_build_targets ?? [],
+        },
+      };
+
       // Sync legacy structures from appState
-      const { files, tables, metrics } = syncAppStateToLegacy(appState, s.files, s.tables);
+      const { files, tables, metrics } = syncAppStateToLegacy(normalizedAppState, s.files, s.tables);
       return {
         ...s,
-        appState,
+        appState: normalizedAppState,
+        channel: normalizedAppState.app_meta.type || s.channel,
         files,
         tables,
-        dashboardMetrics: metrics.length > 0 ? metrics : s.dashboardMetrics,
-        appName: appState.app_meta.name || s.appName,
+        dashboardMetrics: metrics,
+        appName: normalizedAppState.app_meta.name || s.appName,
+        isGenerating: false,
       };
     });
   }, []);

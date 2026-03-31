@@ -127,8 +127,9 @@ function buildConversationEngine(appState: AppState | null, fallbackName: string
 
 const WhatsAppPreview = () => {
   const { files, appName, isGenerating, tables, wizardData, wizardConfig, wizardStep, structuredConfig, appState } = useAppBuilder();
+  const hasRenderableState = !!appState?.runtime?.render_ready;
   const hasContent = files.length > 0 || !!appState;
-  const isConfiguring = wizardStep !== "done";
+  const isConfiguring = !hasRenderableState && wizardStep !== "done";
 
   const effectiveName = appState?.app_meta?.name || wizardData.appName || wizardConfig?.appName || appName;
   const effectiveIntro = appState?.agent_config?.intro_message || wizardData.introMessage || wizardConfig?.introMessage || "";
@@ -145,7 +146,7 @@ const WhatsAppPreview = () => {
 
   useEffect(() => {
     setChatMessages([]);
-  }, [appState, effectiveIntro, engine.botName]);
+  }, [appState?.app_meta?.name, appState?.agent_config?.intro_message, engine.botName]);
 
   const now = () => {
     const d = new Date();
@@ -165,7 +166,12 @@ const WhatsAppPreview = () => {
     }, 800 + Math.random() * 600);
   };
 
-  const showContent = hasContent || isConfiguring;
+  const previewMessages = Array.isArray(appState?.preview?.screen_data?.messages)
+    ? appState?.preview?.screen_data?.messages
+    : [];
+  const headerTitle = appState?.preview?.title || effectiveName || engine.botName;
+  const headerStatus = appState?.preview?.subtitle || "online";
+  const showContent = hasRenderableState || hasContent || isConfiguring;
 
   return (
     <div className="flex-1 flex items-center justify-center bg-muted/5 p-4 gap-6">
@@ -183,8 +189,8 @@ const WhatsAppPreview = () => {
               <Bot className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-semibold text-white">{engine.botName}</p>
-              <p className="text-[10px] text-white/60">{isGenerating || botTyping ? "digitando..." : "online"}</p>
+              <p className="text-sm font-semibold text-white">{headerTitle}</p>
+              <p className="text-[10px] text-white/60">{isGenerating || botTyping ? "digitando..." : headerStatus}</p>
             </div>
             <Phone className="w-4 h-4 text-white/70" />
           </div>
@@ -193,13 +199,30 @@ const WhatsAppPreview = () => {
           <div className="bg-[#ece5dd] dark:bg-[#0b141a] p-4 space-y-3 min-h-[380px] max-h-[440px] overflow-y-auto">
             {showContent ? (
               <>
-                {/* Greeting bubble */}
-                <div className="flex gap-2 animate-in fade-in slide-in-from-left-2 duration-300">
-                  <div className="bg-white dark:bg-[#202c33] rounded-xl rounded-tl-sm px-3 py-2 max-w-[80%] shadow-sm">
-                    <p className="text-xs text-foreground">{engine.greeting}</p>
-                    <p className="text-[9px] text-muted-foreground text-right mt-1">10:30</p>
+                {previewMessages.length > 0 ? (
+                  previewMessages.map((message: any, index: number) => {
+                    const isUser = message.role === "user";
+                    return (
+                      <div key={`${message.role}-${index}`} className={`flex ${isUser ? "justify-end" : "gap-2"} animate-in fade-in duration-200`}>
+                        <div className={`rounded-xl px-3 py-2 max-w-[80%] shadow-sm ${
+                          isUser
+                            ? "bg-[#dcf8c6] dark:bg-[#005c4b] rounded-tr-sm"
+                            : "bg-white dark:bg-[#202c33] rounded-tl-sm"
+                        }`}>
+                          <p className="text-xs text-foreground whitespace-pre-line">{message.text || message.content || engine.greeting}</p>
+                          <p className="text-[9px] text-muted-foreground text-right mt-1">{message.time || "10:30"}</p>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="flex gap-2 animate-in fade-in slide-in-from-left-2 duration-300">
+                    <div className="bg-white dark:bg-[#202c33] rounded-xl rounded-tl-sm px-3 py-2 max-w-[80%] shadow-sm">
+                      <p className="text-xs text-foreground">{engine.greeting}</p>
+                      <p className="text-[9px] text-muted-foreground text-right mt-1">10:30</p>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Tone badge during config */}
                 {isConfiguring && effectiveTone && (
@@ -432,8 +455,9 @@ const WhatsAppPreview = () => {
 
 const WebPreview = () => {
   const { files, appName, isGenerating, dashboardMetrics, tables, wizardData, wizardConfig, wizardStep, appState } = useAppBuilder();
+  const hasRenderableState = !!appState?.runtime?.render_ready;
   const hasContent = files.length > 0 || !!appState;
-  const isConfiguring = wizardStep !== "done";
+  const isConfiguring = !hasRenderableState && wizardStep !== "done";
 
   const effectiveName = appState?.app_meta?.name || wizardData.appName || wizardConfig?.appName || appName;
   const screenData = appState?.preview?.screen_data;
@@ -483,7 +507,7 @@ const WebPreview = () => {
   const tableData = screenData?.table_data;
   const chartData = screenData?.chart_data;
 
-  const showContent = hasContent || isConfiguring;
+  const showContent = hasRenderableState || hasContent || isConfiguring;
 
   return (
     <div className="flex-1 flex items-center justify-center bg-muted/5 p-4 gap-6">
