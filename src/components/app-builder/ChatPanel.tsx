@@ -121,7 +121,7 @@ async function requestStructure(description: string, appType: string, language: 
   if (!resp.ok) return null;
   const data = await resp.json();
   try {
-    const raw = typeof data.structuredConfig === "string" ? JSON.parse(data.structuredConfig) : data.structuredConfig;
+    const raw = typeof data.structuredConfig === "string" ? extractJson(data.structuredConfig) : data.structuredConfig;
     return raw as StructuredAppConfig;
   } catch {
     return null;
