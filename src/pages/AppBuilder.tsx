@@ -116,7 +116,7 @@ const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
       {/* Chat Panel — collapsible */}
       {!chatCollapsed && (
-        <ChatPanel onBack={() => navigate("/home")} initialPrompt={initialPrompt} />
+        <ChatPanel onBack={() => navigate("/apps")} initialPrompt={initialPrompt} />
       )}
 
       {/* Main workspace */}
