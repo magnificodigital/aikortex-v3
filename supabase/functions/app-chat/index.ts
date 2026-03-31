@@ -41,31 +41,9 @@ Valores válidos para "language": "pt-BR", "en", "es"
 Retorne SOMENTE o JSON.`;
 }
 
-/* ── Patch block for incremental updates ── */
+/* ── Runtime App State prompt ── */
 
-function buildPatchBlock(isPatch: boolean): string {
-  if (!isPatch) return "";
-  return `
-
-# MODO PATCH — ATUALIZAÇÃO INCREMENTAL
-Você NÃO deve reconstruir o app do zero.
-Sua tarefa é aplicar APENAS as mudanças necessárias no projeto atual, preservando tudo que já estiver consistente e funcional.
-
-## Regras obrigatórias do Modo Patch:
-- Preserve a arquitetura existente sempre que ela estiver coerente
-- Atualize apenas os arquivos, componentes, fluxos e tabelas realmente impactados
-- Não remova funcionalidades existentes sem necessidade
-- Não quebre o preview
-- Não transforme o app em outro produto
-- Não regenere a base inteira sem motivo
-- Aplique uma atualização incremental, segura, consistente e renderizável
-- O app deve continuar funcionando no preview após a mudança
-`;
-}
-
-/* ── Master system prompt for building ── */
-
-function buildSystemPrompt(ctx?: Record<string, string>) {
+function buildAppStatePrompt(ctx?: Record<string, string>) {
   const appType = ctx?.app_type || "web";
   const appName = ctx?.app_name || "Meu App";
   const appDesc = ctx?.app_description || "";
@@ -78,10 +56,11 @@ function buildSystemPrompt(ctx?: Record<string, string>) {
   const bizContext = ctx?.business_context || "";
   const constraints = ctx?.constraints || "";
   const isPatch = ctx?.is_patch === "true";
+  const currentState = ctx?.current_state || "";
 
   const isWhatsApp = appType === "whatsapp";
 
-  return `Você é o motor de geração do Aikortex Studio. Sua função é gerar aplicações reais, coerentes, estruturadas e renderizáveis no preview do Aikortex.
+  return `Você é o motor de geração do Aikortex Studio. Sua função é gerar um estado de aplicação renderizável em formato JSON.
 
 # CONTEXTO ATIVO
 - Tipo: ${isWhatsApp ? "WhatsApp App" : "Web App"}
@@ -96,129 +75,126 @@ ${features ? `- Funcionalidades: ${features}` : ""}
 ${bizContext ? `- Contexto: ${bizContext}` : ""}
 ${constraints ? `- Restrições: ${constraints}` : ""}
 
-# PERSONALIDADE
-- Copiloto de produto: estratégico, técnico na medida certa, premium
-- Sempre em português brasileiro (a menos que o idioma acima diga o contrário)
-- Respostas CURTAS: máximo 3-4 frases de texto + perguntas
-- NUNCA mostre código na explicação textual
-- Aja como arquiteto funcional e engenheiro assistente
+# REGRA PRINCIPAL
+Retorne APENAS um JSON válido no formato app_state. NENHUM texto fora do JSON.
+Não use markdown. Não explique. Não escreva "Aqui está". SOMENTE o JSON.
 
-# OBJETIVO PRINCIPAL
-Gerar apps funcionais dentro do Aikortex Studio.
-Tudo que for criado deve:
-- refletir corretamente no Preview
-- gerar estrutura real de código
-- gerar tabelas de banco coerentes
-- gerar fluxos iniciais
-- ser editável posteriormente
-- ser consistente com o tipo de app escolhido
+# FORMATO app_state OBRIGATÓRIO
 
-# REGRA MAIS IMPORTANTE: O PREVIEW É A FONTE DA VERDADE
-Tudo que você criar deve fazer o Preview mostrar uma versão funcional e coerente.
-Se algo não puder ser implementado completamente, crie uma versão funcional simulada (mock operacional).
-NUNCA deixe tela vazia, botão quebrado ou fluxo inconsistente.
+{
+  "app_state": {
+    "app_meta": {
+      "type": "${appType}",
+      "name": "${appName}",
+      "description": "",
+      "tone": "${tone}",
+      "language": "${language}",
+      "status": "draft"
+    },
+    "preview": {
+      "type": "${appType}",
+      "title": "",
+      "subtitle": "",
+      "layout": {},
+      "screen_data": {},
+      "interactions": []
+    },
+    "agent_config": {
+      "intro_message": "",
+      "max_turn_messages": ${maxMessages},
+      "onboarding_level": "${onboarding}",
+      "personality_rules": [],
+      "conversation_rules": [],
+      "cta_primary": "",
+      "quick_replies": []
+    },
+    "flows": [],
+    "database": {
+      "tables": []
+    },
+    "files": [],
+    "ui_modules": [],
+    "runtime": {
+      "render_ready": true,
+      "mocked": true,
+      "warnings": [],
+      "next_build_targets": []
+    }
+  },
+  "chat_summary": ""
+}
 
-# FLUXO DE GERAÇÃO
-Gere TODOS os arquivos necessários para uma V1 funcional e completa.
-Inclua: estrutura de código, componentes, páginas, serviços, tabelas de banco e fluxos.
-Termine SEMPRE com pergunta ou sugestão de próximo passo.
+# REGRAS DOS CAMPOS
 
-# FORMATO DE SAÍDA ESTRUTURADO
-Código EXCLUSIVAMENTE com estes blocos (NUNCA use markdown code blocks):
+## app_meta
+- description: descrição completa do app baseada no contexto
 
-[FILE:/caminho/completo/do/arquivo.ext]
-conteúdo do código
-[/FILE]
-
-[TABLE:nome_da_tabela]
-coluna1:TIPO:PK
-coluna2:TIPO
-coluna3:TIPO
-[/TABLE]
-
-### Regras dos blocos:
-- Caminhos completos (ex: /src/components/Header.tsx)
-- Gere os arquivos da funcionalidade, organizados por responsabilidade
-- Tabelas devem incluir todas as colunas com tipos adequados
-
-${isWhatsApp ? `# MODO WHATSAPP APP
-Trate como um microssaas conversacional e operacional centrado em WhatsApp.
-
-## Preview Conversacional obrigatório:
-- Cabeçalho do agente com status online
-- Mensagem inicial coerente
-- Botões rápidos quando fizer sentido
-- Input de conversa e respostas simuladas coerentes
-- Estados de carregamento/configuração
-
-## Núcleo Conversacional obrigatório:
-- Persona, objetivo, comportamento, regras de resposta
-- Tom: ${tone}, Idioma: ${language}
-- Onboarding: ${onboarding}
-- Tratamento de objeções, fallback de erro, CTA principal
-
-## Fluxo Operacional inicial:
-- Saudação → Identificação → Intenção → Coleta de dados → Ação principal
-
-## Estrutura de arquivos:
-- /src/agents/ — agentes (main-agent.ts, qualifier.ts, scheduler.ts)
-- /src/handlers/ — webhooks e handlers de mensagens
-- /src/integrations/ — WhatsApp Cloud API client (whatsapp-api.ts)
-- /src/flows/ — WhatsApp Flows (formulários interativos JSON)
-- /src/templates/ — templates de mensagem
-- /src/memory/ — gerenciamento de estado/sessão
-- /src/config.ts — configuração
-
-## WhatsApp Cloud API v21.0:
-- Base URL: https://graph.facebook.com/v21.0
-- Envio: POST /{phone_number_id}/messages
-- Tipos: text, interactive buttons (max 3), interactive list, template, image/video/audio/document, location, reaction, contacts
-- Webhook GET para verificação, POST para mensagens
-- WhatsApp Flows: JSON-based screens com TextInput, TextArea, DatePicker, RadioButtons, CheckboxGroup, Dropdown, OptIn
-- Use interactive buttons para ≤3 opções, lists para >3
-- Templates para mensagens proativas (fora da janela de 24h)
-- Implemente gestão de estado/sessão para jornadas multi-etapa
-- Sempre inclua fallback para tipos não reconhecidos
-` : `# MODO WEB APP
-Trate como um SaaS visual, portal, dashboard ou aplicação web funcional.
-
-## Preview Web obrigatório:
-- Layout real com sidebar/topbar quando fizer sentido
-- Cards, listas, métricas, formulários ou tabelas
-- Conteúdo coerente com o objetivo do app
-- Dados simulados realistas
-- Componentes interativos e navegação consistente
-- NÃO gere tela placeholder, caixa vazia ou card sem utilidade
-
-## Estrutura de arquivos:
-- /src/pages/ — páginas
-- /src/components/ — componentes reutilizáveis
-- /src/layouts/ — layouts base
-- /src/lib/ — utilidades
-- /src/services/ — lógica de negócio
-- /src/hooks/ — hooks customizados
-- /src/api/ — endpoints/actions
-- /src/auth/ — autenticação
+## preview
+${isWhatsApp ? `### WhatsApp App preview.screen_data DEVE conter:
+- "bot_name": nome do bot
+- "bot_status": "online"
+- "greeting": mensagem de boas-vindas conversacional e contextual
+- "quick_replies": array de 2-4 botões de resposta rápida (texto limpo, sem underscores)
+- "conversation_flow": array de objetos {trigger, response, suggestions} para simular conversa
+- "stages": array de etapas do fluxo (ex: ["Saudação", "Coleta de dados", "Confirmação"])
+` : `### Web App preview.screen_data DEVE conter:
+- "nav_items": array de {label, icon} para sidebar
+- "metrics": array de {label, value, change} para cards
+- "active_page": nome da página ativa
+- "page_title": título da seção
+- "table_data": {name, columns: string[], sample_rows: number} quando relevante
+- "chart_data": {title, type} quando relevante
 `}
 
-# DIFERENCIAL AIKORTEX
-- WhatsApp Apps: recursos avançados (botões, listas, mídia, WhatsApp Flows, memória conversacional, jornadas operacionais, handoff humano)
-- Web Apps: dashboards, CRUD, autenticação, gráficos, responsividade
-- Híbrido: combine operação WhatsApp + painel Web de gestão
+## agent_config
+- Preencha com dados conversacionais reais e contextuais
+- quick_replies: texto limpo, humanizado (sem underscores, sem snake_case)
+- personality_rules: regras de personalidade do agente
+- conversation_rules: regras de como o agente deve conduzir a conversa
 
-# REGRAS CRÍTICAS
-1. NÃO invente funcionalidades desconectadas da ideia principal
-2. NÃO gere telas vazias — toda tela deve parecer viva e contextual
-3. NÃO gere botões sem ação — todo botão deve ter comportamento simulado
-4. NÃO gere estrutura incoerente com o produto solicitado
-5. NÃO quebre o preview — priorize estabilidade sobre ambição
-6. NÃO responda apenas com texto — sua função é CONSTRUIR o app
-7. Construa em 4 camadas sincronizadas: Experiência Visual, Lógica de Negócio, Estrutura de Código, Estrutura de Dados
+## flows
+- Pelo menos 1 fluxo principal para WhatsApp Apps
+- Cada step deve ter: {id, type, action, description}
 
-Se a ideia estiver incompleta, assuma a interpretação mais útil e gere uma V1 sólida pronta para expansão.
+## database.tables
+- Apenas tabelas relevantes ao produto
+- Cada coluna: {name, type, required}
+- Tipos válidos: UUID, TEXT, INTEGER, BOOLEAN, TIMESTAMP, JSONB, FLOAT
 
-Construa sempre com foco em: funcionalidade + coerência + renderização + evolução futura.
-${buildPatchBlock(isPatch)}`;
+## files
+- Arquivos reais que compõem o app
+- Cada arquivo: {path, type, purpose, content_summary}
+${isWhatsApp ? `- Estrutura: /src/agents/, /src/handlers/, /src/integrations/, /src/flows/, /src/templates/, /src/memory/, /src/config.ts` : `- Estrutura: /src/pages/, /src/components/, /src/layouts/, /src/lib/, /src/services/, /src/hooks/, /src/api/`}
+
+## ui_modules
+- Módulos de interface identificáveis
+- Cada módulo: {id, name, type, description}
+
+## runtime
+- render_ready: true quando o preview pode renderizar
+- mocked: true quando dados são simulados
+
+## chat_summary
+- Uma mensagem curta (2-3 frases) resumindo o que foi criado/atualizado
+- Em português brasileiro
+- Tom consultivo e premium
+- Termine com pergunta ou sugestão de próximo passo
+- NÃO inclua código, schemas ou blocos técnicos
+
+${isPatch ? `
+# MODO PATCH
+Você NÃO deve reconstruir o app do zero.
+Aplique APENAS as mudanças necessárias no estado atual.
+Preserve a arquitetura existente.
+${currentState ? `\nEstado atual do app:\n${currentState}` : ""}
+` : `
+# MODO CREATE
+Crie a V1 mais sólida possível.
+Priorize clareza, renderização e coerência.
+Entregue um app com cara de produto real.
+`}
+
+RETORNE SOMENTE O JSON. NADA MAIS.`;
 }
 
 serve(async (req) => {
@@ -230,12 +206,14 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     // Mode: "structure" = generate structured JSON from description
-    // Mode: default = build/patch with master prompt
+    // Mode: "build" = generate full app_state JSON (non-streaming)
+    // Mode: default = conversational patch (non-streaming JSON)
     const isStructureMode = mode === "structure";
+    const isBuildMode = mode === "build" || (!isStructureMode && !mode);
 
     const systemPrompt = isStructureMode
       ? buildStructuringPrompt(appContext?.app_type || "web", appContext?.language || "pt-BR")
-      : buildSystemPrompt(appContext);
+      : buildAppStatePrompt(appContext);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -244,13 +222,13 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
           ...messages,
         ],
-        stream: !isStructureMode,
-        ...(isStructureMode ? { response_format: { type: "json_object" } } : {}),
+        stream: false,
+        response_format: { type: "json_object" },
       }),
     });
 
@@ -272,18 +250,18 @@ serve(async (req) => {
       });
     }
 
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || "{}";
+
     if (isStructureMode) {
-      // Non-streaming: return parsed JSON response
-      const data = await response.json();
-      const content = data.choices?.[0]?.message?.content || "{}";
       return new Response(JSON.stringify({ structuredConfig: content }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Streaming response for build/patch mode
-    return new Response(response.body, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+    // Build/patch mode: return app_state JSON
+    return new Response(JSON.stringify({ appStateRaw: content }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("chat error:", e);
