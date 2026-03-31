@@ -22,6 +22,34 @@ function extractStringsFromCode(code: string, pattern: RegExp): string[] {
   return results;
 }
 
+function formatConversationLabel(value: string): string {
+  return value
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase()
+    .replace(/\b\p{L}/gu, (char) => char.toUpperCase())
+    .replace(/\bDe\b/g, "de")
+    .replace(/\bDa\b/g, "da")
+    .replace(/\bDo\b/g, "do")
+    .replace(/\bDas\b/g, "das")
+    .replace(/\bDos\b/g, "dos")
+    .replace(/\bE\b/g, "e");
+}
+
+function formatFeatureListForConversation(features: string[]): string {
+  const cleaned = features
+    .map(formatConversationLabel)
+    .filter(Boolean)
+    .slice(0, 3);
+
+  if (cleaned.length === 0) return "";
+  if (cleaned.length === 1) return cleaned[0];
+  if (cleaned.length === 2) return `${cleaned[0]} ou ${cleaned[1]}`;
+
+  return `${cleaned.slice(0, -1).join(", ")} ou ${cleaned[cleaned.length - 1]}`;
+}
+
 function extractGreeting(files: GeneratedFile[]): string {
   for (const f of files) {
     const greetMatch = f.content.match(/(?:greeting|intro|saudação|welcome|olá|oi)[^"]*["'`]([^"'`]{10,}?)["'`]/i);
@@ -105,11 +133,12 @@ function buildMockResponses(
 ): Record<string, string> {
   const name = botName || "Assistente";
   const featureList = features && features.length > 0 ? features : [];
+  const conversationalFeatureList = formatFeatureListForConversation(featureList);
 
   // Build contextual default responses
   const contextualDefaults = [
-    featureList.length > 0
-      ? `Posso te ajudar com: ${featureList.slice(0, 3).join(", ")}. Qual delas você precisa?`
+    conversationalFeatureList
+      ? `Posso te ajudar com ${conversationalFeatureList}. Por onde você quer começar?`
       : `Ótimo! Como posso te ajudar hoje?`,
     `Entendido! Deixa eu verificar isso para você. 🔍`,
     `Perfeito! Vou te guiar nesse processo. Primeiro, preciso de algumas informações.`,
