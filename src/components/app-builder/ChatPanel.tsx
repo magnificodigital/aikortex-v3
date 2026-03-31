@@ -115,6 +115,8 @@ function stripStructuredBlocks(content: string): string {
     .replace(/\[TABLE:\w+\]\s+[^\n\[]+/g, "")
     .replace(/```[\s\S]*?```/g, "")
     .replace(/\[METRIC:.*?\]\n[\s\S]*?\[\/METRIC\]/g, "")
+    // Strip bare schema lines: "col:TYPE col:TYPE ..." (3+ column defs on one line)
+    .replace(/^(?:\w+:[A-Z_]+(?::PK)?[\s]+){2,}\w+:[A-Z_]+(?::PK)?$/gm, "")
     .trim();
 }
 
