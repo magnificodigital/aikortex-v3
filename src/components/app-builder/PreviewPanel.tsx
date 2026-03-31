@@ -291,7 +291,7 @@ const WhatsAppPreview = () => {
               value={testInput}
               onChange={e => setTestInput(e.target.value)}
               onKeyDown={e => e.key === "Enter" && handleSendTest()}
-              placeholder="Teste seu agente..."
+              placeholder={appState?.preview?.screen_data?.input_placeholder || "Teste seu agente..."}
               className="flex-1 bg-white dark:bg-[#2a3942] rounded-full px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground outline-none"
             />
             <button
