@@ -4,23 +4,10 @@ import {
   MessageSquare, Search, Globe, Zap, Monitor, Smartphone,
   FileCode, Database, Layout, Code2, ArrowRight,
 } from "lucide-react";
-import { useAppBuilder, GeneratedFile } from "@/contexts/AppBuilderContext";
+import { useAppBuilder, type AppState } from "@/contexts/AppBuilderContext";
 import { Badge } from "@/components/ui/badge";
 
-/* ── Helpers to extract real content from generated files ── */
-
-function extractFromFile(files: GeneratedFile[], pathIncludes: string): GeneratedFile | undefined {
-  return files.find(f => f.path.toLowerCase().includes(pathIncludes.toLowerCase()) || f.name.toLowerCase().includes(pathIncludes.toLowerCase()));
-}
-
-function extractStringsFromCode(code: string, pattern: RegExp): string[] {
-  const results: string[] = [];
-  let match;
-  while ((match = pattern.exec(code)) !== null) {
-    results.push(match[1]);
-  }
-  return results;
-}
+/* ── Helpers ── */
 
 function formatConversationLabel(value: string): string {
   return value
@@ -36,200 +23,6 @@ function formatConversationLabel(value: string): string {
     .replace(/\bDos\b/g, "dos")
     .replace(/\bE\b/g, "e");
 }
-
-function formatFeatureListForConversation(features: string[]): string {
-  const cleaned = features
-    .map(formatConversationLabel)
-    .filter(Boolean)
-    .slice(0, 3);
-
-  if (cleaned.length === 0) return "";
-  if (cleaned.length === 1) return cleaned[0];
-  if (cleaned.length === 2) return `${cleaned[0]} ou ${cleaned[1]}`;
-
-  return `${cleaned.slice(0, -1).join(", ")} ou ${cleaned[cleaned.length - 1]}`;
-}
-
-function extractGreeting(files: GeneratedFile[]): string {
-  for (const f of files) {
-    const greetMatch = f.content.match(/(?:greeting|intro|saudação|welcome|olá|oi)[^"]*["'`]([^"'`]{10,}?)["'`]/i);
-    if (greetMatch) return greetMatch[1];
-    const msgMatch = f.content.match(/sendText\([^,]+,\s*["'`]([^"'`]{10,}?)["'`]/i);
-    if (msgMatch) return msgMatch[1];
-  }
-  return "";
-}
-
-function extractBotName(files: GeneratedFile[], fallback: string): string {
-  for (const f of files) {
-    const match = f.content.match(/botName[:\s=]*["'`]([^"'`]+)["'`]/i)
-      || f.content.match(/name[:\s=]*["'`]([^"'`]+)["'`]/i);
-    if (match && match[1].length > 2 && match[1].length < 40) return match[1];
-  }
-  return fallback;
-}
-
-function extractQuickReplies(files: GeneratedFile[]): string[] {
-  for (const f of files) {
-    const match = f.content.match(/(?:buttons|quick_?replies|options|botões)\s*[:=]\s*\[([\s\S]*?)\]/i);
-    if (match) {
-      return extractStringsFromCode(match[1], /["'`]([^"'`]+)["'`]/g).slice(0, 4);
-    }
-    const btnMatch = f.content.match(/sendButtons\([^,]+,[^,]+,\s*\[([\s\S]*?)\]/i);
-    if (btnMatch) {
-      return extractStringsFromCode(btnMatch[1], /["'`]([^"'`]+)["'`]/g).slice(0, 4);
-    }
-  }
-  return [];
-}
-
-function extractStages(files: GeneratedFile[]): string[] {
-  for (const f of files) {
-    const match = f.content.match(/(?:stages|etapas|steps|fluxo|jornada)\s*[:=]\s*\[([\s\S]*?)\]/i);
-    if (match) {
-      return extractStringsFromCode(match[1], /["'`]([^"'`]+)["'`]/g).slice(0, 6);
-    }
-    const qMatch = f.content.match(/questions\s*=\s*\[([\s\S]*?)\]/i);
-    if (qMatch) {
-      return extractStringsFromCode(qMatch[1], /["'`]([^"'`]{5,})["'`]/g).slice(0, 5);
-    }
-  }
-  return [];
-}
-
-function extractNavItems(files: GeneratedFile[]): string[] {
-  for (const f of files) {
-    const routeMatches = extractStringsFromCode(f.content, /path[:\s=]*["'`]\/([^"'`]+)["'`]/g);
-    if (routeMatches.length > 1) return routeMatches.map(r => r.charAt(0).toUpperCase() + r.slice(1)).slice(0, 6);
-    const navMatches = extractStringsFromCode(f.content, /(?:label|title|text)[:\s=]*["'`]([^"'`]+)["'`]/g);
-    if (navMatches.length > 1) return navMatches.slice(0, 6);
-  }
-  return [];
-}
-
-function extractMetricsFromCode(files: GeneratedFile[]): { label: string; value: string }[] {
-  const results: { label: string; value: string }[] = [];
-  for (const f of files) {
-    const match = f.content.match(/(?:title|label)[:\s=]*["'`]([^"'`]+)["'`][\s\S]*?(?:value)[:\s=]*["'`]([^"'`]+)["'`]/gi);
-    if (match) {
-      for (const m of match) {
-        const titleMatch = m.match(/(?:title|label)[:\s=]*["'`]([^"'`]+)["'`]/i);
-        const valueMatch = m.match(/value[:\s=]*["'`]([^"'`]+)["'`]/i);
-        if (titleMatch && valueMatch) {
-          results.push({ label: titleMatch[1], value: valueMatch[1] });
-        }
-      }
-    }
-  }
-  return results.slice(0, 4);
-}
-
-/* ── Mock bot responses from real file content ── */
-function buildMockResponses(
-  files: GeneratedFile[],
-  wizardIntro?: string,
-  features?: string[],
-  botName?: string,
-): Record<string, { text: string; suggestions?: string[] }> {
-  const name = botName || "Assistente";
-  const featureList = features && features.length > 0 ? features : [];
-  const conversationalFeatureList = formatFeatureListForConversation(featureList);
-  const humanFeatures = featureList.map(formatConversationLabel);
-
-  // Build contextual default responses
-  const contextualDefaults: { text: string; suggestions?: string[] }[] = [
-    conversationalFeatureList
-      ? { text: `Posso te ajudar com ${conversationalFeatureList}. Por onde você quer começar? 😊`, suggestions: humanFeatures.slice(0, 3) }
-      : { text: `Ótimo! Como posso te ajudar hoje?`, suggestions: ["Ver opções", "Falar com atendente"] },
-    { text: `Entendido! Me conta um pouco mais para eu te direcionar melhor. Qual é a sua principal necessidade agora? 🔍`, suggestions: humanFeatures.length > 0 ? humanFeatures.slice(0, 3) : ["Informações", "Ajuda"] },
-    { text: `Perfeito! Para te atender melhor, me responde rapidinho: qual dessas opções faz mais sentido pra você?`, suggestions: humanFeatures.length > 0 ? humanFeatures.slice(0, 3) : ["Começar agora", "Saber mais"] },
-    { text: `Claro! Esse é um dos meus pontos fortes 💪 Me diz: o que você precisa resolver agora?`, suggestions: ["Tenho uma dúvida", "Quero começar"] },
-    { text: `Sem problemas! Vamos resolver isso juntos. O que seria mais útil pra você neste momento?`, suggestions: humanFeatures.length > 0 ? humanFeatures.slice(0, 2) : ["Explorar", "Ajuda"] },
-  ];
-
-  // Feature-specific responses
-  const featureResponses: Record<string, { text: string; suggestions?: string[] }> = {};
-  const featureKeywords: Record<string, string[]> = {
-    "agendamento": ["agendar", "horário", "agenda", "marcar", "consulta", "reservar"],
-    "triagem": ["triagem", "avaliação", "avaliar", "diagnóstico"],
-    "suporte": ["ajuda", "suporte", "problema", "erro", "dúvida", "help"],
-    "preços": ["preço", "valor", "custo", "quanto", "plano", "tabela"],
-    "check-in": ["check", "checkin", "acompanhamento", "retorno"],
-    "cadastro": ["cadastrar", "registrar", "cadastro", "registro", "conta"],
-    "pedido": ["pedido", "comprar", "compra", "encomendar", "pedir"],
-    "cardápio": ["cardápio", "menu", "opções", "pratos"],
-    "pagamento": ["pagar", "pagamento", "pix", "cartão", "boleto"],
-    "delivery": ["entrega", "delivery", "envio", "frete"],
-    "refeição": ["refeição", "comida", "almoço", "jantar", "lanche"],
-    "nutrição": ["nutrição", "dieta", "alimentação", "nutricional", "calorias"],
-  };
-
-  const featureFollowUps: Record<string, { question: string; options: string[] }> = {
-    "agendamento": { question: "Qual dia e horário funcionam melhor pra você?", options: ["Hoje", "Amanhã", "Próxima semana"] },
-    "triagem": { question: "Vou te fazer algumas perguntas rápidas. Pode ser?", options: ["Sim, vamos lá", "Tenho dúvidas antes"] },
-    "suporte": { question: "Me conta o que está acontecendo para eu te ajudar:", options: ["Problema técnico", "Dúvida de uso"] },
-    "preços": { question: "Qual plano te interessa mais?", options: ["Básico", "Profissional", "Empresarial"] },
-    "check-in": { question: "Como estão as coisas desde nosso último contato?", options: ["Tudo bem", "Preciso de ajuda"] },
-    "cadastro": { question: "Vou precisar de alguns dados. Pode me passar seu nome completo?", options: ["Começar cadastro"] },
-    "pedido": { question: "O que você gostaria de pedir?", options: ["Ver cardápio", "Repetir último pedido"] },
-    "cardápio": { question: "Temos várias opções! Alguma preferência?", options: ["Ver tudo", "Promoções", "Mais pedidos"] },
-    "pagamento": { question: "Qual forma de pagamento você prefere?", options: ["Pix", "Cartão", "Boleto"] },
-    "delivery": { question: "Me passa o endereço de entrega para eu calcular:", options: ["Usar endereço salvo", "Novo endereço"] },
-    "refeição": { question: "Qual refeição você quer registrar?", options: ["Café da manhã", "Almoço", "Jantar", "Lanche"] },
-    "nutrição": { question: "Vou montar algo personalizado! Me conta: qual é o seu objetivo principal?", options: ["Emagrecer", "Ganhar massa", "Manter peso"] },
-  };
-
-  for (const [feature, keywords] of Object.entries(featureKeywords)) {
-    const isRelevant = featureList.some(f => f.toLowerCase().includes(feature)) || featureList.length === 0;
-    if (isRelevant) {
-      const followUp = featureFollowUps[feature];
-      for (const kw of keywords) {
-        featureResponses[kw] = {
-          text: followUp
-            ? `Claro! Vou te ajudar com ${formatConversationLabel(feature)}. 📋\n\n${followUp.question}`
-            : `Claro! Vou te ajudar com ${formatConversationLabel(feature)}. Me conta mais detalhes? 📋`,
-          suggestions: followUp?.options,
-        };
-      }
-    }
-  }
-
-  // Common greetings
-  const defaultSuggestions = humanFeatures.length > 0 ? humanFeatures.slice(0, 3) : ["Ver opções", "Ajuda"];
-  const greetingResponses: Record<string, { text: string; suggestions?: string[] }> = {
-    "oi": { text: `Olá! 😊 Sou o ${name}. Como posso te ajudar?`, suggestions: defaultSuggestions },
-    "olá": { text: `Oi! 👋 Que bom te ver aqui. Em que posso ajudar?`, suggestions: defaultSuggestions },
-    "bom dia": { text: `Bom dia! ☀️ Estou aqui para te ajudar. O que precisa?`, suggestions: defaultSuggestions },
-    "boa tarde": { text: `Boa tarde! 🌤️ Como posso ser útil?`, suggestions: defaultSuggestions },
-    "boa noite": { text: `Boa noite! 🌙 Em que posso ajudar?`, suggestions: defaultSuggestions },
-    "obrigado": { text: `De nada! 😊 Precisa de mais alguma coisa?`, suggestions: ["Sim", "Não, obrigado"] },
-    "obrigada": { text: `Por nada! 😊 Estou aqui se precisar de algo mais.`, suggestions: ["Tenho outra dúvida", "Era isso!"] },
-    "tchau": { text: `Até logo! 👋 Foi um prazer ajudar. Volte quando precisar!` },
-    "sim": { text: `Ótimo! Vamos lá então. O que você precisa?`, suggestions: defaultSuggestions },
-    "não": { text: `Tudo bem! Se mudar de ideia, estou por aqui. 😊`, suggestions: ["Voltar ao início"] },
-  };
-
-  // Extract from files too
-  const fromFiles: Record<string, { text: string }> = {};
-  for (const f of files) {
-    const responseMatches = f.content.matchAll(/(?:sendText|reply|respond)\s*\([^,]*,\s*["'`]([^"'`]{10,})["'`]/gi);
-    for (const m of responseMatches) {
-      const text = m[1];
-      const keyword = text.split(/\s+/).slice(0, 2).join(" ").toLowerCase();
-      fromFiles[keyword] = { text };
-    }
-  }
-
-  return {
-    ...featureResponses,
-    ...greetingResponses,
-    ...fromFiles,
-    default: contextualDefaults[0],
-    _contextualDefaults: contextualDefaults as any,
-  };
-}
-
-let responseRotation = 0;
 
 const toneEmoji: Record<string, string> = {
   professional_friendly: "🤝",
@@ -247,48 +40,103 @@ const toneLabels: Record<string, string> = {
   direct: "Direto e Objetivo",
 };
 
+/* ── Mock conversation engine driven by appState ── */
+
+function buildConversationEngine(appState: AppState | null, fallbackName: string, fallbackIntro: string) {
+  const agentCfg = appState?.agent_config;
+  const screenData = appState?.preview?.screen_data;
+
+  const botName = screenData?.bot_name || agentCfg?.cta_primary || appState?.app_meta?.name || fallbackName;
+  const greeting = screenData?.greeting || agentCfg?.intro_message || fallbackIntro || `Olá! 👋 Sou o ${botName}. Como posso ajudar?`;
+  const quickReplies: string[] = (screenData?.quick_replies || agentCfg?.quick_replies || []).map(formatConversationLabel);
+  const stages: string[] = screenData?.stages || [];
+
+  // Build conversation flow from appState
+  const conversationFlow: { trigger: string; response: string; suggestions?: string[] }[] =
+    screenData?.conversation_flow || [];
+
+  const featureFollowUps: Record<string, { question: string; options: string[] }> = {
+    "agendamento": { question: "Qual dia e horário funcionam melhor pra você?", options: ["Hoje", "Amanhã", "Próxima semana"] },
+    "triagem": { question: "Vou te fazer algumas perguntas rápidas. Pode ser?", options: ["Sim, vamos lá", "Tenho dúvidas antes"] },
+    "suporte": { question: "Me conta o que está acontecendo para eu te ajudar:", options: ["Problema técnico", "Dúvida de uso"] },
+    "preços": { question: "Qual plano te interessa mais?", options: ["Básico", "Profissional", "Empresarial"] },
+    "cadastro": { question: "Vou precisar de alguns dados. Pode me passar seu nome completo?", options: ["Começar cadastro"] },
+    "pedido": { question: "O que você gostaria de pedir?", options: ["Ver cardápio", "Repetir último pedido"] },
+    "cardápio": { question: "Temos várias opções! Alguma preferência?", options: ["Ver tudo", "Promoções", "Mais pedidos"] },
+    "pagamento": { question: "Qual forma de pagamento você prefere?", options: ["Pix", "Cartão", "Boleto"] },
+    "nutrição": { question: "Vou montar algo personalizado! Me conta: qual é o seu objetivo principal?", options: ["Emagrecer", "Ganhar massa", "Manter peso"] },
+    "refeição": { question: "Qual refeição você quer registrar?", options: ["Café da manhã", "Almoço", "Jantar", "Lanche"] },
+  };
+
+  const getResponse = (userMsg: string): { text: string; suggestions?: string[] } => {
+    const lower = userMsg.toLowerCase().trim();
+
+    // Check conversation flow from appState first
+    for (const flow of conversationFlow) {
+      if (lower.includes(flow.trigger.toLowerCase())) {
+        return { text: flow.response, suggestions: flow.suggestions };
+      }
+    }
+
+    // Greetings
+    const greetings: Record<string, string> = {
+      "oi": `Olá! 😊 Sou o ${botName}. Como posso te ajudar?`,
+      "olá": `Oi! 👋 Que bom te ver aqui. Em que posso ajudar?`,
+      "bom dia": `Bom dia! ☀️ Estou aqui para te ajudar. O que precisa?`,
+      "boa tarde": `Boa tarde! 🌤️ Como posso ser útil?`,
+      "boa noite": `Boa noite! 🌙 Em que posso ajudar?`,
+      "obrigado": `De nada! 😊 Precisa de mais alguma coisa?`,
+      "obrigada": `Por nada! 😊 Estou aqui se precisar de algo mais.`,
+      "tchau": `Até logo! 👋 Foi um prazer ajudar. Volte quando precisar!`,
+      "sim": `Ótimo! Vamos lá então. O que você precisa?`,
+      "não": `Tudo bem! Se mudar de ideia, estou por aqui. 😊`,
+    };
+
+    for (const [key, text] of Object.entries(greetings)) {
+      if (lower.includes(key)) {
+        return { text, suggestions: quickReplies.length > 0 ? quickReplies.slice(0, 3) : undefined };
+      }
+    }
+
+    // Feature-specific follow-ups
+    for (const [feature, followUp] of Object.entries(featureFollowUps)) {
+      if (lower.includes(feature)) {
+        return {
+          text: `Claro! Vou te ajudar com ${formatConversationLabel(feature)}. 📋\n\n${followUp.question}`,
+          suggestions: followUp.options,
+        };
+      }
+    }
+
+    // Default contextual responses
+    const defaults = [
+      { text: `Entendi! Me conta um pouco mais para eu te direcionar melhor. 🔍`, suggestions: quickReplies.slice(0, 3) },
+      { text: `Perfeito! Para te atender melhor, qual dessas opções faz mais sentido pra você?`, suggestions: quickReplies.slice(0, 3) },
+      { text: `Claro! Esse é um dos meus pontos fortes 💪 O que você precisa resolver?`, suggestions: ["Tenho uma dúvida", "Quero começar"] },
+      { text: `Sem problemas! Vamos resolver isso juntos. O que seria mais útil agora?`, suggestions: quickReplies.slice(0, 2) },
+    ];
+
+    const idx = Math.floor(Math.random() * defaults.length);
+    return defaults[idx];
+  };
+
+  return { botName, greeting, quickReplies, stages, getResponse };
+}
+
 /* ── WhatsApp Preview ── */
 
 const WhatsAppPreview = () => {
-  const { files, appName, isGenerating, tables, wizardData, wizardConfig, wizardStep, structuredConfig } = useAppBuilder();
-  const hasContent = files.length > 0;
+  const { files, appName, isGenerating, tables, wizardData, wizardConfig, wizardStep, structuredConfig, appState } = useAppBuilder();
+  const hasContent = files.length > 0 || !!appState;
   const isConfiguring = wizardStep !== "done";
 
-  // Prefer wizard data, then file extraction, then defaults
-  const effectiveName = wizardData.appName || wizardConfig?.appName || appName;
-  const effectiveIntro = wizardData.introMessage || wizardConfig?.introMessage || "";
-  const effectiveTone = wizardData.tone || wizardConfig?.tone || "professional_friendly";
+  const effectiveName = appState?.app_meta?.name || wizardData.appName || wizardConfig?.appName || appName;
+  const effectiveIntro = appState?.agent_config?.intro_message || wizardData.introMessage || wizardConfig?.introMessage || "";
+  const effectiveTone = appState?.app_meta?.tone || wizardData.tone || wizardConfig?.tone || "professional_friendly";
 
-  const greeting = useMemo(() => {
-    if (effectiveIntro) return effectiveIntro;
-    const fromFiles = extractGreeting(files);
-    return fromFiles || `Olá! 👋 Sou o ${effectiveName}. Como posso ajudar?`;
-  }, [files, effectiveName, effectiveIntro]);
-
-  const botName = useMemo(() => {
-    if (effectiveName && effectiveName !== "Meu App") return effectiveName;
-    return extractBotName(files, effectiveName);
-  }, [files, effectiveName]);
-
-  const quickReplies = useMemo(() => {
-    const extracted = extractQuickReplies(files);
-    return extracted.length > 0 ? extracted : ["Agendar", "Preços", "Suporte"];
-  }, [files]);
-
-  const stages = useMemo(() => extractStages(files), [files]);
-
-  const features = useMemo(() => {
-    if (structuredConfig?.selected_features) {
-      return Array.isArray(structuredConfig.selected_features)
-        ? structuredConfig.selected_features
-        : String(structuredConfig.selected_features).split(",").map((s: string) => s.trim());
-    }
-    return [];
-  }, [structuredConfig]);
-
-  const mockResponses = useMemo(
-    () => buildMockResponses(files, effectiveIntro, features, botName),
-    [files, effectiveIntro, features, botName],
+  const engine = useMemo(
+    () => buildConversationEngine(appState, effectiveName, effectiveIntro),
+    [appState, effectiveName, effectiveIntro],
   );
 
   const [chatMessages, setChatMessages] = useState<{ role: "user" | "bot"; text: string; time: string; suggestions?: string[] }[]>([]);
@@ -297,29 +145,11 @@ const WhatsAppPreview = () => {
 
   useEffect(() => {
     setChatMessages([]);
-  }, [files.length, effectiveIntro, botName]);
+  }, [appState, effectiveIntro, engine.botName]);
 
   const now = () => {
     const d = new Date();
     return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
-  };
-
-  const getBotResponse = (userMsg: string): { text: string; suggestions?: string[] } => {
-    const lower = userMsg.toLowerCase().trim();
-    // Check all non-default keys
-    const key = Object.keys(mockResponses).find(
-      k => k !== "default" && k !== "_contextualDefaults" && lower.includes(k),
-    );
-    if (key) return mockResponses[key];
-
-    // Rotate contextual defaults for variety
-    const defaults = (mockResponses as any)._contextualDefaults as { text: string; suggestions?: string[] }[] | undefined;
-    if (defaults && defaults.length > 0) {
-      const response = defaults[responseRotation % defaults.length];
-      responseRotation++;
-      return response;
-    }
-    return mockResponses["default"];
   };
 
   const handleSendTest = (text?: string) => {
@@ -330,12 +160,11 @@ const WhatsAppPreview = () => {
     setBotTyping(true);
     setTimeout(() => {
       setBotTyping(false);
-      const response = getBotResponse(msg);
+      const response = engine.getResponse(msg);
       setChatMessages(prev => [...prev, { role: "bot", text: response.text, time: now(), suggestions: response.suggestions }]);
     }, 800 + Math.random() * 600);
   };
 
-  // Show preview even during wizard configuration
   const showContent = hasContent || isConfiguring;
 
   return (
@@ -354,7 +183,7 @@ const WhatsAppPreview = () => {
               <Bot className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-semibold text-white">{botName}</p>
+              <p className="text-sm font-semibold text-white">{engine.botName}</p>
               <p className="text-[10px] text-white/60">{isGenerating || botTyping ? "digitando..." : "online"}</p>
             </div>
             <Phone className="w-4 h-4 text-white/70" />
@@ -367,7 +196,7 @@ const WhatsAppPreview = () => {
                 {/* Greeting bubble */}
                 <div className="flex gap-2 animate-in fade-in slide-in-from-left-2 duration-300">
                   <div className="bg-white dark:bg-[#202c33] rounded-xl rounded-tl-sm px-3 py-2 max-w-[80%] shadow-sm">
-                    <p className="text-xs text-foreground">{greeting}</p>
+                    <p className="text-xs text-foreground">{engine.greeting}</p>
                     <p className="text-[9px] text-muted-foreground text-right mt-1">10:30</p>
                   </div>
                 </div>
@@ -382,9 +211,9 @@ const WhatsAppPreview = () => {
                 )}
 
                 {/* Quick reply buttons */}
-                {chatMessages.length === 0 && quickReplies.length > 0 && (
+                {chatMessages.length === 0 && engine.quickReplies.length > 0 && (
                   <div className="flex gap-1.5 flex-wrap animate-in fade-in duration-300 delay-300">
-                    {quickReplies.map((opt) => (
+                    {engine.quickReplies.map((opt) => (
                       <button
                         key={opt}
                         onClick={() => handleSendTest(opt)}
@@ -409,7 +238,6 @@ const WhatsAppPreview = () => {
                         <p className="text-[9px] text-muted-foreground text-right mt-1">{msg.time}</p>
                       </div>
                     </div>
-                    {/* Inline quick-reply suggestions after bot messages */}
                     {msg.role === "bot" && msg.suggestions && msg.suggestions.length > 0 && i === chatMessages.length - 1 && (
                       <div className="flex gap-1.5 flex-wrap animate-in fade-in duration-300">
                         {msg.suggestions.map((s) => (
@@ -485,19 +313,20 @@ const WhatsAppPreview = () => {
           <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-card border border-border rounded-full px-3 py-1 shadow-lg">
             <span className="text-[10px] text-muted-foreground flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-              {hasContent
-                ? `${files.length} arquivo(s)${stages.length > 0 ? ` • ${stages.length} etapas` : ""}${tables.length > 0 ? ` • ${tables.length} tabelas` : ""}`
-                : `Configurando...`
+              {appState
+                ? `${appState.files?.length || 0} arquivo(s)${appState.flows?.length ? ` • ${appState.flows.length} fluxo(s)` : ""}${appState.database?.tables?.length ? ` • ${appState.database.tables.length} tabela(s)` : ""}`
+                : hasContent
+                  ? `${files.length} arquivo(s)${tables.length > 0 ? ` • ${tables.length} tabelas` : ""}`
+                  : `Configurando...`
               }
             </span>
           </div>
         )}
       </div>
 
-      {/* Right panel: config summary during wizard OR generated structure */}
+      {/* Right panel: config summary */}
       {(hasContent || isConfiguring) && (
         <div className="w-[240px] space-y-3 animate-in fade-in slide-in-from-right-4 duration-500">
-          {/* Wizard config summary */}
           {isConfiguring && (
             <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-2">
               <div className="flex items-center gap-1.5 text-[10px] font-semibold text-primary uppercase tracking-wider">
@@ -510,45 +339,27 @@ const WhatsAppPreview = () => {
                     <span className="text-foreground font-medium">{wizardData.appName}</span>
                   </div>
                 )}
-                {wizardData.companyName && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Empresa</span>
-                    <span className="text-foreground font-medium">{wizardData.companyName}</span>
-                  </div>
-                )}
                 {wizardData.tone && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Tom</span>
                     <span className="text-foreground font-medium">{toneLabels[wizardData.tone] || wizardData.tone}</span>
                   </div>
                 )}
-                {wizardData.language && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Idioma</span>
-                    <span className="text-foreground font-medium">{wizardData.language}</span>
-                  </div>
-                )}
-                {wizardData.introMessage && (
-                  <div>
-                    <span className="text-muted-foreground">Intro:</span>
-                    <p className="text-foreground/80 mt-0.5 italic">"{wizardData.introMessage.slice(0, 60)}{wizardData.introMessage.length > 60 ? "..." : ""}"</p>
-                  </div>
-                )}
               </div>
             </div>
           )}
 
-          {/* Files generated */}
-          {hasContent && (
+          {/* Files */}
+          {(appState?.files?.length || files.length > 0) && (
             <div className="rounded-xl border border-border bg-card/60 p-3 space-y-2">
               <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                 <FileCode className="w-3 h-3" /> Arquivos
               </div>
               <div className="space-y-1 max-h-[140px] overflow-y-auto">
-                {files.map((f, i) => (
+                {(appState?.files || files.map(f => ({ path: f.path, type: "", purpose: "", content_summary: "" }))).map((f, i) => (
                   <div key={i} className="flex items-center gap-2 text-[10px] text-foreground/80 py-0.5">
                     <Code2 className="w-3 h-3 text-primary/60 shrink-0" />
-                    <span className="truncate">{f.name}</span>
+                    <span className="truncate">{f.path.split("/").pop() || f.path}</span>
                   </div>
                 ))}
               </div>
@@ -556,13 +367,13 @@ const WhatsAppPreview = () => {
           )}
 
           {/* Tables */}
-          {tables.length > 0 && (
+          {(appState?.database?.tables?.length || tables.length > 0) && (
             <div className="rounded-xl border border-border bg-card/60 p-3 space-y-2">
               <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                 <Database className="w-3 h-3" /> Tabelas
               </div>
               <div className="space-y-1">
-                {tables.map((t, i) => (
+                {(appState?.database?.tables || tables).map((t, i) => (
                   <div key={i} className="flex items-center justify-between text-[10px] py-0.5">
                     <span className="text-foreground/80">{t.name}</span>
                     <Badge variant="secondary" className="text-[8px] h-4 px-1.5">{t.columns.length} cols</Badge>
@@ -572,18 +383,34 @@ const WhatsAppPreview = () => {
             </div>
           )}
 
-          {/* Conversation flow (stages) */}
-          {stages.length > 0 && (
+          {/* Flows */}
+          {appState?.flows && appState.flows.length > 0 && (
             <div className="rounded-xl border border-border bg-card/60 p-3 space-y-2">
               <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                <MessageSquare className="w-3 h-3" /> Fluxo
+                <MessageSquare className="w-3 h-3" /> Fluxos
               </div>
               <div className="space-y-1">
-                {stages.map((s, i) => (
+                {appState.flows.map((f, i) => (
+                  <div key={i} className="flex items-center gap-2 text-[10px] py-0.5">
+                    <span className="w-4 h-4 rounded-full bg-primary/10 text-primary text-[8px] font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+                    <span className="text-foreground/80 truncate">{f.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Stages from conversation */}
+          {engine.stages.length > 0 && (
+            <div className="rounded-xl border border-border bg-card/60 p-3 space-y-2">
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <ArrowRight className="w-3 h-3" /> Jornada
+              </div>
+              <div className="space-y-1">
+                {engine.stages.map((s, i) => (
                   <div key={i} className="flex items-center gap-2 text-[10px] py-0.5">
                     <span className="w-4 h-4 rounded-full bg-primary/10 text-primary text-[8px] font-bold flex items-center justify-center shrink-0">{i + 1}</span>
                     <span className="text-foreground/80 truncate">{s}</span>
-                    {i < stages.length - 1 && <ArrowRight className="w-2.5 h-2.5 text-muted-foreground/40 shrink-0" />}
                   </div>
                 ))}
               </div>
@@ -604,23 +431,24 @@ const WhatsAppPreview = () => {
 /* ── Web Preview ── */
 
 const WebPreview = () => {
-  const { files, appName, isGenerating, dashboardMetrics, tables, wizardData, wizardConfig, wizardStep } = useAppBuilder();
-  const hasContent = files.length > 0;
+  const { files, appName, isGenerating, dashboardMetrics, tables, wizardData, wizardConfig, wizardStep, appState } = useAppBuilder();
+  const hasContent = files.length > 0 || !!appState;
   const isConfiguring = wizardStep !== "done";
 
-  const effectiveName = wizardData.appName || wizardConfig?.appName || appName;
+  const effectiveName = appState?.app_meta?.name || wizardData.appName || wizardConfig?.appName || appName;
+  const screenData = appState?.preview?.screen_data;
 
   const navItems = useMemo(() => {
-    const extracted = extractNavItems(files);
-    if (extracted.length > 1) {
+    if (screenData?.nav_items && Array.isArray(screenData.nav_items) && screenData.nav_items.length > 0) {
       const iconMap: Record<string, typeof BarChart3> = {
         dashboard: BarChart3, clientes: Users, clients: Users, users: Users,
         agenda: Calendar, calendar: Calendar, mensagens: MessageSquare,
         messages: MessageSquare, config: Settings, settings: Settings, home: Layout,
+        configurações: Settings, relatórios: BarChart3, reports: BarChart3,
       };
-      return extracted.map(label => ({
-        label,
-        icon: iconMap[label.toLowerCase()] || Layout,
+      return screenData.nav_items.map((item: any) => ({
+        label: typeof item === "string" ? item : item.label || item.name || "Page",
+        icon: iconMap[(typeof item === "string" ? item : item.label || "").toLowerCase()] || Layout,
       }));
     }
     return [
@@ -630,23 +458,30 @@ const WebPreview = () => {
       { label: "Mensagens", icon: MessageSquare },
       { label: "Configurações", icon: Settings },
     ];
-  }, [files]);
+  }, [screenData]);
 
   const metrics = useMemo(() => {
+    if (screenData?.metrics && Array.isArray(screenData.metrics) && screenData.metrics.length > 0) {
+      return screenData.metrics.slice(0, 4).map((m: any) => ({
+        label: m.label || m.title || "",
+        value: String(m.value || "0"),
+        change: m.change || "",
+      }));
+    }
     if (dashboardMetrics.length > 0) {
       return dashboardMetrics.slice(0, 4).map(m => ({ label: m.label, value: m.value, change: m.change }));
     }
-    const fromCode = extractMetricsFromCode(files);
-    if (fromCode.length > 0) return fromCode;
     return [
       { label: "Usuários", value: "0" },
       { label: "Receita", value: "R$ 0" },
       { label: "Conversão", value: "0%" },
     ];
-  }, [dashboardMetrics, files]);
+  }, [screenData, dashboardMetrics]);
 
-  const activeNav = navItems[0]?.label || "Dashboard";
-  const pageFiles = useMemo(() => files.filter(f => f.path.includes("/pages/") || f.path.includes("Page")), [files]);
+  const activeNav = screenData?.active_page || navItems[0]?.label || "Dashboard";
+  const pageTitle = screenData?.page_title || activeNav;
+  const tableData = screenData?.table_data;
+  const chartData = screenData?.chart_data;
 
   const showContent = hasContent || isConfiguring;
 
@@ -675,10 +510,10 @@ const WebPreview = () => {
               <div className="px-2 py-2 mb-2">
                 <p className="text-xs font-semibold text-foreground">{effectiveName}</p>
                 <p className="text-[9px] text-muted-foreground">
-                  {wizardData.companyName || "Painel de Gestão"}
+                  {wizardData.companyName || appState?.preview?.subtitle || "Painel de Gestão"}
                 </p>
               </div>
-              {navItems.map((item, idx) => (
+              {navItems.map((item: { label: string; icon: typeof BarChart3 }, idx: number) => (
                 <div
                   key={item.label}
                   className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-[11px] transition-colors ${
@@ -695,9 +530,9 @@ const WebPreview = () => {
             <div className="flex-1 p-5 space-y-4 overflow-auto">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-sm font-semibold text-foreground">{activeNav}</h2>
+                  <h2 className="text-sm font-semibold text-foreground">{pageTitle}</h2>
                   <p className="text-[10px] text-muted-foreground">
-                    {isConfiguring ? "Configurando seu app..." : "Visão geral do sistema"}
+                    {isConfiguring ? "Configurando seu app..." : appState?.preview?.subtitle || "Visão geral do sistema"}
                   </p>
                 </div>
                 {isGenerating && (
@@ -730,12 +565,12 @@ const WebPreview = () => {
 
               {/* Metrics */}
               <div className={`grid gap-3 ${metrics.length <= 3 ? "grid-cols-3" : "grid-cols-4"}`}>
-                {metrics.map((m) => (
+                {metrics.map((m: { label: string; value: string; change?: string }) => (
                   <div key={m.label} className="rounded-xl border border-border p-3 bg-card/50 animate-in fade-in duration-300">
                     <p className="text-[9px] text-muted-foreground mb-0.5">{m.label}</p>
                     <p className="text-base font-bold text-foreground">{m.value}</p>
-                    {"change" in m && m.change && (
-                      <span className="text-[9px] text-muted-foreground">{(m as any).change}</span>
+                    {m.change && (
+                      <span className="text-[9px] text-muted-foreground">{m.change}</span>
                     )}
                   </div>
                 ))}
@@ -743,7 +578,9 @@ const WebPreview = () => {
 
               {/* Chart */}
               <div className="rounded-xl border border-border p-4 bg-card/50">
-                <p className="text-[10px] font-medium text-foreground mb-3">Atividade recente</p>
+                <p className="text-[10px] font-medium text-foreground mb-3">
+                  {chartData?.title || "Atividade recente"}
+                </p>
                 <div className="flex items-end gap-1.5 h-[80px]">
                   {[40, 65, 45, 80, 55, 90, 70, 95, 60, 85, 75, 100].map((h, i) => (
                     <div key={i} className="flex-1 rounded-sm transition-all duration-500 overflow-hidden" style={{ height: `${h}%` }}>
@@ -754,30 +591,40 @@ const WebPreview = () => {
               </div>
 
               {/* Dynamic table */}
-              {tables.length > 0 && (
+              {(tableData || (appState?.database?.tables?.length || tables.length > 0)) && (
                 <div className="rounded-xl border border-border bg-card/50 overflow-hidden">
                   <div className="px-4 py-2.5 border-b border-border flex items-center justify-between">
-                    <p className="text-[10px] font-medium text-foreground">{tables[0].name}</p>
+                    <p className="text-[10px] font-medium text-foreground">
+                      {tableData?.name || (appState?.database?.tables?.[0]?.name || tables[0]?.name || "Dados")}
+                    </p>
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="text-[8px] h-4">{tables[0].columns.length} colunas</Badge>
+                      <Badge variant="secondary" className="text-[8px] h-4">
+                        {tableData?.columns?.length || (appState?.database?.tables?.[0]?.columns?.length || tables[0]?.columns?.length || 0)} colunas
+                      </Badge>
                       <Search className="w-3 h-3 text-muted-foreground" />
                     </div>
                   </div>
                   <div className="px-4 py-1">
                     <div className="flex items-center gap-3 py-1.5 border-b border-border/50">
-                      {tables[0].columns.slice(0, 4).map(col => (
-                        <div key={col.name} className="flex-1">
-                          <span className="text-[8px] font-semibold text-muted-foreground uppercase">{col.name}</span>
-                        </div>
-                      ))}
+                      {(tableData?.columns || (appState?.database?.tables?.[0]?.columns?.map((c: any) => c.name) || tables[0]?.columns?.map(c => c.name) || [])).slice(0, 4).map((col: any) => {
+                        const colName = typeof col === "string" ? col : col.name || col;
+                        return (
+                          <div key={colName} className="flex-1">
+                            <span className="text-[8px] font-semibold text-muted-foreground uppercase">{colName}</span>
+                          </div>
+                        );
+                      })}
                     </div>
                     {[1, 2, 3].map(i => (
                       <div key={i} className="flex items-center gap-3 py-2">
-                        {tables[0].columns.slice(0, 4).map((col, ci) => (
-                          <div key={col.name} className="flex-1">
-                            <div className={`h-2 bg-muted/40 rounded ${ci === 0 ? "w-16" : "w-12"}`} />
-                          </div>
-                        ))}
+                        {(tableData?.columns || (appState?.database?.tables?.[0]?.columns?.map((c: any) => c.name) || tables[0]?.columns?.map(c => c.name) || [])).slice(0, 4).map((col: any, ci: number) => {
+                          const colName = typeof col === "string" ? col : col.name || col;
+                          return (
+                            <div key={colName} className="flex-1">
+                              <div className={`h-2 bg-muted/40 rounded ${ci === 0 ? "w-16" : "w-12"}`} />
+                            </div>
+                          );
+                        })}
                       </div>
                     ))}
                   </div>
@@ -805,7 +652,6 @@ const WebPreview = () => {
       {/* Right panel */}
       {(hasContent || isConfiguring) && (
         <div className="w-[220px] space-y-3 animate-in fade-in slide-in-from-right-4 duration-500">
-          {/* Wizard config summary */}
           {isConfiguring && (
             <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-2">
               <div className="flex items-center gap-1.5 text-[10px] font-semibold text-primary uppercase tracking-wider">
@@ -834,29 +680,29 @@ const WebPreview = () => {
             </div>
           )}
 
-          {hasContent && (
+          {(appState?.files?.length || files.length > 0) && (
             <div className="rounded-xl border border-border bg-card/60 p-3 space-y-2">
               <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                <FileCode className="w-3 h-3" /> Arquivos ({files.length})
+                <FileCode className="w-3 h-3" /> Arquivos ({appState?.files?.length || files.length})
               </div>
               <div className="space-y-1 max-h-[160px] overflow-y-auto">
-                {files.map((f, i) => (
+                {(appState?.files || files.map(f => ({ path: f.path }))).map((f: any, i: number) => (
                   <div key={i} className="flex items-center gap-2 text-[10px] text-foreground/80 py-0.5">
                     <Code2 className="w-3 h-3 text-primary/60 shrink-0" />
-                    <span className="truncate">{f.name}</span>
+                    <span className="truncate">{f.path?.split("/").pop() || f.name}</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {tables.length > 0 && (
+          {(appState?.database?.tables?.length || tables.length > 0) && (
             <div className="rounded-xl border border-border bg-card/60 p-3 space-y-2">
               <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                <Database className="w-3 h-3" /> Tabelas ({tables.length})
+                <Database className="w-3 h-3" /> Tabelas ({appState?.database?.tables?.length || tables.length})
               </div>
               <div className="space-y-1">
-                {tables.map((t, i) => (
+                {(appState?.database?.tables || tables).map((t: any, i: number) => (
                   <div key={i} className="flex items-center justify-between text-[10px] py-0.5">
                     <span className="text-foreground/80">{t.name}</span>
                     <Badge variant="secondary" className="text-[8px] h-4 px-1.5">{t.columns.length} cols</Badge>
@@ -866,14 +712,15 @@ const WebPreview = () => {
             </div>
           )}
 
-          {pageFiles.length > 0 && (
+          {/* UI Modules */}
+          {appState?.ui_modules && appState.ui_modules.length > 0 && (
             <div className="rounded-xl border border-border bg-card/60 p-3 space-y-2">
               <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                <Layout className="w-3 h-3" /> Páginas
+                <Layout className="w-3 h-3" /> Módulos
               </div>
               <div className="space-y-1">
-                {pageFiles.map((f, i) => (
-                  <div key={i} className="text-[10px] text-foreground/80 py-0.5 truncate">{f.name}</div>
+                {appState.ui_modules.map((m, i) => (
+                  <div key={i} className="text-[10px] text-foreground/80 py-0.5 truncate">{m.name}</div>
                 ))}
               </div>
             </div>
