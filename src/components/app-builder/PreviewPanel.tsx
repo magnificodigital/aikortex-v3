@@ -130,24 +130,25 @@ function buildMockResponses(
   wizardIntro?: string,
   features?: string[],
   botName?: string,
-): Record<string, string> {
+): Record<string, { text: string; suggestions?: string[] }> {
   const name = botName || "Assistente";
   const featureList = features && features.length > 0 ? features : [];
   const conversationalFeatureList = formatFeatureListForConversation(featureList);
+  const humanFeatures = featureList.map(formatConversationLabel);
 
   // Build contextual default responses
-  const contextualDefaults = [
+  const contextualDefaults: { text: string; suggestions?: string[] }[] = [
     conversationalFeatureList
-      ? `Posso te ajudar com ${conversationalFeatureList}. Por onde você quer começar?`
-      : `Ótimo! Como posso te ajudar hoje?`,
-    `Entendido! Deixa eu verificar isso para você. 🔍`,
-    `Perfeito! Vou te guiar nesse processo. Primeiro, preciso de algumas informações.`,
-    `Claro! Esse é um dos meus pontos fortes. Me conta mais detalhes.`,
-    `Sem problemas! Vamos resolver isso juntos. 💪`,
+      ? { text: `Posso te ajudar com ${conversationalFeatureList}. Por onde você quer começar? 😊`, suggestions: humanFeatures.slice(0, 3) }
+      : { text: `Ótimo! Como posso te ajudar hoje?`, suggestions: ["Ver opções", "Falar com atendente"] },
+    { text: `Entendido! Me conta um pouco mais para eu te direcionar melhor. Qual é a sua principal necessidade agora? 🔍`, suggestions: humanFeatures.length > 0 ? humanFeatures.slice(0, 3) : ["Informações", "Ajuda"] },
+    { text: `Perfeito! Para te atender melhor, me responde rapidinho: qual dessas opções faz mais sentido pra você?`, suggestions: humanFeatures.length > 0 ? humanFeatures.slice(0, 3) : ["Começar agora", "Saber mais"] },
+    { text: `Claro! Esse é um dos meus pontos fortes 💪 Me diz: o que você precisa resolver agora?`, suggestions: ["Tenho uma dúvida", "Quero começar"] },
+    { text: `Sem problemas! Vamos resolver isso juntos. O que seria mais útil pra você neste momento?`, suggestions: humanFeatures.length > 0 ? humanFeatures.slice(0, 2) : ["Explorar", "Ajuda"] },
   ];
 
   // Feature-specific responses
-  const featureResponses: Record<string, string> = {};
+  const featureResponses: Record<string, { text: string; suggestions?: string[] }> = {};
   const featureKeywords: Record<string, string[]> = {
     "agendamento": ["agendar", "horário", "agenda", "marcar", "consulta", "reservar"],
     "triagem": ["triagem", "avaliação", "avaliar", "diagnóstico"],
@@ -163,37 +164,59 @@ function buildMockResponses(
     "nutrição": ["nutrição", "dieta", "alimentação", "nutricional", "calorias"],
   };
 
+  const featureFollowUps: Record<string, { question: string; options: string[] }> = {
+    "agendamento": { question: "Qual dia e horário funcionam melhor pra você?", options: ["Hoje", "Amanhã", "Próxima semana"] },
+    "triagem": { question: "Vou te fazer algumas perguntas rápidas. Pode ser?", options: ["Sim, vamos lá", "Tenho dúvidas antes"] },
+    "suporte": { question: "Me conta o que está acontecendo para eu te ajudar:", options: ["Problema técnico", "Dúvida de uso"] },
+    "preços": { question: "Qual plano te interessa mais?", options: ["Básico", "Profissional", "Empresarial"] },
+    "check-in": { question: "Como estão as coisas desde nosso último contato?", options: ["Tudo bem", "Preciso de ajuda"] },
+    "cadastro": { question: "Vou precisar de alguns dados. Pode me passar seu nome completo?", options: ["Começar cadastro"] },
+    "pedido": { question: "O que você gostaria de pedir?", options: ["Ver cardápio", "Repetir último pedido"] },
+    "cardápio": { question: "Temos várias opções! Alguma preferência?", options: ["Ver tudo", "Promoções", "Mais pedidos"] },
+    "pagamento": { question: "Qual forma de pagamento você prefere?", options: ["Pix", "Cartão", "Boleto"] },
+    "delivery": { question: "Me passa o endereço de entrega para eu calcular:", options: ["Usar endereço salvo", "Novo endereço"] },
+    "refeição": { question: "Qual refeição você quer registrar?", options: ["Café da manhã", "Almoço", "Jantar", "Lanche"] },
+    "nutrição": { question: "Vou montar algo personalizado! Me conta: qual é o seu objetivo principal?", options: ["Emagrecer", "Ganhar massa", "Manter peso"] },
+  };
+
   for (const [feature, keywords] of Object.entries(featureKeywords)) {
     const isRelevant = featureList.some(f => f.toLowerCase().includes(feature)) || featureList.length === 0;
     if (isRelevant) {
+      const followUp = featureFollowUps[feature];
       for (const kw of keywords) {
-        featureResponses[kw] = `Claro! Vou te ajudar com ${feature}. Me passa os detalhes para eu dar andamento. 📋`;
+        featureResponses[kw] = {
+          text: followUp
+            ? `Claro! Vou te ajudar com ${formatConversationLabel(feature)}. 📋\n\n${followUp.question}`
+            : `Claro! Vou te ajudar com ${formatConversationLabel(feature)}. Me conta mais detalhes? 📋`,
+          suggestions: followUp?.options,
+        };
       }
     }
   }
 
   // Common greetings
-  const greetingResponses: Record<string, string> = {
-    "oi": `Olá! 😊 Sou o ${name}. Como posso te ajudar?`,
-    "olá": `Oi! 👋 Que bom te ver aqui. Em que posso ajudar?`,
-    "bom dia": `Bom dia! ☀️ Estou aqui para te ajudar. O que precisa?`,
-    "boa tarde": `Boa tarde! 🌤️ Como posso ser útil?`,
-    "boa noite": `Boa noite! 🌙 Em que posso ajudar?`,
-    "obrigado": `De nada! 😊 Precisa de mais alguma coisa?`,
-    "obrigada": `Por nada! 😊 Estou aqui se precisar de algo mais.`,
-    "tchau": `Até logo! 👋 Foi um prazer ajudar. Volte quando precisar!`,
-    "sim": `Ótimo! Vamos lá então. Me conta mais detalhes.`,
-    "não": `Tudo bem! Se mudar de ideia, estou por aqui. 😊`,
+  const defaultSuggestions = humanFeatures.length > 0 ? humanFeatures.slice(0, 3) : ["Ver opções", "Ajuda"];
+  const greetingResponses: Record<string, { text: string; suggestions?: string[] }> = {
+    "oi": { text: `Olá! 😊 Sou o ${name}. Como posso te ajudar?`, suggestions: defaultSuggestions },
+    "olá": { text: `Oi! 👋 Que bom te ver aqui. Em que posso ajudar?`, suggestions: defaultSuggestions },
+    "bom dia": { text: `Bom dia! ☀️ Estou aqui para te ajudar. O que precisa?`, suggestions: defaultSuggestions },
+    "boa tarde": { text: `Boa tarde! 🌤️ Como posso ser útil?`, suggestions: defaultSuggestions },
+    "boa noite": { text: `Boa noite! 🌙 Em que posso ajudar?`, suggestions: defaultSuggestions },
+    "obrigado": { text: `De nada! 😊 Precisa de mais alguma coisa?`, suggestions: ["Sim", "Não, obrigado"] },
+    "obrigada": { text: `Por nada! 😊 Estou aqui se precisar de algo mais.`, suggestions: ["Tenho outra dúvida", "Era isso!"] },
+    "tchau": { text: `Até logo! 👋 Foi um prazer ajudar. Volte quando precisar!` },
+    "sim": { text: `Ótimo! Vamos lá então. O que você precisa?`, suggestions: defaultSuggestions },
+    "não": { text: `Tudo bem! Se mudar de ideia, estou por aqui. 😊`, suggestions: ["Voltar ao início"] },
   };
 
   // Extract from files too
-  const fromFiles: Record<string, string> = {};
+  const fromFiles: Record<string, { text: string }> = {};
   for (const f of files) {
     const responseMatches = f.content.matchAll(/(?:sendText|reply|respond)\s*\([^,]*,\s*["'`]([^"'`]{10,})["'`]/gi);
     for (const m of responseMatches) {
       const text = m[1];
       const keyword = text.split(/\s+/).slice(0, 2).join(" ").toLowerCase();
-      fromFiles[keyword] = text;
+      fromFiles[keyword] = { text };
     }
   }
 
@@ -202,7 +225,7 @@ function buildMockResponses(
     ...greetingResponses,
     ...fromFiles,
     default: contextualDefaults[0],
-    _contextualDefaults: contextualDefaults as any, // used for rotation
+    _contextualDefaults: contextualDefaults as any,
   };
 }
 
@@ -268,7 +291,7 @@ const WhatsAppPreview = () => {
     [files, effectiveIntro, features, botName],
   );
 
-  const [chatMessages, setChatMessages] = useState<{ role: "user" | "bot"; text: string; time: string }[]>([]);
+  const [chatMessages, setChatMessages] = useState<{ role: "user" | "bot"; text: string; time: string; suggestions?: string[] }[]>([]);
   const [testInput, setTestInput] = useState("");
   const [botTyping, setBotTyping] = useState(false);
 
@@ -281,7 +304,7 @@ const WhatsAppPreview = () => {
     return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
   };
 
-  const getBotResponse = (userMsg: string): string => {
+  const getBotResponse = (userMsg: string): { text: string; suggestions?: string[] } => {
     const lower = userMsg.toLowerCase().trim();
     // Check all non-default keys
     const key = Object.keys(mockResponses).find(
@@ -290,7 +313,7 @@ const WhatsAppPreview = () => {
     if (key) return mockResponses[key];
 
     // Rotate contextual defaults for variety
-    const defaults = (mockResponses as any)._contextualDefaults as string[] | undefined;
+    const defaults = (mockResponses as any)._contextualDefaults as { text: string; suggestions?: string[] }[] | undefined;
     if (defaults && defaults.length > 0) {
       const response = defaults[responseRotation % defaults.length];
       responseRotation++;
@@ -307,7 +330,8 @@ const WhatsAppPreview = () => {
     setBotTyping(true);
     setTimeout(() => {
       setBotTyping(false);
-      setChatMessages(prev => [...prev, { role: "bot", text: getBotResponse(msg), time: now() }]);
+      const response = getBotResponse(msg);
+      setChatMessages(prev => [...prev, { role: "bot", text: response.text, time: now(), suggestions: response.suggestions }]);
     }, 800 + Math.random() * 600);
   };
 
@@ -374,15 +398,31 @@ const WhatsAppPreview = () => {
 
                 {/* Chat messages */}
                 {chatMessages.map((msg, i) => (
-                  <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "gap-2"} animate-in fade-in duration-200`}>
-                    <div className={`rounded-xl px-3 py-2 max-w-[80%] shadow-sm ${
-                      msg.role === "user"
-                        ? "bg-[#dcf8c6] dark:bg-[#005c4b] rounded-tr-sm"
-                        : "bg-white dark:bg-[#202c33] rounded-tl-sm"
-                    }`}>
-                      <p className="text-xs text-foreground">{msg.text}</p>
-                      <p className="text-[9px] text-muted-foreground text-right mt-1">{msg.time}</p>
+                  <div key={i} className="space-y-1.5">
+                    <div className={`flex ${msg.role === "user" ? "justify-end" : "gap-2"} animate-in fade-in duration-200`}>
+                      <div className={`rounded-xl px-3 py-2 max-w-[80%] shadow-sm ${
+                        msg.role === "user"
+                          ? "bg-[#dcf8c6] dark:bg-[#005c4b] rounded-tr-sm"
+                          : "bg-white dark:bg-[#202c33] rounded-tl-sm"
+                      }`}>
+                        <p className="text-xs text-foreground whitespace-pre-line">{msg.text}</p>
+                        <p className="text-[9px] text-muted-foreground text-right mt-1">{msg.time}</p>
+                      </div>
                     </div>
+                    {/* Inline quick-reply suggestions after bot messages */}
+                    {msg.role === "bot" && msg.suggestions && msg.suggestions.length > 0 && i === chatMessages.length - 1 && (
+                      <div className="flex gap-1.5 flex-wrap animate-in fade-in duration-300">
+                        {msg.suggestions.map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => handleSendTest(s)}
+                            className="px-3 py-1.5 rounded-full border border-green-600/30 text-[10px] font-medium text-green-700 dark:text-green-400 bg-white dark:bg-[#202c33] shadow-sm cursor-pointer hover:bg-green-50 dark:hover:bg-[#2a3942] transition-colors"
+                          >
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
 
