@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
-import { useAppBuilder, type ChatMessage, type StructuredAppConfig } from "@/contexts/AppBuilderContext";
+import { useAppBuilder, type ChatMessage, type StructuredAppConfig, type AppState } from "@/contexts/AppBuilderContext";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -40,129 +40,37 @@ const onboardingLabels: Record<string, string> = {
   strict: "Rigoroso",
 };
 
-/* ── Parsers ── */
+/* ── API request (non-streaming) ── */
 
-function parseFileBlocks(content: string): { filePath: string; code: string }[] {
-  const regex = /\[FILE:(.*?)\]\n([\s\S]*?)\[\/FILE\]/g;
-  const results: { filePath: string; code: string }[] = [];
-  let match;
-  while ((match = regex.exec(content)) !== null) {
-    results.push({ filePath: match[1].trim(), code: match[2].trim() });
-  }
-  return results;
-}
-
-function parseTableBlocks(content: string): { name: string; columns: { name: string; type: string; isPK?: boolean }[] }[] {
-  const results: { name: string; columns: { name: string; type: string; isPK?: boolean }[] }[] = [];
-
-  // Multi-line format: [TABLE:name]\n...\n[/TABLE]
-  const multiRegex = /\[TABLE:(\w+)\]\n([\s\S]*?)\[\/TABLE\]/g;
-  let match;
-  while ((match = multiRegex.exec(content)) !== null) {
-    const name = match[1].trim();
-    const lines = match[2].trim().split("\n");
-    const columns = lines.map(line => {
-      const parts = line.split(":");
-      return { name: parts[0]?.trim() || "", type: parts[1]?.trim() || "TEXT", isPK: parts[2]?.trim() === "PK" || undefined };
-    }).filter(c => c.name);
-    results.push({ name, columns });
-  }
-
-  // Single-line format: [TABLE:name] col1:TYPE:PK col2:TYPE ...
-  const singleRegex = /\[TABLE:(\w+)\]\s+([^\n\[]+)/g;
-  while ((match = singleRegex.exec(content)) !== null) {
-    const name = match[1].trim();
-    // Skip if already parsed via multi-line
-    if (results.some(r => r.name === name)) continue;
-    const colDefs = match[2].trim().split(/\s+/);
-    const columns = colDefs.map(def => {
-      const parts = def.split(":");
-      return { name: parts[0]?.trim() || "", type: parts[1]?.trim() || "TEXT", isPK: parts.includes("PK") || undefined };
-    }).filter(c => c.name);
-    if (columns.length > 0) results.push({ name, columns });
-  }
-
-  return results;
-}
-
-function parseLegacyCodeBlocks(content: string): { filePath: string; code: string }[] {
-  const regex = /```(\S+)\n([\s\S]*?)```/g;
-  const results: { filePath: string; code: string }[] = [];
-  let match;
-  while ((match = regex.exec(content)) !== null) {
-    const lang = match[1];
-    const code = match[2].trim();
-    if (lang.includes(".")) {
-      const ext = lang.split(".").pop() || "";
-      let path = `/src/${lang}`;
-      if (ext === "html") path = `/${lang}`;
-      else if (lang.includes("agent") || lang.includes("qualifier") || lang.includes("scheduler"))
-        path = `/src/agents/${lang}`;
-      else if (lang.includes("api") || lang.includes("webhook"))
-        path = `/src/integrations/${lang}`;
-      else if (ext === "tsx" && lang.startsWith("use"))
-        path = `/src/hooks/${lang}`;
-      results.push({ filePath: path, code });
-    }
-  }
-  return results;
-}
-
-function stripStructuredBlocks(content: string): string {
-  return content
-    .replace(/\[FILE:.*?\]\n[\s\S]*?\[\/FILE\]/g, "")
-    .replace(/\[TABLE:\w+\]\n[\s\S]*?\[\/TABLE\]/g, "")
-    .replace(/\[TABLE:\w+\]\s+[^\n\[]+/g, "")
-    .replace(/```[\s\S]*?```/g, "")
-    .replace(/\[METRIC:.*?\]\n[\s\S]*?\[\/METRIC\]/g, "")
-    // Strip bare schema lines: "col:TYPE col:TYPE ..." (3+ column defs on one line)
-    .replace(/^(?:\w+:[A-Z_]+(?::PK)?[\s]+){2,}\w+:[A-Z_]+(?::PK)?$/gm, "")
-    .trim();
-}
-
-/* ── Streaming ── */
-
-async function streamChat({
-  messages, onDelta, onDone, appContext,
-}: { messages: Msg[]; onDelta: (t: string) => void; onDone: () => void; appContext?: Record<string, string> }) {
+async function requestAppState(
+  messages: Msg[],
+  appContext: Record<string, string>,
+  mode: string,
+): Promise<{ appState: AppState | null; chatSummary: string; error?: string }> {
   const resp = await fetch(CHAT_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
     },
-    body: JSON.stringify({ messages, appContext }),
+    body: JSON.stringify({ messages, appContext, mode }),
   });
-  if (resp.status === 429) { toast.error("Limite de requisições excedido."); onDone(); return; }
-  if (resp.status === 402) { toast.error("Créditos insuficientes."); onDone(); return; }
-  if (!resp.ok || !resp.body) throw new Error("Falha ao conectar com IA");
+  if (resp.status === 429) return { appState: null, chatSummary: "", error: "Limite de requisições excedido." };
+  if (resp.status === 402) return { appState: null, chatSummary: "", error: "Créditos insuficientes." };
+  if (!resp.ok) return { appState: null, chatSummary: "", error: "Erro no serviço de IA" };
 
-  const reader = resp.body.getReader();
-  const decoder = new TextDecoder();
-  let buf = "";
-  let done = false;
-  while (!done) {
-    const { done: d, value } = await reader.read();
-    if (d) break;
-    buf += decoder.decode(value, { stream: true });
-    let idx: number;
-    while ((idx = buf.indexOf("\n")) !== -1) {
-      let line = buf.slice(0, idx);
-      buf = buf.slice(idx + 1);
-      if (line.endsWith("\r")) line = line.slice(0, -1);
-      if (!line.startsWith("data: ")) continue;
-      const json = line.slice(6).trim();
-      if (json === "[DONE]") { done = true; break; }
-      try {
-        const c = JSON.parse(json).choices?.[0]?.delta?.content;
-        if (c) onDelta(c);
-      } catch { buf = line + "\n" + buf; break; }
-    }
+  const data = await resp.json();
+  if (data.error) return { appState: null, chatSummary: "", error: data.error };
+
+  try {
+    const raw = typeof data.appStateRaw === "string" ? JSON.parse(data.appStateRaw) : data.appStateRaw;
+    const state = raw?.app_state || raw;
+    const summary = raw?.chat_summary || "";
+    return { appState: state as AppState, chatSummary: summary };
+  } catch {
+    return { appState: null, chatSummary: "", error: "Erro ao processar resposta da IA" };
   }
-  onDone();
 }
-
-/* ── Structure request (non-streaming) ── */
 
 async function requestStructure(description: string, appType: string, language: string): Promise<StructuredAppConfig | null> {
   const resp = await fetch(CHAT_URL, {
@@ -196,12 +104,12 @@ interface ChatPanelProps {
 
 const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
   const {
-    channel, initializeProject, addFile, addTable, addTerminalLog,
-    setIsGenerating, setAppName, setWizardConfig,
+    channel, initializeProject, addTerminalLog,
+    setIsGenerating, setAppName, setWizardConfig, setAppState,
     chatMessages, setChatMessages,
     wizardStep, setWizardStep,
     wizardData: ctxWizardData, setWizardData: setCtxWizardData,
-    structuredConfig, setStructuredConfig,
+    structuredConfig, setStructuredConfig, appState,
   } = useAppBuilder();
 
   const messagesRef = useRef(chatMessages);
@@ -229,16 +137,13 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
   const [toolsUsed, setToolsUsed] = useState(0);
   const [toolsExpanded, setToolsExpanded] = useState(true);
   const [toolLogs, setToolLogs] = useState<ToolLog[]>([]);
-  const [filesGenerated, setFilesGenerated] = useState(0);
   const [structuring, setStructuring] = useState(false);
   const [building, setBuilding] = useState(false);
   const [editingConfig, setEditingConfig] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const sentInitial = useRef(false);
   const initializedProject = useRef(false);
-  const processedBlocksRef = useRef(new Set<string>());
 
-  // If loading existing app that already went through wizard
   useEffect(() => {
     if (wizardStep === "done" && chatMessages.length > 0) {
       initializedProject.current = true;
@@ -246,7 +151,6 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
     }
   }, []);
 
-  // If initialPrompt is provided, skip directly to structuring
   useEffect(() => {
     if (initialPrompt && !sentInitial.current) {
       sentInitial.current = true;
@@ -259,40 +163,6 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, structuring]);
-
-  /** Process structured blocks incrementally during streaming */
-  const processIncrementally = useCallback((content: string) => {
-    const fileBlocks = parseFileBlocks(content);
-    const legacyBlocks = parseLegacyCodeBlocks(content);
-    const allFiles = fileBlocks.length > 0 ? fileBlocks : legacyBlocks;
-
-    let newCount = 0;
-    allFiles.forEach(({ filePath, code }) => {
-      const key = `file:${filePath}`;
-      if (!processedBlocksRef.current.has(key)) {
-        processedBlocksRef.current.add(key);
-        const fileName = filePath.split("/").pop() || filePath;
-        addFile({ name: fileName, path: filePath, content: code });
-        addTerminalLog({ text: `✓ ${fileName}`, type: "success", timestamp: Date.now() });
-        newCount++;
-      }
-    });
-
-    const tableBlocks = parseTableBlocks(content);
-    tableBlocks.forEach(({ name, columns }) => {
-      const key = `table:${name}`;
-      if (!processedBlocksRef.current.has(key)) {
-        processedBlocksRef.current.add(key);
-        addTable({ name, columns, rows: [] });
-        addTerminalLog({ text: `✓ Tabela: ${name}`, type: "success", timestamp: Date.now() });
-      }
-    });
-
-    if (newCount > 0) {
-      setFilesGenerated(prev => prev + newCount);
-      setToolLogs(prev => [...prev, { label: `${newCount} arquivo(s) gerado(s)`, status: "success" }]);
-    }
-  }, [addFile, addTable, addTerminalLog]);
 
   /* ── Step 1: Discovery → Step 2: Structuring ── */
 
@@ -322,7 +192,6 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
 
     if (result) {
       setStructuredConfig(result);
-      // Sync wizard data from structured config
       setWizardData(prev => ({
         ...prev,
         appName: result.app_name || prev.appName,
@@ -359,8 +228,8 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
     if (!structuredConfig) return;
     setWizardStep("build");
     setBuilding(true);
+    setIsGenerating(true);
 
-    // Save wizard config
     setWizardConfig({
       prompt: wizardData.prompt,
       companyName: wizardData.companyName,
@@ -387,7 +256,7 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
 
 ---
 
-Gerando código, banco e preview...`;
+Gerando app state...`;
 
     setMessages(prev => [...prev, { role: "assistant", content: configSummary }]);
 
@@ -396,7 +265,10 @@ Gerando código, banco e preview...`;
       initializeProject(channel, wizardData.prompt);
     }
 
-    // Build the full context prompt
+    setToolsUsed(p => p + 1);
+    setToolLogs(prev => [...prev, { label: "Gerando estado do app...", status: "success" }]);
+    addTerminalLog({ text: "$ aikortex build --mode=create", type: "command", timestamp: Date.now() });
+
     const contextPrompt = `Crie um ${channel === "whatsapp" ? "WhatsApp App" : "Web App"} chamado "${structuredConfig.app_name}".
 Descrição: ${structuredConfig.app_description}
 Tom: ${structuredConfig.tone}
@@ -408,95 +280,110 @@ Funcionalidades: ${(structuredConfig.selected_features || []).join(", ")}
 ${structuredConfig.business_context ? `Contexto: ${structuredConfig.business_context}` : ""}
 ${structuredConfig.constraints ? `Restrições: ${structuredConfig.constraints}` : ""}`;
 
+    const sc = structuredConfig;
+    const appContext: Record<string, string> = {
+      app_type: channel,
+      app_name: sc.app_name || "Meu App",
+      app_description: sc.app_description || wizardData.prompt || "",
+      tone: sc.tone || "professional_friendly",
+      language: sc.language || "pt-BR",
+      intro_message: sc.intro_message || "",
+      max_turn_messages: String(sc.max_turn_messages || 2),
+      onboarding_level: sc.onboarding_level || "soft",
+      selected_features: (sc.selected_features || []).join(", "),
+      business_context: sc.business_context || "",
+      constraints: sc.constraints || "",
+      is_patch: "false",
+    };
+
+    const { appState: newState, chatSummary, error } = await requestAppState(
+      [{ role: "user", content: contextPrompt }],
+      appContext,
+      "build",
+    );
+
+    if (error) {
+      toast.error(error);
+      setToolLogs(prev => [...prev, { label: error, status: "error" }]);
+      addTerminalLog({ text: `✗ ${error}`, type: "error", timestamp: Date.now() });
+    } else if (newState) {
+      setAppState(newState);
+      const filesCount = newState.files?.length || 0;
+      const tablesCount = newState.database?.tables?.length || 0;
+      setToolLogs(prev => [
+        ...prev,
+        { label: `${filesCount} arquivo(s) gerado(s)`, status: "success" },
+        { label: `${tablesCount} tabela(s) criada(s)`, status: "success" },
+      ]);
+      addTerminalLog({ text: `✓ ${filesCount} arquivos gerados`, type: "success", timestamp: Date.now() });
+      addTerminalLog({ text: `✓ ${tablesCount} tabelas criadas`, type: "success", timestamp: Date.now() });
+      addTerminalLog({ text: "✓ Preview atualizado", type: "success", timestamp: Date.now() });
+
+      const summary = chatSummary || `✅ **${newState.app_meta?.name || sc.app_name}** criado com sucesso!\n\nO preview está pronto. Use o chat para fazer ajustes.`;
+      setMessages(prev => [...prev, { role: "assistant", content: summary }]);
+    }
+
     setBuilding(false);
+    setIsGenerating(false);
     setWizardStep("done");
-    await sendMessage(contextPrompt);
   };
 
-  /* ── Send message (build & patch mode) ── */
+  /* ── Send message (patch mode) ── */
 
   const sendMessage = async (text: string) => {
     if (!text.trim() || isLoading) return;
     const userMsg: Msg = { role: "user", content: text.trim() };
-    setMessages((p) => [...p, userMsg]);
+    setMessages(p => [...p, userMsg]);
     setInput("");
     setIsLoading(true);
     setIsGenerating(true);
-    setToolsUsed((p) => p + 1);
-    processedBlocksRef.current = new Set();
+    setToolsUsed(p => p + 1);
 
     if (!initializedProject.current) {
       initializedProject.current = true;
       initializeProject(channel, text.trim());
     }
 
-    setToolLogs((prev) => [
-      ...prev,
-      { label: `Processando: "${text.trim().slice(0, 40)}..."`, status: "success" },
-    ]);
-    addTerminalLog({ text: `$ Processando...`, type: "command", timestamp: Date.now() });
+    setToolLogs(prev => [...prev, { label: `Processando: "${text.trim().slice(0, 40)}..."`, status: "success" }]);
+    addTerminalLog({ text: "$ aikortex patch", type: "command", timestamp: Date.now() });
 
-    let assistantSoFar = "";
-    let incrementalTimer: any = null;
-
-    const upsert = (chunk: string) => {
-      assistantSoFar += chunk;
-      const currentText = assistantSoFar;
-      setMessages((prev) => {
-        const last = prev[prev.length - 1];
-        if (last?.role === "assistant")
-          return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: currentText } : m));
-        return [...prev, { role: "assistant", content: currentText }];
-      });
-
-      if (!incrementalTimer) {
-        incrementalTimer = setTimeout(() => {
-          processIncrementally(assistantSoFar);
-          incrementalTimer = null;
-        }, 500);
-      }
+    const sc = structuredConfig;
+    const appContext: Record<string, string> = {
+      app_type: channel,
+      app_name: sc?.app_name || wizardData.appName || "Meu App",
+      app_description: sc?.app_description || wizardData.prompt || "",
+      tone: sc?.tone || wizardData.tone || "professional_friendly",
+      language: sc?.language || wizardData.language || "pt-BR",
+      intro_message: sc?.intro_message || wizardData.introMessage || "",
+      max_turn_messages: String(sc?.max_turn_messages || wizardData.maxMessages || 2),
+      onboarding_level: sc?.onboarding_level || wizardData.onboarding || "soft",
+      selected_features: (sc?.selected_features || wizardData.selectedFeatures || []).join(", "),
+      business_context: sc?.business_context || wizardData.businessContext || "",
+      constraints: sc?.constraints || wizardData.constraints || "",
+      is_patch: "true",
+      current_state: appState ? JSON.stringify(appState).slice(0, 4000) : "",
     };
 
-    try {
-      // Patch mode: if we already have files or prior conversation
-      const hasPriorFiles = processedBlocksRef.current.size > 0 || messages.length > 2;
+    const { appState: newState, chatSummary, error } = await requestAppState(
+      [...messages, userMsg],
+      appContext,
+      "build",
+    );
 
-      const sc = structuredConfig;
-      const appContext: Record<string, string> = {
-        app_type: channel,
-        app_name: sc?.app_name || wizardData.appName || "Meu App",
-        app_description: sc?.app_description || wizardData.prompt || "",
-        tone: sc?.tone || wizardData.tone || "professional_friendly",
-        language: sc?.language || wizardData.language || "pt-BR",
-        intro_message: sc?.intro_message || wizardData.introMessage || "",
-        max_turn_messages: String(sc?.max_turn_messages || wizardData.maxMessages || 2),
-        onboarding_level: sc?.onboarding_level || wizardData.onboarding || "soft",
-        selected_features: (sc?.selected_features || wizardData.selectedFeatures || []).join(", "),
-        business_context: sc?.business_context || wizardData.businessContext || "",
-        constraints: sc?.constraints || wizardData.constraints || "",
-        is_patch: hasPriorFiles ? "true" : "false",
-      };
-
-      await streamChat({
-        messages: [...messages, userMsg],
-        appContext,
-        onDelta: upsert,
-        onDone: () => {
-          if (incrementalTimer) clearTimeout(incrementalTimer);
-          setIsLoading(false);
-          setIsGenerating(false);
-          processIncrementally(assistantSoFar);
-          addTerminalLog({ text: "✓ Concluído", type: "success", timestamp: Date.now() });
-        },
-      });
-    } catch {
-      if (incrementalTimer) clearTimeout(incrementalTimer);
-      toast.error("Erro ao se comunicar com a IA");
-      setIsLoading(false);
-      setIsGenerating(false);
-      setToolLogs((prev) => [...prev, { label: "Falha na comunicação", status: "error" }]);
-      addTerminalLog({ text: "✗ Erro na comunicação", type: "error", timestamp: Date.now() });
+    if (error) {
+      toast.error(error);
+      setMessages(p => [...p, { role: "assistant", content: `❌ ${error}` }]);
+      setToolLogs(prev => [...prev, { label: error, status: "error" }]);
+      addTerminalLog({ text: `✗ ${error}`, type: "error", timestamp: Date.now() });
+    } else if (newState) {
+      setAppState(newState);
+      addTerminalLog({ text: "✓ Atualizado", type: "success", timestamp: Date.now() });
+      const summary = chatSummary || "✅ Atualização aplicada! O preview foi atualizado.";
+      setMessages(p => [...p, { role: "assistant", content: summary }]);
     }
+
+    setIsLoading(false);
+    setIsGenerating(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -578,12 +465,6 @@ ${structuredConfig.constraints ? `Restrições: ${structuredConfig.constraints}`
           >
             <Wrench className="w-3 h-3" />
             <span>{toolsUsed} ações</span>
-            {filesGenerated > 0 && (
-              <span className="flex items-center gap-1 ml-2 text-primary">
-                <FileCode className="w-3 h-3" />
-                {filesGenerated} arquivos
-              </span>
-            )}
             {toolsExpanded ? <ChevronUp className="w-3 h-3 ml-auto" /> : <ChevronDown className="w-3 h-3 ml-auto" />}
           </button>
           {toolsExpanded && toolLogs.length > 0 && (
@@ -670,14 +551,13 @@ ${structuredConfig.constraints ? `Restrições: ${structuredConfig.constraints}`
 
         {/* Chat messages */}
         {messages.map((m, i) => {
-          const displayContent = m.role === "assistant" ? stripStructuredBlocks(m.content) : m.content;
-          if (m.role === "assistant" && !displayContent) return null;
+          if (m.role === "assistant" && !m.content) return null;
           return (
             <div key={i}>
               {m.role === "user" ? (
                 <div className="flex justify-end">
                   <div className="bg-primary/10 border border-primary/20 rounded-2xl rounded-br-sm px-4 py-2.5 max-w-[90%] text-sm">
-                    <p className="whitespace-pre-wrap text-foreground">{displayContent}</p>
+                    <p className="whitespace-pre-wrap text-foreground">{m.content}</p>
                   </div>
                 </div>
               ) : (
@@ -690,7 +570,7 @@ ${structuredConfig.constraints ? `Restrições: ${structuredConfig.constraints}`
                       [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_li]:mb-0.5
                       [&_strong]:text-foreground
                       [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm">
-                      <ReactMarkdown>{displayContent}</ReactMarkdown>
+                      <ReactMarkdown>{m.content}</ReactMarkdown>
                     </div>
                   </div>
                 </div>
@@ -730,7 +610,6 @@ ${structuredConfig.constraints ? `Restrições: ${structuredConfig.constraints}`
             </div>
 
             {!editingConfig ? (
-              /* Read-only view */
               <div className="space-y-2 text-[11px]">
                 <div className="flex justify-between py-1 border-b border-border/50">
                   <span className="text-muted-foreground">Nome</span>
@@ -762,7 +641,6 @@ ${structuredConfig.constraints ? `Restrições: ${structuredConfig.constraints}`
                 </div>
               </div>
             ) : (
-              /* Editable view */
               <div className="space-y-2.5">
                 <div>
                   <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Nome</label>
@@ -866,7 +744,7 @@ ${structuredConfig.constraints ? `Restrições: ${structuredConfig.constraints}`
             <div>
               <p className="text-xs font-medium text-foreground">Construindo {wizardData.appName}...</p>
               <p className="text-[10px] text-muted-foreground">
-                {channel === "whatsapp" ? "Gerando fluxos, agentes e código" : "Gerando páginas, componentes e código"}
+                {channel === "whatsapp" ? "Gerando fluxos, agentes e estado do app" : "Gerando páginas, componentes e estado do app"}
               </p>
             </div>
           </div>

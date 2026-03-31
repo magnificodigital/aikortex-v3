@@ -31,7 +31,7 @@ const tabs: { id: TabId; label: string; icon: typeof Eye }[] = [
 
 const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
   const navigate = useNavigate();
-  const { channel, setChannel, saveApp, appName, appId, files, tables, isGenerating, chatMessages, setFiles, setTables, setAppName, setChannel: setCtxChannel, setChatMessages, setWizardStep, setWizardData, setWizardConfig, setStructuredConfig } = useAppBuilder();
+  const { channel, setChannel, saveApp, appName, appId, files, tables, isGenerating, chatMessages, setFiles, setTables, setAppName, setChannel: setCtxChannel, setChatMessages, setWizardStep, setWizardData, setWizardConfig, setStructuredConfig, setAppState } = useAppBuilder();
   const { user } = useAuth();
 
   const [activeTab, setActiveTab] = useState<TabId>("preview");
@@ -93,12 +93,13 @@ const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
         if (Array.isArray(data.tables_schema)) setTables(data.tables_schema as any);
         // Restore chat history and wizard state from config
         const cfg = data.config as any;
-        if (cfg && typeof cfg === "object") {
+         if (cfg && typeof cfg === "object") {
           if (Array.isArray(cfg.chatMessages)) setChatMessages(cfg.chatMessages);
           if (cfg.wizardStep) setWizardStep(cfg.wizardStep);
           if (cfg.wizardData) setWizardData(cfg.wizardData);
           if (cfg.wizardConfig) setWizardConfig(cfg.wizardConfig);
           if (cfg.structuredConfig) setStructuredConfig(cfg.structuredConfig);
+          if (cfg.appState) setAppState(cfg.appState);
         }
       });
   }, [appId]);

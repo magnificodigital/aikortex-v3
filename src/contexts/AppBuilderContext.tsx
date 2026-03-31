@@ -42,7 +42,6 @@ export interface WizardConfig {
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
-// 5-step flow: discover → structure → build → done (preview sync is automatic, patch is done-state)
 export type WizardStepId = "discover" | "structure" | "build" | "done";
 
 export interface WizardData {
@@ -73,6 +72,80 @@ export interface StructuredAppConfig {
   constraints?: string;
 }
 
+/* ── Runtime App State (JSON-driven preview) ── */
+
+export interface AppStatePreview {
+  type: "whatsapp" | "web";
+  title: string;
+  subtitle: string;
+  layout: Record<string, any>;
+  screen_data: Record<string, any>;
+  interactions: any[];
+}
+
+export interface AppStateAgentConfig {
+  intro_message: string;
+  max_turn_messages: number;
+  onboarding_level: "none" | "soft" | "strict";
+  personality_rules: string[];
+  conversation_rules: string[];
+  cta_primary: string;
+  quick_replies: string[];
+}
+
+export interface AppStateFlow {
+  id: string;
+  name: string;
+  description: string;
+  steps: any[];
+}
+
+export interface AppStateTable {
+  name: string;
+  columns: { name: string; type: string; required: boolean }[];
+}
+
+export interface AppStateFile {
+  path: string;
+  type: string;
+  purpose: string;
+  content_summary: string;
+}
+
+export interface AppStateUIModule {
+  id: string;
+  name: string;
+  type: string;
+  description: string;
+}
+
+export interface AppStateRuntime {
+  render_ready: boolean;
+  mocked: boolean;
+  warnings: string[];
+  next_build_targets: string[];
+}
+
+export interface AppState {
+  app_meta: {
+    type: "whatsapp" | "web";
+    name: string;
+    description: string;
+    tone: string;
+    language: string;
+    status: string;
+  };
+  preview: AppStatePreview;
+  agent_config: AppStateAgentConfig;
+  flows: AppStateFlow[];
+  database: {
+    tables: AppStateTable[];
+  };
+  files: AppStateFile[];
+  ui_modules: AppStateUIModule[];
+  runtime: AppStateRuntime;
+}
+
 export interface AppBuilderState {
   channel: "whatsapp" | "web";
   files: GeneratedFile[];
@@ -86,6 +159,7 @@ export interface AppBuilderState {
   wizardStep: WizardStepId;
   wizardData: WizardData;
   structuredConfig: StructuredAppConfig | null;
+  appState: AppState | null;
 }
 
 interface AppBuilderContextType extends AppBuilderState {
@@ -103,6 +177,7 @@ interface AppBuilderContextType extends AppBuilderState {
   setWizardStep: (step: WizardStepId) => void;
   setWizardData: (data: WizardData) => void;
   setStructuredConfig: (config: StructuredAppConfig | null) => void;
+  setAppState: (state: AppState | null) => void;
   initializeProject: (channel: "whatsapp" | "web", prompt: string) => void;
   saveApp: (userId: string) => Promise<string | null>;
   appId: string | null;
@@ -177,6 +252,52 @@ function generateWhatsAppMetrics(): DashboardMetric[] {
   ];
 }
 
+/* ── Helper: Sync AppState → legacy structures ── */
+
+function syncAppStateToLegacy(
+  appState: AppState,
+  existingFiles: GeneratedFile[],
+  existingTables: GeneratedTable[],
+): { files: GeneratedFile[]; tables: GeneratedTable[]; metrics: DashboardMetric[] } {
+  // Convert appState.files to GeneratedFile[]
+  const files: GeneratedFile[] = appState.files.map(f => ({
+    name: f.path.split("/").pop() || f.path,
+    path: f.path,
+    content: `// ${f.purpose}\n// ${f.content_summary}`,
+  }));
+
+  // Convert appState.database.tables to GeneratedTable[]
+  const tables: GeneratedTable[] = appState.database.tables.map(t => ({
+    name: t.name,
+    columns: t.columns.map(c => ({
+      name: c.name,
+      type: c.type,
+      isPK: c.name === "id" || undefined,
+    })),
+    rows: [],
+  }));
+
+  // Extract metrics from preview screen_data
+  const metrics: DashboardMetric[] = [];
+  const sd = appState.preview.screen_data;
+  if (sd?.metrics && Array.isArray(sd.metrics)) {
+    for (const m of sd.metrics) {
+      metrics.push({
+        label: m.label || m.title || "",
+        value: String(m.value || "0"),
+        change: m.change || "--",
+        up: true,
+      });
+    }
+  }
+
+  return {
+    files: files.length > 0 ? files : existingFiles,
+    tables: tables.length > 0 ? tables : existingTables,
+    metrics,
+  };
+}
+
 /* ── Provider ── */
 
 export function AppBuilderProvider({ children, initialChannel = "web", existingAppId }: { children: ReactNode; initialChannel?: "whatsapp" | "web"; existingAppId?: string | null }) {
@@ -208,6 +329,7 @@ export function AppBuilderProvider({ children, initialChannel = "web", existingA
     wizardStep: "discover",
     wizardData: defaultWizardData,
     structuredConfig: null,
+    appState: null,
   });
 
   const setChannel = useCallback((ch: "whatsapp" | "web") => setState(s => ({ ...s, channel: ch })), []);
@@ -240,6 +362,21 @@ export function AppBuilderProvider({ children, initialChannel = "web", existingA
   const setCtxWizardData = useCallback((data: WizardData) => setState(s => ({ ...s, wizardData: data })), []);
   const setWizardConfig = useCallback((config: WizardConfig) => setState(s => ({ ...s, wizardConfig: config })), []);
   const setStructuredConfig = useCallback((config: StructuredAppConfig | null) => setState(s => ({ ...s, structuredConfig: config })), []);
+  const setAppState = useCallback((appState: AppState | null) => {
+    setState(s => {
+      if (!appState) return { ...s, appState: null };
+      // Sync legacy structures from appState
+      const { files, tables, metrics } = syncAppStateToLegacy(appState, s.files, s.tables);
+      return {
+        ...s,
+        appState,
+        files,
+        tables,
+        dashboardMetrics: metrics.length > 0 ? metrics : s.dashboardMetrics,
+        appName: appState.app_meta.name || s.appName,
+      };
+    });
+  }, []);
 
   const initializeProject = useCallback((channel: "whatsapp" | "web", prompt: string) => {
     const files = channel === "whatsapp" ? generateWhatsAppFiles(prompt) : generateWebFiles(prompt);
@@ -274,6 +411,7 @@ export function AppBuilderProvider({ children, initialChannel = "web", existingA
       wizardData: state.wizardData,
       wizardConfig: state.wizardConfig,
       structuredConfig: state.structuredConfig,
+      appState: state.appState,
     };
 
     const payload = {
@@ -312,7 +450,7 @@ export function AppBuilderProvider({ children, initialChannel = "web", existingA
       setChannel, addFile, setFiles, addTable, setTables,
       addTerminalLog, setDashboardMetrics, setAppName,
       setIsGenerating, setWizardConfig, setChatMessages, setWizardStep,
-      setWizardData: setCtxWizardData, setStructuredConfig,
+      setWizardData: setCtxWizardData, setStructuredConfig, setAppState,
       initializeProject, saveApp, appId, setAppId,
     }}>
       {children}
