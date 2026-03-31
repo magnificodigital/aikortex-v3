@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-/* ── Structuring prompt: AI generates structured JSON from user description ── */
+/* ── Structuring prompt ── */
 
 function buildStructuringPrompt(appType: string, language: string) {
   return `Você é um arquiteto de produto especializado em apps para ${appType === "whatsapp" ? "WhatsApp" : "Web"}.
@@ -16,23 +16,22 @@ REGRAS:
 - Retorne APENAS um bloco JSON válido, sem texto antes ou depois
 - Infira o máximo possível da descrição: nome, funcionalidades, tom, mensagem inicial
 - Se algo não for mencionado, use valores padrão inteligentes
-- O JSON deve seguir EXATAMENTE este formato:
 
-\`\`\`json
+O JSON deve seguir EXATAMENTE este formato:
+
 {
   "app_type": "${appType}",
   "app_name": "Nome do App",
   "app_description": "Descrição completa e detalhada",
   "tone": "professional_friendly",
   "language": "${language}",
-  "intro_message": "Mensagem de boas-vindas contextual",
+  "intro_message": "Mensagem de boas-vindas contextual e natural, como uma conversa real",
   "max_turn_messages": 2,
   "onboarding_level": "soft",
   "selected_features": ["feature1", "feature2", "feature3"],
   "business_context": "Contexto de negócio inferido",
   "constraints": "Restrições identificadas ou padrão"
 }
-\`\`\`
 
 Valores válidos para "tone": "professional_friendly", "formal", "casual", "empathetic", "direct"
 Valores válidos para "onboarding_level": "none", "soft", "strict"
@@ -60,7 +59,7 @@ function buildAppStatePrompt(ctx?: Record<string, string>) {
 
   const isWhatsApp = appType === "whatsapp";
 
-  return `Você é o motor de geração do Aikortex Studio. Sua função é gerar um estado de aplicação renderizável em formato JSON.
+  return `Você é o motor de geração do Aikortex Studio. Sua função é gerar um estado de aplicação renderizável.
 
 # CONTEXTO ATIVO
 - Tipo: ${isWhatsApp ? "WhatsApp App" : "Web App"}
@@ -75,17 +74,16 @@ ${features ? `- Funcionalidades: ${features}` : ""}
 ${bizContext ? `- Contexto: ${bizContext}` : ""}
 ${constraints ? `- Restrições: ${constraints}` : ""}
 
-# REGRA PRINCIPAL
-Retorne APENAS um JSON válido no formato app_state. NENHUM texto fora do JSON.
-Não use markdown. Não explique. Não escreva "Aqui está". SOMENTE o JSON.
+# REGRA ABSOLUTA
+Retorne APENAS JSON válido. NENHUM texto fora do JSON. Sem markdown, sem explicações, sem "Aqui está".
 
-# FORMATO app_state OBRIGATÓRIO
+# FORMATO OBRIGATÓRIO
 
 {
   "app_state": {
     "app_meta": {
       "type": "${appType}",
-      "name": "${appName}",
+      "name": "",
       "description": "",
       "tone": "${tone}",
       "language": "${language}",
@@ -109,9 +107,7 @@ Não use markdown. Não explique. Não escreva "Aqui está". SOMENTE o JSON.
       "quick_replies": []
     },
     "flows": [],
-    "database": {
-      "tables": []
-    },
+    "database": { "tables": [] },
     "files": [],
     "ui_modules": [],
     "runtime": {
@@ -124,77 +120,57 @@ Não use markdown. Não explique. Não escreva "Aqui está". SOMENTE o JSON.
   "chat_summary": ""
 }
 
-# REGRAS DOS CAMPOS
+# REGRAS CRÍTICAS POR CAMPO
 
-## app_meta
-- description: descrição completa do app baseada no contexto
-
-## preview
-${isWhatsApp ? `### WhatsApp App preview.screen_data DEVE conter:
-- "bot_name": nome do bot
+## preview.screen_data
+${isWhatsApp ? `Para WhatsApp Apps, DEVE conter:
+- "bot_name": nome do bot (texto limpo, humanizado)
 - "bot_status": "online"
-- "greeting": mensagem de boas-vindas conversacional e contextual
-- "quick_replies": array de 2-4 botões de resposta rápida (texto limpo, sem underscores)
-- "conversation_flow": array de objetos {trigger, response, suggestions} para simular conversa
-- "stages": array de etapas do fluxo (ex: ["Saudação", "Coleta de dados", "Confirmação"])
-` : `### Web App preview.screen_data DEVE conter:
-- "nav_items": array de {label, icon} para sidebar
-- "metrics": array de {label, value, change} para cards
+- "greeting": mensagem de boas-vindas CONVERSACIONAL e natural (como um humano falaria no WhatsApp, NÃO como um sistema)
+- "quick_replies": array de 2-4 botões de resposta rápida com TEXTO LIMPO (ex: "Agendar consulta", "Ver preços"). NUNCA use snake_case, underscores ou nomes técnicos.
+- "conversation_flow": array de objetos {"trigger": "palavra-chave", "response": "resposta natural do bot", "suggestions": ["opção1", "opção2"]}
+  - As respostas devem ser CONVERSACIONAIS, como uma pessoa falaria no WhatsApp
+  - Cada trigger deve ter uma resposta que AVANÇA a conversa (faz perguntas, coleta dados, oferece opções)
+  - Mínimo 5 conversation_flow entries cobrindo as features principais
+- "stages": array de etapas da jornada do usuário (ex: ["Boas-vindas", "Coleta de dados", "Confirmação"])
+- "input_placeholder": texto do placeholder do input (ex: "Digite sua mensagem...")
+
+REGRA DE LINGUAGEM: Todas as mensagens, quick_replies e responses devem ser escritas como uma CONVERSA REAL de WhatsApp. Sem termos técnicos, sem underscores, sem snake_case. Use emojis com moderação. Fale como um profissional amigável falaria.` : `Para Web Apps, DEVE conter:
+- "nav_items": array de {"label": "Nome da página", "icon": "nome-do-icone"}
+- "metrics": array de {"label": "Métrica", "value": "123", "change": "+12%"}
 - "active_page": nome da página ativa
-- "page_title": título da seção
-- "table_data": {name, columns: string[], sample_rows: number} quando relevante
-- "chart_data": {title, type} quando relevante
-`}
+- "page_title": título da seção principal
+- "table_data": {"name": "tabela", "columns": ["col1", "col2"], "sample_rows": 3} quando relevante
+- "chart_data": {"title": "Título do gráfico", "type": "bar|line|pie"} quando relevante`}
 
 ## agent_config
-- Preencha com dados conversacionais reais e contextuais
-- quick_replies: texto limpo, humanizado (sem underscores, sem snake_case)
-- personality_rules: regras de personalidade do agente
-- conversation_rules: regras de como o agente deve conduzir a conversa
+- quick_replies: TEXTO LIMPO e HUMANIZADO. Nunca "plano_alimentar", sempre "Plano alimentar" ou "Ver meu plano".
+- personality_rules e conversation_rules: regras claras e contextuais
 
 ## flows
 - Pelo menos 1 fluxo principal para WhatsApp Apps
-- Cada step deve ter: {id, type, action, description}
+- Cada step: {"id": "step_1", "type": "message|input|action", "action": "descrição", "description": "detalhe"}
 
 ## database.tables
 - Apenas tabelas relevantes ao produto
-- Cada coluna: {name, type, required}
-- Tipos válidos: UUID, TEXT, INTEGER, BOOLEAN, TIMESTAMP, JSONB, FLOAT
+- Cada coluna: {"name": "", "type": "UUID|TEXT|INTEGER|BOOLEAN|TIMESTAMP|JSONB|FLOAT", "required": true/false}
 
 ## files
-- Arquivos reais que compõem o app
-- Cada arquivo: {path, type, purpose, content_summary}
-${isWhatsApp ? `- Estrutura: /src/agents/, /src/handlers/, /src/integrations/, /src/flows/, /src/templates/, /src/memory/, /src/config.ts` : `- Estrutura: /src/pages/, /src/components/, /src/layouts/, /src/lib/, /src/services/, /src/hooks/, /src/api/`}
-
-## ui_modules
-- Módulos de interface identificáveis
-- Cada módulo: {id, name, type, description}
-
-## runtime
-- render_ready: true quando o preview pode renderizar
-- mocked: true quando dados são simulados
+- Arquivos reais do app
+- Cada arquivo: {"path": "/src/...", "type": "ts|tsx|json", "purpose": "função", "content_summary": "resumo"}
 
 ## chat_summary
-- Uma mensagem curta (2-3 frases) resumindo o que foi criado/atualizado
-- Em português brasileiro
-- Tom consultivo e premium
-- Termine com pergunta ou sugestão de próximo passo
-- NÃO inclua código, schemas ou blocos técnicos
+- 2-3 frases resumindo o que foi criado
+- Português brasileiro, tom consultivo e premium
+- Termine com sugestão de próximo passo
+- NUNCA inclua código, schemas, definições de tabela ou blocos técnicos
 
-${isPatch ? `
-# MODO PATCH
-Você NÃO deve reconstruir o app do zero.
-Aplique APENAS as mudanças necessárias no estado atual.
-Preserve a arquitetura existente.
-${currentState ? `\nEstado atual do app:\n${currentState}` : ""}
-` : `
-# MODO CREATE
-Crie a V1 mais sólida possível.
-Priorize clareza, renderização e coerência.
-Entregue um app com cara de produto real.
-`}
+${isPatch ? `# MODO PATCH
+Preserve a estrutura existente. Aplique APENAS as mudanças necessárias.
+${currentState ? `\nEstado atual:\n${currentState}` : ""}` : `# MODO CREATE
+Crie a V1 mais sólida possível. Priorize clareza e coerência.`}
 
-RETORNE SOMENTE O JSON. NADA MAIS.`;
+RETORNE SOMENTE O JSON.`;
 }
 
 serve(async (req) => {
@@ -205,11 +181,7 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    // Mode: "structure" = generate structured JSON from description
-    // Mode: "build" = generate full app_state JSON (non-streaming)
-    // Mode: default = conversational patch (non-streaming JSON)
     const isStructureMode = mode === "structure";
-    const isBuildMode = mode === "build" || (!isStructureMode && !mode);
 
     const systemPrompt = isStructureMode
       ? buildStructuringPrompt(appContext?.app_type || "web", appContext?.language || "pt-BR")
@@ -259,7 +231,6 @@ serve(async (req) => {
       });
     }
 
-    // Build/patch mode: return app_state JSON
     return new Response(JSON.stringify({ appStateRaw: content }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
