@@ -277,19 +277,9 @@ const ChatPanel = ({ onBack, initialPrompt }: ChatPanelProps) => {
       constraints: structuredConfig.constraints || "",
     });
 
-    const configSummary = `## 🚀 Iniciando construção
-
-| Config | Valor |
-|---|---|
-| **Canal** | ${channel === "whatsapp" ? "WhatsApp" : "Web App"} |
-| **Nome** | ${structuredConfig.app_name} |
-| **Tom** | ${toneLabels[structuredConfig.tone] || structuredConfig.tone} |
-| **Idioma** | ${structuredConfig.language} |
-| **Features** | ${(structuredConfig.selected_features || []).join(", ")} |
-
----
-
-Gerando app state...`;
+    const formatFeature = (f: string) => f.replace(/[_-]+/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+    const featuresFormatted = (structuredConfig.selected_features || []).map(formatFeature).join(", ");
+    const configSummary = `🚀 **Iniciando construção de ${structuredConfig.app_name}**\n\nCanal: ${channel === "whatsapp" ? "WhatsApp" : "Web App"} · Tom: ${toneLabels[structuredConfig.tone] || structuredConfig.tone} · Idioma: ${structuredConfig.language}\n\nFuncionalidades: ${featuresFormatted}\n\nGerando app state...`;
 
     setMessages(prev => [...prev, { role: "assistant", content: configSummary }]);
 
