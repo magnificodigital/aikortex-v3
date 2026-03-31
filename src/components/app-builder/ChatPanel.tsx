@@ -53,22 +53,35 @@ function parseFileBlocks(content: string): { filePath: string; code: string }[] 
 }
 
 function parseTableBlocks(content: string): { name: string; columns: { name: string; type: string; isPK?: boolean }[] }[] {
-  const regex = /\[TABLE:(\w+)\]\n([\s\S]*?)\[\/TABLE\]/g;
   const results: { name: string; columns: { name: string; type: string; isPK?: boolean }[] }[] = [];
+
+  // Multi-line format: [TABLE:name]\n...\n[/TABLE]
+  const multiRegex = /\[TABLE:(\w+)\]\n([\s\S]*?)\[\/TABLE\]/g;
   let match;
-  while ((match = regex.exec(content)) !== null) {
+  while ((match = multiRegex.exec(content)) !== null) {
     const name = match[1].trim();
     const lines = match[2].trim().split("\n");
     const columns = lines.map(line => {
       const parts = line.split(":");
-      return {
-        name: parts[0]?.trim() || "",
-        type: parts[1]?.trim() || "TEXT",
-        isPK: parts[2]?.trim() === "PK" || undefined,
-      };
+      return { name: parts[0]?.trim() || "", type: parts[1]?.trim() || "TEXT", isPK: parts[2]?.trim() === "PK" || undefined };
     }).filter(c => c.name);
     results.push({ name, columns });
   }
+
+  // Single-line format: [TABLE:name] col1:TYPE:PK col2:TYPE ...
+  const singleRegex = /\[TABLE:(\w+)\]\s+([^\n\[]+)/g;
+  while ((match = singleRegex.exec(content)) !== null) {
+    const name = match[1].trim();
+    // Skip if already parsed via multi-line
+    if (results.some(r => r.name === name)) continue;
+    const colDefs = match[2].trim().split(/\s+/);
+    const columns = colDefs.map(def => {
+      const parts = def.split(":");
+      return { name: parts[0]?.trim() || "", type: parts[1]?.trim() || "TEXT", isPK: parts.includes("PK") || undefined };
+    }).filter(c => c.name);
+    if (columns.length > 0) results.push({ name, columns });
+  }
+
   return results;
 }
 
@@ -99,6 +112,7 @@ function stripStructuredBlocks(content: string): string {
   return content
     .replace(/\[FILE:.*?\]\n[\s\S]*?\[\/FILE\]/g, "")
     .replace(/\[TABLE:\w+\]\n[\s\S]*?\[\/TABLE\]/g, "")
+    .replace(/\[TABLE:\w+\]\s+[^\n\[]+/g, "")
     .replace(/```[\s\S]*?```/g, "")
     .replace(/\[METRIC:.*?\]\n[\s\S]*?\[\/METRIC\]/g, "")
     .trim();
