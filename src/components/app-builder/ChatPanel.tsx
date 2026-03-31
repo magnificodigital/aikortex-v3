@@ -658,7 +658,7 @@ ${structuredConfig.constraints ? `Restrições: ${structuredConfig.constraints}`
                   <span className="text-muted-foreground block mb-1">Funcionalidades</span>
                   <div className="flex flex-wrap gap-1">
                     {(structuredConfig.selected_features || []).map((f, i) => (
-                      <Badge key={i} variant="secondary" className="text-[9px] px-1.5 py-0.5">{f}</Badge>
+                      <Badge key={i} variant="secondary" className="text-[9px] px-1.5 py-0.5">{f.replace(/[_-]+/g, " ").replace(/\b\w/g, c => c.toUpperCase())}</Badge>
                     ))}
                   </div>
                 </div>
