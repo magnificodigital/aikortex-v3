@@ -153,7 +153,7 @@ const AgentDetail = () => {
           avatar: avatarSrc,
           model: data.model || "gemini-2.5-flash",
           agentType: (data.agent_type as AgentType) || "Custom",
-          savedConfig: data.config || null,
+          savedConfig: (typeof data.config === 'object' && data.config !== null && !Array.isArray(data.config) ? data.config : null) as Record<string, any> | null,
         });
       }
       setAgentLoading(false);
