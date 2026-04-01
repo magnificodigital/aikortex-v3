@@ -574,6 +574,37 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
                 </div>
               </div>
 
+              {/* Model selector */}
+              {(() => {
+                const llmProviders = ["OpenAI", "Anthropic", "Gemini"] as const;
+                const availableModels: { value: string; label: string }[] = [];
+                llmProviders.forEach(provider => {
+                  if (connectorKeys[provider]?.configured && LLM_PROVIDER_MODELS[provider]) {
+                    LLM_PROVIDER_MODELS[provider].models.forEach(m => availableModels.push({ value: m.value, label: `${provider} — ${m.label}` }));
+                  }
+                });
+                if (availableModels.length === 0) return null;
+                return (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Monitor className="w-4 h-4 text-primary" />
+                      <h3 className="text-sm font-semibold text-foreground">Modelo do Agente</h3>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Modelo de IA usado pelo agente em produção e testes.</p>
+                    <Select value={agentModel} onValueChange={onModelChange}>
+                      <SelectTrigger className="text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableModels.map(m => (
+                          <SelectItem key={m.value} value={m.value}>🤖 {m.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                );
+              })()}
+
               {/* Webhooks */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
