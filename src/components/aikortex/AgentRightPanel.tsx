@@ -128,6 +128,14 @@ export interface AgentConfig {
   apiConfig: ApiConfig;
 }
 
+interface PresetData {
+  description?: string;
+  objective?: string;
+  instructions?: string;
+  toneOfVoice?: string;
+  greetingMessage?: string;
+}
+
 interface Props {
   agent: { name: string; avatar: string };
   agentType: AgentType;
@@ -141,6 +149,8 @@ interface Props {
   isSaving?: boolean;
   /** Storage key prefix for persisting config across reloads */
   storagePrefix?: string;
+  /** Pre-fill data from template presets */
+  presetData?: PresetData;
 }
 
 interface KnowledgeFileLocal {
