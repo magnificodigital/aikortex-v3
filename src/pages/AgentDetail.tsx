@@ -197,11 +197,8 @@ const AgentDetail = () => {
 
   // Setup mode ALWAYS uses free OpenRouter models
   const setupInitialMessage = useMemo(() => {
-    if (!hasAnyLLMKey && !keysLoading) {
-      return `⚠️ **Primeiro passo obrigatório:** Configure sua chave de API na aba **Integrações** no painel à direita para começar a construir seu agente.`;
-    }
     return `Olá! 👋 Sou o assistente de configuração do **${agent.name}**. O que gostaria de configurar?`;
-  }, [hasAnyLLMKey, keysLoading, agent.name]);
+  }, [agent.name]);
 
   const setupChat = useAgentChat(
     [{ role: "agent", text: setupInitialMessage }],
