@@ -122,7 +122,6 @@ const AgentDetail = () => {
   const agent = resolvedAgent;
 
   // Extract preset data from navigation state (when coming from template selection)
-  const navState = location.state as any;
   const presetData = useMemo(() => {
     if (!navState?.fromTemplate || !navState?.preset) return undefined;
     const p = navState.preset;
