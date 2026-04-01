@@ -103,10 +103,25 @@ const AgentDetail = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { agentId } = useParams();
-  const agent = AGENTS_MAP[agentId || "sdr-1"] || AGENTS_MAP["sdr-1"];
+  // Derive agent type from navigation state first, then AGENTS_MAP, then fallback to Custom
+  const navState = location.state as any;
+  const resolvedAgent = useMemo(() => {
+    if (agentId && AGENTS_MAP[agentId]) return AGENTS_MAP[agentId];
+    // If coming from template, build agent info from state
+    if (navState?.fromTemplate && navState?.preset) {
+      const p = navState.preset;
+      return {
+        name: p.agentName || "Agente Personalizado",
+        avatar: avatar1,
+        model: "gemini-2.5-flash",
+        agentType: (p.agentType || "Custom") as AgentType,
+      };
+    }
+    return AGENTS_MAP["custom-1"];
+  }, [agentId, navState]);
+  const agent = resolvedAgent;
 
   // Extract preset data from navigation state (when coming from template selection)
-  const navState = location.state as any;
   const presetData = useMemo(() => {
     if (!navState?.fromTemplate || !navState?.preset) return undefined;
     const p = navState.preset;
@@ -147,7 +162,7 @@ const AgentDetail = () => {
       const result = await saveAgent({
         id: agentId && !AGENTS_MAP[agentId] ? agentId : undefined,
         name: config.name,
-        agent_type: config.agentType,
+        agent_type: config.agentType || agent.agentType,
         description: config.description,
         avatar_url: config.avatarUrl,
         model: config.model,
