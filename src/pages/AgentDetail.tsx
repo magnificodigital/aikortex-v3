@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ArrowLeft, Send, Paperclip, HelpCircle, AlertTriangle, KeyRound, Bot, TestTube } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -101,8 +101,23 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
 
 const AgentDetail = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { agentId } = useParams();
   const agent = AGENTS_MAP[agentId || "sdr-1"] || AGENTS_MAP["sdr-1"];
+
+  // Extract preset data from navigation state (when coming from template selection)
+  const navState = location.state as any;
+  const presetData = useMemo(() => {
+    if (!navState?.fromTemplate || !navState?.preset) return undefined;
+    const p = navState.preset;
+    return {
+      description: p.context?.targetAudienceDescription || p.agentObjective || "",
+      objective: p.context?.painPoints || p.agentObjective || "",
+      instructions: "",
+      toneOfVoice: p.context?.toneOfVoice || "",
+      greetingMessage: p.context?.greetingMessage || "",
+    };
+  }, [navState]);
 
   const storagePrefix = `agent-detail-${agentId || "sdr-1"}`;
 
@@ -178,13 +193,7 @@ const AgentDetail = () => {
     }
   }, [rightPanelTab, refetchKeys]);
 
-  // Auto-redirect to Integrações tab if no API key is configured at all
-  useEffect(() => {
-    if (keysLoading) return;
-    if (!hasAnyLLMKey) {
-      setRightPanelTab("connectors");
-    }
-  }, [hasAnyLLMKey, keysLoading]);
+  // Don't auto-redirect to Integrações — setup mode works without API keys
 
   useEffect(() => {
     if (chatMode !== "test" || keysLoading) return;
@@ -203,11 +212,8 @@ const AgentDetail = () => {
 
   // Setup mode ALWAYS uses free OpenRouter models
   const setupInitialMessage = useMemo(() => {
-    if (!hasAnyLLMKey && !keysLoading) {
-      return `⚠️ **Primeiro passo obrigatório:** Configure sua chave de API na aba **Integrações** no painel à direita para começar a construir seu agente.`;
-    }
     return `Olá! 👋 Sou o assistente de configuração do **${agent.name}**. O que gostaria de configurar?`;
-  }, [hasAnyLLMKey, keysLoading, agent.name]);
+  }, [agent.name]);
 
   const setupChat = useAgentChat(
     [{ role: "agent", text: setupInitialMessage }],
@@ -289,7 +295,8 @@ const AgentDetail = () => {
   const activeChat = chatMode === "setup" ? setupChat : testChat;
   const { messages, sendMessage, isStreaming } = activeChat;
 
-  const canSend = chatMode === "setup" ? (!keysLoading && hasAnyLLMKey) : (!keysLoading && hasApiKey);
+  // Setup mode uses free gateway — always allowed. Test mode requires user API key.
+  const canSend = chatMode === "setup" ? true : (!keysLoading && hasApiKey);
 
   const handleSend = () => {
     if (!input.trim() || isStreaming || !canSend) return;
@@ -382,14 +389,14 @@ const AgentDetail = () => {
           </div>
         </ScrollArea>
 
-        {/* API Key Warning — required for both modes */}
-        {!keysLoading && !hasAnyLLMKey && (
+        {/* API Key Info — only in setup mode when no keys configured */}
+        {chatMode === "setup" && !keysLoading && !hasAnyLLMKey && (
           <div className="px-4 pt-2">
-            <Alert className="border-destructive/30 bg-destructive/5">
-              <KeyRound className="h-4 w-4 text-destructive" />
+            <Alert className="border-primary/30 bg-primary/5">
+              <KeyRound className="h-4 w-4 text-primary" />
               <AlertDescription className="text-xs text-muted-foreground flex items-center justify-between">
                 <span>
-                  <strong className="text-foreground">Passo obrigatório:</strong> Configure pelo menos uma chave de API (OpenAI, Anthropic ou Gemini) na aba <strong className="text-foreground">Integrações</strong> para começar.
+                  Configure uma chave de API na aba <strong className="text-foreground">Integrações</strong> quando quiser <strong className="text-foreground">testar</strong> o agente com seu próprio modelo.
                 </span>
                 <Button
                   variant="outline"
@@ -397,7 +404,7 @@ const AgentDetail = () => {
                   className="text-xs gap-1 ml-3 shrink-0"
                   onClick={() => setRightPanelTab("connectors")}
                 >
-                  <KeyRound className="w-3 h-3" /> Configurar API
+                  <KeyRound className="w-3 h-3" /> Integrações
                 </Button>
               </AlertDescription>
             </Alert>
@@ -434,13 +441,11 @@ const AgentDetail = () => {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={
-                !hasAnyLLMKey && !keysLoading
-                  ? "🔑 Configure sua chave de API na aba Integrações para começar..."
-                  : chatMode === "test" && !hasApiKey && !keysLoading
-                    ? "⚠️ Configure sua chave de API na aba Integrações para testar..."
-                    : chatMode === "setup"
-                      ? "Pergunte sobre a configuração do agente..."
-                      : "Envie uma mensagem para testar o agente..."
+                chatMode === "test" && !hasApiKey && !keysLoading
+                  ? "⚠️ Configure sua chave de API na aba Integrações para testar..."
+                  : chatMode === "setup"
+                    ? "Pergunte sobre a configuração do agente..."
+                    : "Envie uma mensagem para testar o agente..."
               }
               className="border-0 bg-transparent text-sm min-h-[80px] max-h-[160px] resize-none focus-visible:ring-0 focus-visible:ring-offset-0 p-4"
               disabled={!canSend}
@@ -490,7 +495,7 @@ const AgentDetail = () => {
       </div>
 
       {/* RIGHT — Panel */}
-      <AgentRightPanel agent={agent} agentType={agent.agentType} agentModel={agentModel} onModelChange={setAgentModel} activeTab={rightPanelTab} onTabChange={setRightPanelTab} onApiKeysChanged={refetchKeys} onConfigChange={handleConfigChange} onSaveAgent={handleSaveAgent} isSaving={isSaving} storagePrefix={storagePrefix} />
+      <AgentRightPanel agent={agent} agentType={agent.agentType} agentModel={agentModel} onModelChange={setAgentModel} activeTab={rightPanelTab} onTabChange={setRightPanelTab} onApiKeysChanged={refetchKeys} onConfigChange={handleConfigChange} onSaveAgent={handleSaveAgent} isSaving={isSaving} storagePrefix={storagePrefix} presetData={presetData} />
     </div>
   );
 };
