@@ -178,13 +178,7 @@ const AgentDetail = () => {
     }
   }, [rightPanelTab, refetchKeys]);
 
-  // Auto-redirect to Integrações tab if no API key is configured at all
-  useEffect(() => {
-    if (keysLoading) return;
-    if (!hasAnyLLMKey) {
-      setRightPanelTab("connectors");
-    }
-  }, [hasAnyLLMKey, keysLoading]);
+  // Don't auto-redirect to Integrações — setup mode works without API keys
 
   useEffect(() => {
     if (chatMode !== "test" || keysLoading) return;
