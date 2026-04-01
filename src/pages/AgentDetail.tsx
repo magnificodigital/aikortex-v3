@@ -272,10 +272,11 @@ const AgentDetail = () => {
 
   /* ── Wizard State ── */
   const isNewAgent = isTemplate || navState?.fromTemplate;
+  const hasInitialPrompt = !!navState?.initialPrompt;
   const [wizardStep, setWizardStep] = useState<"discover" | "structure" | "build" | "done">(
     isNewAgent ? "discover" : "done"
   );
-  const [wizardPrompt, setWizardPrompt] = useState("");
+  const [wizardPrompt, setWizardPrompt] = useState(navState?.initialPrompt || "");
   const [wizardMessages, setWizardMessages] = useState<WizardChatMessage[]>([]);
   const [structuredConfig, setStructuredConfig] = useState<StructuredAgentConfig | null>(null);
   const [isStructuring, setIsStructuring] = useState(false);
