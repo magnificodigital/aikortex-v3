@@ -272,10 +272,11 @@ const AgentDetail = () => {
 
   /* ── Wizard State ── */
   const isNewAgent = isTemplate || navState?.fromTemplate;
+  const hasInitialPrompt = !!navState?.initialPrompt;
   const [wizardStep, setWizardStep] = useState<"discover" | "structure" | "build" | "done">(
     isNewAgent ? "discover" : "done"
   );
-  const [wizardPrompt, setWizardPrompt] = useState("");
+  const [wizardPrompt, setWizardPrompt] = useState(navState?.initialPrompt || "");
   const [wizardMessages, setWizardMessages] = useState<WizardChatMessage[]>([]);
   const [structuredConfig, setStructuredConfig] = useState<StructuredAgentConfig | null>(null);
   const [isStructuring, setIsStructuring] = useState(false);
@@ -297,6 +298,18 @@ const AgentDetail = () => {
       });
     }
   }, [loadedAgent.model, isTemplate, storagePrefix]);
+
+  /* ── Auto-trigger structuring from Home prompt ── */
+  const autoTriggered = useRef(false);
+  useEffect(() => {
+    if (autoTriggered.current || !hasInitialPrompt || !isNewAgent) return;
+    autoTriggered.current = true;
+    // Auto-structure: user already described what they want from Home
+    setTimeout(() => {
+      setWizardMessages([{ role: "user", content: navState.initialPrompt }]);
+      handleStructure(navState.initialPrompt);
+    }, 300);
+  }, [hasInitialPrompt, isNewAgent]);
 
   const handleConfigChange = useCallback((config: AgentConfig) => {
     setAgentConfig(config);
@@ -715,27 +728,18 @@ const AgentDetail = () => {
                     Conte o que seu agente {initialAgentType !== "Custom" ? initialAgentType : ""} deve fazer. A IA vai estruturar tudo automaticamente.
                   </p>
 
-                  <div className="w-full max-w-[340px] space-y-3">
-                    <textarea
-                      value={wizardPrompt}
-                      onChange={(e) => setWizardPrompt(e.target.value)}
-                      placeholder={`Ex: ${SUGGESTIONS_BY_TYPE[initialAgentType]?.[0] || "Descreva o que o agente deve fazer..."}`}
-                      className="w-full bg-card/50 border border-border rounded-lg outline-none resize-none text-xs text-foreground placeholder:text-muted-foreground px-3 py-2.5 min-h-[100px] focus:border-primary/30 transition-colors"
-                    />
-                    <Button onClick={handleDiscover} disabled={wizardPrompt.length < 10} className="w-full gap-2 h-9 text-xs rounded-lg">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      Estruturar com IA
-                    </Button>
-                  </div>
-
                   {/* Quick suggestions */}
-                  <div className="mt-6 w-full max-w-[340px]">
-                    <p className="text-[10px] text-muted-foreground mb-2 text-center">ou comece com uma ideia:</p>
+                  <div className="w-full max-w-[380px]">
+                    <p className="text-[10px] text-muted-foreground mb-2 text-center">Comece com uma ideia:</p>
                     <div className="space-y-1.5">
                       {(SUGGESTIONS_BY_TYPE[initialAgentType] || SUGGESTIONS_BY_TYPE.Custom).map((s) => (
                         <button
                           key={s}
-                          onClick={() => setWizardPrompt(s)}
+                          onClick={() => {
+                            setWizardPrompt(s);
+                            setWizardMessages(prev => [...prev, { role: "user", content: s }]);
+                            handleStructure(s);
+                          }}
                           className="w-full text-left text-[11px] px-3 py-2 rounded-lg border border-border hover:border-primary/30 hover:bg-accent/20 text-muted-foreground hover:text-foreground transition-all"
                         >
                           {s}
@@ -954,28 +958,45 @@ const AgentDetail = () => {
               )}
             </div>
 
-            {/* Input - patch mode after wizard done */}
+            {/* Input - discover + patch mode */}
             <div className="p-3 border-t border-border">
-              <div className={`rounded-xl border border-border bg-card/50 p-1 transition-colors ${wizardStep === "done" ? "focus-within:border-primary/30" : "opacity-60"}`}>
+              <div className={`rounded-xl border border-border bg-card/50 p-1 transition-colors focus-within:border-primary/30`}>
                 <textarea
-                  value={patchInput}
-                  onChange={(e) => setPatchInput(e.target.value)}
+                  value={wizardStep === "discover" ? wizardPrompt : patchInput}
+                  onChange={(e) => {
+                    if (wizardStep === "discover") setWizardPrompt(e.target.value);
+                    else setPatchInput(e.target.value);
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
-                      handlePatchSend();
+                      if (wizardStep === "discover") handleDiscover();
+                      else if (wizardStep === "done") handlePatchSend();
                     }
                   }}
-                  placeholder={wizardStep === "done" ? "Peça alterações ao agente..." : "Complete as etapas acima para começar..."}
+                  placeholder={
+                    wizardStep === "discover"
+                      ? `Descreva o que seu agente ${initialAgentType !== "Custom" ? initialAgentType + " " : ""}deve fazer...`
+                      : wizardStep === "done"
+                      ? "Peça alterações ao agente..."
+                      : "Aguarde a etapa atual finalizar..."
+                  }
                   rows={1}
-                  disabled={wizardStep !== "done"}
+                  disabled={wizardStep !== "done" && wizardStep !== "discover"}
                   className="w-full bg-transparent border-none outline-none resize-none text-sm text-foreground placeholder:text-muted-foreground px-3 py-2 min-h-[36px] max-h-[120px] disabled:cursor-not-allowed"
                 />
                 <div className="flex items-center justify-end px-2 pb-1">
                   <Button
                     size="icon"
-                    onClick={handlePatchSend}
-                    disabled={!patchInput.trim() || isPatchLoading || wizardStep !== "done"}
+                    onClick={() => {
+                      if (wizardStep === "discover") handleDiscover();
+                      else handlePatchSend();
+                    }}
+                    disabled={
+                      wizardStep === "discover"
+                        ? wizardPrompt.length < 10 || isStructuring
+                        : !patchInput.trim() || isPatchLoading || wizardStep !== "done"
+                    }
                     className="h-8 w-8 rounded-full"
                   >
                     <ArrowUp className="w-3.5 h-3.5" />
