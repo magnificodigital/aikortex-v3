@@ -289,7 +289,8 @@ const AgentDetail = () => {
   const activeChat = chatMode === "setup" ? setupChat : testChat;
   const { messages, sendMessage, isStreaming } = activeChat;
 
-  const canSend = chatMode === "setup" ? (!keysLoading && hasAnyLLMKey) : (!keysLoading && hasApiKey);
+  // Setup mode uses free gateway — always allowed. Test mode requires user API key.
+  const canSend = chatMode === "setup" ? true : (!keysLoading && hasApiKey);
 
   const handleSend = () => {
     if (!input.trim() || isStreaming || !canSend) return;
