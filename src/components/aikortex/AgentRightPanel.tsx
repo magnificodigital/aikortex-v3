@@ -742,58 +742,6 @@ const AgentRightPanel = ({
           </ScrollArea>
         </TabsContent>
 
-                <p className="text-sm text-muted-foreground mt-1">Fontes de dados para alimentar o agente.</p>
-              </div>
-              <div
-                className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
-                onClick={() => fileInputRef.current?.click()}
-                onDragOver={(e) => { e.preventDefault(); }}
-                onDrop={(e) => { e.preventDefault(); if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); }}
-              >
-                <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-                <p className="text-sm font-medium text-foreground">Arraste arquivos ou clique para enviar</p>
-                <p className="text-xs text-muted-foreground mt-1">PDFs, documentos, FAQ</p>
-                <input ref={fileInputRef} type="file" multiple accept=".pdf,.doc,.docx,.txt,.md,.csv" className="hidden"
-                  onChange={(e) => e.target.files && handleFiles(e.target.files)} />
-              </div>
-              {knowledgeFiles.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase">Arquivos enviados</p>
-                  {knowledgeFiles.map((f) => (
-                    <div key={f.id} className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2">
-                      {getFileIcon(f.type)}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-foreground truncate">{f.name}</p>
-                        {f.size > 0 && <p className="text-[11px] text-muted-foreground">{formatSize(f.size)}</p>}
-                      </div>
-                      <button onClick={() => setKnowledgeFiles(prev => prev.filter(x => x.id !== f.id))} className="text-muted-foreground hover:text-destructive">
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className="space-y-3">
-                <p className="text-xs font-semibold text-muted-foreground uppercase">URLs</p>
-                <div className="flex gap-2">
-                  <div className="flex-1 relative">
-                    <Link2 className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <Input value={urlInput} onChange={(e) => setUrlInput(e.target.value)} placeholder="https://exemplo.com/faq" className="pl-9"
-                      onKeyDown={(e) => e.key === "Enter" && addUrl()} />
-                  </div>
-                  <Button size="sm" onClick={addUrl} disabled={!urlInput.trim()} className="gap-1 shrink-0"><Plus className="w-4 h-4" /></Button>
-                </div>
-                {urls.map((url, i) => (
-                  <div key={i} className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2">
-                    <Globe className="w-4 h-4 text-primary shrink-0" />
-                    <p className="text-sm text-foreground truncate flex-1">{url}</p>
-                    <button onClick={() => setUrls(urls.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive"><X className="w-4 h-4" /></button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </ScrollArea>
-        </TabsContent>
 
         {/* ── Canais (top-level tab) ── */}
         <TabsContent value="channels" className="flex-1 mt-0 min-h-0 overflow-hidden">
