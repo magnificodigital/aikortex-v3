@@ -910,12 +910,8 @@ const AgentRightPanel = ({
         </TabsContent>
       </Tabs>
 
-      {/* Save button footer */}
-      <div className="border-t border-border px-4 py-3 shrink-0 bg-background">
-        <Button className="w-full gap-2 h-10" onClick={() => onSaveAgent?.(buildSavePayload())} disabled={!agentName.trim() || isSaving}>
-          {isSaving ? "Salvando..." : "💾 Salvar Agente"}
-        </Button>
-      </div>
+
+
 
       {/* Integration Dialog */}
       <Dialog open={!!connectorDialog} onOpenChange={(open) => { if (!open) { setConnectorDialog(null); setKeyInput(""); } }}>
