@@ -215,7 +215,7 @@ const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
         </div>
       </div>
 
-      {showConfig && <AppConfigPanel channel={channel} onChannelChange={setChannel} />}
+      <AppConfigPanel channel={channel} onChannelChange={setChannel} open={showConfig} onClose={() => setShowConfig(false)} />
     </div>
   );
 };
