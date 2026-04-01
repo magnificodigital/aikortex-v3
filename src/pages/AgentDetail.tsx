@@ -299,6 +299,18 @@ const AgentDetail = () => {
     }
   }, [loadedAgent.model, isTemplate, storagePrefix]);
 
+  /* ── Auto-trigger structuring from Home prompt ── */
+  const autoTriggered = useRef(false);
+  useEffect(() => {
+    if (autoTriggered.current || !hasInitialPrompt || !isNewAgent) return;
+    autoTriggered.current = true;
+    // Auto-structure: user already described what they want from Home
+    setTimeout(() => {
+      setWizardMessages([{ role: "user", content: navState.initialPrompt }]);
+      handleStructure(navState.initialPrompt);
+    }, 300);
+  }, [hasInitialPrompt, isNewAgent]);
+
   const handleConfigChange = useCallback((config: AgentConfig) => {
     setAgentConfig(config);
   }, []);
