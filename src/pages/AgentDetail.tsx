@@ -111,57 +111,7 @@ Quando todas as configurações estiverem completas, sugira mudar para o modo **
 IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
 };
 
-// ── Wizard types & constants ──
-type WizardStep = "describe" | "customize" | "calibrate" | "create";
-
-interface WizardStructuredConfig {
-  name: string;
-  agentType: AgentType;
-  description: string;
-  objective: string;
-  toneOfVoice: string;
-  language: string;
-  greetingMessage: string;
-  quickReplies: string[];
-  instructions: string;
-  stages: Array<{ id: string; name: string; description: string; example: string }>;
-}
-
-interface CalibrationResult {
-  round: number;
-  userMessage: string;
-  agentResponse: string;
-  passed: boolean;
-}
-
-const WIZARD_STEP_META = [
-  { key: "describe" as const, label: "Descrever", icon: MessageSquare },
-  { key: "customize" as const, label: "Personalizar", icon: Settings2 },
-  { key: "calibrate" as const, label: "Calibrar", icon: FlaskConical },
-  { key: "create" as const, label: "Criar", icon: Rocket },
-];
-
-const PROMPT_SUGGESTIONS: Record<string, string[]> = {
-  SDR: [
-    "Crie um agente SDR que qualifique leads por WhatsApp e agenda reuniões.",
-    "Quero um assistente que responda leads em segundos e aplique critérios BANT.",
-  ],
-  BDR: [
-    "Crie um agente de prospecção outbound que pesquisa empresas e gera oportunidades.",
-    "Quero um BDR que aborde empresas-alvo com mensagens personalizadas.",
-  ],
-  SAC: [
-    "Crie um agente de suporte que resolva problemas e colete satisfação.",
-    "Quero um SAC 24/7 que responda dúvidas e escale quando necessário.",
-  ],
-  CS: [
-    "Crie um agente de Customer Success para onboarding e retenção.",
-    "Quero um CS que acompanhe clientes e previna churn.",
-  ],
-  Custom: [
-    "Descreva livremente o que seu agente deve fazer...",
-  ],
-};
+// ── Loaded agent state ──
 
 // ── Loaded agent state ──
 interface LoadedAgent {
