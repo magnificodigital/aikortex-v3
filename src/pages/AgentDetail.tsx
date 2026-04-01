@@ -182,9 +182,14 @@ const AgentDetail = () => {
     if (!navState?.fromTemplate || !agentId) return;
     const prefix = `agent-detail-${agentId}`;
     try {
+      // Clear all config AND chat history for new agents from templates
       ["name","desc","objective","instructions","toneOfVoice","greetingMessage","files","urls","channels","apiConfig","avatar"].forEach(k =>
         localStorage.removeItem(`${prefix}-${k}`)
       );
+      // Clear persisted chat messages so history starts empty
+      localStorage.removeItem(`${prefix}-setup-messages`);
+      localStorage.removeItem(`${prefix}-test-messages`);
+      localStorage.removeItem(`${prefix}-chatMode`);
     } catch {}
   }, [navState?.fromTemplate, agentId]);
 
