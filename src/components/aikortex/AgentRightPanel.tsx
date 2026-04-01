@@ -548,8 +548,8 @@ const AgentRightPanel = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col min-w-0">
-      <Tabs value={rightTab} onValueChange={handleTabChange} className="flex flex-col h-full">
+    <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+      <Tabs value={rightTab} onValueChange={handleTabChange} className="flex flex-col flex-1 min-h-0">
         <div className="border-b border-border px-4">
           <TabsList className="bg-transparent h-11 gap-0 p-0">
             {[
@@ -570,8 +570,8 @@ const AgentRightPanel = ({
         </div>
 
         {/* ── Integrações ── */}
-        <TabsContent value="connectors" className="flex-1 mt-0 overflow-hidden">
-          <ScrollArea className="h-full">
+        <TabsContent value="connectors" className="flex-1 mt-0 min-h-0 overflow-hidden">
+          <ScrollArea className="h-full max-h-[calc(100vh-110px)]">
             <div className="p-6 space-y-6">
               <div>
                 <h2 className="text-lg font-bold text-foreground">Integrações</h2>
@@ -650,8 +650,8 @@ const AgentRightPanel = ({
         </TabsContent>
 
         {/* ── Arquivos ── */}
-        <TabsContent value="files" className="flex-1 mt-0 overflow-hidden">
-          <ScrollArea className="h-full">
+        <TabsContent value="files" className="flex-1 mt-0 min-h-0 overflow-hidden">
+          <ScrollArea className="h-full max-h-[calc(100vh-110px)]">
             <div className="p-6 space-y-6">
               <div>
                 <h2 className="text-lg font-bold text-foreground">Conhecimento</h2>
@@ -719,8 +719,8 @@ const AgentRightPanel = ({
         </TabsContent>
 
         {/* ── Agente (Settings com sidebar) ── */}
-        <TabsContent value="agent" className="flex-1 mt-0 overflow-hidden">
-          <div className="flex h-full">
+        <TabsContent value="agent" className="flex-1 mt-0 min-h-0 overflow-hidden">
+          <div className="flex h-full max-h-[calc(100vh-110px)]">
             {/* Sidebar de navegação */}
             <div className="w-48 border-r border-border p-4 space-y-4 shrink-0">
               {SETTINGS_NAV.map((section) => (
@@ -1002,8 +1002,8 @@ const AgentRightPanel = ({
         </TabsContent>
 
         {/* ── Canais (tab principal) ── */}
-        <TabsContent value="settings" className="flex-1 mt-0 overflow-hidden">
-          <ScrollArea className="h-full">
+        <TabsContent value="settings" className="flex-1 mt-0 min-h-0 overflow-hidden">
+          <ScrollArea className="h-full max-h-[calc(100vh-110px)]">
             <div className="p-6 max-w-lg space-y-6">
               <div>
                 <h2 className="text-lg font-bold text-foreground">Canais</h2>
