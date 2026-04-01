@@ -1,8 +1,8 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import {
   Phone, Bot, Send, BarChart3, Settings, Users, Calendar,
   MessageSquare, Search, Globe, Zap, Monitor, Smartphone,
-  FileCode, Database, Layout, Code2, ArrowRight,
+  FileCode, Database, Layout, Code2, ArrowRight, Loader2,
 } from "lucide-react";
 import { useAppBuilder, type AppState } from "@/contexts/AppBuilderContext";
 import { Badge } from "@/components/ui/badge";
@@ -50,8 +50,6 @@ function buildConversationEngine(appState: AppState | null, fallbackName: string
   const greeting = screenData?.greeting || agentCfg?.intro_message || fallbackIntro || `Olá! 👋 Sou o ${botName}. Como posso ajudar?`;
   const quickReplies: string[] = (screenData?.quick_replies || agentCfg?.quick_replies || []).map(formatConversationLabel);
   const stages: string[] = screenData?.stages || [];
-
-  // Build conversation flow from appState
   const conversationFlow: { trigger: string; response: string; suggestions?: string[] }[] =
     screenData?.conversation_flow || [];
 
@@ -70,15 +68,11 @@ function buildConversationEngine(appState: AppState | null, fallbackName: string
 
   const getResponse = (userMsg: string): { text: string; suggestions?: string[] } => {
     const lower = userMsg.toLowerCase().trim();
-
-    // Check conversation flow from appState first
     for (const flow of conversationFlow) {
       if (lower.includes(flow.trigger.toLowerCase())) {
         return { text: flow.response, suggestions: flow.suggestions };
       }
     }
-
-    // Greetings
     const greetings: Record<string, string> = {
       "oi": `Olá! 😊 Sou o ${botName}. Como posso te ajudar?`,
       "olá": `Oi! 👋 Que bom te ver aqui. Em que posso ajudar?`,
@@ -91,14 +85,11 @@ function buildConversationEngine(appState: AppState | null, fallbackName: string
       "sim": `Ótimo! Vamos lá então. O que você precisa?`,
       "não": `Tudo bem! Se mudar de ideia, estou por aqui. 😊`,
     };
-
     for (const [key, text] of Object.entries(greetings)) {
       if (lower.includes(key)) {
         return { text, suggestions: quickReplies.length > 0 ? quickReplies.slice(0, 3) : undefined };
       }
     }
-
-    // Feature-specific follow-ups
     for (const [feature, followUp] of Object.entries(featureFollowUps)) {
       if (lower.includes(feature)) {
         return {
@@ -107,17 +98,13 @@ function buildConversationEngine(appState: AppState | null, fallbackName: string
         };
       }
     }
-
-    // Default contextual responses
     const defaults = [
       { text: `Entendi! Me conta um pouco mais para eu te direcionar melhor. 🔍`, suggestions: quickReplies.slice(0, 3) },
       { text: `Perfeito! Para te atender melhor, qual dessas opções faz mais sentido pra você?`, suggestions: quickReplies.slice(0, 3) },
       { text: `Claro! Esse é um dos meus pontos fortes 💪 O que você precisa resolver?`, suggestions: ["Tenho uma dúvida", "Quero começar"] },
       { text: `Sem problemas! Vamos resolver isso juntos. O que seria mais útil agora?`, suggestions: quickReplies.slice(0, 2) },
     ];
-
-    const idx = Math.floor(Math.random() * defaults.length);
-    return defaults[idx];
+    return defaults[Math.floor(Math.random() * defaults.length)];
   };
 
   return { botName, greeting, quickReplies, stages, getResponse };
@@ -127,9 +114,17 @@ function buildConversationEngine(appState: AppState | null, fallbackName: string
 
 const WhatsAppPreview = () => {
   const { files, appName, isGenerating, tables, wizardData, wizardConfig, wizardStep, structuredConfig, appState } = useAppBuilder();
+
+  // FIX: showContent nunca colapsa — se wizard foi concluído OU há conteúdo, sempre mostrar
   const hasRenderableState = !!appState?.runtime?.render_ready;
   const hasContent = files.length > 0 || !!appState;
-  const isConfiguring = !hasRenderableState && wizardStep !== "done";
+  const wizardDone = wizardStep === "done";
+  // FIX: isConfiguring agora inclui o estado de "wizard concluído mas appState ainda não chegou"
+  const isConfiguring = !hasRenderableState && !wizardDone;
+  const isWaitingForState = wizardDone && !hasRenderableState && !isGenerating;
+  // FIX: showContent = true sempre que wizard foi iniciado (structure ou além)
+  const wizardStarted = wizardStep !== "discover" || hasContent;
+  const showContent = hasRenderableState || hasContent || wizardStarted;
 
   const effectiveName = appState?.app_meta?.name || wizardData.appName || wizardConfig?.appName || appName;
   const effectiveIntro = appState?.agent_config?.intro_message || wizardData.introMessage || wizardConfig?.introMessage || "";
@@ -143,10 +138,15 @@ const WhatsAppPreview = () => {
   const [chatMessages, setChatMessages] = useState<{ role: "user" | "bot"; text: string; time: string; suggestions?: string[] }[]>([]);
   const [testInput, setTestInput] = useState("");
   const [botTyping, setBotTyping] = useState(false);
+  // FIX: controle estável para evitar reset desnecessário do chat
+  const prevBotName = useRef(engine.botName);
 
   useEffect(() => {
-    setChatMessages([]);
-  }, [appState?.app_meta?.name, appState?.agent_config?.intro_message, engine.botName]);
+    if (prevBotName.current !== engine.botName) {
+      prevBotName.current = engine.botName;
+      setChatMessages([]);
+    }
+  }, [engine.botName]);
 
   const now = () => {
     const d = new Date();
@@ -171,7 +171,15 @@ const WhatsAppPreview = () => {
     : [];
   const headerTitle = appState?.preview?.title || effectiveName || engine.botName;
   const headerStatus = appState?.preview?.subtitle || "online";
-  const showContent = hasRenderableState || hasContent || isConfiguring;
+
+  // FIX: status badge dinâmico
+  const statusBadge = (() => {
+    if (isGenerating) return "gerando...";
+    if (isWaitingForState) return "finalizando...";
+    if (hasRenderableState) return `${appState!.files?.length || 0} arquivo(s)${appState!.flows?.length ? ` • ${appState!.flows.length} fluxo(s)` : ""}${appState!.database?.tables?.length ? ` • ${appState!.database.tables.length} tabela(s)` : ""}`;
+    if (hasContent) return `${files.length} arquivo(s)${tables.length > 0 ? ` • ${tables.length} tabelas` : ""}`;
+    return "Configurando...";
+  })();
 
   return (
     <div className="flex-1 flex items-center justify-center bg-muted/5 p-4 gap-6">
@@ -190,7 +198,9 @@ const WhatsAppPreview = () => {
             </div>
             <div className="flex-1">
               <p className="text-sm font-semibold text-white">{headerTitle}</p>
-              <p className="text-[10px] text-white/60">{isGenerating || botTyping ? "digitando..." : headerStatus}</p>
+              <p className="text-[10px] text-white/60">
+                {isGenerating || botTyping ? "digitando..." : headerStatus}
+              </p>
             </div>
             <Phone className="w-4 h-4 text-white/70" />
           </div>
@@ -199,6 +209,15 @@ const WhatsAppPreview = () => {
           <div className="bg-[#ece5dd] dark:bg-[#0b141a] p-4 space-y-3 min-h-[380px] max-h-[440px] overflow-y-auto">
             {showContent ? (
               <>
+                {/* FIX: estado de aguardando appState — mostra loader mas mantém o preview visível */}
+                {isWaitingForState && (
+                  <div className="flex justify-center animate-in fade-in duration-300">
+                    <span className="px-3 py-1.5 rounded-full bg-white/80 dark:bg-[#202c33]/80 text-[9px] text-muted-foreground border border-border/30 shadow-sm flex items-center gap-1.5">
+                      <Loader2 className="w-3 h-3 animate-spin" /> Finalizando app...
+                    </span>
+                  </div>
+                )}
+
                 {previewMessages.length > 0 ? (
                   previewMessages.map((message: any, index: number) => {
                     const isUser = message.role === "user";
@@ -224,7 +243,7 @@ const WhatsAppPreview = () => {
                   </div>
                 )}
 
-                {/* Tone badge during config */}
+                {/* Tone badge durante config */}
                 {isConfiguring && effectiveTone && (
                   <div className="flex justify-center animate-in fade-in duration-300">
                     <span className="px-2.5 py-1 rounded-full bg-white/80 dark:bg-[#202c33]/80 text-[9px] text-muted-foreground border border-border/30 shadow-sm">
@@ -233,7 +252,7 @@ const WhatsAppPreview = () => {
                   </div>
                 )}
 
-                {/* Quick reply buttons */}
+                {/* Quick replies */}
                 {chatMessages.length === 0 && engine.quickReplies.length > 0 && (
                   <div className="flex gap-1.5 flex-wrap animate-in fade-in duration-300 delay-300">
                     {engine.quickReplies.map((opt) => (
@@ -292,22 +311,15 @@ const WhatsAppPreview = () => {
               </>
             ) : (
               <div className="flex items-center justify-center h-full min-h-[300px] text-xs text-muted-foreground">
-                {isGenerating ? (
-                  <div className="flex flex-col items-center gap-3">
-                    <Zap className="w-6 h-6 animate-pulse text-green-500" />
-                    <span>Gerando preview do WhatsApp App...</span>
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    <Smartphone className="w-8 h-8 mx-auto mb-2 text-muted-foreground/30" />
-                    <p>Envie uma mensagem no Studio<br/>para ver o preview do seu bot aqui</p>
-                  </div>
-                )}
+                <div className="text-center">
+                  <Smartphone className="w-8 h-8 mx-auto mb-2 text-muted-foreground/30" />
+                  <p>Descreva seu app no Studio<br />para ver o preview aqui</p>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Input bar */}
+          {/* Input bar — FIX: habilitado assim que wizard foi concluído, mesmo antes do appState */}
           <div className="bg-[#f0f0f0] dark:bg-[#202c33] px-3 py-2.5 flex items-center gap-2 border-t border-border/30">
             <input
               type="text"
@@ -315,11 +327,12 @@ const WhatsAppPreview = () => {
               onChange={e => setTestInput(e.target.value)}
               onKeyDown={e => e.key === "Enter" && handleSendTest()}
               placeholder={appState?.preview?.screen_data?.input_placeholder || "Teste seu agente..."}
-              className="flex-1 bg-white dark:bg-[#2a3942] rounded-full px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground outline-none"
+              disabled={!wizardDone}
+              className="flex-1 bg-white dark:bg-[#2a3942] rounded-full px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground outline-none disabled:opacity-50"
             />
             <button
               onClick={() => handleSendTest()}
-              disabled={!testInput.trim() || botTyping}
+              disabled={!testInput.trim() || botTyping || !wizardDone}
               className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center shadow-sm hover:bg-green-700 transition-colors disabled:opacity-50"
             >
               <Send className="w-3.5 h-3.5 text-white" />
@@ -331,24 +344,19 @@ const WhatsAppPreview = () => {
           </div>
         </div>
 
-        {/* Bottom info badge */}
-        {(hasContent || isConfiguring) && (
-          <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-card border border-border rounded-full px-3 py-1 shadow-lg">
+        {/* Status badge inferior — FIX: dinâmico e sem travar em "Configurando..." */}
+        {wizardStarted && (
+          <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-card border border-border rounded-full px-3 py-1 shadow-lg whitespace-nowrap">
             <span className="text-[10px] text-muted-foreground flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-              {appState
-                ? `${appState.files?.length || 0} arquivo(s)${appState.flows?.length ? ` • ${appState.flows.length} fluxo(s)` : ""}${appState.database?.tables?.length ? ` • ${appState.database.tables.length} tabela(s)` : ""}`
-                : hasContent
-                  ? `${files.length} arquivo(s)${tables.length > 0 ? ` • ${tables.length} tabelas` : ""}`
-                  : `Configurando...`
-              }
+              <span className={`w-1.5 h-1.5 rounded-full ${isGenerating || isWaitingForState ? "bg-yellow-500 animate-pulse" : "bg-green-500"}`} />
+              {statusBadge}
             </span>
           </div>
         )}
       </div>
 
       {/* Right panel: config summary */}
-      {(hasContent || isConfiguring) && (
+      {(hasContent || wizardStarted) && (
         <div className="w-[240px] space-y-3 animate-in fade-in slide-in-from-right-4 duration-500">
           {isConfiguring && (
             <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-2">
@@ -356,18 +364,47 @@ const WhatsAppPreview = () => {
                 <Zap className="w-3 h-3" /> Configuração Atual
               </div>
               <div className="space-y-1.5 text-[10px]">
-                {wizardData.appName && (
+                {effectiveName && effectiveName !== "Meu App" && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Nome</span>
-                    <span className="text-foreground font-medium">{wizardData.appName}</span>
+                    <span className="text-foreground font-medium">{effectiveName}</span>
                   </div>
                 )}
-                {wizardData.tone && (
+                {effectiveTone && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Tom</span>
-                    <span className="text-foreground font-medium">{toneLabels[wizardData.tone] || wizardData.tone}</span>
+                    <span className="text-foreground font-medium">{toneLabels[effectiveTone] || effectiveTone}</span>
                   </div>
                 )}
+                {effectiveIntro && (
+                  <div className="pt-0.5">
+                    <span className="text-muted-foreground block mb-0.5">Intro</span>
+                    <span className="text-foreground italic text-[9px]">"{effectiveIntro.slice(0, 60)}{effectiveIntro.length > 60 ? "..." : ""}"</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* App state summary quando pronto */}
+          {hasRenderableState && appState && (
+            <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-3 space-y-2">
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-green-600 uppercase tracking-wider">
+                <Zap className="w-3 h-3" /> App Criado
+              </div>
+              <div className="space-y-1.5 text-[10px]">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Nome</span>
+                  <span className="text-foreground font-medium">{appState.app_meta.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Tom</span>
+                  <span className="text-foreground font-medium">{toneLabels[appState.app_meta.tone] || appState.app_meta.tone}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Idioma</span>
+                  <span className="text-foreground font-medium">{appState.app_meta.language}</span>
+                </div>
               </div>
             </div>
           )}
@@ -423,7 +460,7 @@ const WhatsAppPreview = () => {
             </div>
           )}
 
-          {/* Stages from conversation */}
+          {/* Stages */}
           {engine.stages.length > 0 && (
             <div className="rounded-xl border border-border bg-card/60 p-3 space-y-2">
               <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
@@ -440,9 +477,10 @@ const WhatsAppPreview = () => {
             </div>
           )}
 
-          {isGenerating && (
+          {(isGenerating || isWaitingForState) && (
             <div className="flex items-center gap-2 text-[10px] text-primary animate-pulse px-1">
-              <Zap className="w-3 h-3" /> Atualizando em tempo real...
+              <Loader2 className="w-3 h-3 animate-spin" />
+              {isWaitingForState ? "Finalizando app..." : "Atualizando em tempo real..."}
             </div>
           )}
         </div>
@@ -457,7 +495,11 @@ const WebPreview = () => {
   const { files, appName, isGenerating, dashboardMetrics, tables, wizardData, wizardConfig, wizardStep, appState } = useAppBuilder();
   const hasRenderableState = !!appState?.runtime?.render_ready;
   const hasContent = files.length > 0 || !!appState;
-  const isConfiguring = !hasRenderableState && wizardStep !== "done";
+  const wizardDone = wizardStep === "done";
+  const isConfiguring = !hasRenderableState && !wizardDone;
+  const isWaitingForState = wizardDone && !hasRenderableState && !isGenerating;
+  const wizardStarted = wizardStep !== "discover" || hasContent;
+  const showContent = hasRenderableState || hasContent || wizardStarted;
 
   const effectiveName = appState?.app_meta?.name || wizardData.appName || wizardConfig?.appName || appName;
   const screenData = appState?.preview?.screen_data;
@@ -505,13 +547,9 @@ const WebPreview = () => {
   const activeNav = screenData?.active_page || navItems[0]?.label || "Dashboard";
   const pageTitle = screenData?.page_title || activeNav;
   const tableData = screenData?.table_data;
-  const chartData = screenData?.chart_data;
-
-  const showContent = hasRenderableState || hasContent || isConfiguring;
 
   return (
     <div className="flex-1 flex items-center justify-center bg-muted/5 p-4 gap-6">
-      {/* Browser window */}
       <div className="w-full max-w-[780px] rounded-xl border border-border bg-card shadow-2xl overflow-hidden transition-all duration-500">
         {/* Browser chrome */}
         <div className="bg-muted/40 px-3 py-2 flex items-center gap-2 border-b border-border">
@@ -525,6 +563,9 @@ const WebPreview = () => {
               🔒 {effectiveName.toLowerCase().replace(/\s+/g, "")}.aikortex.com
             </div>
           </div>
+          {(isGenerating || isWaitingForState) && (
+            <Loader2 className="w-3.5 h-3.5 text-primary animate-spin mr-1" />
+          )}
         </div>
 
         {showContent ? (
@@ -556,34 +597,24 @@ const WebPreview = () => {
                 <div>
                   <h2 className="text-sm font-semibold text-foreground">{pageTitle}</h2>
                   <p className="text-[10px] text-muted-foreground">
-                    {isConfiguring ? "Configurando seu app..." : appState?.preview?.subtitle || "Visão geral do sistema"}
+                    {isWaitingForState ? "Finalizando app..." : isConfiguring ? "Configurando seu app..." : appState?.preview?.subtitle || "Visão geral do sistema"}
                   </p>
                 </div>
-                {isGenerating && (
+                {(isGenerating || isWaitingForState) && (
                   <div className="flex items-center gap-1.5 text-[10px] text-primary animate-pulse">
-                    <Zap className="w-3 h-3" />
-                    Atualizando...
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    {isWaitingForState ? "Finalizando..." : "Atualizando..."}
                   </div>
                 )}
               </div>
 
-              {/* Wizard config banner when configuring */}
+              {/* Config banner */}
               {isConfiguring && wizardData.prompt && (
                 <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-1.5 animate-in fade-in duration-300">
                   <p className="text-[10px] font-semibold text-primary">📝 Descrição do App</p>
                   <p className="text-[10px] text-foreground/80 leading-relaxed">
                     {wizardData.prompt.slice(0, 150)}{wizardData.prompt.length > 150 ? "..." : ""}
                   </p>
-                  {wizardData.tone && (
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="secondary" className="text-[8px] h-4">
-                        {toneEmoji[wizardData.tone]} {toneLabels[wizardData.tone] || wizardData.tone}
-                      </Badge>
-                      <Badge variant="secondary" className="text-[8px] h-4">
-                        🌐 {wizardData.language}
-                      </Badge>
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -593,9 +624,7 @@ const WebPreview = () => {
                   <div key={m.label} className="rounded-xl border border-border p-3 bg-card/50 animate-in fade-in duration-300">
                     <p className="text-[9px] text-muted-foreground mb-0.5">{m.label}</p>
                     <p className="text-base font-bold text-foreground">{m.value}</p>
-                    {m.change && (
-                      <span className="text-[9px] text-muted-foreground">{m.change}</span>
-                    )}
+                    {m.change && <span className="text-[9px] text-muted-foreground">{m.change}</span>}
                   </div>
                 ))}
               </div>
@@ -603,7 +632,7 @@ const WebPreview = () => {
               {/* Chart */}
               <div className="rounded-xl border border-border p-4 bg-card/50">
                 <p className="text-[10px] font-medium text-foreground mb-3">
-                  {chartData?.title || "Atividade recente"}
+                  {screenData?.chart_data?.title || "Atividade recente"}
                 </p>
                 <div className="flex items-end gap-1.5 h-[80px]">
                   {[40, 65, 45, 80, 55, 90, 70, 95, 60, 85, 75, 100].map((h, i) => (
@@ -614,7 +643,7 @@ const WebPreview = () => {
                 </div>
               </div>
 
-              {/* Dynamic table */}
+              {/* Table */}
               {(tableData || (appState?.database?.tables?.length || tables.length > 0)) && (
                 <div className="rounded-xl border border-border bg-card/50 overflow-hidden">
                   <div className="px-4 py-2.5 border-b border-border flex items-center justify-between">
@@ -658,51 +687,48 @@ const WebPreview = () => {
           </div>
         ) : (
           <div className="h-[420px] flex items-center justify-center text-sm text-muted-foreground">
-            {isGenerating ? (
-              <div className="flex flex-col items-center gap-3">
-                <Zap className="w-6 h-6 animate-pulse text-primary" />
-                <span>Gerando preview do Web App...</span>
-              </div>
-            ) : (
-              <div className="text-center">
-                <Monitor className="w-10 h-10 mx-auto mb-3 text-muted-foreground/20" />
-                <p className="text-xs">Envie uma mensagem no Studio<br/>para ver o preview do seu app aqui</p>
-              </div>
-            )}
+            <div className="text-center">
+              <Monitor className="w-10 h-10 mx-auto mb-3 text-muted-foreground/20" />
+              <p className="text-xs">Descreva seu app no Studio<br />para ver o preview aqui</p>
+            </div>
           </div>
         )}
       </div>
 
       {/* Right panel */}
-      {(hasContent || isConfiguring) && (
+      {(hasContent || wizardStarted) && (
         <div className="w-[220px] space-y-3 animate-in fade-in slide-in-from-right-4 duration-500">
-          {isConfiguring && (
+          {hasRenderableState && appState ? (
+            <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-3 space-y-2">
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-green-600 uppercase tracking-wider">
+                <Zap className="w-3 h-3" /> App Criado
+              </div>
+              <div className="space-y-1.5 text-[10px]">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Nome</span>
+                  <span className="text-foreground font-medium">{appState.app_meta.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Idioma</span>
+                  <span className="text-foreground font-medium">{appState.app_meta.language}</span>
+                </div>
+              </div>
+            </div>
+          ) : isConfiguring ? (
             <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-2">
               <div className="flex items-center gap-1.5 text-[10px] font-semibold text-primary uppercase tracking-wider">
                 <Zap className="w-3 h-3" /> Configuração
               </div>
               <div className="space-y-1.5 text-[10px]">
-                {wizardData.appName && wizardData.appName !== "Meu App" && (
+                {effectiveName && effectiveName !== "Meu App" && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Nome</span>
-                    <span className="text-foreground font-medium">{wizardData.appName}</span>
-                  </div>
-                )}
-                {wizardData.companyName && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Empresa</span>
-                    <span className="text-foreground font-medium">{wizardData.companyName}</span>
-                  </div>
-                )}
-                {wizardData.tone && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Tom</span>
-                    <span className="text-foreground font-medium">{toneLabels[wizardData.tone] || wizardData.tone}</span>
+                    <span className="text-foreground font-medium">{effectiveName}</span>
                   </div>
                 )}
               </div>
             </div>
-          )}
+          ) : null}
 
           {(appState?.files?.length || files.length > 0) && (
             <div className="rounded-xl border border-border bg-card/60 p-3 space-y-2">
@@ -736,7 +762,6 @@ const WebPreview = () => {
             </div>
           )}
 
-          {/* UI Modules */}
           {appState?.ui_modules && appState.ui_modules.length > 0 && (
             <div className="rounded-xl border border-border bg-card/60 p-3 space-y-2">
               <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
@@ -750,9 +775,10 @@ const WebPreview = () => {
             </div>
           )}
 
-          {isGenerating && (
+          {(isGenerating || isWaitingForState) && (
             <div className="flex items-center gap-2 text-[10px] text-primary animate-pulse px-1">
-              <Zap className="w-3 h-3" /> Atualizando em tempo real...
+              <Loader2 className="w-3 h-3 animate-spin" />
+              {isWaitingForState ? "Finalizando app..." : "Atualizando em tempo real..."}
             </div>
           )}
         </div>
