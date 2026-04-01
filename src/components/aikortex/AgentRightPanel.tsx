@@ -86,11 +86,6 @@ const SETTINGS_NAV = [
     { key: "objective",    icon: Zap,         label: "Objetivo" },
     { key: "instructions", icon: Settings2,   label: "Instruções" },
   ]},
-  { section: "CONFIGURAÇÃO", items: [
-    { key: "channels",     icon: MonitorSmartphone, label: "Canais" },
-    { key: "advanced",     icon: Settings2,   label: "Avançado" },
-    { key: "danger",       icon: AlertTriangle, label: "Danger Zone" },
-  ]},
 ];
 
 export interface ApiConfig {
