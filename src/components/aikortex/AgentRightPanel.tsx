@@ -621,6 +621,9 @@ const AgentRightPanel = ({
                 <p className="text-sm text-muted-foreground mt-1">Conecte integrações para expandir as capacidades do seu agente.</p>
               </div>
 
+              {/* Modelo de IA */}
+              <ModelSection />
+
               {/* MCPs */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
