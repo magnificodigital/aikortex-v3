@@ -507,56 +507,15 @@ const AgentRightPanel = ({
     });
 
     return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-lg font-bold text-foreground">Modelo de IA</h2>
-          <p className="text-sm text-muted-foreground mt-1">Escolha o modelo que este agente usará nas conversas.</p>
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Cpu className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-semibold text-foreground">Modelo de IA</h3>
         </div>
+        <p className="text-xs text-muted-foreground">Escolha o modelo que este agente usará nas conversas.</p>
 
-        {/* FIX: sempre mostra os providers — conectados ou não */}
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-foreground">Provedores disponíveis</h3>
-          {["OpenAI", "Anthropic", "Gemini"].map(provider => {
-            const isConnected = !!connectorKeys[provider]?.configured;
-            const integration = INTEGRATIONS.find(i => i.label === provider);
-            return (
-              <div key={provider} className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${isConnected ? "border-primary/30 bg-primary/5" : "border-border bg-card"}`}>
-                {integration?.logo && (
-                  <img src={integration.logo} alt={provider} className="w-6 h-6 rounded object-contain shrink-0"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-foreground">{provider}</span>
-                    {isConnected && (
-                      <span className="flex items-center gap-1 text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
-                        <Check className="w-2.5 h-2.5" /> Conectado
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground truncate">{integration?.desc}</p>
-                </div>
-                {!isConnected ? (
-                  <Button variant="outline" size="sm" className="text-xs gap-1 shrink-0"
-                    onClick={() => { handleTabChange("connectors"); handleConnectIntegration(integration!); }}>
-                    <KeyRound className="w-3 h-3" /> Conectar
-                  </Button>
-                ) : (
-                  <Button variant="ghost" size="sm" className="text-xs gap-1 shrink-0"
-                    onClick={() => handleConnectIntegration(integration!)}>
-                    <Settings className="w-3 h-3" /> Gerenciar
-                  </Button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Seleção de modelo — aparece quando há chave */}
         {hasLLMKey && availableModels.length > 0 ? (
           <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-foreground">Modelo ativo</h3>
-            <p className="text-xs text-muted-foreground">Modelo usado pelo agente nas conversas de teste e produção.</p>
             <Select value={agentModel} onValueChange={onModelChange}>
               <SelectTrigger className="text-sm">
                 <SelectValue />
@@ -573,16 +532,14 @@ const AgentRightPanel = ({
                 })}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground">
               Modelo atual: <strong>{availableModels.find(m => m.value === agentModel)?.label || agentModel}</strong>
             </p>
           </div>
         ) : (
-          <div className="rounded-lg border border-dashed border-border bg-muted/30 p-4 text-center">
-            <Cpu className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
-            <p className="text-sm font-medium text-foreground">Nenhum modelo configurado</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Conecte pelo menos um provedor acima para escolher o modelo.
+          <div className="rounded-lg border border-dashed border-border bg-muted/30 p-3 text-center">
+            <p className="text-xs text-muted-foreground">
+              Conecte um provedor de LLM (OpenAI, Anthropic ou Gemini) na seção de APIs abaixo para selecionar um modelo.
             </p>
           </div>
         )}
@@ -620,9 +577,6 @@ const AgentRightPanel = ({
                 <h2 className="text-lg font-bold text-foreground">Integrações</h2>
                 <p className="text-sm text-muted-foreground mt-1">Conecte integrações para expandir as capacidades do seu agente.</p>
               </div>
-
-              {/* Modelo de IA */}
-              <ModelSection />
 
               {/* MCPs */}
               <div className="space-y-2">
@@ -676,6 +630,9 @@ const AgentRightPanel = ({
                   })}
                 </div>
               </div>
+
+              {/* Modelo de IA */}
+              <ModelSection />
 
               {/* Webhooks */}
               <div className="space-y-2">
