@@ -339,7 +339,8 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
 
   const [settingsNav, setSettingsNav] = useState("general");
   const [agentName, setAgentName] = useState(() => {
-    if (storagePrefix) { try { const v = localStorage.getItem(`${storagePrefix}-name`); if (v) return v; } catch {} }
+    // When coming from a template, always use the template name — never stale localStorage
+    if (!presetData && storagePrefix) { try { const v = localStorage.getItem(`${storagePrefix}-name`); if (v) return v; } catch {} }
     return agent.name;
   });
   const [agentDesc, setAgentDesc] = useState(() => {
