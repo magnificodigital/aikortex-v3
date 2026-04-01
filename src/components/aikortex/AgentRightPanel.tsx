@@ -104,8 +104,7 @@ const SETTINGS_NAV = [
     { key: "general", icon: User, label: "Identidade" },
     { key: "objective", icon: Zap, label: "Objetivo" },
     { key: "instructions", icon: Settings2, label: "Instruções" },
-    { key: "model", icon: Cpu, label: "Modelo" },
-    { key: "channels_nav", icon: Globe, label: "Canais" },
+    { key: "files_nav", icon: FileText, label: "Arquivos" },
   ]},
 ];
 
@@ -462,8 +461,17 @@ const AgentRightPanel = ({
 
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-      {/* ── Publish button in top bar ── */}
+      {/* ── Save + Publish buttons in top bar ── */}
       <div className="h-12 border-b border-border flex items-center justify-end px-4 gap-2 shrink-0">
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5 text-xs h-8"
+          disabled={!agentName.trim() || isSaving}
+          onClick={() => onSaveAgent?.(buildSavePayload())}
+        >
+          {isSaving ? "Salvando..." : "💾 Salvar"}
+        </Button>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -496,7 +504,6 @@ const AgentRightPanel = ({
             {[
               { value: "agent", label: "Agente" },
               { value: "connectors", label: "Integrações" },
-              { value: "files", label: "Arquivos" },
               { value: "channels", label: "Canais" },
               { value: "advanced", label: "Avançado" },
               { value: "danger", label: "Danger Zone" },
@@ -621,31 +628,60 @@ const AgentRightPanel = ({
                   </div>
                 )}
 
-                {/* Modelo */}
-                {settingsNav === "model" && <ModelSection />}
-
-                {/* Canais (within agent tab) */}
-                {settingsNav === "channels_nav" && (
+                {/* Arquivos (within agent tab) */}
+                {settingsNav === "files_nav" && (
                   <div className="space-y-6">
                     <div>
-                      <h2 className="text-lg font-bold text-foreground">Canais</h2>
-                      <p className="text-sm text-muted-foreground mt-1">Onde o agente será publicado.</p>
+                      <h2 className="text-lg font-bold text-foreground">Conhecimento</h2>
+                      <p className="text-sm text-muted-foreground mt-1">Fontes de dados para alimentar o agente.</p>
                     </div>
-                    {filteredChannels.map((ch) => {
-                      const isSelected = connectedChannels.includes(ch.value);
-                      return (
-                        <div key={ch.value} className={`flex items-center gap-4 rounded-xl border-2 p-4 transition-all ${isSelected ? "border-primary bg-primary/5" : "border-border bg-card"}`}>
-                          {ch.logo ? (
-                            <img src={ch.logo} alt={ch.label} className="w-8 h-8 rounded-lg object-contain shrink-0"
-                              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                          ) : <Globe className="w-8 h-8 text-primary shrink-0" />}
-                          <span className="text-sm font-semibold text-foreground flex-1">{ch.label}</span>
-                          <Button size="sm" variant={isSelected ? "default" : "outline"} onClick={() => toggleChannel(ch.value)} className="text-xs h-8 gap-1.5">
-                            {isSelected ? <><Check className="w-3 h-3" /> Conectado</> : "Conectar"}
-                          </Button>
+                    <div
+                      className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
+                      onClick={() => fileInputRef.current?.click()}
+                      onDragOver={(e) => { e.preventDefault(); }}
+                      onDrop={(e) => { e.preventDefault(); if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); }}
+                    >
+                      <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-sm font-medium text-foreground">Arraste arquivos ou clique para enviar</p>
+                      <p className="text-xs text-muted-foreground mt-1">PDFs, documentos, FAQ</p>
+                      <input ref={fileInputRef} type="file" multiple accept=".pdf,.doc,.docx,.txt,.md,.csv" className="hidden"
+                        onChange={(e) => e.target.files && handleFiles(e.target.files)} />
+                    </div>
+                    {knowledgeFiles.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase">Arquivos enviados</p>
+                        {knowledgeFiles.map((f) => (
+                          <div key={f.id} className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2">
+                            {getFileIcon(f.type)}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-foreground truncate">{f.name}</p>
+                              {f.size > 0 && <p className="text-[11px] text-muted-foreground">{formatSize(f.size)}</p>}
+                            </div>
+                            <button onClick={() => setKnowledgeFiles(prev => prev.filter(x => x.id !== f.id))} className="text-muted-foreground hover:text-destructive">
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="space-y-3">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase">URLs</p>
+                      <div className="flex gap-2">
+                        <div className="flex-1 relative">
+                          <Link2 className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                          <Input value={urlInput} onChange={(e) => setUrlInput(e.target.value)} placeholder="https://exemplo.com/faq" className="pl-9"
+                            onKeyDown={(e) => e.key === "Enter" && addUrl()} />
                         </div>
-                      );
-                    })}
+                        <Button size="sm" onClick={addUrl} disabled={!urlInput.trim()} className="gap-1 shrink-0"><Plus className="w-4 h-4" /></Button>
+                      </div>
+                      {urls.map((url, i) => (
+                        <div key={i} className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2">
+                          <Globe className="w-4 h-4 text-primary shrink-0" />
+                          <p className="text-sm text-foreground truncate flex-1">{url}</p>
+                          <button onClick={() => setUrls(urls.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive"><X className="w-4 h-4" /></button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -706,64 +742,6 @@ const AgentRightPanel = ({
           </ScrollArea>
         </TabsContent>
 
-        {/* ── Arquivos ── */}
-        <TabsContent value="files" className="flex-1 mt-0 min-h-0 overflow-hidden">
-          <ScrollArea className="h-full max-h-[calc(100vh-160px)]">
-            <div className="p-6 space-y-6">
-              <div>
-                <h2 className="text-lg font-bold text-foreground">Conhecimento</h2>
-                <p className="text-sm text-muted-foreground mt-1">Fontes de dados para alimentar o agente.</p>
-              </div>
-              <div
-                className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
-                onClick={() => fileInputRef.current?.click()}
-                onDragOver={(e) => { e.preventDefault(); }}
-                onDrop={(e) => { e.preventDefault(); if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); }}
-              >
-                <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-                <p className="text-sm font-medium text-foreground">Arraste arquivos ou clique para enviar</p>
-                <p className="text-xs text-muted-foreground mt-1">PDFs, documentos, FAQ</p>
-                <input ref={fileInputRef} type="file" multiple accept=".pdf,.doc,.docx,.txt,.md,.csv" className="hidden"
-                  onChange={(e) => e.target.files && handleFiles(e.target.files)} />
-              </div>
-              {knowledgeFiles.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase">Arquivos enviados</p>
-                  {knowledgeFiles.map((f) => (
-                    <div key={f.id} className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2">
-                      {getFileIcon(f.type)}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-foreground truncate">{f.name}</p>
-                        {f.size > 0 && <p className="text-[11px] text-muted-foreground">{formatSize(f.size)}</p>}
-                      </div>
-                      <button onClick={() => setKnowledgeFiles(prev => prev.filter(x => x.id !== f.id))} className="text-muted-foreground hover:text-destructive">
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className="space-y-3">
-                <p className="text-xs font-semibold text-muted-foreground uppercase">URLs</p>
-                <div className="flex gap-2">
-                  <div className="flex-1 relative">
-                    <Link2 className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <Input value={urlInput} onChange={(e) => setUrlInput(e.target.value)} placeholder="https://exemplo.com/faq" className="pl-9"
-                      onKeyDown={(e) => e.key === "Enter" && addUrl()} />
-                  </div>
-                  <Button size="sm" onClick={addUrl} disabled={!urlInput.trim()} className="gap-1 shrink-0"><Plus className="w-4 h-4" /></Button>
-                </div>
-                {urls.map((url, i) => (
-                  <div key={i} className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2">
-                    <Globe className="w-4 h-4 text-primary shrink-0" />
-                    <p className="text-sm text-foreground truncate flex-1">{url}</p>
-                    <button onClick={() => setUrls(urls.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive"><X className="w-4 h-4" /></button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </ScrollArea>
-        </TabsContent>
 
         {/* ── Canais (top-level tab) ── */}
         <TabsContent value="channels" className="flex-1 mt-0 min-h-0 overflow-hidden">
@@ -874,12 +852,8 @@ const AgentRightPanel = ({
         </TabsContent>
       </Tabs>
 
-      {/* Save button footer */}
-      <div className="border-t border-border px-4 py-3 shrink-0 bg-background">
-        <Button className="w-full gap-2 h-10" onClick={() => onSaveAgent?.(buildSavePayload())} disabled={!agentName.trim() || isSaving}>
-          {isSaving ? "Salvando..." : "💾 Salvar Agente"}
-        </Button>
-      </div>
+
+
 
       {/* Integration Dialog */}
       <Dialog open={!!connectorDialog} onOpenChange={(open) => { if (!open) { setConnectorDialog(null); setKeyInput(""); } }}>
