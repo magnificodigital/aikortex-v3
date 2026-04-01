@@ -909,8 +909,6 @@ const AgentRightPanel = ({
                   </div>
                 )}
 
-                {/* ── Modelo (era Machine) ── */}
-                {settingsNav === "model" && <ModelSection />}
 
                 {/* ── Canais ── */}
                 {settingsNav === "channels" && (
