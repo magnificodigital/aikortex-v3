@@ -8,6 +8,41 @@ const corsHeaders = {
 /* ── Structuring prompt ── */
 
 function buildStructuringPrompt(appType: string, language: string) {
+  if (appType === "agent") {
+    return `Você é um arquiteto especializado em agentes de IA conversacionais.
+
+Sua ÚNICA tarefa é analisar a descrição do usuário e retornar um JSON estruturado que define completamente o agente a ser construído.
+
+REGRAS:
+- Retorne APENAS um bloco JSON válido, sem texto antes ou depois
+- Infira o máximo possível da descrição: nome, tipo, tom, objetivo, instruções, mensagem de saudação
+- Se algo não for mencionado, use valores padrão inteligentes
+
+O JSON deve seguir EXATAMENTE este formato:
+
+{
+  "agent_name": "Nome do Agente",
+  "agent_type": "SDR",
+  "description": "Descrição completa do agente e seu papel",
+  "objective": "Objetivo principal do agente",
+  "tone": "professional_friendly",
+  "language": "${language}",
+  "greeting_message": "Mensagem de saudação natural e contextual",
+  "instructions": "Instruções detalhadas de comportamento",
+  "quick_replies": ["Opção 1", "Opção 2", "Opção 3"],
+  "stages": [
+    {"id": "s1", "name": "Saudação", "description": "Apresentar o agente", "example": "Olá! Como posso ajudar?"},
+    {"id": "s2", "name": "Entendimento", "description": "Compreender a necessidade", "example": "Me conte mais sobre o que precisa."}
+  ]
+}
+
+Valores válidos para "tone": "professional_friendly", "formal", "casual", "empathetic", "direct"
+Valores válidos para "agent_type": "SDR", "BDR", "SAC", "CS", "Custom"
+Valores válidos para "language": "pt-BR", "en", "es"
+
+Retorne SOMENTE o JSON.`;
+  }
+
   return `Você é um arquiteto de produto especializado em apps para ${appType === "whatsapp" ? "WhatsApp" : "Web"}.
 
 Sua ÚNICA tarefa é analisar a descrição do usuário e retornar um JSON estruturado que define completamente o app a ser construído.
