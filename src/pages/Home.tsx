@@ -5,6 +5,8 @@ import { Monitor, Sparkles, Globe, ArrowUp, RefreshCw, Phone } from "lucide-reac
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { AGENT_PRESETS } from "@/types/agent-presets";
+import type { AgentType } from "@/types/agent-builder";
 
 const suggestionsByTab = {
   app: [
@@ -60,6 +62,17 @@ const Home = () => {
     return "app";
   };
 
+  const detectAgentType = (text: string): { id: string; type: AgentType; name: string } => {
+    const lower = text.toLowerCase();
+    if (lower.includes("sdr") || lower.includes("qualificação") || lower.includes("qualificacao") || lower.includes("qualificador"))
+      return { id: "sdr-1", type: "SDR", name: "Agente SDR" };
+    if (lower.includes("bdr") || lower.includes("prospecção") || lower.includes("prospeccao") || lower.includes("outbound") || lower.includes("linkedin"))
+      return { id: "bdr-1", type: "BDR", name: "Agente BDR" };
+    if (lower.includes("sac") || lower.includes("suporte") || lower.includes("atendimento") || lower.includes("customer success") || lower.includes("cs "))
+      return { id: "sac-1", type: "SAC", name: "Agente SAC" };
+    return { id: "custom-1", type: "Custom", name: "Agente Personalizado" };
+  };
+
   const handleSubmit = () => {
     const text = prompt.trim();
     if (!text) return;
@@ -70,7 +83,33 @@ const Home = () => {
     if (detected === "flows") {
       navigate("/aikortex/automations", { state: { initialPrompt: text } });
     } else if (detected === "agentes") {
-      navigate("/aikortex/agents", { state: { initialPrompt: text } });
+      // Detect agent type and navigate directly to AgentDetail with preset
+      const agentInfo = detectAgentType(text);
+      const preset = AGENT_PRESETS[agentInfo.type];
+
+      // Clear stale localStorage
+      const storagePrefix = `agent-detail-${agentInfo.id}`;
+      try {
+        ["name", "desc", "objective", "instructions", "toneOfVoice", "greetingMessage"].forEach(k =>
+          localStorage.removeItem(`${storagePrefix}-${k}`)
+        );
+      } catch {}
+
+      navigate(`/aikortex/agents/${agentInfo.id}`, {
+        state: {
+          fromTemplate: true,
+          initialPrompt: text,
+          preset: {
+            context: preset.context,
+            intents: preset.intents,
+            stages: preset.stages,
+            advancedConfig: preset.advancedConfig,
+            agentType: agentInfo.type,
+            agentName: agentInfo.name,
+            agentObjective: preset.context.targetAudienceDescription || "",
+          },
+        },
+      });
     } else {
       const channel = detectedChannel || "web";
       navigate("/app-builder", { state: { initialPrompt: text, channel } });
