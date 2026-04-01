@@ -282,8 +282,12 @@ const AgentDetail = () => {
   const setupSystemPrompt = useMemo(() => buildSetupSystemPrompt(agentConfig, keys, agentModel), [agentConfig, keys, agentModel]);
 
   const setupInitialMessage = useMemo(() => {
+    if (navState?.fromTemplate || isTemplate) {
+      const typeName = loadedAgent.agentType !== "Custom" ? ` do tipo **${loadedAgent.agentType}**` : "";
+      return `Olá! 👋 Vamos configurar seu novo agente${typeName}.\n\nPara começar, qual será o **nome** do seu agente?`;
+    }
     return `Olá! 👋 Sou o assistente de configuração do **${loadedAgent.name}**. O que gostaria de configurar?`;
-  }, [loadedAgent.name]);
+  }, [loadedAgent.name, loadedAgent.agentType, navState?.fromTemplate, isTemplate]);
 
   const setupChat = useAgentChat(
     [{ role: "agent", text: setupInitialMessage }],
