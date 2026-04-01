@@ -104,8 +104,7 @@ const SETTINGS_NAV = [
     { key: "general", icon: User, label: "Identidade" },
     { key: "objective", icon: Zap, label: "Objetivo" },
     { key: "instructions", icon: Settings2, label: "Instruções" },
-    { key: "model", icon: Cpu, label: "Modelo" },
-    { key: "channels_nav", icon: Globe, label: "Canais" },
+    { key: "files_nav", icon: FileText, label: "Arquivos" },
   ]},
 ];
 
