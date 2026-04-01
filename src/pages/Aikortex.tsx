@@ -25,18 +25,16 @@ const Aikortex = () => {
       );
     } catch {}
 
-    // Navigate to AgentDetail with preset data in state
-    navigate(`/aikortex/agents/${agent.id}`, {
+    // Navigate to Agent Builder wizard with agent type pre-selected
+    navigate("/agent-builder", {
       state: {
-        fromTemplate: true,
+        agentType: agent.type,
+        agentName: agent.name,
         preset: {
           context: preset.context,
           intents: preset.intents,
           stages: preset.stages,
           advancedConfig: preset.advancedConfig,
-          agentType: agent.type,
-          agentName: agent.name,
-          agentObjective: agent.objective,
         },
       },
     });
