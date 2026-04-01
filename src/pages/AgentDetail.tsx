@@ -162,7 +162,7 @@ const AgentDetail = () => {
       const result = await saveAgent({
         id: agentId && !AGENTS_MAP[agentId] ? agentId : undefined,
         name: config.name,
-        agent_type: config.agentType,
+        agent_type: config.agentType || agent.agentType,
         description: config.description,
         avatar_url: config.avatarUrl,
         model: config.model,
