@@ -101,8 +101,23 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
 
 const AgentDetail = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { agentId } = useParams();
   const agent = AGENTS_MAP[agentId || "sdr-1"] || AGENTS_MAP["sdr-1"];
+
+  // Extract preset data from navigation state (when coming from template selection)
+  const navState = location.state as any;
+  const presetData = useMemo(() => {
+    if (!navState?.fromTemplate || !navState?.preset) return undefined;
+    const p = navState.preset;
+    return {
+      description: p.context?.targetAudienceDescription || p.agentObjective || "",
+      objective: p.context?.painPoints || p.agentObjective || "",
+      instructions: "",
+      toneOfVoice: p.context?.toneOfVoice || "",
+      greetingMessage: p.context?.greetingMessage || "",
+    };
+  }, [navState]);
 
   const storagePrefix = `agent-detail-${agentId || "sdr-1"}`;
 
