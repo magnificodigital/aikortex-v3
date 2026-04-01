@@ -165,17 +165,10 @@ const AgentDetail = () => {
 
   const { saveAgent } = useUserAgents();
 
+  // When creating from template, DON'T pre-fill config — let the chat assistant collect all info
   const presetData = useMemo(() => {
-    if (!navState?.fromTemplate || !navState?.preset) return undefined;
-    const p = navState.preset;
-    return {
-      name:           p.agentName || "",
-      description:    p.context?.targetAudienceDescription || p.agentObjective || "",
-      objective:      p.context?.painPoints || p.agentObjective || "",
-      instructions:   "",
-      toneOfVoice:    p.context?.toneOfVoice || "",
-      greetingMessage: p.context?.greetingMessage || "",
-    };
+    if (navState?.fromTemplate) return undefined; // New agent = empty config
+    return undefined;
   }, [navState]);
 
   useEffect(() => {
