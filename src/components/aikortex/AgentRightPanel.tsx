@@ -461,8 +461,17 @@ const AgentRightPanel = ({
 
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-      {/* ── Publish button in top bar ── */}
+      {/* ── Save + Publish buttons in top bar ── */}
       <div className="h-12 border-b border-border flex items-center justify-end px-4 gap-2 shrink-0">
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5 text-xs h-8"
+          disabled={!agentName.trim() || isSaving}
+          onClick={() => onSaveAgent?.(buildSavePayload())}
+        >
+          {isSaving ? "Salvando..." : "💾 Salvar"}
+        </Button>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
