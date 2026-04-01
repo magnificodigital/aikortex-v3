@@ -104,7 +104,9 @@ const StepAgents = ({ selected, onSelect }: Props) => {
               const active = selected?.id === agent.id;
               const avatarSrc = agent.avatar_url || AVATAR_MAP[agent.agent_type?.toLowerCase() === "sdr" ? "sdr-1" : agent.agent_type?.toLowerCase() === "bdr" ? "bdr-1" : agent.agent_type?.toLowerCase() === "sac" ? "sac-1" : "custom-1"] || avatar1;
               return (
-                <button
+                <div
+                  role="button"
+                  tabIndex={0}
                   key={agent.id}
                   onClick={() => handleSelectSaved(agent)}
                   className={`text-left rounded-xl border p-5 transition-all duration-200 space-y-4 relative group ${
