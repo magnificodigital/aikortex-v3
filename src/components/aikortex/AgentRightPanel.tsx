@@ -343,7 +343,7 @@ const AgentRightPanel = ({
   };
 
   const [agentName, setAgentName] = useState(() =>
-    resolveInitial("name", presetData?.name, savedConfig?.name) || agent.name
+    resolveInitial("name", presetData?.name, savedConfig?.name) || agent.name || ""
   );
   const [agentDesc, setAgentDesc] = useState(() =>
     resolveInitial("desc", presetData?.description, savedConfig?.objective)

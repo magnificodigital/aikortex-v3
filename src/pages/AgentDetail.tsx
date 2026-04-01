@@ -558,7 +558,7 @@ const AgentDetail = () => {
       {/* RIGHT — Panel */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <AgentRightPanel
-          agent={loadedAgent}
+          agent={navState?.fromTemplate || isTemplate ? { name: "", avatar: loadedAgent.avatar } : loadedAgent}
           agentType={loadedAgent.agentType}
           agentModel={agentModel}
           onModelChange={setAgentModel}
@@ -570,7 +570,7 @@ const AgentDetail = () => {
           isSaving={isSaving}
           storagePrefix={storagePrefix}
           presetData={presetData}
-          savedConfig={loadedAgent.savedConfig}
+          savedConfig={navState?.fromTemplate ? null : loadedAgent.savedConfig}
         />
       </div>
     </div>
