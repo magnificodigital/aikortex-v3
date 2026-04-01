@@ -85,7 +85,6 @@ const SETTINGS_NAV = [
     { key: "general",      icon: User,        label: "Identidade" },
     { key: "objective",    icon: Zap,         label: "Objetivo" },
     { key: "instructions", icon: Settings2,   label: "Instruções" },
-    { key: "model",        icon: Cpu,         label: "Modelo" },       // FIX: era "machine"
   ]},
   { section: "CONFIGURAÇÃO", items: [
     { key: "channels",     icon: MonitorSmartphone, label: "Canais" },
@@ -622,6 +621,9 @@ const AgentRightPanel = ({
                 <p className="text-sm text-muted-foreground mt-1">Conecte integrações para expandir as capacidades do seu agente.</p>
               </div>
 
+              {/* Modelo de IA */}
+              <ModelSection />
+
               {/* MCPs */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -910,8 +912,6 @@ const AgentRightPanel = ({
                   </div>
                 )}
 
-                {/* ── Modelo (era Machine) ── */}
-                {settingsNav === "model" && <ModelSection />}
 
                 {/* ── Canais ── */}
                 {settingsNav === "channels" && (
