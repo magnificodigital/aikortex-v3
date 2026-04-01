@@ -1002,8 +1002,8 @@ const AgentRightPanel = ({
         </TabsContent>
 
         {/* ── Canais (tab principal) ── */}
-        <TabsContent value="settings" className="flex-1 mt-0 overflow-hidden">
-          <ScrollArea className="h-full">
+        <TabsContent value="settings" className="flex-1 mt-0 min-h-0 overflow-hidden">
+          <ScrollArea className="h-full max-h-[calc(100vh-110px)]">
             <div className="p-6 max-w-lg space-y-6">
               <div>
                 <h2 className="text-lg font-bold text-foreground">Canais</h2>
