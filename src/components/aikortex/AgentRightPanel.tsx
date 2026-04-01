@@ -51,6 +51,22 @@ const LLM_PROVIDER_MODELS: Record<string, { models: { value: string; label: stri
     ],
     capabilities: ["Chat e completions", "Visão (imagens e vídeo)", "Function calling", "Contexto de 1M tokens", "Geração de imagens"],
   },
+  ElevenLabs: {
+    models: [
+      { value: "eleven_multilingual_v2", label: "Multilingual v2", desc: "Voz multilíngue de alta qualidade." },
+      { value: "eleven_turbo_v2_5",      label: "Turbo v2.5",      desc: "Baixa latência para tempo real." },
+      { value: "eleven_monolingual_v1",  label: "Monolingual v1",  desc: "Inglês otimizado e econômico." },
+    ],
+    capabilities: ["Text-to-speech", "Clonagem de voz", "Voz multilíngue", "Streaming de áudio"],
+  },
+  DeepSeek: {
+    models: [
+      { value: "deepseek-r1",    label: "DeepSeek R1",    desc: "Raciocínio avançado open-source." },
+      { value: "deepseek-v3",    label: "DeepSeek V3",    desc: "Modelo geral de alta performance." },
+      { value: "deepseek-coder", label: "DeepSeek Coder", desc: "Especializado em código." },
+    ],
+    capabilities: ["Chat e completions", "Raciocínio avançado", "Geração de código", "Open-source"],
+  },
 };
 
 const INTEGRATIONS = [
@@ -58,6 +74,7 @@ const INTEGRATIONS = [
   { label: "Anthropic",         desc: "Modelos Claude para raciocínio avançado.",            logo: "https://cdn.simpleicons.org/anthropic" },
   { label: "Gemini",            desc: "IA multimodal do Google.",                            logo: "https://cdn.simpleicons.org/googlegemini" },
   { label: "ElevenLabs",        desc: "Geração de voz e text-to-speech.",                    logo: "https://cdn.simpleicons.org/elevenlabs" },
+  { label: "DeepSeek",          desc: "Modelos open-source de alto desempenho.",             logo: "https://cdn.simpleicons.org/deepseek" },
   { label: "OpenRouter",        desc: "Acesso unificado a múltiplos LLMs.",                  logo: "https://openrouter.ai/favicon.ico" },
   { label: "Gmail",             desc: "Ler, enviar e compor e-mails.",                       logo: "https://cdn.simpleicons.org/gmail" },
   { label: "Google Calendar",   desc: "Ler e gerenciar eventos.",                            logo: "https://cdn.simpleicons.org/googlecalendar" },
@@ -198,7 +215,7 @@ const AgentRightPanel = ({
       piperun:       ["Piperun"],
       rd_station:    ["RD Station"],
       crm_generic:   ["HubSpot"],
-      deepseek:      [],
+      deepseek:      ["DeepSeek"],
     };
     const allowedLabels = new Set<string>();
     allowedLabels.add("OpenRouter");
