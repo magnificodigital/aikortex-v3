@@ -374,14 +374,14 @@ const AgentDetail = () => {
           </div>
         </ScrollArea>
 
-        {/* API Key Warning — required for both modes */}
-        {!keysLoading && !hasAnyLLMKey && (
+        {/* API Key Info — only in setup mode when no keys configured */}
+        {chatMode === "setup" && !keysLoading && !hasAnyLLMKey && (
           <div className="px-4 pt-2">
-            <Alert className="border-destructive/30 bg-destructive/5">
-              <KeyRound className="h-4 w-4 text-destructive" />
+            <Alert className="border-primary/30 bg-primary/5">
+              <KeyRound className="h-4 w-4 text-primary" />
               <AlertDescription className="text-xs text-muted-foreground flex items-center justify-between">
                 <span>
-                  <strong className="text-foreground">Passo obrigatório:</strong> Configure pelo menos uma chave de API (OpenAI, Anthropic ou Gemini) na aba <strong className="text-foreground">Integrações</strong> para começar.
+                  Configure uma chave de API na aba <strong className="text-foreground">Integrações</strong> quando quiser <strong className="text-foreground">testar</strong> o agente com seu próprio modelo.
                 </span>
                 <Button
                   variant="outline"
@@ -389,7 +389,7 @@ const AgentDetail = () => {
                   className="text-xs gap-1 ml-3 shrink-0"
                   onClick={() => setRightPanelTab("connectors")}
                 >
-                  <KeyRound className="w-3 h-3" /> Configurar API
+                  <KeyRound className="w-3 h-3" /> Integrações
                 </Button>
               </AlertDescription>
             </Alert>
