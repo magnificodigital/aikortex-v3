@@ -215,7 +215,7 @@ const AgentRightPanel = ({
       piperun:       ["Piperun"],
       rd_station:    ["RD Station"],
       crm_generic:   ["HubSpot"],
-      deepseek:      [],
+      deepseek:      ["DeepSeek"],
     };
     const allowedLabels = new Set<string>();
     allowedLabels.add("OpenRouter");
