@@ -147,7 +147,7 @@ const StepAgents = ({ selected, onSelect }: Props) => {
                     </Badge>
                     <span className="text-[10px] text-muted-foreground">{agent.agent_type}</span>
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>
