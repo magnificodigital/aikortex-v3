@@ -84,6 +84,7 @@ const App = () => (
               <Route path="/aikortex/crm" element={<P><AikortexCRM /></P>} />
               <Route path="/aikortex/agents" element={<P><Aikortex /></P>} />
               <Route path="/aikortex/agents/:agentId" element={<P><AgentDetail /></P>} />
+              <Route path="/agent-builder" element={<P><AgentBuilderPage /></P>} />
               <Route path="/aikortex/automations" element={<P><AikortexAutomations /></P>} />
               <Route path="/aikortex/messages" element={<P><AikortexMessages /></P>} />
               <Route path="/aikortex/broadcasts" element={<P><AikortexBroadcasts /></P>} />
