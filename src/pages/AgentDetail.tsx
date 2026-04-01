@@ -958,28 +958,45 @@ const AgentDetail = () => {
               )}
             </div>
 
-            {/* Input - patch mode after wizard done */}
+            {/* Input - discover + patch mode */}
             <div className="p-3 border-t border-border">
-              <div className={`rounded-xl border border-border bg-card/50 p-1 transition-colors ${wizardStep === "done" ? "focus-within:border-primary/30" : "opacity-60"}`}>
+              <div className={`rounded-xl border border-border bg-card/50 p-1 transition-colors focus-within:border-primary/30`}>
                 <textarea
-                  value={patchInput}
-                  onChange={(e) => setPatchInput(e.target.value)}
+                  value={wizardStep === "discover" ? wizardPrompt : patchInput}
+                  onChange={(e) => {
+                    if (wizardStep === "discover") setWizardPrompt(e.target.value);
+                    else setPatchInput(e.target.value);
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
-                      handlePatchSend();
+                      if (wizardStep === "discover") handleDiscover();
+                      else if (wizardStep === "done") handlePatchSend();
                     }
                   }}
-                  placeholder={wizardStep === "done" ? "Peça alterações ao agente..." : "Complete as etapas acima para começar..."}
+                  placeholder={
+                    wizardStep === "discover"
+                      ? `Descreva o que seu agente ${initialAgentType !== "Custom" ? initialAgentType + " " : ""}deve fazer...`
+                      : wizardStep === "done"
+                      ? "Peça alterações ao agente..."
+                      : "Aguarde a etapa atual finalizar..."
+                  }
                   rows={1}
-                  disabled={wizardStep !== "done"}
+                  disabled={wizardStep !== "done" && wizardStep !== "discover"}
                   className="w-full bg-transparent border-none outline-none resize-none text-sm text-foreground placeholder:text-muted-foreground px-3 py-2 min-h-[36px] max-h-[120px] disabled:cursor-not-allowed"
                 />
                 <div className="flex items-center justify-end px-2 pb-1">
                   <Button
                     size="icon"
-                    onClick={handlePatchSend}
-                    disabled={!patchInput.trim() || isPatchLoading || wizardStep !== "done"}
+                    onClick={() => {
+                      if (wizardStep === "discover") handleDiscover();
+                      else handlePatchSend();
+                    }}
+                    disabled={
+                      wizardStep === "discover"
+                        ? wizardPrompt.length < 10 || isStructuring
+                        : !patchInput.trim() || isPatchLoading || wizardStep !== "done"
+                    }
                     className="h-8 w-8 rounded-full"
                   >
                     <ArrowUp className="w-3.5 h-3.5" />
