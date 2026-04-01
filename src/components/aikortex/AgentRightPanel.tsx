@@ -867,139 +867,13 @@ const AgentRightPanel = ({
                 )}
 
 
-                {/* ── Canais ── */}
-                {settingsNav === "channels" && (
-                  <div className="space-y-4">
-                    <div>
-                      <h2 className="text-lg font-bold text-foreground">Canais</h2>
-                      <p className="text-sm text-muted-foreground mt-1">Onde seu agente opera.</p>
-                    </div>
-                    {filteredChannels.map((ch) => {
-                      const isSelected = connectedChannels.includes(ch.value);
-                      return (
-                        <div key={ch.value} className={`flex items-center gap-4 rounded-xl border-2 p-4 transition-all ${isSelected ? "border-primary bg-primary/5 shadow-md" : "border-border bg-card"}`}>
-                          {ch.logo ? (
-                            <img src={ch.logo} alt={ch.label} className="w-8 h-8 rounded-lg object-contain shrink-0"
-                              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                          ) : (
-                            <Globe className="w-8 h-8 text-primary shrink-0" />
-                          )}
-                          <span className="text-sm font-semibold text-foreground flex-1">{ch.label}</span>
-                          <Button size="sm" variant={isSelected ? "default" : "outline"}
-                            onClick={() => toggleChannel(ch.value)}
-                            className="shrink-0 text-xs h-8 gap-1.5">
-                            {isSelected ? <><Check className="w-3 h-3" /> Conectado</> : "Conectar"}
-                          </Button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {/* ── Avançado ── */}
-                {settingsNav === "advanced" && (
-                  <div className="space-y-6">
-                    <div>
-                      <h2 className="text-lg font-bold text-foreground">Configurações da API</h2>
-                      <p className="text-sm text-muted-foreground mt-1">Parâmetros avançados para controlar o comportamento do LLM.</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium text-foreground">Temperature</label>
-                        <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">{apiConfig.temperature}</span>
-                      </div>
-                      <input type="range" min="0" max="2" step="0.1" value={apiConfig.temperature}
-                        onChange={(e) => setApiConfig(prev => ({ ...prev, temperature: parseFloat(e.target.value) }))}
-                        className="w-full accent-primary" />
-                      <div className="flex justify-between text-[10px] text-muted-foreground">
-                        <span>Preciso (0)</span><span>Equilibrado (0.7)</span><span>Criativo (2)</span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground">Max Tokens</label>
-                      <p className="text-[11px] text-muted-foreground">Número máximo de tokens na resposta.</p>
-                      <Input type="number" min={1} max={128000} value={apiConfig.maxTokens}
-                        onChange={(e) => setApiConfig(prev => ({ ...prev, maxTokens: parseInt(e.target.value) || 2048 }))}
-                        className="text-sm font-mono" />
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium text-foreground">Top P</label>
-                        <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">{apiConfig.topP}</span>
-                      </div>
-                      <input type="range" min="0" max="1" step="0.05" value={apiConfig.topP}
-                        onChange={(e) => setApiConfig(prev => ({ ...prev, topP: parseFloat(e.target.value) }))}
-                        className="w-full accent-primary" />
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium text-foreground">Frequency Penalty</label>
-                        <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">{apiConfig.frequencyPenalty}</span>
-                      </div>
-                      <input type="range" min="-2" max="2" step="0.1" value={apiConfig.frequencyPenalty}
-                        onChange={(e) => setApiConfig(prev => ({ ...prev, frequencyPenalty: parseFloat(e.target.value) }))}
-                        className="w-full accent-primary" />
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium text-foreground">Presence Penalty</label>
-                        <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">{apiConfig.presencePenalty}</span>
-                      </div>
-                      <input type="range" min="-2" max="2" step="0.1" value={apiConfig.presencePenalty}
-                        onChange={(e) => setApiConfig(prev => ({ ...prev, presencePenalty: parseFloat(e.target.value) }))}
-                        className="w-full accent-primary" />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground">Formato de Resposta</label>
-                      <Select value={apiConfig.responseFormat} onValueChange={(v) => setApiConfig(prev => ({ ...prev, responseFormat: v as "text" | "json" }))}>
-                        <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="text">Texto</SelectItem>
-                          <SelectItem value="json">JSON</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground">Stop Sequences</label>
-                      <Input
-                        value={apiConfig.stopSequences.join(", ")}
-                        onChange={(e) => setApiConfig(prev => ({
-                          ...prev,
-                          stopSequences: e.target.value ? e.target.value.split(",").map(s => s.trim()).filter(Boolean) : [],
-                        }))}
-                        placeholder='Ex: "###", "FIM"'
-                        className="text-sm font-mono"
-                      />
-                    </div>
-
-                    <Button variant="outline" size="sm" className="text-xs" onClick={() => setApiConfig(DEFAULT_API_CONFIG)}>
-                      Restaurar padrões
-                    </Button>
-                  </div>
-                )}
-
-                {/* ── Danger Zone ── */}
-                {settingsNav === "danger" && (
-                  <div>
-                    <h2 className="text-lg font-bold text-destructive">Danger Zone</h2>
-                    <p className="text-sm text-muted-foreground mt-1">Ações irreversíveis para este agente.</p>
-                    <Button variant="destructive" size="sm" className="mt-4">Excluir Agente</Button>
-                  </div>
-                )}
               </div>
             </ScrollArea>
           </div>
         </TabsContent>
 
-        {/* ── Canais (tab principal) ── */}
-        <TabsContent value="settings" className="flex-1 mt-0 min-h-0 overflow-hidden">
+        {/* ── Canais (top-level tab) ── */}
+        <TabsContent value="channels" className="flex-1 mt-0 min-h-0 overflow-hidden">
           <ScrollArea className="h-full max-h-[calc(100vh-110px)]">
             <div className="p-6 max-w-lg space-y-6">
               <div>
@@ -1025,6 +899,112 @@ const AgentRightPanel = ({
                   </div>
                 );
               })}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+
+        {/* ── Avançado (top-level tab) ── */}
+        <TabsContent value="advanced" className="flex-1 mt-0 min-h-0 overflow-hidden">
+          <ScrollArea className="h-full max-h-[calc(100vh-110px)]">
+            <div className="p-6 max-w-lg space-y-8">
+              <div>
+                <h2 className="text-lg font-bold text-foreground">Configurações da API</h2>
+                <p className="text-sm text-muted-foreground mt-1">Parâmetros avançados para controlar o comportamento do LLM.</p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-foreground">Temperature</label>
+                  <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">{apiConfig.temperature}</span>
+                </div>
+                <input type="range" min="0" max="2" step="0.1" value={apiConfig.temperature}
+                  onChange={(e) => setApiConfig(prev => ({ ...prev, temperature: parseFloat(e.target.value) }))}
+                  className="w-full accent-primary" />
+                <div className="flex justify-between text-[10px] text-muted-foreground">
+                  <span>Preciso (0)</span><span>Equilibrado (0.7)</span><span>Criativo (2)</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Max Tokens</label>
+                <p className="text-[11px] text-muted-foreground">Número máximo de tokens na resposta.</p>
+                <Input type="number" min={1} max={128000} value={apiConfig.maxTokens}
+                  onChange={(e) => setApiConfig(prev => ({ ...prev, maxTokens: parseInt(e.target.value) || 2048 }))}
+                  className="text-sm font-mono" />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-foreground">Top P</label>
+                  <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">{apiConfig.topP}</span>
+                </div>
+                <input type="range" min="0" max="1" step="0.05" value={apiConfig.topP}
+                  onChange={(e) => setApiConfig(prev => ({ ...prev, topP: parseFloat(e.target.value) }))}
+                  className="w-full accent-primary" />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-foreground">Frequency Penalty</label>
+                  <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">{apiConfig.frequencyPenalty}</span>
+                </div>
+                <input type="range" min="-2" max="2" step="0.1" value={apiConfig.frequencyPenalty}
+                  onChange={(e) => setApiConfig(prev => ({ ...prev, frequencyPenalty: parseFloat(e.target.value) }))}
+                  className="w-full accent-primary" />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-foreground">Presence Penalty</label>
+                  <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">{apiConfig.presencePenalty}</span>
+                </div>
+                <input type="range" min="-2" max="2" step="0.1" value={apiConfig.presencePenalty}
+                  onChange={(e) => setApiConfig(prev => ({ ...prev, presencePenalty: parseFloat(e.target.value) }))}
+                  className="w-full accent-primary" />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Formato de Resposta</label>
+                <Select value={apiConfig.responseFormat} onValueChange={(v) => setApiConfig(prev => ({ ...prev, responseFormat: v as "text" | "json" }))}>
+                  <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="text">Texto</SelectItem>
+                    <SelectItem value="json">JSON</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Stop Sequences</label>
+                <Input
+                  value={apiConfig.stopSequences.join(", ")}
+                  onChange={(e) => setApiConfig(prev => ({
+                    ...prev,
+                    stopSequences: e.target.value ? e.target.value.split(",").map(s => s.trim()).filter(Boolean) : [],
+                  }))}
+                  placeholder='Ex: "###", "FIM"'
+                  className="text-sm font-mono"
+                />
+              </div>
+
+              <Button variant="outline" size="sm" className="text-xs" onClick={() => setApiConfig(DEFAULT_API_CONFIG)}>
+                Restaurar padrões
+              </Button>
+            </div>
+          </ScrollArea>
+        </TabsContent>
+
+        {/* ── Danger Zone (top-level tab) ── */}
+        <TabsContent value="danger" className="flex-1 mt-0 min-h-0 overflow-hidden">
+          <ScrollArea className="h-full max-h-[calc(100vh-110px)]">
+            <div className="p-6 max-w-lg space-y-4">
+              <h2 className="text-lg font-bold text-destructive">Danger Zone</h2>
+              <p className="text-sm text-muted-foreground">Ações irreversíveis para este agente.</p>
+              <div className="rounded-xl border-2 border-destructive/30 p-4 space-y-3">
+                <h3 className="text-sm font-semibold text-foreground">Excluir agente</h3>
+                <p className="text-xs text-muted-foreground">Esta ação não pode ser desfeita. Todos os dados do agente serão permanentemente removidos.</p>
+                <Button variant="destructive" size="sm">Excluir Agente</Button>
+              </div>
             </div>
           </ScrollArea>
         </TabsContent>
