@@ -51,6 +51,22 @@ const LLM_PROVIDER_MODELS: Record<string, { models: { value: string; label: stri
     ],
     capabilities: ["Chat e completions", "Visão (imagens e vídeo)", "Function calling", "Contexto de 1M tokens", "Geração de imagens"],
   },
+  ElevenLabs: {
+    models: [
+      { value: "eleven_multilingual_v2", label: "Multilingual v2", desc: "Voz multilíngue de alta qualidade." },
+      { value: "eleven_turbo_v2_5",      label: "Turbo v2.5",      desc: "Baixa latência para tempo real." },
+      { value: "eleven_monolingual_v1",  label: "Monolingual v1",  desc: "Inglês otimizado e econômico." },
+    ],
+    capabilities: ["Text-to-speech", "Clonagem de voz", "Voz multilíngue", "Streaming de áudio"],
+  },
+  DeepSeek: {
+    models: [
+      { value: "deepseek-r1",    label: "DeepSeek R1",    desc: "Raciocínio avançado open-source." },
+      { value: "deepseek-v3",    label: "DeepSeek V3",    desc: "Modelo geral de alta performance." },
+      { value: "deepseek-coder", label: "DeepSeek Coder", desc: "Especializado em código." },
+    ],
+    capabilities: ["Chat e completions", "Raciocínio avançado", "Geração de código", "Open-source"],
+  },
 };
 
 const INTEGRATIONS = [
