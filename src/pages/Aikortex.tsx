@@ -17,6 +17,14 @@ const Aikortex = () => {
     // Get preset for this agent type
     const preset = AGENT_PRESETS[agent.type];
 
+    // Clear stale localStorage for this agent so template values take precedence
+    const storagePrefix = `agent-detail-${agent.id}`;
+    try {
+      ["name", "desc", "objective", "instructions", "toneOfVoice", "greetingMessage"].forEach(k =>
+        localStorage.removeItem(`${storagePrefix}-${k}`)
+      );
+    } catch {}
+
     // Navigate to AgentDetail with preset data in state
     navigate(`/aikortex/agents/${agent.id}`, {
       state: {

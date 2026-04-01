@@ -5,6 +5,8 @@ import { Monitor, Sparkles, Globe, ArrowUp, RefreshCw, Phone } from "lucide-reac
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { AGENT_PRESETS } from "@/types/agent-presets";
+import type { AgentType } from "@/types/agent-builder";
 
 const suggestionsByTab = {
   app: [
