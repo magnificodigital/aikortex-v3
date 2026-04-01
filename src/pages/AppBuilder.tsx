@@ -211,7 +211,7 @@ const AppBuilderInner = ({ initialPrompt }: { initialPrompt: string }) => {
             )}
             {activeTab === "database" && <DatabasePanel />}
           </div>
-          <TerminalPanel />
+          
         </div>
       </div>
 
