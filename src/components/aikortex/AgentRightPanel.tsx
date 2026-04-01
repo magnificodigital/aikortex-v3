@@ -84,7 +84,7 @@ const SETTINGS_NAV = [
     { key: "general", icon: User, label: "Identidade" },
     { key: "objective", icon: Zap, label: "Objetivo" },
     { key: "instructions", icon: Settings2, label: "Instruções" },
-    { key: "machine", icon: Monitor, label: "Modelo" },
+    
   ]},
   { section: "CONFIGURAÇÃO", items: [
     { key: "channels", icon: MonitorSmartphone, label: "Canais" },
