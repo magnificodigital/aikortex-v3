@@ -719,8 +719,8 @@ const AgentRightPanel = ({
         </TabsContent>
 
         {/* ── Agente (Settings com sidebar) ── */}
-        <TabsContent value="agent" className="flex-1 mt-0 overflow-hidden">
-          <div className="flex h-full">
+        <TabsContent value="agent" className="flex-1 mt-0 min-h-0 overflow-hidden">
+          <div className="flex h-full max-h-[calc(100vh-110px)]">
             {/* Sidebar de navegação */}
             <div className="w-48 border-r border-border p-4 space-y-4 shrink-0">
               {SETTINGS_NAV.map((section) => (
