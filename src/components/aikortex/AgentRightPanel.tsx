@@ -339,28 +339,28 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
 
   const [settingsNav, setSettingsNav] = useState("general");
   const [agentName, setAgentName] = useState(() => {
-    if (storagePrefix) { try { return localStorage.getItem(`${storagePrefix}-name`) || agent.name; } catch {} }
+    if (storagePrefix) { try { const v = localStorage.getItem(`${storagePrefix}-name`); if (v) return v; } catch {} }
     return agent.name;
   });
   const [agentDesc, setAgentDesc] = useState(() => {
-    if (storagePrefix) { try { return localStorage.getItem(`${storagePrefix}-desc`) || ""; } catch {} }
-    return "";
+    if (storagePrefix) { try { const v = localStorage.getItem(`${storagePrefix}-desc`); if (v) return v; } catch {} }
+    return presetData?.description || "";
   });
   const [agentObjective, setAgentObjective] = useState(() => {
-    if (storagePrefix) { try { return localStorage.getItem(`${storagePrefix}-objective`) || ""; } catch {} }
-    return "";
+    if (storagePrefix) { try { const v = localStorage.getItem(`${storagePrefix}-objective`); if (v) return v; } catch {} }
+    return presetData?.objective || "";
   });
   const [agentInstructions, setAgentInstructions] = useState(() => {
-    if (storagePrefix) { try { return localStorage.getItem(`${storagePrefix}-instructions`) || ""; } catch {} }
-    return "";
+    if (storagePrefix) { try { const v = localStorage.getItem(`${storagePrefix}-instructions`); if (v) return v; } catch {} }
+    return presetData?.instructions || "";
   });
   const [agentToneOfVoice, setAgentToneOfVoice] = useState(() => {
-    if (storagePrefix) { try { return localStorage.getItem(`${storagePrefix}-toneOfVoice`) || ""; } catch {} }
-    return "";
+    if (storagePrefix) { try { const v = localStorage.getItem(`${storagePrefix}-toneOfVoice`); if (v) return v; } catch {} }
+    return presetData?.toneOfVoice || "";
   });
   const [agentGreetingMessage, setAgentGreetingMessage] = useState(() => {
-    if (storagePrefix) { try { return localStorage.getItem(`${storagePrefix}-greetingMessage`) || ""; } catch {} }
-    return "";
+    if (storagePrefix) { try { const v = localStorage.getItem(`${storagePrefix}-greetingMessage`); if (v) return v; } catch {} }
+    return presetData?.greetingMessage || "";
   });
   const [knowledgeFiles, setKnowledgeFiles] = useState<KnowledgeFileLocal[]>(() => {
     if (storagePrefix) { try { const s = localStorage.getItem(`${storagePrefix}-files`); if (s) return JSON.parse(s); } catch {} }
