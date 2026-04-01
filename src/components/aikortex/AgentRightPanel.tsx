@@ -751,42 +751,7 @@ const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTa
                       />
                     </div>
 
-                    {/* Model — only show if user has at least one LLM key */}
-                    {(() => {
-                      const hasLLMKey = ["OpenAI", "Anthropic", "Gemini"].some(p => connectorKeys[p]?.configured);
-                      if (!hasLLMKey) return (
-                        <div className="space-y-2">
-                          <h3 className="text-sm font-semibold text-foreground">Modelo</h3>
-                          <p className="text-xs text-muted-foreground">Configure uma chave de API na aba <strong>Integrações</strong> para escolher o modelo de IA.</p>
-                          <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => handleTabChange("connectors")}>
-                            <KeyRound className="w-3 h-3" /> Ir para Integrações
-                          </Button>
-                        </div>
-                      );
-                      // Build available models from configured providers
-                      const availableModels: { value: string; label: string }[] = [];
-                      ["OpenAI", "Anthropic", "Gemini"].forEach(provider => {
-                        if (connectorKeys[provider]?.configured && LLM_PROVIDER_MODELS[provider]) {
-                          LLM_PROVIDER_MODELS[provider].models.forEach(m => availableModels.push({ value: m.value, label: m.label }));
-                        }
-                      });
-                      return (
-                        <div className="space-y-2">
-                          <h3 className="text-sm font-semibold text-foreground">Modelo</h3>
-                          <p className="text-xs text-muted-foreground">O modelo de IA usado pelo agente.</p>
-                          <Select value={agentModel} onValueChange={onModelChange}>
-                            <SelectTrigger className="text-sm">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {availableModels.map(m => (
-                                <SelectItem key={m.value} value={m.value}>🤖 {m.label}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      );
-                    })()}
+                    {/* Model section removed — now in "Modelo" tab */}
 
                     {/* Save Agent Button */}
                     <div className="pt-4 border-t border-border">
