@@ -570,8 +570,8 @@ const AgentRightPanel = ({
         </div>
 
         {/* ── Integrações ── */}
-        <TabsContent value="connectors" className="flex-1 mt-0 overflow-hidden">
-          <ScrollArea className="h-full">
+        <TabsContent value="connectors" className="flex-1 mt-0 min-h-0 overflow-hidden">
+          <ScrollArea className="h-full max-h-[calc(100vh-110px)]">
             <div className="p-6 space-y-6">
               <div>
                 <h2 className="text-lg font-bold text-foreground">Integrações</h2>
