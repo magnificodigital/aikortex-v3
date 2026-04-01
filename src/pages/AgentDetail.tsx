@@ -728,27 +728,18 @@ const AgentDetail = () => {
                     Conte o que seu agente {initialAgentType !== "Custom" ? initialAgentType : ""} deve fazer. A IA vai estruturar tudo automaticamente.
                   </p>
 
-                  <div className="w-full max-w-[340px] space-y-3">
-                    <textarea
-                      value={wizardPrompt}
-                      onChange={(e) => setWizardPrompt(e.target.value)}
-                      placeholder={`Ex: ${SUGGESTIONS_BY_TYPE[initialAgentType]?.[0] || "Descreva o que o agente deve fazer..."}`}
-                      className="w-full bg-card/50 border border-border rounded-lg outline-none resize-none text-xs text-foreground placeholder:text-muted-foreground px-3 py-2.5 min-h-[100px] focus:border-primary/30 transition-colors"
-                    />
-                    <Button onClick={handleDiscover} disabled={wizardPrompt.length < 10} className="w-full gap-2 h-9 text-xs rounded-lg">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      Estruturar com IA
-                    </Button>
-                  </div>
-
                   {/* Quick suggestions */}
-                  <div className="mt-6 w-full max-w-[340px]">
-                    <p className="text-[10px] text-muted-foreground mb-2 text-center">ou comece com uma ideia:</p>
+                  <div className="w-full max-w-[380px]">
+                    <p className="text-[10px] text-muted-foreground mb-2 text-center">Comece com uma ideia:</p>
                     <div className="space-y-1.5">
                       {(SUGGESTIONS_BY_TYPE[initialAgentType] || SUGGESTIONS_BY_TYPE.Custom).map((s) => (
                         <button
                           key={s}
-                          onClick={() => setWizardPrompt(s)}
+                          onClick={() => {
+                            setWizardPrompt(s);
+                            setWizardMessages(prev => [...prev, { role: "user", content: s }]);
+                            handleStructure(s);
+                          }}
                           className="w-full text-left text-[11px] px-3 py-2 rounded-lg border border-border hover:border-primary/30 hover:bg-accent/20 text-muted-foreground hover:text-foreground transition-all"
                         >
                           {s}
