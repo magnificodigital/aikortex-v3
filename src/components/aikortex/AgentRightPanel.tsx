@@ -742,12 +742,6 @@ const AgentRightPanel = ({
           </ScrollArea>
         </TabsContent>
 
-        {/* ── Arquivos ── */}
-        <TabsContent value="files" className="flex-1 mt-0 min-h-0 overflow-hidden">
-          <ScrollArea className="h-full max-h-[calc(100vh-160px)]">
-            <div className="p-6 space-y-6">
-              <div>
-                <h2 className="text-lg font-bold text-foreground">Conhecimento</h2>
                 <p className="text-sm text-muted-foreground mt-1">Fontes de dados para alimentar o agente.</p>
               </div>
               <div
