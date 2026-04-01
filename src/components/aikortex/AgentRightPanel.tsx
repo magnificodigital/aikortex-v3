@@ -74,6 +74,7 @@ const INTEGRATIONS = [
   { label: "Anthropic",         desc: "Modelos Claude para raciocínio avançado.",            logo: "https://cdn.simpleicons.org/anthropic" },
   { label: "Gemini",            desc: "IA multimodal do Google.",                            logo: "https://cdn.simpleicons.org/googlegemini" },
   { label: "ElevenLabs",        desc: "Geração de voz e text-to-speech.",                    logo: "https://cdn.simpleicons.org/elevenlabs" },
+  { label: "DeepSeek",          desc: "Modelos open-source de alto desempenho.",             logo: "https://cdn.simpleicons.org/deepseek" },
   { label: "OpenRouter",        desc: "Acesso unificado a múltiplos LLMs.",                  logo: "https://openrouter.ai/favicon.ico" },
   { label: "Gmail",             desc: "Ler, enviar e compor e-mails.",                       logo: "https://cdn.simpleicons.org/gmail" },
   { label: "Google Calendar",   desc: "Ler e gerenciar eventos.",                            logo: "https://cdn.simpleicons.org/googlecalendar" },
