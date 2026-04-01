@@ -165,26 +165,24 @@ const AgentDetail = () => {
 
   const { saveAgent } = useUserAgents();
 
+  // When creating from template, DON'T pre-fill config — let the chat assistant collect all info
   const presetData = useMemo(() => {
-    if (!navState?.fromTemplate || !navState?.preset) return undefined;
-    const p = navState.preset;
-    return {
-      name:           p.agentName || "",
-      description:    p.context?.targetAudienceDescription || p.agentObjective || "",
-      objective:      p.context?.painPoints || p.agentObjective || "",
-      instructions:   "",
-      toneOfVoice:    p.context?.toneOfVoice || "",
-      greetingMessage: p.context?.greetingMessage || "",
-    };
+    if (navState?.fromTemplate) return undefined; // New agent = empty config
+    return undefined;
   }, [navState]);
 
   useEffect(() => {
     if (!navState?.fromTemplate || !agentId) return;
     const prefix = `agent-detail-${agentId}`;
     try {
+      // Clear all config AND chat history for new agents from templates
       ["name","desc","objective","instructions","toneOfVoice","greetingMessage","files","urls","channels","apiConfig","avatar"].forEach(k =>
         localStorage.removeItem(`${prefix}-${k}`)
       );
+      // Clear persisted chat messages so history starts empty
+      localStorage.removeItem(`${prefix}-setup-messages`);
+      localStorage.removeItem(`${prefix}-test-messages`);
+      localStorage.removeItem(`${prefix}-chatMode`);
     } catch {}
   }, [navState?.fromTemplate, agentId]);
 
@@ -284,8 +282,12 @@ const AgentDetail = () => {
   const setupSystemPrompt = useMemo(() => buildSetupSystemPrompt(agentConfig, keys, agentModel), [agentConfig, keys, agentModel]);
 
   const setupInitialMessage = useMemo(() => {
+    if (navState?.fromTemplate || isTemplate) {
+      const typeName = loadedAgent.agentType !== "Custom" ? ` do tipo **${loadedAgent.agentType}**` : "";
+      return `Olá! 👋 Vamos configurar seu novo agente${typeName}.\n\nPara começar, qual será o **nome** do seu agente?`;
+    }
     return `Olá! 👋 Sou o assistente de configuração do **${loadedAgent.name}**. O que gostaria de configurar?`;
-  }, [loadedAgent.name]);
+  }, [loadedAgent.name, loadedAgent.agentType, navState?.fromTemplate, isTemplate]);
 
   const setupChat = useAgentChat(
     [{ role: "agent", text: setupInitialMessage }],
