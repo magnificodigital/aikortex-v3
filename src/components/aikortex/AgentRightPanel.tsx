@@ -504,7 +504,6 @@ const AgentRightPanel = ({
             {[
               { value: "agent", label: "Agente" },
               { value: "connectors", label: "Integrações" },
-              { value: "files", label: "Arquivos" },
               { value: "channels", label: "Canais" },
               { value: "advanced", label: "Avançado" },
               { value: "danger", label: "Danger Zone" },
