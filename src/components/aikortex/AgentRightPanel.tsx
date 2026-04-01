@@ -179,7 +179,7 @@ const PROVIDER_MAP: Record<string, string> = {
 
 const MODEL_GATED_PROVIDERS = new Set(["OpenAI"]);
 
-const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTab, onTabChange, onApiKeysChanged, onConfigChange, onSaveAgent, isSaving, storagePrefix }: Props) => {
+const AgentRightPanel = ({ agent, agentType, agentModel, onModelChange, activeTab, onTabChange, onApiKeysChanged, onConfigChange, onSaveAgent, isSaving, storagePrefix, presetData }: Props) => {
   const [rightTab, setRightTab] = useState(activeTab || "agent");
 
   // Filter integrations and channels by agent type
