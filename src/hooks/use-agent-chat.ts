@@ -263,16 +263,20 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
       flushAssistantMessage(true);
     } catch (e: any) {
       console.error("Agent chat error:", e);
-      setMessages((prev) => [
-        ...prev,
-        { role: "agent", text: `⚠️ ${e.message || "Erro ao conectar com a IA."}` },
-      ]);
+      if (mountedRef.current) {
+        setMessages((prev) => [
+          ...prev,
+          { role: "agent", text: `⚠️ ${e.message || "Erro ao conectar com a IA."}` },
+        ]);
+      }
     } finally {
       if (flushTimerRef.current) {
         clearTimeout(flushTimerRef.current);
         flushTimerRef.current = null;
       }
-      setIsStreaming(false);
+      if (mountedRef.current) {
+        setIsStreaming(false);
+      }
     }
   }, [isStreaming, options.provider, options.model, options.useGateway, options.gatewayModel, options.systemPrompt, options.apiConfig, options.agentContext, flushAssistantMessage]);
 
