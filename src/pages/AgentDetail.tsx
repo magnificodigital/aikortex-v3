@@ -584,15 +584,47 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
             <span className="text-sm font-semibold">{loadedAgent.name}</span>
             <span className="text-[10px] text-muted-foreground">— Agente de Voz</span>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
+            {[
+              { label: "Voz",          icon: Mic,               tab: "voice" },
+              { label: "Integrações",  icon: Plug,              tab: "connectors" },
+              { label: "Canais",       icon: Share2,            tab: "channels" },
+              { label: "Avançado",     icon: SlidersHorizontal, tab: "advanced" },
+            ].map((btn) => (
+              <Button
+                key={btn.tab}
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs gap-1 px-2"
+                onClick={() => { setRightPanelTab(btn.tab); setShowConfig(true); }}
+              >
+                <btn.icon className="w-3.5 h-3.5" />
+                <span className="hidden lg:inline">{btn.label}</span>
+              </Button>
+            ))}
+            <div className="w-px h-5 bg-border mx-1" />
             <Button
-              variant={showConfig ? "secondary" : "ghost"}
-              size="icon"
-              className="h-7 w-7"
-              title="Configurações do Agente"
-              onClick={() => setShowConfig(!showConfig)}
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1 px-2"
+              disabled={isSaving}
+              onClick={() => {
+                if (agentConfig) {
+                  handleSaveAgent({ ...agentConfig, model: agentModel, agentType: loadedAgent.agentType });
+                }
+              }}
             >
-              <Settings className="w-3.5 h-3.5" />
+              <Save className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">{isSaving ? "Salvando..." : "Salvar"}</span>
+            </Button>
+            <Button
+              size="sm"
+              className="h-7 text-xs gap-1 px-2"
+              disabled={!agentConfig?.name?.trim() || isSaving}
+              onClick={() => toast.info("Publicação em breve!")}
+            >
+              <Rocket className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Publicar</span>
             </Button>
           </div>
         </div>
