@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -208,53 +209,286 @@ Crie a V1 mais sólida possível. Priorize clareza e coerência.`}
 RETORNE SOMENTE O JSON.`;
 }
 
+const DEFAULT_GATEWAY_MODEL = "google/gemini-2.5-flash";
+
+const OPENAI_MODEL_MAP: Record<string, string> = {
+  "gpt-5.2": "gpt-4o",
+  "gpt-5": "gpt-4o",
+  "gpt-5-mini": "gpt-4o-mini",
+  "gpt-5-nano": "gpt-4o-mini",
+  "gpt-4o": "gpt-4o",
+  "gpt-4o-mini": "gpt-4o-mini",
+  "gpt-4-turbo": "gpt-4-turbo",
+  "gpt-3.5-turbo": "gpt-3.5-turbo",
+};
+
+const ANTHROPIC_MODEL_MAP: Record<string, string> = {
+  "claude-4-sonnet": "claude-sonnet-4-20250514",
+  "claude-3.5-sonnet": "claude-3-5-sonnet-20241022",
+  "claude-3-haiku": "claude-3-haiku-20240307",
+};
+
+type SupportedProvider = "openai" | "anthropic" | "gemini" | "openrouter";
+
+function validateProviderKey(provider: SupportedProvider, apiKey: string) {
+  const normalized = apiKey.trim();
+  if (!normalized) {
+    return { valid: false, normalized, error: "Chave de API ausente." };
+  }
+
+  if (provider === "openai" && !normalized.startsWith("sk-")) {
+    return { valid: false, normalized, error: "A chave da OpenAI deve começar com 'sk-'." };
+  }
+
+  if (provider === "openrouter" && !normalized.startsWith("sk-or-")) {
+    return { valid: false, normalized, error: "A chave do OpenRouter deve começar com 'sk-or-'." };
+  }
+
+  if (provider === "gemini" && !normalized.startsWith("AIza")) {
+    return { valid: false, normalized, error: "A chave do Gemini deve começar com 'AIza'." };
+  }
+
+  return { valid: true, normalized };
+}
+
+async function getAuthContext(authHeader: string | null) {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+
+  if (!authHeader || !supabaseUrl || !supabaseAnonKey) {
+    return { supabase: null, user: null };
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    global: { headers: { Authorization: authHeader } },
+  });
+
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) {
+    return { supabase: null, user: null };
+  }
+
+  return { supabase, user };
+}
+
+async function getUserApiKeys(authHeader: string | null) {
+  const auth = await getAuthContext(authHeader);
+  if (!auth.supabase || !auth.user) {
+    return { ...auth, keys: {} as Partial<Record<SupportedProvider, string>> };
+  }
+
+  const { data } = await auth.supabase
+    .from("user_api_keys")
+    .select("provider, api_key")
+    .eq("user_id", auth.user.id);
+
+  const keys = (data || []).reduce((acc, row) => {
+    const provider = row.provider as SupportedProvider;
+    if (["openai", "anthropic", "gemini", "openrouter"].includes(provider) && typeof row.api_key === "string" && row.api_key.trim()) {
+      acc[provider] = row.api_key.trim();
+    }
+    return acc;
+  }, {} as Partial<Record<SupportedProvider, string>>);
+
+  return { ...auth, keys };
+}
+
+function pickPreferredProvider(
+  keys: Partial<Record<SupportedProvider, string>>,
+  requestedProvider?: string,
+): SupportedProvider | null {
+  if (requestedProvider && requestedProvider in keys && keys[requestedProvider as SupportedProvider]) {
+    return requestedProvider as SupportedProvider;
+  }
+
+  return ["openai", "gemini", "anthropic", "openrouter"].find((provider) => !!keys[provider as SupportedProvider]) as SupportedProvider | null;
+}
+
+function buildGatewayResponse(messages: Array<{ role: string; content: string }>, requestedModel?: string, stream = true) {
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+  return fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${LOVABLE_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: requestedModel || DEFAULT_GATEWAY_MODEL,
+      messages,
+      stream,
+      ...(stream ? {} : { response_format: { type: "json_object" } }),
+    }),
+  });
+}
+
+async function proxyAgentChat(body: Record<string, unknown>, authHeader: string | null) {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  if (!supabaseUrl) throw new Error("SUPABASE_URL is not configured");
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
+  if (authHeader) {
+    headers.Authorization = authHeader;
+  }
+
+  let response = await fetch(`${supabaseUrl}/functions/v1/agent-chat`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
+
+  if (response.status === 401 && ((body.useGateway === true) || !body.provider)) {
+    response = await buildGatewayResponse((body.messages as Array<{ role: string; content: string }>) || [], body.model as string | undefined, true);
+  }
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    return new Response(errorText, {
+      status: response.status,
+      headers: { ...corsHeaders, "Content-Type": response.headers.get("Content-Type") || "application/json" },
+    });
+  }
+
+  return new Response(response.body, {
+    headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+  });
+}
+
+async function buildStructuredResponse({
+  messages,
+  systemPrompt,
+  requestedModel,
+  requestedProvider,
+  authHeader,
+}: {
+  messages: Array<{ role: string; content: string }>;
+  systemPrompt: string;
+  requestedModel?: string;
+  requestedProvider?: string;
+  authHeader: string | null;
+}) {
+  const finalMessages = [{ role: "system", content: systemPrompt }, ...messages];
+  const { keys } = await getUserApiKeys(authHeader);
+  const selectedProvider = pickPreferredProvider(keys, requestedProvider);
+
+  if (selectedProvider === "openai" && keys.openai) {
+    const validation = validateProviderKey("openai", keys.openai);
+    if (!validation.valid) {
+      return new Response(JSON.stringify({ error: validation.error }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${validation.normalized}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: OPENAI_MODEL_MAP[requestedModel || ""] || requestedModel || "gpt-4o-mini",
+        messages: finalMessages,
+        stream: false,
+        response_format: { type: "json_object" },
+      }),
+    });
+
+    return { response, parser: "openai" as const, provider: selectedProvider };
+  }
+
+  if (selectedProvider === "gemini" && keys.gemini) {
+    const validation = validateProviderKey("gemini", keys.gemini);
+    if (!validation.valid) {
+      return new Response(JSON.stringify({ error: validation.error }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${validation.normalized}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: requestedModel || "gemini-2.5-flash",
+        messages: finalMessages,
+        stream: false,
+        response_format: { type: "json_object" },
+      }),
+    });
+
+    return { response, parser: "openai" as const, provider: selectedProvider };
+  }
+
+  if (selectedProvider === "anthropic" && keys.anthropic) {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": keys.anthropic,
+        "anthropic-version": "2023-06-01",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: ANTHROPIC_MODEL_MAP[requestedModel || ""] || requestedModel || "claude-3-5-sonnet-20241022",
+        system: systemPrompt,
+        messages,
+        max_tokens: 4096,
+      }),
+    });
+
+    return { response, parser: "anthropic" as const, provider: selectedProvider };
+  }
+
+  if (selectedProvider === "openrouter" && keys.openrouter) {
+    const validation = validateProviderKey("openrouter", keys.openrouter);
+    if (!validation.valid) {
+      return new Response(JSON.stringify({ error: validation.error }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${validation.normalized}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://aikortex.lovable.app",
+        "X-OpenRouter-Title": "Aikortex",
+      },
+      body: JSON.stringify({
+        model: requestedModel || "openai/gpt-5-mini",
+        messages: finalMessages,
+        stream: false,
+        response_format: { type: "json_object" },
+      }),
+    });
+
+    return { response, parser: "openai" as const, provider: selectedProvider };
+  }
+
+  const response = await buildGatewayResponse(finalMessages, requestedModel, false);
+  return { response, parser: "openai" as const, provider: "gateway" as const };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const body = await req.json();
-    const { messages, appContext, mode, useGateway, model: requestedModel } = body;
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const { messages, appContext, mode, model: requestedModel, provider: requestedProvider } = body;
+    const authHeader = req.headers.get("Authorization");
 
     /* ── Mode: agent-chat (streaming, for agent configuration assistant) ── */
-    if (mode === "agent-chat" || useGateway === true) {
-      const chatModel = requestedModel || "google/gemini-2.5-flash";
-      
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: chatModel,
-          messages,
-          stream: true,
-        }),
-      });
-
-      if (!response.ok) {
-        if (response.status === 429) {
-          return new Response(JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns segundos." }), {
-            status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        if (response.status === 402) {
-          return new Response(JSON.stringify({ error: "Créditos insuficientes. Adicione créditos em Configurações." }), {
-            status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        const t = await response.text();
-        console.error("AI gateway error:", response.status, t);
-        return new Response(JSON.stringify({ error: "Erro no serviço de IA" }), {
-          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      return new Response(response.body, {
-        headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-      });
+    if (mode === "agent-chat") {
+      return await proxyAgentChat(body, authHeader);
     }
 
     /* ── Mode: structure (non-streaming JSON) ── */
@@ -264,24 +498,26 @@ serve(async (req) => {
       ? buildStructuringPrompt(appContext?.app_type || "web", appContext?.language || "pt-BR")
       : buildAppStatePrompt(appContext);
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...messages,
-        ],
-        stream: false,
-        response_format: { type: "json_object" },
-      }),
+    const structured = await buildStructuredResponse({
+      messages,
+      systemPrompt,
+      requestedModel,
+      requestedProvider,
+      authHeader,
     });
 
+    if (structured instanceof Response) {
+      return structured;
+    }
+
+    const { response, parser, provider } = structured;
+
     if (!response.ok) {
+      if (response.status === 401) {
+        return new Response(JSON.stringify({ error: provider === "openai" ? "Chave da OpenAI inválida. Verifique sua configuração em Integrações." : "Chave de API inválida. Verifique sua configuração em Integrações." }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns segundos." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -300,7 +536,9 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || "{}";
+    const content = parser === "anthropic"
+      ? data.content?.find?.((block: { type?: string }) => block.type === "text")?.text || "{}"
+      : data.choices?.[0]?.message?.content || "{}";
 
     if (isStructureMode) {
       return new Response(JSON.stringify({ structuredConfig: content }), {

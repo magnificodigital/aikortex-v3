@@ -10,8 +10,14 @@ import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import { useAppBuilder, type ChatMessage, type StructuredAppConfig, type AppState } from "@/contexts/AppBuilderContext";
+import { supabase } from "@/integrations/supabase/client";
 
 type Msg = { role: "user" | "assistant"; content: string };
+
+async function getAuthToken() {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+}
 
 interface ToolLog {
   label: string;
@@ -75,11 +81,12 @@ async function requestAppState(
   appContext: Record<string, string>,
   mode: string,
 ): Promise<{ appState: AppState | null; chatSummary: string; error?: string }> {
+  const accessToken = await getAuthToken();
   const resp = await fetch(CHAT_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify({ messages, appContext, mode }),
   });
@@ -106,11 +113,12 @@ async function requestAppState(
 }
 
 async function requestStructure(description: string, appType: string, language: string): Promise<StructuredAppConfig | null> {
+  const accessToken = await getAuthToken();
   const resp = await fetch(CHAT_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify({
       messages: [{ role: "user", content: description }],

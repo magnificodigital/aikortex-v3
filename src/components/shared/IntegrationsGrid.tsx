@@ -81,6 +81,33 @@ export const SERVICE_PROVIDERS: IntegrationProvider[] = [
 
 export const ALL_PROVIDERS = [...LLM_PROVIDERS, ...SERVICE_PROVIDERS];
 
+const KEY_VALIDATORS: Partial<Record<string, (key: string) => boolean>> = {
+  openai: (key) => key.startsWith("sk-"),
+  openrouter: (key) => key.startsWith("sk-or-"),
+  gemini: (key) => key.startsWith("AIza"),
+};
+
+function getKeyValidationError(provider: string, apiKey: string) {
+  const normalizedKey = apiKey.trim();
+  const validator = KEY_VALIDATORS[provider];
+
+  if (!validator || validator(normalizedKey)) return null;
+
+  if (provider === "openai") {
+    return "A chave da OpenAI parece inválida. Ela deve começar com 'sk-'.";
+  }
+
+  if (provider === "openrouter") {
+    return "A chave do OpenRouter parece inválida. Ela deve começar com 'sk-or-'.";
+  }
+
+  if (provider === "gemini") {
+    return "A chave do Gemini parece inválida. Ela deve começar com 'AIza'.";
+  }
+
+  return "A chave informada parece inválida.";
+}
+
 interface IntegrationsGridProps {
   /** Which providers to show. Defaults to ALL_PROVIDERS */
   providers?: IntegrationProvider[];
@@ -141,6 +168,11 @@ export function IntegrationsGrid({
 
   const handleSave = async () => {
     if (!dialogProvider || !keyInput.trim()) return;
+    const validationError = getKeyValidationError(dialogProvider.provider, keyInput);
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
     setSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();

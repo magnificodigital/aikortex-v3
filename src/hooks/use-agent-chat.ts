@@ -131,13 +131,12 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
       const maxRetries = 2;
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
         const payload: Record<string, any> = {
+          mode: "agent-chat",
           messages: apiMessages,
           useGateway: options.useGateway ?? false,
         };
 
         if (options.useGateway) {
-          // Use Lovable AI Gateway via app-chat edge function
-          payload.mode = "agent-chat";
           payload.model = options.gatewayModel || "google/gemini-2.5-flash";
         } else {
           // Use user's own API key via agent-chat edge function
