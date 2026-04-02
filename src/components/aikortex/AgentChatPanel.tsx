@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Phone } from "lucide-react";
 import {
   ArrowLeft, ArrowUp, Send, AlertTriangle,
   Sparkles, Bot, Mic, Check, Loader2, Pencil, RotateCw,
@@ -55,11 +54,11 @@ interface AgentChatPanelProps {
   messages: ChatMessage[];
   sendMessage: (text: string) => void;
   isStreaming: boolean;
-  // Wizard-specific
   onStructureRequest: (description: string) => Promise<StructuredAgentConfig | null>;
   onBuildAgent: (config: StructuredAgentConfig) => Promise<void>;
   isStructuring: boolean;
   isBuilding: boolean;
+  onOpenConfig?: () => void;
 }
 
 const AGENT_SUGGESTIONS: Record<string, string[]> = {
@@ -145,6 +144,7 @@ const AgentChatPanel = ({
   onBuildAgent,
   isStructuring,
   isBuilding,
+  onOpenConfig,
 }: AgentChatPanelProps) => {
   const [input, setInput] = useState("");
   const [editingConfig, setEditingConfig] = useState(false);
@@ -303,13 +303,7 @@ const AgentChatPanel = ({
               onClick={() => setChatMode("test")}
               className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-all ${chatMode === "test" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
             >
-              Testar Texto
-            </button>
-            <button
-              onClick={() => setChatMode("voice")}
-              className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-all flex items-center gap-1 ${chatMode === "voice" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              <Phone className="w-3 h-3" /> Testar Voz
+              Testar
             </button>
           </div>
         </div>
