@@ -123,9 +123,8 @@ const Aikortex = () => {
   const getAvatarSrc = (agent: UserAgent) => {
     if (agent.avatar_url) return agent.avatar_url;
     const key = agent.agent_type?.toLowerCase() === "sdr" ? "sdr-1"
-      : agent.agent_type?.toLowerCase() === "bdr" ? "bdr-1"
       : agent.agent_type?.toLowerCase() === "sac" ? "sac-1"
-      : "custom-1";
+      : "sdr-1";
     return AVATAR_MAP[key] || avatar1;
   };
 
