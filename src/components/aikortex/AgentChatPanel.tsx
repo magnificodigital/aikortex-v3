@@ -157,7 +157,7 @@ const AgentChatPanel = ({
     }
   }, [messages, wizardMessages, isStructuring, isBuilding]);
 
-  const canSendTest = chatMode === "test" ? hasApiKey : true;
+  const canSendTest = chatMode === "test" ? (hasAnyLLMKey || hasApiKey) : true;
   const isDiscoverEmpty = wizardStep === "discover" && wizardMessages.length === 0;
   const suggestions = AGENT_SUGGESTIONS[agentType] || AGENT_SUGGESTIONS.Custom;
 
