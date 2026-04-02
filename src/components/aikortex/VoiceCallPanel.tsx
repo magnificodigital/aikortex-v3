@@ -152,6 +152,8 @@ const VoiceCallPanel = ({
   hasElevenLabsKey,
   onGoToIntegrations,
 }: VoiceCallPanelProps) => {
+  const [selectedVoice, setSelectedVoice] = useState(VOICES[0].id);
+
   const [callStatus, setCallStatus] = useState<CallStatus>("idle");
   const [isMuted, setIsMuted] = useState(false);
   const [duration, setDuration] = useState(0);
