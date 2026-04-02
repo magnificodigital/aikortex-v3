@@ -143,6 +143,19 @@ const AgentDetail = () => {
     try { return normalizeFreeSetupModel(localStorage.getItem(`${storagePrefix}-setupModel`)); } catch { return DEFAULT_FREE_SETUP_MODEL; }
   });
 
+  // Auto-select first available model when keys load and current model's provider isn't configured
+  useEffect(() => {
+    if (keysLoading) return;
+    const provider = getProviderForModel(agentModel);
+    const hasCurrentKey = keys[provider]?.configured;
+    if (!hasCurrentKey) {
+      const firstAvailable = LLM_MODELS.find(m => keys[m.provider]?.configured);
+      if (firstAvailable) {
+        setAgentModel(firstAvailable.value);
+      }
+    }
+  }, [keysLoading, keys]);
+
   useEffect(() => {
     try { localStorage.setItem(`${storagePrefix}-model`, agentModel); } catch {}
   }, [agentModel, storagePrefix]);
