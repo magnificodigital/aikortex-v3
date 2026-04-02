@@ -25,7 +25,7 @@ import {
   Workflow,
   MessageSquare,
   Send,
-  Bot,
+  ShoppingCart,
   User,
   TrendingUp,
   BookOpen,
