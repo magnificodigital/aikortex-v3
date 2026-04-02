@@ -54,6 +54,9 @@ serve(async (req) => {
     }
 
     // Step 1: Create a temporary conversational AI agent
+    const agentLang = language || "pt";
+    const isEnglish = agentLang === "en";
+    
     const agentBody: Record<string, unknown> = {
       name: `${agentName || "Agente"} - Sessão`,
       conversation_config: {
@@ -62,10 +65,14 @@ serve(async (req) => {
             prompt: agentPrompt || `Você é o agente ${agentName || "IA"}. Responda sempre em português brasileiro de forma profissional e amigável.`,
           },
           first_message: firstMessage || `Olá! Sou ${agentName || "seu agente"}. Como posso ajudar?`,
-          language: language || "pt",
+          language: agentLang,
+        },
+        asr: {
+          ...(!isEnglish && { model: "custom" }),
         },
         tts: {
-          voice_id: voiceId || "EXAVITQu4vr4xnSDxMaL", // Sarah default
+          voice_id: voiceId || "EXAVITQu4vr4xnSDxMaL",
+          ...(!isEnglish && { model_id: "eleven_turbo_v2_5" }),
         },
       },
     };
