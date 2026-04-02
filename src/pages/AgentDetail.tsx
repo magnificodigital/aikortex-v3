@@ -91,6 +91,7 @@ const AgentDetail = () => {
   const navState    = location.state as any;
 
   const isTemplate    = !!agentId && !!TEMPLATE_MAP[agentId];
+  const isNewCustomFromHome = navState?.fromTemplate === false && !!navState?.initialPrompt;
   const templateAgent = isTemplate ? TEMPLATE_MAP[agentId!] : null;
   const initialType: AgentType = (navState?.agentType as AgentType) || templateAgent?.agentType || "Custom";
 
