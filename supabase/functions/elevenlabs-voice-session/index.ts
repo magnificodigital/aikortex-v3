@@ -11,15 +11,17 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    // Authenticate user
+    // Authenticate user using service role to verify the JWT token
     const authHeader = req.headers.get("Authorization") || "";
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Use service role client to verify the user's JWT
+    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: authError } = await adminClient.auth.getUser(token);
+
     if (authError || !user) {
       console.error("Auth error:", authError?.message, "Header present:", !!authHeader);
       return new Response(JSON.stringify({ error: "Não autenticado" }), {
@@ -27,6 +29,11 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // User-context client for RLS queries
+    const supabase = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
 
     const { agentName, agentPrompt, voiceId, firstMessage, language } = await req.json();
 
