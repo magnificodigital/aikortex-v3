@@ -578,7 +578,7 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
           <VoiceCallPanel
             agentName={loadedAgent.name}
             agentAvatar={loadedAgent.avatar}
-            elevenLabsAgentId={agentConfig?.voiceConfig?.elevenLabsAgentId}
+            elevenLabsAgentId={(agentConfig as any)?.voiceConfig?.elevenLabsAgentId}
             hasElevenLabsKey={!!keys["elevenlabs"]?.configured}
             onGoToIntegrations={() => setRightPanelTab("connectors")}
           />
