@@ -288,66 +288,12 @@ const AgentChatPanel = ({
         </div>
       )}
 
-      {/* Mode toggle + Model selector — only after wizard is done */}
+      {/* Agent info bar — only after wizard is done */}
       {wizardStep === "done" && (
-        <>
-          <div className="h-10 border-b border-border flex items-center px-3 gap-2 shrink-0">
-            <img src={agentAvatar} className="w-6 h-6 rounded-full object-cover" alt="" />
-            <span className="text-xs font-medium truncate flex-1">{agentName}</span>
-            <div className="flex gap-1">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant={chatMode === "setup" ? "default" : "ghost"} size="sm" className="h-7 text-xs px-2" onClick={() => setChatMode("setup")}>
-                      <Settings className="w-3 h-3 mr-1" /> Configurar
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Assistente gratuito para configurar o agente</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant={chatMode === "test" ? "default" : "ghost"} size="sm" className="h-7 text-xs px-2"
-                      onClick={() => { if (!hasAnyLLMKey && !keysLoading) { onGoToIntegrations(); return; } setChatMode("test"); }}>
-                      <FlaskConical className="w-3 h-3 mr-1" /> Testar
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>{hasAnyLLMKey ? "Testar o agente com sua API key" : "Configure uma API key para testar"}</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          </div>
-          <div className="h-9 border-b border-border flex items-center px-3 gap-2 shrink-0">
-            {chatMode === "setup" ? (
-              <>
-                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Modelo:</span>
-                <Select value={setupModel} onValueChange={setSetupModel}>
-                  <SelectTrigger className="h-6 text-xs flex-1 border-0 bg-muted/50"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {gatewayModels.map(m => <SelectItem key={m.value} value={m.value} className="text-xs">{m.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </>
-            ) : (
-              <>
-                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Modelo:</span>
-                {availableModels.length > 0 ? (
-                  <Select value={agentModel} onValueChange={setAgentModel}>
-                    <SelectTrigger className="h-6 text-xs flex-1 border-0 bg-muted/50"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {availableModels.map(m => <SelectItem key={m.value} value={m.value} className="text-xs">{m.label}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <Button variant="ghost" size="sm" className="h-6 text-xs text-destructive" onClick={onGoToIntegrations}>
-                    <AlertTriangle className="w-3 h-3 mr-1" /> Conectar API Key
-                  </Button>
-                )}
-              </>
-            )}
-          </div>
-        </>
+        <div className="h-10 border-b border-border flex items-center px-3 gap-2 shrink-0">
+          <img src={agentAvatar} className="w-6 h-6 rounded-full object-cover" alt="" />
+          <span className="text-xs font-medium truncate flex-1">{agentName}</span>
+        </div>
       )}
 
       {/* Messages area */}

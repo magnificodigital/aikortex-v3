@@ -5,6 +5,12 @@ import { Badge } from "@/components/ui/badge";
 
 const LLM_PROVIDERS = [
   {
+    name: "Aikortex",
+    description: "IA nativa da plataforma para criação e estruturação de agentes e apps",
+    logo: "",
+    status: "ativo",
+  },
+  {
     name: "OpenAI",
     description: "GPT-4o, GPT-5 e modelos de linguagem avançados",
     logo: "https://cdn.worldvectorlogo.com/logos/openai-2.svg",

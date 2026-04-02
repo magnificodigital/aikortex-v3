@@ -318,21 +318,22 @@ const AgentDetail = () => {
   useEffect(() => {
     if (autoStructured || !isTemplate || !templateAgent?.autoPrompt) return;
     setAutoStructured(true);
-    // Trigger structuring automatically
+    // Trigger structuring and auto-build for templates
     const run = async () => {
       setWizardStep("structure");
       const result = await handleStructureRequest(templateAgent.autoPrompt);
       if (result) {
         setStructuredConfig(result);
         handleConfigStructured(result);
+        // Auto-build: save agent immediately so user only edits what's needed
+        await handleBuildAgent(result);
       } else {
         setWizardStep("discover");
       }
     };
-    // Small delay to let UI mount
     const timer = setTimeout(run, 300);
     return () => clearTimeout(timer);
-  }, [isTemplate, templateAgent, autoStructured, handleStructureRequest, handleConfigStructured]);
+  }, [isTemplate, templateAgent, autoStructured, handleStructureRequest, handleConfigStructured, handleBuildAgent]);
 
   /* ── Chat (setup mode — gratuito) ── */
 
