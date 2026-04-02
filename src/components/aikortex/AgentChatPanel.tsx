@@ -36,8 +36,8 @@ interface AgentChatPanelProps {
   setWizardStep: (step: "discover" | "structure" | "build" | "done") => void;
   structuredConfig: StructuredAgentConfig | null;
   setStructuredConfig: (config: StructuredAgentConfig | null) => void;
-  chatMode: "setup" | "test";
-  setChatMode: (mode: "setup" | "test") => void;
+  chatMode: "setup" | "test" | "voice";
+  setChatMode: (mode: "setup" | "test" | "voice") => void;
   hasApiKey: boolean;
   hasAnyLLMKey: boolean;
   keysLoading: boolean;
