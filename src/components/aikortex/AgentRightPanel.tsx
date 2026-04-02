@@ -339,28 +339,6 @@ const AgentRightPanel = ({
     if (presetData.greetingMessage) setAgentGreetingMessage(presetData.greetingMessage);
   }, [presetData]);
 
-  useEffect(() => {
-    if (!savedConfig) return;
-    setAgentName(savedConfig.name ?? agent.name ?? "");
-    setAgentDesc(savedConfig.description ?? "");
-    setAgentObjective(savedConfig.objective ?? "");
-    setAgentInstructions(savedConfig.instructions ?? "");
-    setAgentToneOfVoice(savedConfig.toneOfVoice ?? "");
-    setAgentGreetingMessage(savedConfig.greetingMessage ?? "");
-    setKnowledgeFiles(
-      savedConfig.knowledgeFiles?.length
-        ? savedConfig.knowledgeFiles.map((n: string, i: number) => ({ id: `saved-${i}-${n}`, name: n, size: 0, type: "" }))
-        : []
-    );
-    setUrls(savedConfig.urls?.length ? savedConfig.urls : []);
-    setConnectedChannels(savedConfig.channels?.length ? savedConfig.channels : []);
-    setSavedIntegrations(savedConfig.integrations?.length ? savedConfig.integrations : []);
-    setIntegrationConfigs(savedConfig.integrationConfigs || {});
-    setApiConfig(savedConfig.apiConfig ? { ...DEFAULT_API_CONFIG, ...savedConfig.apiConfig } : DEFAULT_API_CONFIG);
-    setVoiceConfig(savedConfig.voiceConfig ? { ...DEFAULT_VOICE_CONFIG, ...savedConfig.voiceConfig } : { ...DEFAULT_VOICE_CONFIG, agentName: savedConfig.name || agent.name });
-    setAvatarPreview(savedConfig.avatarUrl || agent.avatar || null);
-  }, [savedConfig, agent.name, agent.avatar]);
-
   // FIX: fieldUpdates do chat — atualiza campos em tempo real
   useEffect(() => {
     if (!fieldUpdates) return;
