@@ -695,6 +695,7 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
         isStructuring={isStructuring}
         isBuilding={isBuilding}
         onOpenConfig={() => setShowConfig(true)}
+        initialPrompt={isNewCustomFromHome ? navState?.initialPrompt : undefined}
       />
 
       {/* ── RIGHT: Voice Agent ── */}
