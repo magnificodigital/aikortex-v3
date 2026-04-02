@@ -604,7 +604,6 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
           <div className="flex items-center gap-1">
             {[
               { label: "Agente",       icon: Bot,               tab: "agent" },
-              { label: "Voz",          icon: Mic,               tab: "voice" },
               { label: "Integrações",  icon: Plug,              tab: "connectors" },
               { label: "Canais",       icon: Share2,            tab: "channels" },
               { label: "Avançado",     icon: SlidersHorizontal, tab: "advanced" },
