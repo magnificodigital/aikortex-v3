@@ -175,7 +175,7 @@ const Apps = () => {
             <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
               channel === "whatsapp" ? "bg-green-500/15 text-green-500" : "bg-muted text-muted-foreground"
             }`}>
-              <Phone className="w-4 h-4" />
+              <WhatsAppIcon className="w-4 h-4" />
             </div>
             <div className="text-left">
               <p className="text-sm font-semibold text-foreground">WhatsApp App</p>
