@@ -621,20 +621,9 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
               </Button>
             ))}
             <div className="w-px h-5 bg-border mx-1" />
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs gap-1 px-2"
-              disabled={isSaving}
-              onClick={() => {
-                if (agentConfig) {
-                  handleSaveAgent({ ...agentConfig, model: agentModel, agentType: loadedAgent.agentType });
-                }
-              }}
-            >
-              <Save className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">{isSaving ? "Salvando..." : "Salvar"}</span>
-            </Button>
+            {isSaving && (
+              <span className="text-[10px] text-muted-foreground animate-pulse">Salvando...</span>
+            )}
             <Button
               size="sm"
               className="h-7 text-xs gap-1 px-2"
