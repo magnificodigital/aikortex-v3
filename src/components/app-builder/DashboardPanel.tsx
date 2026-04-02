@@ -1,4 +1,5 @@
-import { BarChart3, Users, MessageSquare, TrendingUp, Clock, Phone, Monitor, ArrowUp, ArrowDown, Activity, Database, Loader2 } from "lucide-react";
+import { BarChart3, Users, MessageSquare, TrendingUp, Clock, Monitor, ArrowUp, ArrowDown, Activity, Database, Loader2 } from "lucide-react";
+import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 import { useAppBuilder } from "@/contexts/AppBuilderContext";
 
 interface DashboardPanelProps {
