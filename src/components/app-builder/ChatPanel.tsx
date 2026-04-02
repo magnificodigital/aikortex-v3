@@ -429,7 +429,16 @@ ${structuredConfig.constraints ? `Restrições: ${structuredConfig.constraints}`
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      if (wizardStep === "done") {
+      if (wizardStep === "discover") {
+        if (input.trim().length >= 10) {
+          setWizardData(prev => ({ ...prev, prompt: input.trim() }));
+          // Small delay to ensure state is set before handleDiscover reads it
+          const text = input.trim();
+          setInput("");
+          setMessages(prev => [...prev, { role: "user", content: text }]);
+          handleStructure(text);
+        }
+      } else if (wizardStep === "done") {
         sendMessage(input);
       }
     }
