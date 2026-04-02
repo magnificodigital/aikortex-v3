@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useConversation } from "@elevenlabs/react";
 import {
-  Phone, PhoneOff, Mic, MicOff, FileText, AlertTriangle, ExternalLink,
+  Phone, PhoneOff, Mic, MicOff, FileText, AlertTriangle, ExternalLink, Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const VOICES = [
   { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah" },
