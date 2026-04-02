@@ -256,14 +256,6 @@ const AppSidebar = () => {
           </Link>
         </div>
 
-        {/* Agentes — fixo no topo */}
-        <div className="mt-2">
-          <Link to="/aikortex/agents" className={linkClasses(isItemActive("/aikortex/agents"))} title={collapsed ? "Agentes" : undefined}>
-            <Bot className={`w-4 h-4 shrink-0 ${isItemActive("/aikortex/agents") ? "text-primary" : ""}`} />
-            {!collapsed && <span>Agentes</span>}
-          </Link>
-        </div>
-
         {renderGroup("Aikortex", aikortexItems, aikortexOpen, setAikortexOpen)}
         {renderGroup("Gestão", gestaoItems, gestaoOpen, setGestaoOpen)}
         {renderGroup("Partners", partnersItems, partnersOpen, setPartnersOpen)}
