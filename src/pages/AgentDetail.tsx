@@ -106,7 +106,7 @@ const AgentDetail = () => {
   const [agentLoading, setAgentLoading] = useState(!isTemplate);
 
   useEffect(() => {
-    if (isTemplate || !agentId) { setAgentLoading(false); return; }
+    if (isTemplate || !agentId || agentId === "new" || agentId.startsWith("new-")) { setAgentLoading(false); return; }
     const load = async () => {
       setAgentLoading(true);
       const { data } = await supabase.from("user_agents").select("*").eq("id", agentId).single();
