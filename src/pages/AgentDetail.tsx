@@ -122,11 +122,12 @@ const AgentDetail = () => {
 
   const storagePrefix = `agent-detail-${agentId || "new"}`;
 
-  const [chatMode, setChatMode] = useState<"setup" | "test" | "voice">(() => {
+  const [chatMode, setChatMode] = useState<"setup" | "test">(() => {
     if (navState?.chatMode === "test") return "test";
-    if (navState?.chatMode === "voice") return "voice";
-    try { return (localStorage.getItem(`${storagePrefix}-chatMode`) as "setup" | "test" | "voice") || "setup"; } catch { return "setup"; }
+    try { return (localStorage.getItem(`${storagePrefix}-chatMode`) as "setup" | "test") || "setup"; } catch { return "setup"; }
   });
+
+  const [showConfig, setShowConfig] = useState(false);
 
   useEffect(() => {
     try { localStorage.setItem(`${storagePrefix}-chatMode`, chatMode); } catch {}
