@@ -633,14 +633,20 @@ const AgentRightPanel = ({
                     </div>
                   </div>
                 )}
+
+                {/* Voz */}
+                {settingsNav === "voice_nav" && (
+                  <div className="space-y-6">
+                    <div>
+                      <h2 className="text-lg font-bold text-foreground">Configurações de Voz</h2>
+                      <p className="text-sm text-muted-foreground mt-1">Personalize a voz e o comportamento do agente em chamadas.</p>
+                    </div>
+                    <VoiceConfigPanel config={voiceConfig} onChange={setVoiceConfig} />
+                  </div>
+                )}
               </div>
             </ScrollArea>
           </div>
-        </TabsContent>
-
-        {/* ── Aba Voz ── */}
-        <TabsContent value="voice" className="flex-1 mt-0 min-h-0 overflow-hidden">
-          <VoiceConfigPanel config={voiceConfig} onChange={setVoiceConfig} />
         </TabsContent>
 
         {/* ── Aba Integrações ── */}
