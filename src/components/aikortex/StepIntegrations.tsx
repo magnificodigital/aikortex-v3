@@ -1,6 +1,7 @@
-import { ExternalTool, EXTERNAL_TOOLS, AgentType, TOOLS_BY_AGENT_TYPE } from "@/types/agent-builder";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, ArrowLeft, Check, Puzzle } from "lucide-react";
+import { ArrowRight, ArrowLeft, Puzzle } from "lucide-react";
+import { IntegrationsGrid, LLM_PROVIDERS, SERVICE_PROVIDERS } from "@/components/shared/IntegrationsGrid";
+import { ExternalTool, AgentType, TOOLS_BY_AGENT_TYPE } from "@/types/agent-builder";
 
 interface Props {
   selected: ExternalTool[];
@@ -11,8 +12,6 @@ interface Props {
 }
 
 const StepIntegrations = ({ selected, onToggle, onNext, onBack, agentType }: Props) => {
-  const allowedTools = agentType ? TOOLS_BY_AGENT_TYPE[agentType] : EXTERNAL_TOOLS.map(t => t.value);
-  const filteredTools = EXTERNAL_TOOLS.filter(t => allowedTools.includes(t.value));
   return (
     <div className="max-w-2xl mx-auto space-y-8 animate-fade-in">
       <div className="text-center space-y-2">
@@ -20,45 +19,20 @@ const StepIntegrations = ({ selected, onToggle, onNext, onBack, agentType }: Pro
           <Puzzle className="w-7 h-7 text-primary" />
         </div>
         <h2 className="text-2xl font-bold text-foreground">Integrações</h2>
-        <p className="text-sm text-muted-foreground">Conecte ferramentas externas para expandir as capacidades do agente.</p>
+        <p className="text-sm text-muted-foreground">Conecte suas chaves de API para utilizar nos agentes.</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {filteredTools.map((tool) => {
-          const isSelected = selected.includes(tool.value);
-          return (
-            <div
-              key={tool.value}
-              className={`flex items-center gap-3 rounded-xl border-2 p-4 transition-all ${
-                isSelected ? "border-primary bg-primary/5 shadow-md" : "border-border bg-card"
-              }`}
-            >
-              <img
-                src={tool.logo}
-                alt={tool.label}
-                className="w-9 h-9 rounded-lg object-contain shrink-0"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-              />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground">{tool.label}</p>
-                <p className="text-xs text-muted-foreground truncate">{tool.description}</p>
-              </div>
-              <Button
-                size="sm"
-                variant={isSelected ? "default" : "outline"}
-                onClick={() => onToggle(tool.value)}
-                className="shrink-0 text-xs h-8 gap-1.5"
-              >
-                {isSelected ? (
-                  <><Check className="w-3 h-3" /> Conectado</>
-                ) : (
-                  "Conectar"
-                )}
-              </Button>
-            </div>
-          );
-        })}
-      </div>
+      <IntegrationsGrid
+        providers={LLM_PROVIDERS}
+        title="Modelos de IA (LLMs)"
+        subtitle="Conecte provedores de IA para potencializar seu agente."
+      />
+
+      <IntegrationsGrid
+        providers={SERVICE_PROVIDERS}
+        title="Serviços & Ferramentas"
+        subtitle="Conecte ferramentas externas para expandir as capacidades."
+      />
 
       <div className="flex justify-between">
         <Button variant="outline" onClick={onBack} className="gap-1.5">
