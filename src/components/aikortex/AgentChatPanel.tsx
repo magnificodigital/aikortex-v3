@@ -59,6 +59,7 @@ interface AgentChatPanelProps {
   isStructuring: boolean;
   isBuilding: boolean;
   onOpenConfig?: () => void;
+  initialPrompt?: string;
 }
 
 const AGENT_SUGGESTIONS: Record<string, string[]> = {
