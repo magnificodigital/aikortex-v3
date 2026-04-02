@@ -3,6 +3,7 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Loader2, ArrowLeft, Sparkles, Bot, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { ConversationProvider } from "@elevenlabs/react";
 import AgentRightPanel, { type AgentConfig } from "@/components/aikortex/AgentRightPanel";
 import AgentChatPanel, { type StructuredAgentConfig } from "@/components/aikortex/AgentChatPanel";
 import VoiceCallPanel from "@/components/aikortex/VoiceCallPanel";
@@ -597,13 +598,15 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
         </div>
 
         {/* Voice call interface */}
-        <VoiceCallPanel
-          agentName={loadedAgent.name}
-          agentAvatar={loadedAgent.avatar}
-          elevenLabsAgentId={(agentConfig as any)?.voiceConfig?.elevenLabsAgentId}
-          hasElevenLabsKey={!!keys["elevenlabs"]?.configured}
-          onGoToIntegrations={() => { setShowConfig(true); setRightPanelTab("connectors"); }}
-        />
+        <ConversationProvider>
+          <VoiceCallPanel
+            agentName={loadedAgent.name}
+            agentAvatar={loadedAgent.avatar}
+            elevenLabsAgentId={(agentConfig as any)?.voiceConfig?.elevenLabsAgentId}
+            hasElevenLabsKey={!!keys["elevenlabs"]?.configured}
+            onGoToIntegrations={() => { setShowConfig(true); setRightPanelTab("connectors"); }}
+          />
+        </ConversationProvider>
       </div>
 
       {/* ── Config Panel (Sheet overlay like AppBuilder) ── */}
