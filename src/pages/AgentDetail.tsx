@@ -103,9 +103,10 @@ const AgentDetail = () => {
 
   /* ── Wizard state ── */
 
-  // Agentes novos (template) começam no wizard. Agentes salvos (UUID) pulam direto para "done".
+  // Templates com autoPrompt pulam discover. Custom começa no discover. Agentes salvos vão para "done".
+  const hasAutoPrompt = isTemplate && !!templateAgent?.autoPrompt;
   const [wizardStep, setWizardStep] = useState<"discover" | "structure" | "build" | "done">(
-    isTemplate ? "discover" : "done"
+    isTemplate ? (hasAutoPrompt ? "structure" : "discover") : "done"
   );
   const [structuredConfig, setStructuredConfig] = useState<StructuredAgentConfig | null>(null);
 
@@ -321,19 +322,17 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
     } catch {}
   }, [isTemplate, agentId]);
 
-  /* ── Auto-send template prompt — only after user leaves discover step ── */
+  /* ── Auto-send template prompt immediately ── */
 
   const [autoSent, setAutoSent] = useState(false);
   useEffect(() => {
     if (autoSent || !isTemplate || !templateAgent?.autoPrompt) return;
-    // Don't auto-send during discover — let user see the empty state first
-    if (wizardStep === "discover") return;
     const timer = setTimeout(() => {
       setupChat.sendMessage(templateAgent.autoPrompt);
       setAutoSent(true);
     }, 600);
     return () => clearTimeout(timer);
-  }, [isTemplate, templateAgent, autoSent, setupChat, wizardStep]);
+  }, [isTemplate, templateAgent, autoSent, setupChat]);
 
   /* ── Loading screen ── */
 
