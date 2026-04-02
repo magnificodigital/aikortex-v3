@@ -600,6 +600,13 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
     }
   );
 
+  useEffect(() => {
+    if (setupMessagesSnapshot?.length) {
+      setupChat.setMessages(setupMessagesSnapshot as any);
+      setSetupMessagesSnapshot(null);
+    }
+  }, [setupMessagesSnapshot, setupChat.setMessages]);
+
   /* ── Chat (test mode) ── */
 
   const testSystemPrompt = useMemo(() => {
