@@ -384,54 +384,44 @@ const VoiceCallPanel = ({
           </Button>
         )}
 
-        {callStatus === "idle" && (
-          <Button
-            size="icon"
-            className="h-16 w-16 rounded-full bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-500/20"
-            onClick={handleStart}
-          >
-            <Phone className="h-7 w-7 text-white" />
-          </Button>
-        )}
+        {/* Call button - always visible */}
+        <Button
+          size="icon"
+          className={`h-16 w-16 rounded-full shadow-lg transition-all ${
+            callStatus === "connecting"
+              ? "bg-yellow-500 hover:bg-yellow-600 animate-pulse"
+              : "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20"
+          }`}
+          disabled={callStatus === "connecting" || callStatus === "connected"}
+          onClick={callStatus === "idle" || callStatus === "ended" ? handleStart : undefined}
+        >
+          <Phone className="h-7 w-7 text-white" />
+        </Button>
 
-        {callStatus === "connecting" && (
-          <Button
-            size="icon"
-            className="h-16 w-16 rounded-full bg-yellow-500 hover:bg-yellow-600 shadow-lg animate-pulse"
-            disabled
-          >
-            <Phone className="h-7 w-7 text-white" />
-          </Button>
-        )}
-
-        {callStatus === "connected" && (
-          <Button
-            size="icon"
-            className="h-16 w-16 rounded-full bg-destructive hover:bg-destructive/90 shadow-lg shadow-destructive/20"
-            onClick={handleEnd}
-          >
-            <PhoneOff className="h-7 w-7 text-white" />
-          </Button>
-        )}
-
-        {callStatus === "ended" && (
-          <div className="flex flex-col items-center gap-3">
-            <p className="text-xs text-muted-foreground">
-              Duração total: {formatTime(duration)}
-            </p>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handleReset} className="text-xs h-8 gap-1">
-                <Phone className="w-3.5 h-3.5" /> Nova ligação
-              </Button>
-              {transcript.length > 0 && (
-                <Button size="sm" onClick={() => setShowTranscript(true)} className="text-xs h-8 gap-1">
-                  <FileText className="w-3.5 h-3.5" /> Ver transcrição
-                </Button>
-              )}
-            </div>
-          </div>
-        )}
+        {/* Hangup button - always visible */}
+        <Button
+          size="icon"
+          className="h-16 w-16 rounded-full bg-destructive hover:bg-destructive/90 shadow-lg shadow-destructive/20 transition-all"
+          disabled={callStatus !== "connected"}
+          onClick={callStatus === "connected" ? handleEnd : undefined}
+        >
+          <PhoneOff className="h-7 w-7 text-white" />
+        </Button>
       </div>
+
+      {/* Post-call actions */}
+      {callStatus === "ended" && (
+        <div className="flex flex-col items-center gap-3 mt-4">
+          <p className="text-xs text-muted-foreground">
+            Duração total: {formatTime(duration)}
+          </p>
+          {transcript.length > 0 && (
+            <Button size="sm" onClick={() => setShowTranscript(true)} className="text-xs h-8 gap-1">
+              <FileText className="w-3.5 h-3.5" /> Ver transcrição
+            </Button>
+          )}
+        </div>
+      )}
 
       {/* Hint text */}
       {callStatus === "idle" && (
