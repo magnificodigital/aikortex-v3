@@ -187,6 +187,7 @@ const AgentDetail = () => {
           knowledgeFiles:  config.knowledgeFiles,
           urls:            config.urls,
           apiConfig:       config.apiConfig,
+          voiceConfig:     config.voiceConfig,
         },
       });
       if (result) {
