@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  User, Zap, Settings2, AlertTriangle,
+  User, Zap, Settings2, AlertTriangle, Mic,
   Upload, X, FileText, Image, File, Plus, Globe, Link2, Check, Camera,
   Webhook, KeyRound, Blocks, Eye, EyeOff, ExternalLink, Trash2, Settings, Rocket,
 } from "lucide-react";
@@ -96,7 +96,8 @@ const SETTINGS_NAV = [
     { key: "general",      icon: User,      label: "Identidade" },
     { key: "objective",    icon: Zap,       label: "Objetivo" },
     { key: "instructions", icon: Settings2, label: "Instruções" },
-    { key: "files_nav",    icon: FileText,  label: "Arquivos" },
+    { key: "files_nav",    icon: FileText,  label: "Conhecimento" },
+    { key: "voice_nav",    icon: Mic,       label: "Voz" },
   ]},
 ];
 
@@ -632,14 +633,20 @@ const AgentRightPanel = ({
                     </div>
                   </div>
                 )}
+
+                {/* Voz */}
+                {settingsNav === "voice_nav" && (
+                  <div className="space-y-6">
+                    <div>
+                      <h2 className="text-lg font-bold text-foreground">Configurações de Voz</h2>
+                      <p className="text-sm text-muted-foreground mt-1">Personalize a voz e o comportamento do agente em chamadas.</p>
+                    </div>
+                    <VoiceConfigPanel config={voiceConfig} onChange={setVoiceConfig} />
+                  </div>
+                )}
               </div>
             </ScrollArea>
           </div>
-        </TabsContent>
-
-        {/* ── Aba Voz ── */}
-        <TabsContent value="voice" className="flex-1 mt-0 min-h-0 overflow-hidden">
-          <VoiceConfigPanel config={voiceConfig} onChange={setVoiceConfig} />
         </TabsContent>
 
         {/* ── Aba Integrações ── */}

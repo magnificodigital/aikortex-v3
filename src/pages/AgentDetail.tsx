@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { Loader2, ArrowLeft, Sparkles, Bot, Settings, Mic, Plug, Share2, SlidersHorizontal, Rocket } from "lucide-react";
+import { Loader2, ArrowLeft, Sparkles, Bot, Settings, Plug, Share2, SlidersHorizontal, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ConversationProvider } from "@elevenlabs/react";
@@ -604,7 +604,6 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
           <div className="flex items-center gap-1">
             {[
               { label: "Agente",       icon: Bot,               tab: "agent" },
-              { label: "Voz",          icon: Mic,               tab: "voice" },
               { label: "Integrações",  icon: Plug,              tab: "connectors" },
               { label: "Canais",       icon: Share2,            tab: "channels" },
               { label: "Avançado",     icon: SlidersHorizontal, tab: "advanced" },
