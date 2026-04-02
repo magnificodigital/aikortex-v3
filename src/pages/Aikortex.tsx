@@ -84,26 +84,12 @@ const Aikortex = () => {
   };
 
   const handleNewCustom = () => {
-    const storagePrefix = `agent-detail-custom-1`;
-    try {
-      ["name", "desc", "objective", "instructions", "toneOfVoice", "greetingMessage"].forEach(k =>
-        localStorage.removeItem(`${storagePrefix}-${k}`)
-      );
-    } catch {}
-
-    navigate(`/aikortex/agents/custom-1`, {
+    const newId = `new-${Date.now()}`;
+    navigate(`/aikortex/agents/${newId}`, {
       state: {
-        fromTemplate: true,
+        fromTemplate: false,
         agentType: "Custom",
-        agentName: "Agente Personalizado",
-        preset: {
-          agentName: "Agente Personalizado",
-          agentObjective: "Configure um agente sob medida.",
-          context: AGENT_PRESETS["Custom"]?.context || {},
-          intents: AGENT_PRESETS["Custom"]?.intents || [],
-          stages: AGENT_PRESETS["Custom"]?.stages || [],
-          advancedConfig: AGENT_PRESETS["Custom"]?.advancedConfig || {},
-        },
+        agentName: "Novo Agente",
       },
     });
   };
