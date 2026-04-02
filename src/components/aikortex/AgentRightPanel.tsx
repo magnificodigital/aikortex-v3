@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { IntegrationsGrid, LLM_PROVIDERS, SERVICE_PROVIDERS } from "@/components/shared/IntegrationsGrid";
 import { Button } from "@/components/ui/button";
 import type { AgentType } from "@/types/agent-builder";
 import { CHANNELS_BY_AGENT_TYPE, TOOLS_BY_AGENT_TYPE } from "@/types/agent-builder";
