@@ -222,7 +222,7 @@ const AgentDetail = () => {
     setIsSaving(true);
     try {
       const result = await saveAgent({
-        id:          agentId && !TEMPLATE_MAP[agentId] ? agentId : undefined,
+        id:          agentId && !TEMPLATE_MAP[agentId] && agentId !== "new" && !agentId.startsWith("new-") ? agentId : undefined,
         name:        config.name,
         agent_type:  config.agentType,
         description: config.description,
