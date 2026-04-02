@@ -23,34 +23,17 @@ const TEMPLATE_CARDS = [
     type: "SDR" as const,
   },
   {
-    id: "bdr-1",
-    name: "Agente BDR",
-    description: "Prospecta leads outbound, pesquisa empresas-alvo e gera oportunidades via abordagem personalizada.",
-    avatar: avatar2,
-    type: "BDR" as const,
-  },
-  {
     id: "sac-1",
     name: "Agente SAC",
     description: "Atende clientes automaticamente, resolve dúvidas e reduz tickets com suporte inteligente.",
     avatar: avatar3,
     type: "SAC" as const,
   },
-  {
-    id: "social-1",
-    name: "Social Media Manager",
-    description: "Planeja conteúdo semanal, escreve na sua voz, responde DMs e acompanha o que funciona.",
-    avatar: avatar8,
-    type: "Custom" as const,
-  },
 ];
 
 const AVATAR_MAP: Record<string, string> = {
   "sdr-1": avatar1,
-  "bdr-1": avatar2,
   "sac-1": avatar3,
-  "social-1": avatar8,
-  "custom-1": avatar1,
 };
 
 const StepAgents = ({ selected, onSelect }: Props) => {
