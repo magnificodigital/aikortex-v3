@@ -242,6 +242,12 @@ const AgentDetail = () => {
           urls:            config.urls,
           apiConfig:       config.apiConfig,
           voiceConfig:     config.voiceConfig,
+          wizardStep,
+          wizardMessages,
+          setupMessages: setupChat.messages,
+          testMessages: testChat.messages,
+          setupModel,
+          chatMode,
         },
       });
       if (result) {
