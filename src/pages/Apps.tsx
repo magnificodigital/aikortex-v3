@@ -220,7 +220,7 @@ const Apps = () => {
                     <span key={ch} className={`w-6 h-6 rounded-md flex items-center justify-center ${
                       ch === "whatsapp" ? "bg-green-500/10 text-green-500" : "bg-primary/10 text-primary"
                     }`}>
-                      {ch === "whatsapp" ? <Phone className="w-3 h-3" /> : <Globe className="w-3 h-3" />}
+                      {ch === "whatsapp" ? <WhatsAppIcon className="w-3 h-3" /> : <Globe className="w-3 h-3" />}
                     </span>
                   ))}
                 </div>
