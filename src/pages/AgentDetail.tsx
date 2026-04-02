@@ -300,8 +300,8 @@ const AgentDetail = () => {
     const savedDraft = loadedAgent.savedConfig;
     if (!savedDraft || typeof savedDraft !== "object") return;
     if (Array.isArray(savedDraft.wizardMessages)) setWizardMessages(savedDraft.wizardMessages);
-    if (Array.isArray(savedDraft.setupMessages) && savedDraft.setupMessages.length > 0) setSetupMessagesSnapshot(savedDraft.setupMessages);
-    if (Array.isArray(savedDraft.testMessages) && savedDraft.testMessages.length > 0) setTestMessagesSnapshot(savedDraft.testMessages);
+    if (Array.isArray(savedDraft.setupMessages) && savedDraft.setupMessages.length > 0) setPendingSetupRestore(savedDraft.setupMessages);
+    if (Array.isArray(savedDraft.testMessages) && savedDraft.testMessages.length > 0) setPendingTestRestore(savedDraft.testMessages);
     if (savedDraft.wizardStep && ["discover", "structure", "build", "done"].includes(savedDraft.wizardStep)) {
       setWizardStep(savedDraft.wizardStep);
     }
