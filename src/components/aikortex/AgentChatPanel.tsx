@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   ArrowLeft, ArrowUp, Send, Settings, FlaskConical, AlertTriangle,
-  Sparkles, Bot, Mic,
+  Sparkles, Bot, Mic, Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -53,15 +53,48 @@ interface AgentChatPanelProps {
   isStreaming: boolean;
 }
 
-const AGENT_SUGGESTIONS = [
-  "Agente SDR para qualificação de leads B2B",
-  "Agente de suporte ao cliente para e-commerce",
-  "Agente de agendamento para clínicas e consultórios",
-  "Agente de onboarding para novos clientes",
+const AGENT_SUGGESTIONS: Record<string, string[]> = {
+  SDR: [
+    "Agente SDR para qualificação de leads B2B via WhatsApp",
+    "SDR que coleta nome, email e interesse e agenda reunião",
+    "Qualificador BANT automático com encaminhamento para closers",
+    "Agente inbound que filtra leads e envia material",
+  ],
+  BDR: [
+    "Agente BDR para prospecção outbound de empresas SaaS",
+    "Prospectador que pesquisa empresas e personaliza abordagem",
+    "BDR que identifica decisores e agenda reuniões qualificadas",
+    "Agente de outbound com follow-up automático multicanal",
+  ],
+  SAC: [
+    "Agente de suporte ao cliente para e-commerce",
+    "SAC que resolve dúvidas e escala para humanos quando necessário",
+    "Atendente automatizado com pesquisa de satisfação integrada",
+    "Suporte técnico com diagnóstico e abertura de chamados",
+  ],
+  CS: [
+    "Agente de Customer Success para onboarding de clientes",
+    "CS que acompanha uso do produto e previne churn",
+    "Consultor de sucesso com health check periódico",
+    "Agente de expansão que identifica oportunidades de upsell",
+  ],
+  Custom: [
+    "Agente SDR para qualificação de leads B2B",
+    "Agente de suporte ao cliente para e-commerce",
+    "Agente de agendamento para clínicas e consultórios",
+    "Agente de onboarding para novos clientes",
+  ],
+};
+
+const stepLabels = [
+  { id: "discover" as const, label: "Descobrir", num: 1 },
+  { id: "structure" as const, label: "Estruturar", num: 2 },
+  { id: "build" as const, label: "Construir", num: 3 },
 ];
 
 const AgentChatPanel = ({
   onBack,
+  agentType,
   agentName,
   agentAvatar,
   wizardStep,
@@ -107,6 +140,11 @@ const AgentChatPanel = ({
   const canSendTest = chatMode === "test" ? hasApiKey : true;
   const isEmpty = messages.length === 0;
   const isDiscoverEmpty = wizardStep === "discover" && isEmpty;
+  const suggestions = AGENT_SUGGESTIONS[agentType] || AGENT_SUGGESTIONS.Custom;
+
+  const typeLabel: Record<string, string> = {
+    SDR: "SDR", BDR: "BDR", SAC: "SAC", CS: "Customer Success", Custom: "personalizado",
+  };
 
   return (
     <div className="w-[420px] min-w-[360px] border-r border-border flex flex-col bg-background">
@@ -115,95 +153,149 @@ const AgentChatPanel = ({
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onBack}>
           <ArrowLeft className="w-4 h-4" />
         </Button>
-        <img src={agentAvatar} className="w-7 h-7 rounded-full object-cover" alt="" />
-        <span className="text-sm font-medium truncate flex-1">{agentName}</span>
-
-        {/* Mode toggle */}
-        <div className="flex gap-1">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={chatMode === "setup" ? "default" : "ghost"}
-                  size="sm"
-                  className="h-7 text-xs px-2"
-                  onClick={() => setChatMode("setup")}
-                >
-                  <Settings className="w-3 h-3 mr-1" /> Configurar
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Assistente gratuito para configurar o agente</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={chatMode === "test" ? "default" : "ghost"}
-                  size="sm"
-                  className="h-7 text-xs px-2"
-                  onClick={() => {
-                    if (!hasAnyLLMKey && !keysLoading) {
-                      onGoToIntegrations();
-                      return;
-                    }
-                    setChatMode("test");
-                  }}
-                >
-                  <FlaskConical className="w-3 h-3 mr-1" /> Testar
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {hasAnyLLMKey ? "Testar o agente com sua API key" : "Configure uma API key para testar"}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-md bg-primary/15 flex items-center justify-center">
+            <Sparkles className="w-3.5 h-3.5 text-primary" />
+          </div>
+          <span className="text-sm font-semibold tracking-tight">Studio</span>
         </div>
+        <span className="flex-1" />
+
+        {/* Agent type badge */}
+        <span className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium bg-primary/10 text-primary border border-primary/20">
+          <Bot className="w-3 h-3" />
+          {typeLabel[agentType] || agentType}
+        </span>
       </div>
 
-      {/* Model selector bar */}
-      <div className="h-9 border-b border-border flex items-center px-3 gap-2 shrink-0">
-        {chatMode === "setup" ? (
-          <>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Modelo:</span>
-            <Select value={setupModel} onValueChange={setSetupModel}>
-              <SelectTrigger className="h-6 text-xs flex-1 border-0 bg-muted/50">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {gatewayModels.map(m => (
-                  <SelectItem key={m.value} value={m.value} className="text-xs">{m.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </>
-        ) : (
-          <>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Modelo:</span>
-            {availableModels.length > 0 ? (
-              <Select value={agentModel} onValueChange={setAgentModel}>
-                <SelectTrigger className="h-6 text-xs flex-1 border-0 bg-muted/50">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableModels.map(m => (
-                    <SelectItem key={m.value} value={m.value} className="text-xs">{m.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+      {/* Wizard Stepper — only during creation */}
+      {wizardStep !== "done" && (
+        <div className="px-4 py-2.5 border-b border-border bg-card/30">
+          <div className="flex items-center gap-1">
+            {stepLabels.map((s, i) => {
+              const stepOrder = ["discover", "structure", "build"];
+              const currentIdx = stepOrder.indexOf(wizardStep);
+              const thisIdx = stepOrder.indexOf(s.id);
+              const isDone = thisIdx < currentIdx;
+              const isActive = s.id === wizardStep;
+              return (
+                <div key={s.id} className="flex items-center flex-1 last:flex-none">
+                  <div className="flex items-center gap-1.5">
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold transition-all ${
+                      isDone ? "bg-primary text-primary-foreground"
+                      : isActive ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
+                    }`}>
+                      {isDone ? <Check className="w-3 h-3" /> : s.num}
+                    </div>
+                    <span className={`text-[10px] font-medium ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
+                      {s.label}
+                    </span>
+                  </div>
+                  {i < stepLabels.length - 1 && (
+                    <div className={`flex-1 h-px mx-2 ${isDone ? "bg-primary" : "bg-border"}`} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Mode toggle + Model selector — only after wizard is done */}
+      {wizardStep === "done" && (
+        <>
+          {/* Mode toggle */}
+          <div className="h-10 border-b border-border flex items-center px-3 gap-2 shrink-0">
+            <img src={agentAvatar} className="w-6 h-6 rounded-full object-cover" alt="" />
+            <span className="text-xs font-medium truncate flex-1">{agentName}</span>
+            <div className="flex gap-1">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={chatMode === "setup" ? "default" : "ghost"}
+                      size="sm"
+                      className="h-7 text-xs px-2"
+                      onClick={() => setChatMode("setup")}
+                    >
+                      <Settings className="w-3 h-3 mr-1" /> Configurar
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Assistente gratuito para configurar o agente</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={chatMode === "test" ? "default" : "ghost"}
+                      size="sm"
+                      className="h-7 text-xs px-2"
+                      onClick={() => {
+                        if (!hasAnyLLMKey && !keysLoading) {
+                          onGoToIntegrations();
+                          return;
+                        }
+                        setChatMode("test");
+                      }}
+                    >
+                      <FlaskConical className="w-3 h-3 mr-1" /> Testar
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {hasAnyLLMKey ? "Testar o agente com sua API key" : "Configure uma API key para testar"}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
+
+          {/* Model selector bar */}
+          <div className="h-9 border-b border-border flex items-center px-3 gap-2 shrink-0">
+            {chatMode === "setup" ? (
+              <>
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Modelo:</span>
+                <Select value={setupModel} onValueChange={setSetupModel}>
+                  <SelectTrigger className="h-6 text-xs flex-1 border-0 bg-muted/50">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {gatewayModels.map(m => (
+                      <SelectItem key={m.value} value={m.value} className="text-xs">{m.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </>
             ) : (
-              <Button variant="ghost" size="sm" className="h-6 text-xs text-destructive" onClick={onGoToIntegrations}>
-                <AlertTriangle className="w-3 h-3 mr-1" /> Conectar API Key
-              </Button>
+              <>
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Modelo:</span>
+                {availableModels.length > 0 ? (
+                  <Select value={agentModel} onValueChange={setAgentModel}>
+                    <SelectTrigger className="h-6 text-xs flex-1 border-0 bg-muted/50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableModels.map(m => (
+                        <SelectItem key={m.value} value={m.value} className="text-xs">{m.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Button variant="ghost" size="sm" className="h-6 text-xs text-destructive" onClick={onGoToIntegrations}>
+                    <AlertTriangle className="w-3 h-3 mr-1" /> Conectar API Key
+                  </Button>
+                )}
+              </>
             )}
-          </>
-        )}
-      </div>
+          </div>
+        </>
+      )}
 
       {/* Messages area */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
-        {/* Empty state — discover */}
+        {/* ══ Step 1: Discover — empty state ══ */}
         {isDiscoverEmpty && (
           <div className="flex flex-col items-center justify-center h-full pt-12">
             <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
@@ -211,14 +303,14 @@ const AgentChatPanel = ({
             </div>
             <h2 className="text-base font-semibold text-foreground mb-1">Descreva seu agente</h2>
             <p className="text-xs text-muted-foreground text-center max-w-[280px] mb-6">
-              Conte o que seu agente deve fazer. A IA vai estruturar a configuração automaticamente.
+              Conte o que seu agente {typeLabel[agentType] || ""} deve fazer. A IA vai estruturar tudo automaticamente.
             </p>
 
             {/* Quick suggestions */}
             <div className="w-full max-w-[340px]">
               <p className="text-[10px] text-muted-foreground mb-2 text-center">ou comece com uma ideia:</p>
               <div className="space-y-1.5">
-                {AGENT_SUGGESTIONS.map((s) => (
+                {suggestions.map((s) => (
                   <button
                     key={s}
                     onClick={() => setInput(s)}
@@ -275,7 +367,7 @@ const AgentChatPanel = ({
 
       {/* Input area */}
       <div className="p-3 border-t border-border shrink-0">
-        {chatMode === "test" && !hasApiKey && !keysLoading && (
+        {chatMode === "test" && !hasApiKey && !keysLoading && wizardStep === "done" && (
           <div className="mb-2 text-xs text-destructive flex items-center gap-1">
             <AlertTriangle className="w-3 h-3" />
             API key de {currentProvider} não configurada.{" "}
@@ -287,11 +379,15 @@ const AgentChatPanel = ({
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={chatMode === "setup"
-              ? "Descreva o agente que quer criar..."
-              : "Envie uma mensagem de teste..."}
+            placeholder={
+              wizardStep === "discover"
+                ? "Descreva o agente que quer criar..."
+                : chatMode === "setup"
+                ? "Descreva o que quer ajustar..."
+                : "Envie uma mensagem de teste..."
+            }
             rows={2}
-            disabled={isStreaming || (chatMode === "test" && !canSendTest)}
+            disabled={isStreaming || (wizardStep === "done" && chatMode === "test" && !canSendTest)}
             className="w-full bg-transparent border-none outline-none resize-none text-sm text-foreground placeholder:text-muted-foreground px-3 py-2 min-h-[36px] max-h-[120px] disabled:cursor-not-allowed"
           />
           <div className="flex items-center justify-between px-2 pb-1">
@@ -308,13 +404,13 @@ const AgentChatPanel = ({
                 className="h-8 rounded-full bg-primary hover:bg-primary/90 gap-1.5 text-xs px-4"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                Criar Agente
+                Estruturar com IA
               </Button>
             ) : (
               <Button
                 size="icon"
                 onClick={handleSend}
-                disabled={!input.trim() || isStreaming || (chatMode === "test" && !canSendTest)}
+                disabled={!input.trim() || isStreaming || (wizardStep === "done" && chatMode === "test" && !canSendTest)}
                 className="h-8 w-8 rounded-full bg-primary hover:bg-primary/90"
               >
                 <ArrowUp className="w-3.5 h-3.5" />
