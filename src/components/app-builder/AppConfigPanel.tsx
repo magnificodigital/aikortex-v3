@@ -453,7 +453,7 @@ const ChannelsTab = ({ channel, onChannelChange }: { channel: AppChannel; onChan
 
       {channel === "whatsapp" && (
         <>
-          <Section title="WhatsApp Business API" icon={Phone}>
+          <Section title="WhatsApp Business API" icon={() => <WhatsAppIcon className="w-4 h-4" />}>
             <div className="space-y-3">
               <div className="flex items-center gap-2.5 p-3 rounded-lg border border-border bg-card/50">
                 <div className="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center">
