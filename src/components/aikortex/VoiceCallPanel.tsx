@@ -226,29 +226,47 @@ const VoiceCallPanel = ({
   };
 
   const handleStart = useCallback(async () => {
-    const agentId = elevenLabsAgentId || import.meta.env.VITE_ELEVENLABS_AGENT_ID;
-    if (!agentId) {
-      toast.error("Agent ID da ElevenLabs não configurado.");
-      return;
-    }
-
     setCallStatus("connecting");
     setTranscript([]);
     setDuration(0);
 
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
-      await conversation.startSession({ agentId });
+
+      // Call edge function to auto-create agent and get signed URL
+      const { data: sessionData, error: fnError } = await supabase.functions.invoke(
+        "elevenlabs-voice-session",
+        {
+          body: {
+            agentName,
+            agentPrompt,
+            voiceId: selectedVoice,
+            firstMessage: agentGreeting,
+            language: "pt",
+          },
+        }
+      );
+
+      if (fnError || !sessionData?.signed_url) {
+        const msg = sessionData?.error || fnError?.message || "Erro ao criar sessão de voz";
+        toast.error(msg);
+        setCallStatus("idle");
+        return;
+      }
+
+      await conversation.startSession({
+        signedUrl: sessionData.signed_url,
+      });
     } catch (err: any) {
       console.error("Failed to start voice:", err);
       if (err?.name === "NotAllowedError") {
         toast.error("Permissão de microfone necessária para usar voz.");
       } else {
-        toast.error("Erro ao iniciar ligação.");
+        toast.error(err?.message || "Erro ao iniciar ligação.");
       }
       setCallStatus("idle");
     }
-  }, [conversation, elevenLabsAgentId]);
+  }, [conversation, agentName, agentPrompt, agentGreeting, selectedVoice]);
 
   const handleEnd = useCallback(async () => {
     try {
