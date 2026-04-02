@@ -644,7 +644,7 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
 
       {/* ── Config Panel (Sheet overlay like AppBuilder) ── */}
       <Sheet open={showConfig} onOpenChange={setShowConfig}>
-        <SheetContent side="right" className="w-full sm:w-[580px] md:w-[640px] lg:w-[720px] p-0 border-l border-border">
+        <SheetContent side="right" className="w-full sm:w-[50vw] p-0 border-l border-border">
           <SheetHeader className="sr-only">
             <SheetTitle>Configurações do Agente</SheetTitle>
           </SheetHeader>
