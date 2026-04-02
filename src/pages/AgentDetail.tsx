@@ -320,6 +320,19 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
     } catch {}
   }, [navState?.fromTemplate, agentId]);
 
+  /* ── Auto-send template prompt ── */
+
+  const [autoSent, setAutoSent] = useState(false);
+  useEffect(() => {
+    if (autoSent || !isTemplate || !templateAgent?.autoPrompt) return;
+    // Wait for chat to be ready (initial message rendered)
+    const timer = setTimeout(() => {
+      setupChat.sendMessage(templateAgent.autoPrompt);
+      setAutoSent(true);
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [isTemplate, templateAgent, autoSent, setupChat]);
+
   /* ── Loading screen ── */
 
   if (agentLoading) {
