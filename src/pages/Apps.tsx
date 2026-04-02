@@ -128,7 +128,7 @@ const Apps = () => {
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                         app.channel === "whatsapp" ? "bg-green-500/10 text-green-500" : "bg-primary/10 text-primary"
                       }`}>
-                        {app.channel === "whatsapp" ? <Phone className="w-4 h-4" /> : <Monitor className="w-4 h-4" />}
+                        {app.channel === "whatsapp" ? <WhatsAppIcon className="w-4 h-4" /> : <Monitor className="w-4 h-4" />}
                       </div>
                       <div>
                         <p className="text-sm font-bold text-foreground">{app.name}</p>
