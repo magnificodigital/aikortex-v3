@@ -473,6 +473,7 @@ const AgentRightPanel = ({
           <TabsList className="bg-transparent h-11 gap-0 p-0">
             {[
               { value: "agent",      label: "Agente" },
+              { value: "voice",      label: "Voz" },
               { value: "connectors", label: "Integrações" },
               { value: "channels",   label: "Canais" },
               { value: "advanced",   label: "Avançado" },
