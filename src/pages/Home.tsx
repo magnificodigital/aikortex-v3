@@ -81,33 +81,45 @@ const Home = () => {
     if (detected === "flows") {
       navigate("/aikortex/automations", { state: { initialPrompt: text } });
     } else if (detected === "agentes") {
-      // Detect agent type and navigate directly to AgentDetail with preset
       const agentInfo = detectAgentType(text);
-      const preset = AGENT_PRESETS[agentInfo.type];
 
-      // Clear stale localStorage
-      const storagePrefix = `agent-detail-${agentInfo.id}`;
-      try {
-        ["name", "desc", "objective", "instructions", "toneOfVoice", "greetingMessage"].forEach(k =>
-          localStorage.removeItem(`${storagePrefix}-${k}`)
-        );
-      } catch {}
+      if (agentInfo) {
+        // Template match — navigate with preset
+        const preset = AGENT_PRESETS[agentInfo.type];
 
-      navigate(`/aikortex/agents/${agentInfo.id}`, {
-        state: {
-          fromTemplate: true,
-          initialPrompt: text,
-          preset: {
-            context: preset.context,
-            intents: preset.intents,
-            stages: preset.stages,
-            advancedConfig: preset.advancedConfig,
-            agentType: agentInfo.type,
-            agentName: agentInfo.name,
-            agentObjective: preset.context.targetAudienceDescription || "",
+        // Clear stale localStorage
+        const storagePrefix = `agent-detail-${agentInfo.id}`;
+        try {
+          ["name", "desc", "objective", "instructions", "toneOfVoice", "greetingMessage"].forEach(k =>
+            localStorage.removeItem(`${storagePrefix}-${k}`)
+          );
+        } catch {}
+
+        navigate(`/aikortex/agents/${agentInfo.id}`, {
+          state: {
+            fromTemplate: true,
+            initialPrompt: text,
+            preset: {
+              context: preset.context,
+              intents: preset.intents,
+              stages: preset.stages,
+              advancedConfig: preset.advancedConfig,
+              agentType: agentInfo.type,
+              agentName: agentInfo.name,
+              agentObjective: preset.context.targetAudienceDescription || "",
+            },
           },
-        },
-      });
+        });
+      } else {
+        // No template — custom agent via wizard with user prompt
+        navigate(`/aikortex/agents/new`, {
+          state: {
+            fromTemplate: false,
+            initialPrompt: text,
+            agentType: "Custom",
+          },
+        });
+      }
     } else {
       const channel = detectedChannel || "web";
       navigate("/app-builder", { state: { initialPrompt: text, channel } });
