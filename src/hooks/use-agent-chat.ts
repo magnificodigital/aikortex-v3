@@ -85,6 +85,18 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
   const messagesRef = useRef(messages);
   const pendingAssistantTextRef = useRef("");
   const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      if (flushTimerRef.current) {
+        clearTimeout(flushTimerRef.current);
+        flushTimerRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     messagesRef.current = messages;
@@ -99,6 +111,7 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
   const flushAssistantMessage = useCallback((force = false) => {
     const commit = () => {
       flushTimerRef.current = null;
+      if (!mountedRef.current) return;
       const finalText = pendingAssistantTextRef.current;
       setMessages((prev) => {
         if (!prev.length) return prev;
@@ -122,14 +135,6 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
 
     if (flushTimerRef.current) return;
     flushTimerRef.current = setTimeout(commit, STREAM_UPDATE_INTERVAL_MS);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (flushTimerRef.current) {
-        clearTimeout(flushTimerRef.current);
-      }
-    };
   }, []);
 
   const sendMessage = useCallback(async (userText: string) => {
