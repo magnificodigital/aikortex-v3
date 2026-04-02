@@ -68,14 +68,20 @@ const Integrations = () => (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {LLM_PROVIDERS.map((provider) => (
             <Card key={provider.name} className="p-4 flex items-start gap-4 border-border hover:border-primary/40 transition-colors">
-              <img
-                src={provider.logo}
-                alt={provider.name}
-                className="w-10 h-10 rounded-lg object-contain shrink-0 bg-muted p-1"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = "none";
-                }}
-              />
+              {provider.logo ? (
+                <img
+                  src={provider.logo}
+                  alt={provider.name}
+                  className="w-10 h-10 rounded-lg object-contain shrink-0 bg-muted p-1"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = "none";
+                  }}
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Sparkles className="w-5 h-5 text-primary" />
+                </div>
+              )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-semibold text-foreground">{provider.name}</p>
