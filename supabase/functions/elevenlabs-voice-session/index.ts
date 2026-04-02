@@ -82,8 +82,15 @@ serve(async (req) => {
     if (!createResp.ok) {
       const errText = await createResp.text();
       console.error("ElevenLabs create agent error:", createResp.status, errText);
+      
+      // Check for permission error
+      let userMessage = `Erro ao criar agente ElevenLabs: ${createResp.status}`;
+      if (errText.includes("missing_permissions") || errText.includes("convai_write")) {
+        userMessage = "Sua chave de API da ElevenLabs não tem permissão para Conversational AI. Acesse elevenlabs.io → API Keys → edite sua chave e habilite a permissão 'Conversational AI'.";
+      }
+      
       return new Response(
-        JSON.stringify({ error: `Erro ao criar agente ElevenLabs: ${createResp.status}` }),
+        JSON.stringify({ error: userMessage }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
