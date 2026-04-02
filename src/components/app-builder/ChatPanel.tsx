@@ -549,14 +549,6 @@ ${structuredConfig.constraints ? `Restrições: ${structuredConfig.constraints}`
                 : "Conte o que seu Web App deve fazer. A IA vai estruturar tudo automaticamente."}
             </p>
 
-            <div className="w-full max-w-[340px] space-y-3">
-              <Input
-                value={wizardData.companyName}
-                onChange={(e) => setWizardData(prev => ({ ...prev, companyName: e.target.value }))}
-                placeholder="Nome da empresa (opcional)"
-                className="h-9 text-xs bg-card/50"
-              />
-            </div>
 
             {/* Quick suggestions */}
             <div className="mt-6 w-full max-w-[340px]">
