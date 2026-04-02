@@ -3,6 +3,7 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import AgentRightPanel, { type AgentConfig } from "@/components/aikortex/AgentRightPanel";
 import AgentChatPanel, { type StructuredAgentConfig } from "@/components/aikortex/AgentChatPanel";
+import VoiceCallPanel from "@/components/aikortex/VoiceCallPanel";
 import { useAgentChat } from "@/hooks/use-agent-chat";
 import { useApiKeys } from "@/hooks/use-api-keys";
 import { useUserAgents } from "@/hooks/use-user-agents";
