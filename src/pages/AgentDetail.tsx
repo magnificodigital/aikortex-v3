@@ -107,8 +107,9 @@ const AgentDetail = () => {
   /* ── Wizard state ── */
 
   const hasAutoPrompt = isTemplate && !!templateAgent?.autoPrompt;
+  // Templates skip wizard entirely — start at "done" and auto-save in background
   const [wizardStep, setWizardStep] = useState<"discover" | "structure" | "build" | "done">(
-    isTemplate ? "discover" : "done"
+    isTemplate && hasAutoPrompt ? "done" : (isTemplate ? "discover" : "done")
   );
   const [structuredConfig, setStructuredConfig] = useState<StructuredAgentConfig | null>(null);
   const [isStructuring, setIsStructuring] = useState(false);
@@ -277,7 +278,6 @@ const AgentDetail = () => {
 
       if (result) {
         toast.success(`✅ ${config.agent_name} criado com sucesso!`);
-        // Update loaded agent state
         setLoadedAgent({
           name: config.agent_name,
           avatar: AVATAR_BY_TYPE[resolvedType] || avatar1,
@@ -313,28 +313,133 @@ const AgentDetail = () => {
     }
   }, [agentId, saveAgent, navigate, agentModel, loadedAgent.agentType]);
 
-  /* ── Auto-structure for templates with autoPrompt ── */
+  /* ── Auto-populate and auto-save for templates ── */
 
-  const [autoStructured, setAutoStructured] = useState(false);
+  const autoSavedRef = useRef(false);
   useEffect(() => {
-    if (autoStructured || !isTemplate || !templateAgent?.autoPrompt) return;
-    setAutoStructured(true);
-    // Trigger structuring and auto-build for templates
+    if (autoSavedRef.current || !isTemplate || !templateAgent?.autoPrompt) return;
+    autoSavedRef.current = true;
+
+    // Build preset data from AGENT_PRESETS immediately
+    const preset = AGENT_PRESETS[templateAgent.agentType];
+    const presetContext = preset?.context || {};
+    
+    const immediatePreset = {
+      name: templateAgent.name,
+      description: presetContext.targetAudienceDescription || templateAgent.autoPrompt.slice(0, 150),
+      objective: presetContext.painPoints || "",
+      toneOfVoice: presetContext.toneOfVoice || "Profissional e amigável",
+      greetingMessage: presetContext.greetingMessage || "",
+      instructions: `1. Sempre se apresentar como assistente\n2. Focar em entender as necessidades\n3. Ser ${presetContext.toneOfVoice || "profissional"}\n4. Nunca prometer o que não pode cumprir\n5. Direcionar para próximo passo claro`,
+    };
+    
+    // Immediately populate the right panel
+    setPresetData(immediatePreset);
+
+    // Auto-save the agent in background
     const run = async () => {
-      setWizardStep("structure");
-      const result = await handleStructureRequest(templateAgent.autoPrompt);
-      if (result) {
-        setStructuredConfig(result);
-        handleConfigStructured(result);
-        // Auto-build: save agent immediately so user only edits what's needed
-        await handleBuildAgent(result);
-      } else {
-        setWizardStep("discover");
+      setIsBuilding(true);
+      try {
+        // First try AI-enhanced structure
+        const aiConfig = await (async () => {
+          try {
+            const resp = await fetch(STRUCTURE_URL, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+              },
+              body: JSON.stringify({
+                description: templateAgent.autoPrompt,
+                agent_type: templateAgent.agentType,
+                language: "pt-BR",
+              }),
+            });
+            if (resp.ok) {
+              const data = await resp.json();
+              return data.structuredConfig as StructuredAgentConfig;
+            }
+          } catch (e) {
+            console.warn("AI structure failed, using preset defaults:", e);
+          }
+          return null;
+        })();
+
+        // Use AI config if available, otherwise use preset defaults
+        const finalConfig: StructuredAgentConfig = aiConfig || {
+          agent_name: templateAgent.name,
+          agent_type: templateAgent.agentType,
+          description: immediatePreset.description,
+          objective: immediatePreset.objective,
+          tone: immediatePreset.toneOfVoice,
+          language: "pt-BR",
+          greeting_message: immediatePreset.greetingMessage,
+          instructions: immediatePreset.instructions,
+          channels: ["whatsapp", "website"],
+          selected_features: [],
+          onboarding_level: "soft",
+        };
+
+        // Update preset data with AI-enhanced config
+        setPresetData({
+          name: finalConfig.agent_name,
+          description: finalConfig.description,
+          objective: finalConfig.objective,
+          toneOfVoice: finalConfig.tone,
+          greetingMessage: finalConfig.greeting_message,
+          instructions: finalConfig.instructions,
+        });
+
+        // Save to database
+        const resolvedType = templateAgent.agentType;
+        const result = await saveAgent({
+          name: finalConfig.agent_name,
+          agent_type: resolvedType,
+          description: finalConfig.description,
+          avatar_url: AVATAR_BY_TYPE[resolvedType] || avatar1,
+          model: agentModel,
+          status: "configuring",
+          config: {
+            objective: finalConfig.objective,
+            instructions: finalConfig.instructions,
+            toneOfVoice: finalConfig.tone,
+            greetingMessage: finalConfig.greeting_message,
+            channels: finalConfig.channels,
+            integrations: [],
+            knowledgeFiles: [],
+            urls: [],
+          },
+        });
+
+        if (result) {
+          toast.success(`✅ ${finalConfig.agent_name} criado com sucesso!`);
+          setLoadedAgent({
+            name: finalConfig.agent_name,
+            avatar: AVATAR_BY_TYPE[resolvedType] || avatar1,
+            model: agentModel,
+            agentType: resolvedType,
+            savedConfig: {
+              objective: finalConfig.objective,
+              instructions: finalConfig.instructions,
+              toneOfVoice: finalConfig.tone,
+              greetingMessage: finalConfig.greeting_message,
+              channels: finalConfig.channels,
+            },
+          });
+          if (result.id !== agentId) {
+            navigate(`/aikortex/agents/${result.id}`, { replace: true });
+          }
+        }
+      } catch (e) {
+        console.error("Auto-save template error:", e);
+        toast.error("Erro ao criar agente. Os campos foram preenchidos — salve manualmente.");
+      } finally {
+        setIsBuilding(false);
       }
     };
-    const timer = setTimeout(run, 300);
-    return () => clearTimeout(timer);
-  }, [isTemplate, templateAgent, autoStructured, handleStructureRequest, handleConfigStructured, handleBuildAgent]);
+
+    run();
+  }, [isTemplate, templateAgent, agentId, agentModel, saveAgent, navigate]);
 
   /* ── Chat (setup mode — gratuito) ── */
 
