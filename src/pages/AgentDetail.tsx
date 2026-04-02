@@ -161,7 +161,19 @@ const AgentDetail = () => {
   /* ── Agent config (from right panel) ── */
 
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null);
-  const handleConfigChange = useCallback((config: AgentConfig) => setAgentConfig(config), []);
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleConfigChange = useCallback((config: AgentConfig) => {
+    setAgentConfig(config);
+
+    // Auto-save with debounce when config panel is open
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
+      if (config.name?.trim()) {
+        handleSaveAgent({ ...config, model: agentModel, agentType: loadedAgent.agentType });
+      }
+    }, 1500);
+  }, [agentModel, loadedAgent.agentType]);
 
   /* ── Save agent ── */
 
