@@ -400,7 +400,7 @@ const AgentChatPanel = ({
                 <Mic className="w-3.5 h-3.5" />
               </button>
             </div>
-            {isDiscoverEmpty && input.trim().length >= 10 ? (
+            {wizardStep === "discover" && input.trim().length >= 10 ? (
               <Button
                 size="sm"
                 onClick={handleSend}
