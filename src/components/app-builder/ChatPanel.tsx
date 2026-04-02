@@ -547,18 +547,6 @@ ${structuredConfig.constraints ? `Restrições: ${structuredConfig.constraints}`
                 placeholder="Nome da empresa (opcional)"
                 className="h-9 text-xs bg-card/50"
               />
-              <textarea
-                value={wizardData.prompt}
-                onChange={(e) => setWizardData(prev => ({ ...prev, prompt: e.target.value }))}
-                placeholder={channel === "whatsapp"
-                  ? "Ex: Um bot de qualificação de leads que coleta nome, email e interesse via WhatsApp..."
-                  : "Ex: Um painel de gestão com dashboard de métricas, cadastro de clientes e relatórios..."}
-                className="w-full bg-card/50 border border-border rounded-lg outline-none resize-none text-xs text-foreground placeholder:text-muted-foreground px-3 py-2.5 min-h-[100px] focus:border-primary/30 transition-colors"
-              />
-              <Button onClick={handleDiscover} disabled={wizardData.prompt.length < 10} className="w-full gap-2 h-9 text-xs rounded-lg">
-                <Sparkles className="w-3.5 h-3.5" />
-                Estruturar com IA
-              </Button>
             </div>
 
             {/* Quick suggestions */}
