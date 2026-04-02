@@ -288,12 +288,12 @@ const VoiceCallPanel = ({
     return (
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="text-center max-w-[300px] space-y-4">
-          <div className="w-14 h-14 mx-auto rounded-full bg-destructive/10 flex items-center justify-center">
-            <AlertTriangle className="w-7 h-7 text-destructive" />
+          <div className="w-14 h-14 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+            <Phone className="w-7 h-7 text-primary" />
           </div>
-          <h3 className="text-sm font-semibold">ElevenLabs não configurado</h3>
+          <h3 className="text-sm font-semibold">Configure seu agente de Ligação</h3>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Para usar o modo de voz, configure sua chave de API da ElevenLabs nas Integrações.
+            Para usar o modo de voz, configure sua chave de API nas Integrações.
           </p>
           <Button size="sm" onClick={onGoToIntegrations} className="gap-1.5">
             <ExternalLink className="w-3.5 h-3.5" /> Ir para Integrações
