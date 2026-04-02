@@ -8,6 +8,7 @@ import {
   Search, Plus, Trash2, GripVertical, Sparkles, Globe2, FileUp,
   ToggleLeft, Cpu, Layers, X,
 } from "lucide-react";
+import { IntegrationsGrid, LLM_PROVIDERS, SERVICE_PROVIDERS } from "@/components/shared/IntegrationsGrid";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
