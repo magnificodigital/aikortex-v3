@@ -1,12 +1,15 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   ArrowLeft, ArrowUp, Send, Settings, FlaskConical, AlertTriangle,
-  Sparkles, Bot, Mic, Check,
+  Sparkles, Bot, Mic, Check, Loader2, Pencil, RotateCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ReactMarkdown from "react-markdown";
+import { toast } from "sonner";
 import type { ChatMessage } from "@/hooks/use-agent-chat";
 import type { AgentType } from "@/types/agent-builder";
 
@@ -22,6 +25,8 @@ export interface StructuredAgentConfig {
   channels: string[];
   quick_replies?: string[];
   stages?: Array<{ id: string; name: string; description: string; example: string }>;
+  selected_features?: string[];
+  onboarding_level?: string;
 }
 
 interface AgentChatPanelProps {
@@ -51,6 +56,11 @@ interface AgentChatPanelProps {
   messages: ChatMessage[];
   sendMessage: (text: string) => void;
   isStreaming: boolean;
+  // Wizard-specific
+  onStructureRequest: (description: string) => Promise<StructuredAgentConfig | null>;
+  onBuildAgent: (config: StructuredAgentConfig) => Promise<void>;
+  isStructuring: boolean;
+  isBuilding: boolean;
 }
 
 const AGENT_SUGGESTIONS: Record<string, string[]> = {
@@ -58,31 +68,26 @@ const AGENT_SUGGESTIONS: Record<string, string[]> = {
     "Agente SDR para qualificação de leads B2B via WhatsApp",
     "SDR que coleta nome, email e interesse e agenda reunião",
     "Qualificador BANT automático com encaminhamento para closers",
-    "Agente inbound que filtra leads e envia material",
   ],
   BDR: [
     "Agente BDR para prospecção outbound de empresas SaaS",
     "Prospectador que pesquisa empresas e personaliza abordagem",
     "BDR que identifica decisores e agenda reuniões qualificadas",
-    "Agente de outbound com follow-up automático multicanal",
   ],
   SAC: [
     "Agente de suporte ao cliente para e-commerce",
     "SAC que resolve dúvidas e escala para humanos quando necessário",
-    "Atendente automatizado com pesquisa de satisfação integrada",
     "Suporte técnico com diagnóstico e abertura de chamados",
   ],
   CS: [
     "Agente de Customer Success para onboarding de clientes",
     "CS que acompanha uso do produto e previne churn",
     "Consultor de sucesso com health check periódico",
-    "Agente de expansão que identifica oportunidades de upsell",
   ],
   Custom: [
-    "Agente SDR para qualificação de leads B2B",
-    "Agente de suporte ao cliente para e-commerce",
-    "Agente de agendamento para clínicas e consultórios",
-    "Agente de onboarding para novos clientes",
+    "Agente de qualificação de leads",
+    "Agente criador de conteúdo para redes sociais",
+    "Agente de atendimento ao cliente",
   ],
 };
 
@@ -92,12 +97,33 @@ const stepLabels = [
   { id: "build" as const, label: "Construir", num: 3 },
 ];
 
+const toneLabels: Record<string, string> = {
+  professional_friendly: "Profissional e Amigável",
+  formal: "Formal",
+  casual: "Casual e Descontraído",
+  empathetic: "Empático e Acolhedor",
+  direct: "Direto e Objetivo",
+};
+
+const onboardingLabels: Record<string, string> = {
+  none: "Nenhum",
+  soft: "Suave",
+  strict: "Rigoroso",
+};
+
+const typeLabel: Record<string, string> = {
+  SDR: "SDR", BDR: "BDR", SAC: "SAC", CS: "Customer Success", Custom: "personalizado",
+};
+
 const AgentChatPanel = ({
   onBack,
   agentType,
   agentName,
   agentAvatar,
   wizardStep,
+  setWizardStep,
+  structuredConfig,
+  setStructuredConfig,
   chatMode,
   setChatMode,
   hasApiKey,
@@ -111,19 +137,83 @@ const AgentChatPanel = ({
   setAgentModel,
   gatewayModels,
   onGoToIntegrations,
+  onConfigStructured,
+  onAgentCreated,
   messages,
   sendMessage,
   isStreaming,
+  onStructureRequest,
+  onBuildAgent,
+  isStructuring,
+  isBuilding,
 }: AgentChatPanelProps) => {
   const [input, setInput] = useState("");
+  const [editingConfig, setEditingConfig] = useState(false);
+  const [wizardMessages, setWizardMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, wizardMessages, isStructuring, isBuilding]);
 
+  const canSendTest = chatMode === "test" ? hasApiKey : true;
+  const isDiscoverEmpty = wizardStep === "discover" && wizardMessages.length === 0;
+  const suggestions = AGENT_SUGGESTIONS[agentType] || AGENT_SUGGESTIONS.Custom;
+
+  /* ── Discover → Structure ── */
+  const handleDiscover = useCallback(async (text: string) => {
+    if (text.length < 10) {
+      toast.error("Descreva com pelo menos 10 caracteres.");
+      return;
+    }
+    setWizardMessages(prev => [...prev, { role: "user", content: text }]);
+    setInput("");
+    setWizardStep("structure");
+
+    setWizardMessages(prev => [
+      ...prev,
+      { role: "assistant", content: "🧠 Analisando sua ideia e estruturando o agente..." },
+    ]);
+
+    const result = await onStructureRequest(text);
+
+    if (result) {
+      setStructuredConfig(result);
+      onConfigStructured(result);
+      setWizardMessages(prev => {
+        const filtered = prev.filter(m => m.content !== "🧠 Analisando sua ideia e estruturando o agente...");
+        return [
+          ...filtered,
+          { role: "assistant", content: `✅ Estrutura definida para **${result.agent_name}**!\n\nRevise a configuração abaixo e clique em **Construir** quando estiver pronto.` },
+        ];
+      });
+    } else {
+      toast.error("Erro ao estruturar. Tente novamente.");
+      setWizardStep("discover");
+      setWizardMessages(prev => prev.filter(m => m.content !== "🧠 Analisando sua ideia e estruturando o agente..."));
+    }
+  }, [onStructureRequest, setStructuredConfig, onConfigStructured, setWizardStep]);
+
+  /* ── Re-structure ── */
+  const handleRestructure = useCallback(() => {
+    const lastUserMsg = wizardMessages.filter(m => m.role === "user").pop();
+    if (lastUserMsg) {
+      setStructuredConfig(null);
+      setEditingConfig(false);
+      handleDiscover(lastUserMsg.content);
+    }
+  }, [wizardMessages, handleDiscover, setStructuredConfig]);
+
+  /* ── Build ── */
+  const handleBuild = useCallback(async () => {
+    if (!structuredConfig) return;
+    setWizardStep("build");
+    await onBuildAgent(structuredConfig);
+  }, [structuredConfig, setWizardStep, onBuildAgent]);
+
+  /* ── Send (post-wizard) ── */
   const handleSend = useCallback(() => {
     if (!input.trim() || isStreaming) return;
     sendMessage(input.trim());
@@ -133,18 +223,16 @@ const AgentChatPanel = ({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      if (wizardStep === "discover") {
+        if (input.trim().length >= 10) handleDiscover(input.trim());
+      } else if (wizardStep === "done") {
+        handleSend();
+      }
     }
   };
 
-  const canSendTest = chatMode === "test" ? hasApiKey : true;
-  // During discover phase, treat a single initial greeting as "empty" so the empty state shows
-  const isDiscoverEmpty = wizardStep === "discover" && messages.filter(m => m.role === "user").length === 0;
-  const suggestions = AGENT_SUGGESTIONS[agentType] || AGENT_SUGGESTIONS.Custom;
-
-  const typeLabel: Record<string, string> = {
-    SDR: "SDR", BDR: "BDR", SAC: "SAC", CS: "Customer Success", Custom: "personalizado",
-  };
+  // Which messages to show based on wizard state
+  const displayMessages = wizardStep === "done" ? messages : wizardMessages;
 
   return (
     <div className="w-[420px] min-w-[360px] border-r border-border flex flex-col bg-background">
@@ -160,15 +248,13 @@ const AgentChatPanel = ({
           <span className="text-sm font-semibold tracking-tight">Studio</span>
         </div>
         <span className="flex-1" />
-
-        {/* Agent type badge */}
         <span className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium bg-primary/10 text-primary border border-primary/20">
           <Bot className="w-3 h-3" />
           {typeLabel[agentType] || agentType}
         </span>
       </div>
 
-      {/* Wizard Stepper — only during creation */}
+      {/* Wizard Stepper */}
       {wizardStep !== "done" && (
         <div className="px-4 py-2.5 border-b border-border bg-card/30">
           <div className="flex items-center gap-1">
@@ -205,7 +291,6 @@ const AgentChatPanel = ({
       {/* Mode toggle + Model selector — only after wizard is done */}
       {wizardStep === "done" && (
         <>
-          {/* Mode toggle */}
           <div className="h-10 border-b border-border flex items-center px-3 gap-2 shrink-0">
             <img src={agentAvatar} className="w-6 h-6 rounded-full object-cover" alt="" />
             <span className="text-xs font-medium truncate flex-1">{agentName}</span>
@@ -213,58 +298,34 @@ const AgentChatPanel = ({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button
-                      variant={chatMode === "setup" ? "default" : "ghost"}
-                      size="sm"
-                      className="h-7 text-xs px-2"
-                      onClick={() => setChatMode("setup")}
-                    >
+                    <Button variant={chatMode === "setup" ? "default" : "ghost"} size="sm" className="h-7 text-xs px-2" onClick={() => setChatMode("setup")}>
                       <Settings className="w-3 h-3 mr-1" /> Configurar
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>Assistente gratuito para configurar o agente</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button
-                      variant={chatMode === "test" ? "default" : "ghost"}
-                      size="sm"
-                      className="h-7 text-xs px-2"
-                      onClick={() => {
-                        if (!hasAnyLLMKey && !keysLoading) {
-                          onGoToIntegrations();
-                          return;
-                        }
-                        setChatMode("test");
-                      }}
-                    >
+                    <Button variant={chatMode === "test" ? "default" : "ghost"} size="sm" className="h-7 text-xs px-2"
+                      onClick={() => { if (!hasAnyLLMKey && !keysLoading) { onGoToIntegrations(); return; } setChatMode("test"); }}>
                       <FlaskConical className="w-3 h-3 mr-1" /> Testar
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>
-                    {hasAnyLLMKey ? "Testar o agente com sua API key" : "Configure uma API key para testar"}
-                  </TooltipContent>
+                  <TooltipContent>{hasAnyLLMKey ? "Testar o agente com sua API key" : "Configure uma API key para testar"}</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </div>
           </div>
-
-          {/* Model selector bar */}
           <div className="h-9 border-b border-border flex items-center px-3 gap-2 shrink-0">
             {chatMode === "setup" ? (
               <>
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Modelo:</span>
                 <Select value={setupModel} onValueChange={setSetupModel}>
-                  <SelectTrigger className="h-6 text-xs flex-1 border-0 bg-muted/50">
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger className="h-6 text-xs flex-1 border-0 bg-muted/50"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {gatewayModels.map(m => (
-                      <SelectItem key={m.value} value={m.value} className="text-xs">{m.label}</SelectItem>
-                    ))}
+                    {gatewayModels.map(m => <SelectItem key={m.value} value={m.value} className="text-xs">{m.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </>
@@ -273,13 +334,9 @@ const AgentChatPanel = ({
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Modelo:</span>
                 {availableModels.length > 0 ? (
                   <Select value={agentModel} onValueChange={setAgentModel}>
-                    <SelectTrigger className="h-6 text-xs flex-1 border-0 bg-muted/50">
-                      <SelectValue />
-                    </SelectTrigger>
+                    <SelectTrigger className="h-6 text-xs flex-1 border-0 bg-muted/50"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {availableModels.map(m => (
-                        <SelectItem key={m.value} value={m.value} className="text-xs">{m.label}</SelectItem>
-                      ))}
+                      {availableModels.map(m => <SelectItem key={m.value} value={m.value} className="text-xs">{m.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 ) : (
@@ -295,6 +352,7 @@ const AgentChatPanel = ({
 
       {/* Messages area */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
+
         {/* ══ Step 1: Discover — empty state ══ */}
         {isDiscoverEmpty && (
           <div className="flex flex-col items-center justify-center h-full pt-12">
@@ -303,10 +361,8 @@ const AgentChatPanel = ({
             </div>
             <h2 className="text-base font-semibold text-foreground mb-1">Descreva seu agente</h2>
             <p className="text-xs text-muted-foreground text-center max-w-[280px] mb-6">
-              Conte o que seu agente {typeLabel[agentType] || ""} deve fazer. A IA vai estruturar tudo automaticamente.
+              Conte o que seu agente {typeLabel[agentType] || ""} deve fazer. Vamos estruturar tudo automaticamente.
             </p>
-
-            {/* Quick suggestions */}
             <div className="w-full max-w-[340px]">
               <p className="text-[10px] text-muted-foreground mb-2 text-center">ou comece com uma ideia:</p>
               <div className="space-y-1.5">
@@ -324,16 +380,16 @@ const AgentChatPanel = ({
           </div>
         )}
 
-        {/* Chat messages — hide initial greeting during discover empty state */}
-        {messages.map((msg, i) => {
-          // Skip initial agent greeting when showing discover empty state
-          if (isDiscoverEmpty && msg.role === "agent" && i === 0) return null;
+        {/* Chat / wizard messages */}
+        {displayMessages.map((msg, i) => {
+          const text = "text" in msg ? msg.text : msg.content;
+          const role = "text" in msg ? msg.role : msg.role === "user" ? "user" : "agent";
           return (
             <div key={i}>
-              {msg.role === "user" ? (
+              {role === "user" ? (
                 <div className="flex justify-end">
                   <div className="bg-primary/10 border border-primary/20 rounded-2xl rounded-br-sm px-4 py-2.5 max-w-[90%] text-sm">
-                    <p className="whitespace-pre-wrap text-foreground">{msg.text}</p>
+                    <p className="whitespace-pre-wrap text-foreground">{text}</p>
                   </div>
                 </div>
               ) : (
@@ -342,8 +398,8 @@ const AgentChatPanel = ({
                     <Bot className="w-3.5 h-3.5 text-primary" />
                   </div>
                   <div className="text-sm leading-relaxed text-foreground flex-1 min-w-0">
-                    <div className="prose prose-sm dark:prose-invert max-w-none [&>p]:m-0 [&>ul]:my-1 [&>ol]:my-1 [&_strong]:text-foreground">
-                      <ReactMarkdown>{msg.text}</ReactMarkdown>
+                    <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_li]:mb-0.5 [&_strong]:text-foreground">
+                      <ReactMarkdown>{text}</ReactMarkdown>
                     </div>
                   </div>
                 </div>
@@ -352,7 +408,168 @@ const AgentChatPanel = ({
           );
         })}
 
-        {isStreaming && messages[messages.length - 1]?.role !== "agent" && (
+        {/* ══ Step 2: Structuring — loading state ══ */}
+        {isStructuring && (
+          <div className="flex items-center gap-3 bg-card/50 border border-border rounded-xl p-4">
+            <Loader2 className="w-5 h-5 text-primary animate-spin" />
+            <div>
+              <p className="text-xs font-medium text-foreground">Estruturando com IA...</p>
+              <p className="text-[10px] text-muted-foreground">Analisando descrição e definindo configuração</p>
+            </div>
+          </div>
+        )}
+
+        {/* ══ Step 2: Structured Config Card ══ */}
+        {wizardStep === "structure" && structuredConfig && !isStructuring && (
+          <div className="bg-card/50 border border-border rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded-full bg-primary/15 flex items-center justify-center">
+                  <Check className="w-3 h-3 text-primary" />
+                </div>
+                <h3 className="text-xs font-semibold text-foreground">Configuração Estruturada</h3>
+              </div>
+              <button
+                onClick={() => setEditingConfig(!editingConfig)}
+                className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+              >
+                <Pencil className="w-3 h-3" />
+                {editingConfig ? "Fechar" : "Editar"}
+              </button>
+            </div>
+
+            {!editingConfig ? (
+              <div className="space-y-2 text-[11px]">
+                <div className="flex justify-between py-1 border-b border-border/50">
+                  <span className="text-muted-foreground">Nome</span>
+                  <span className="font-medium text-foreground">{structuredConfig.agent_name}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-border/50">
+                  <span className="text-muted-foreground">Tom</span>
+                  <span className="font-medium text-foreground">{toneLabels[structuredConfig.tone] || structuredConfig.tone}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-border/50">
+                  <span className="text-muted-foreground">Idioma</span>
+                  <span className="font-medium text-foreground">{structuredConfig.language}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-border/50">
+                  <span className="text-muted-foreground">Onboarding</span>
+                  <span className="font-medium text-foreground">{onboardingLabels[structuredConfig.onboarding_level || "soft"] || structuredConfig.onboarding_level}</span>
+                </div>
+                <div className="py-1 border-b border-border/50">
+                  <span className="text-muted-foreground block mb-1">Mensagem inicial</span>
+                  <span className="text-foreground italic">"{structuredConfig.greeting_message}"</span>
+                </div>
+                <div className="py-1">
+                  <span className="text-muted-foreground block mb-1">Funcionalidades</span>
+                  <div className="flex flex-wrap gap-1">
+                    {(structuredConfig.selected_features || []).map((f, i) => (
+                      <Badge key={i} variant="secondary" className="text-[9px] px-1.5 py-0.5">
+                        {f.replace(/[_-]+/g, " ").replace(/\b\w/g, c => c.toUpperCase())}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                <div>
+                  <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Nome</label>
+                  <Input
+                    value={structuredConfig.agent_name}
+                    onChange={(e) => setStructuredConfig({ ...structuredConfig, agent_name: e.target.value })}
+                    className="h-7 text-xs bg-background"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Tom</label>
+                  <div className="flex flex-wrap gap-1">
+                    {Object.entries(toneLabels).map(([key, label]) => (
+                      <button
+                        key={key}
+                        onClick={() => setStructuredConfig({ ...structuredConfig, tone: key })}
+                        className={`px-2 py-1 rounded-md text-[9px] font-medium border transition-all ${
+                          structuredConfig.tone === key
+                            ? "bg-primary/10 border-primary/30 text-primary"
+                            : "bg-card border-border text-muted-foreground"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Idioma</label>
+                  <div className="flex gap-1">
+                    {[["pt-BR", "🇧🇷 PT"], ["en", "🇺🇸 EN"], ["es", "🇪🇸 ES"]].map(([k, l]) => (
+                      <button
+                        key={k}
+                        onClick={() => setStructuredConfig({ ...structuredConfig, language: k })}
+                        className={`px-2 py-1 rounded-md text-[9px] font-medium border transition-all ${
+                          structuredConfig.language === k
+                            ? "bg-primary/10 border-primary/30 text-primary"
+                            : "bg-card border-border text-muted-foreground"
+                        }`}
+                      >
+                        {l}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Mensagem inicial</label>
+                  <textarea
+                    value={structuredConfig.greeting_message}
+                    onChange={(e) => setStructuredConfig({ ...structuredConfig, greeting_message: e.target.value })}
+                    className="w-full bg-background border border-border rounded-md text-xs px-2 py-1.5 min-h-[50px] resize-none outline-none focus:border-primary/30 transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Onboarding</label>
+                  <div className="flex gap-1">
+                    {(["none", "soft", "strict"] as const).map(v => (
+                      <button
+                        key={v}
+                        onClick={() => setStructuredConfig({ ...structuredConfig, onboarding_level: v })}
+                        className={`flex-1 px-2 py-1 rounded-md text-[9px] font-medium border transition-all ${
+                          structuredConfig.onboarding_level === v
+                            ? "bg-primary/10 border-primary/30 text-primary"
+                            : "bg-card border-border text-muted-foreground"
+                        }`}
+                      >
+                        {onboardingLabels[v]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-2 pt-1">
+              <Button variant="outline" size="sm" className="flex-1 h-8 text-xs rounded-lg gap-1" onClick={handleRestructure} disabled={isStructuring}>
+                <RotateCw className="w-3 h-3" /> Re-estruturar
+              </Button>
+              <Button size="sm" className="flex-1 h-8 text-xs rounded-lg gap-1" onClick={handleBuild} disabled={isBuilding}>
+                <Sparkles className="w-3 h-3" /> Construir
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* ══ Step 3: Building indicator ══ */}
+        {isBuilding && (
+          <div className="flex items-center gap-3 bg-card/50 border border-border rounded-xl p-4">
+            <Loader2 className="w-5 h-5 text-primary animate-spin" />
+            <div>
+              <p className="text-xs font-medium text-foreground">Construindo {structuredConfig?.agent_name || agentName}...</p>
+              <p className="text-[10px] text-muted-foreground">Salvando configuração e preparando o agente</p>
+            </div>
+          </div>
+        )}
+
+        {/* Streaming indicator (post-wizard) */}
+        {wizardStep === "done" && isStreaming && messages[messages.length - 1]?.role !== "agent" && (
           <div className="flex gap-2.5">
             <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
               <Bot className="w-3.5 h-3.5 text-primary animate-pulse" />
@@ -378,7 +595,9 @@ const AgentChatPanel = ({
             <button className="underline" onClick={onGoToIntegrations}>Configurar</button>
           </div>
         )}
-        <div className="rounded-xl border border-border bg-card/50 p-1 transition-colors focus-within:border-primary/30">
+        <div className={`rounded-xl border border-border bg-card/50 p-1 transition-colors ${
+          (wizardStep === "done" || wizardStep === "discover") ? "focus-within:border-primary/30" : "opacity-60"
+        }`}>
           <textarea
             value={input}
             onChange={e => setInput(e.target.value)}
@@ -386,12 +605,16 @@ const AgentChatPanel = ({
             placeholder={
               wizardStep === "discover"
                 ? "Descreva o agente que quer criar..."
-                : chatMode === "setup"
-                ? "Descreva o que quer ajustar..."
-                : "Envie uma mensagem de teste..."
+                : wizardStep === "done"
+                ? (chatMode === "setup" ? "Descreva o que quer ajustar..." : "Envie uma mensagem de teste...")
+                : "Complete as etapas acima para começar..."
             }
             rows={2}
-            disabled={isStreaming || (wizardStep === "done" && chatMode === "test" && !canSendTest)}
+            disabled={
+              isStreaming || isStructuring || isBuilding ||
+              (wizardStep !== "done" && wizardStep !== "discover") ||
+              (wizardStep === "done" && chatMode === "test" && !canSendTest)
+            }
             className="w-full bg-transparent border-none outline-none resize-none text-sm text-foreground placeholder:text-muted-foreground px-3 py-2 min-h-[36px] max-h-[120px] disabled:cursor-not-allowed"
           />
           <div className="flex items-center justify-between px-2 pb-1">
@@ -403,8 +626,8 @@ const AgentChatPanel = ({
             {wizardStep === "discover" && input.trim().length >= 10 ? (
               <Button
                 size="sm"
-                onClick={handleSend}
-                disabled={isStreaming}
+                onClick={() => handleDiscover(input.trim())}
+                disabled={isStructuring}
                 className="h-8 rounded-full bg-primary hover:bg-primary/90 gap-1.5 text-xs px-4"
               >
                 <Sparkles className="w-3.5 h-3.5" />
@@ -414,7 +637,7 @@ const AgentChatPanel = ({
               <Button
                 size="icon"
                 onClick={handleSend}
-                disabled={!input.trim() || isStreaming || (wizardStep === "done" && chatMode === "test" && !canSendTest)}
+                disabled={!input.trim() || isStreaming || (wizardStep === "done" && chatMode === "test" && !canSendTest) || (wizardStep !== "done")}
                 className="h-8 w-8 rounded-full bg-primary hover:bg-primary/90"
               >
                 <ArrowUp className="w-3.5 h-3.5" />
