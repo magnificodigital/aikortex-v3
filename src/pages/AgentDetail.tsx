@@ -211,8 +211,10 @@ const AgentDetail = () => {
 
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null);
   const [wizardMessages, setWizardMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>([]);
-  const [setupMessagesSnapshot, setSetupMessagesSnapshot] = useState<any[] | null>(null);
-  const [testMessagesSnapshot, setTestMessagesSnapshot] = useState<any[] | null>(null);
+  const setupMessagesRef = useRef<any[] | null>(null);
+  const testMessagesRef = useRef<any[] | null>(null);
+  const [pendingSetupRestore, setPendingSetupRestore] = useState<any[] | null>(null);
+  const [pendingTestRestore, setPendingTestRestore] = useState<any[] | null>(null);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /* ── Save agent ── */
@@ -246,8 +248,8 @@ const AgentDetail = () => {
           voiceConfig:     config.voiceConfig,
           wizardStep,
           wizardMessages,
-          setupMessages: setupMessagesSnapshot || [],
-          testMessages: testMessagesSnapshot || [],
+          setupMessages: setupMessagesRef.current || [],
+          testMessages: testMessagesRef.current || [],
           setupModel,
           chatMode,
         },
@@ -268,7 +270,7 @@ const AgentDetail = () => {
     } finally {
       setIsSaving(false);
     }
-  }, [agentId, saveAgent, navigate, wizardStep, wizardMessages, setupModel, chatMode, setupMessagesSnapshot, testMessagesSnapshot]);
+  }, [agentId, saveAgent, navigate, wizardStep, wizardMessages, setupModel, chatMode]);
 
   const saveAgentRef = useRef(handleSaveAgent);
   saveAgentRef.current = handleSaveAgent;
@@ -298,8 +300,8 @@ const AgentDetail = () => {
     const savedDraft = loadedAgent.savedConfig;
     if (!savedDraft || typeof savedDraft !== "object") return;
     if (Array.isArray(savedDraft.wizardMessages)) setWizardMessages(savedDraft.wizardMessages);
-    if (Array.isArray(savedDraft.setupMessages) && savedDraft.setupMessages.length > 0) setSetupMessagesSnapshot(savedDraft.setupMessages);
-    if (Array.isArray(savedDraft.testMessages) && savedDraft.testMessages.length > 0) setTestMessagesSnapshot(savedDraft.testMessages);
+    if (Array.isArray(savedDraft.setupMessages) && savedDraft.setupMessages.length > 0) setPendingSetupRestore(savedDraft.setupMessages);
+    if (Array.isArray(savedDraft.testMessages) && savedDraft.testMessages.length > 0) setPendingTestRestore(savedDraft.testMessages);
     if (savedDraft.wizardStep && ["discover", "structure", "build", "done"].includes(savedDraft.wizardStep)) {
       setWizardStep(savedDraft.wizardStep);
     }
@@ -601,11 +603,11 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
   );
 
   useEffect(() => {
-    if (setupMessagesSnapshot?.length) {
-      setupChat.setMessages(setupMessagesSnapshot as any);
-      setSetupMessagesSnapshot(null);
+    if (pendingSetupRestore?.length) {
+      setupChat.setMessages(pendingSetupRestore as any);
+      setPendingSetupRestore(null);
     }
-  }, [setupMessagesSnapshot, setupChat.setMessages]);
+  }, [pendingSetupRestore, setupChat.setMessages]);
 
   /* ── Chat (test mode) ── */
 
@@ -659,18 +661,19 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
   );
 
   useEffect(() => {
-    if (testMessagesSnapshot?.length) {
-      testChat.setMessages(testMessagesSnapshot as any);
-      setTestMessagesSnapshot(null);
+    if (pendingTestRestore?.length) {
+      testChat.setMessages(pendingTestRestore as any);
+      setPendingTestRestore(null);
     }
-  }, [testMessagesSnapshot, testChat.setMessages]);
+  }, [pendingTestRestore, testChat.setMessages]);
 
+  // Sync message refs for auto-save (no re-renders)
   useEffect(() => {
-    setSetupMessagesSnapshot(setupChat.messages);
+    setupMessagesRef.current = setupChat.messages;
   }, [setupChat.messages]);
 
   useEffect(() => {
-    setTestMessagesSnapshot(testChat.messages);
+    testMessagesRef.current = testChat.messages;
   }, [testChat.messages]);
 
   const activeChat = chatMode === "setup" ? setupChat : testChat;
