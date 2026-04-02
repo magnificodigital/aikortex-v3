@@ -322,19 +322,17 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
     } catch {}
   }, [isTemplate, agentId]);
 
-  /* ── Auto-send template prompt — only after user leaves discover step ── */
+  /* ── Auto-send template prompt immediately ── */
 
   const [autoSent, setAutoSent] = useState(false);
   useEffect(() => {
     if (autoSent || !isTemplate || !templateAgent?.autoPrompt) return;
-    // Don't auto-send during discover — let user see the empty state first
-    if (wizardStep === "discover") return;
     const timer = setTimeout(() => {
       setupChat.sendMessage(templateAgent.autoPrompt);
       setAutoSent(true);
     }, 600);
     return () => clearTimeout(timer);
-  }, [isTemplate, templateAgent, autoSent, setupChat, wizardStep]);
+  }, [isTemplate, templateAgent, autoSent, setupChat]);
 
   /* ── Loading screen ── */
 
