@@ -575,7 +575,7 @@ ${structuredConfig.constraints ? `Restrições: ${structuredConfig.constraints}`
                 ]).map((s) => (
                   <button
                     key={s}
-                    onClick={() => setWizardData(prev => ({ ...prev, prompt: s }))}
+                    onClick={() => { setWizardData(prev => ({ ...prev, prompt: s })); setInput(s); }}
                     className="w-full text-left text-[11px] px-3 py-2 rounded-lg border border-border hover:border-primary/30 hover:bg-accent/20 text-muted-foreground hover:text-foreground transition-all"
                   >
                     {s}
