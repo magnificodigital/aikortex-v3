@@ -133,9 +133,13 @@ const AgentDetail = () => {
 
   const hasAutoPrompt = isTemplate && !!templateAgent?.autoPrompt;
   // Templates skip wizard entirely — start at "done" and auto-save in background
-  const [wizardStep, setWizardStep] = useState<"discover" | "structure" | "build" | "done">(
-    isTemplate && hasAutoPrompt ? "done" : (isTemplate ? "discover" : "done")
-  );
+  const [wizardStep, setWizardStep] = useState<"discover" | "structure" | "build" | "done">(() => {
+    if (isTemplate && hasAutoPrompt) return "done";
+    if (isTemplate) return "discover";
+    if (isNewCustomFromHome) return "discover";
+    // Existing saved agent
+    return "done";
+  });
   const [structuredConfig, setStructuredConfig] = useState<StructuredAgentConfig | null>(null);
   const [isStructuring, setIsStructuring] = useState(false);
   const [isBuilding, setIsBuilding] = useState(false);
