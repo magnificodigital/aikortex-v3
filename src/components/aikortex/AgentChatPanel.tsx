@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { Phone } from "lucide-react";
 import {
   ArrowLeft, ArrowUp, Send, AlertTriangle,
   Sparkles, Bot, Mic, Check, Loader2, Pencil, RotateCw,
@@ -36,8 +37,8 @@ interface AgentChatPanelProps {
   setWizardStep: (step: "discover" | "structure" | "build" | "done") => void;
   structuredConfig: StructuredAgentConfig | null;
   setStructuredConfig: (config: StructuredAgentConfig | null) => void;
-  chatMode: "setup" | "test";
-  setChatMode: (mode: "setup" | "test") => void;
+  chatMode: "setup" | "test" | "voice";
+  setChatMode: (mode: "setup" | "test" | "voice") => void;
   hasApiKey: boolean;
   hasAnyLLMKey: boolean;
   keysLoading: boolean;
@@ -290,7 +291,27 @@ const AgentChatPanel = ({
       {wizardStep === "done" && (
         <div className="h-10 border-b border-border flex items-center px-3 gap-2 shrink-0">
           <img src={agentAvatar} className="w-6 h-6 rounded-full object-cover" alt="" />
-          <span className="text-xs font-medium truncate flex-1">{agentName}</span>
+          <span className="text-xs font-medium truncate mr-auto">{agentName}</span>
+          <div className="flex items-center bg-muted rounded-lg p-0.5">
+            <button
+              onClick={() => setChatMode("setup")}
+              className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-all ${chatMode === "setup" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              Configurar
+            </button>
+            <button
+              onClick={() => setChatMode("test")}
+              className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-all ${chatMode === "test" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              Testar Texto
+            </button>
+            <button
+              onClick={() => setChatMode("voice")}
+              className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-all flex items-center gap-1 ${chatMode === "voice" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              <Phone className="w-3 h-3" /> Testar Voz
+            </button>
+          </div>
         </div>
       )}
 

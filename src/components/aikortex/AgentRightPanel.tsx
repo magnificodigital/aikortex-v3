@@ -17,6 +17,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import VoiceConfigPanel, { type VoiceConfig, DEFAULT_VOICE_CONFIG } from "./VoiceConfigPanel";
 
 const LLM_PROVIDER_MODELS: Record<string, { models: { value: string; label: string; desc: string }[]; capabilities: string[] }> = {
   OpenAI: {
@@ -128,6 +129,7 @@ export interface AgentConfig {
   knowledgeFiles: string[];
   urls: string[];
   apiConfig: ApiConfig;
+  voiceConfig?: VoiceConfig;
 }
 
 // FIX: presetData adicionada para receber dados do wizard
@@ -313,6 +315,9 @@ const AgentRightPanel = ({
   const [apiConfig,         setApiConfig]         = useState<ApiConfig>(() =>
     savedConfig?.apiConfig ? { ...DEFAULT_API_CONFIG, ...savedConfig.apiConfig } : DEFAULT_API_CONFIG
   );
+  const [voiceConfig, setVoiceConfig] = useState<VoiceConfig>(() =>
+    savedConfig?.voiceConfig ? { ...DEFAULT_VOICE_CONFIG, ...savedConfig.voiceConfig } : { ...DEFAULT_VOICE_CONFIG, agentName: agent.name }
+  );
 
   const fileInputRef   = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -360,9 +365,10 @@ const AgentRightPanel = ({
       channels: connectedChannels,
       integrations: Object.entries(connectorKeys).filter(([, v]) => v.configured).map(([k]) => k),
       knowledgeFiles: knowledgeFiles.map(f => f.name), urls, apiConfig,
+      voiceConfig,
     });
   }, [agentName, agentDesc, agentObjective, agentInstructions, agentToneOfVoice, agentGreetingMessage,
-      avatarPreview, connectedChannels, connectorKeys, knowledgeFiles, urls, apiConfig]);
+      avatarPreview, connectedChannels, connectorKeys, knowledgeFiles, urls, apiConfig, voiceConfig]);
 
   // ── Helpers ──
   const handleFiles = (files: FileList) => {
@@ -421,7 +427,7 @@ const AgentRightPanel = ({
     greetingMessage: agentGreetingMessage, avatarUrl: avatarPreview || agent.avatar || "",
     channels: connectedChannels,
     integrations: Object.entries(connectorKeys).filter(([, v]) => v.configured).map(([k]) => k),
-    knowledgeFiles: knowledgeFiles.map(f => f.name), urls, apiConfig,
+    knowledgeFiles: knowledgeFiles.map(f => f.name), urls, apiConfig, voiceConfig,
     model: agentModel, agentType,
   });
 
@@ -467,6 +473,7 @@ const AgentRightPanel = ({
           <TabsList className="bg-transparent h-11 gap-0 p-0">
             {[
               { value: "agent",      label: "Agente" },
+              { value: "voice",      label: "Voz" },
               { value: "connectors", label: "Integrações" },
               { value: "channels",   label: "Canais" },
               { value: "advanced",   label: "Avançado" },
@@ -648,6 +655,11 @@ const AgentRightPanel = ({
               </div>
             </ScrollArea>
           </div>
+        </TabsContent>
+
+        {/* ── Aba Voz ── */}
+        <TabsContent value="voice" className="flex-1 mt-0 min-h-0 overflow-hidden">
+          <VoiceConfigPanel config={voiceConfig} onChange={setVoiceConfig} />
         </TabsContent>
 
         {/* ── Aba Integrações ── */}
