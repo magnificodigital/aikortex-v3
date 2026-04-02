@@ -738,6 +738,8 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
         isBuilding={isBuilding}
         onOpenConfig={() => setShowConfig(true)}
         initialPrompt={isNewCustomFromHome ? navState?.initialPrompt : undefined}
+        initialWizardMessages={wizardMessages}
+        onWizardMessagesChange={setWizardMessages}
       />
 
       {/* ── RIGHT: Voice Agent ── */}
