@@ -1,4 +1,5 @@
-import { BarChart3, Users, MessageSquare, TrendingUp, Clock, Phone, Monitor, ArrowUp, ArrowDown, Activity, Database, Loader2 } from "lucide-react";
+import { BarChart3, Users, MessageSquare, TrendingUp, Clock, Monitor, ArrowUp, ArrowDown, Activity, Database, Loader2 } from "lucide-react";
+import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 import { useAppBuilder } from "@/contexts/AppBuilderContext";
 
 interface DashboardPanelProps {
@@ -108,7 +109,7 @@ const DashboardPanel = ({}: DashboardPanelProps) => {
               ? "bg-green-500/10 text-green-600 border-green-500/20"
               : "bg-primary/10 text-primary border-primary/20"
           }`}>
-            {appType === "whatsapp" ? <Phone className="w-3 h-3" /> : <Monitor className="w-3 h-3" />}
+            {appType === "whatsapp" ? <WhatsAppIcon className="w-3 h-3" /> : <Monitor className="w-3 h-3" />}
             {appType === "whatsapp" ? "WhatsApp" : "Web App"}
           </span>
         </div>

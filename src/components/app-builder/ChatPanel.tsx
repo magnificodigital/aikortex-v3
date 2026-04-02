@@ -4,6 +4,7 @@ import {
   CheckCircle2, AlertCircle, ChevronUp, FileCode, Sparkles,
   Phone, Monitor, Check, Loader2, Pencil, RotateCw,
 } from "lucide-react";
+import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -474,7 +475,7 @@ ${structuredConfig.constraints ? `Restrições: ${structuredConfig.constraints}`
             ? "bg-green-500/10 text-green-500 border border-green-500/20"
             : "bg-primary/10 text-primary border border-primary/20"
         }`}>
-          {channel === "whatsapp" ? <Phone className="w-3 h-3" /> : <Monitor className="w-3 h-3" />}
+          {channel === "whatsapp" ? <WhatsAppIcon className="w-3 h-3" /> : <Monitor className="w-3 h-3" />}
           {channel === "whatsapp" ? "WhatsApp" : "Web"}
         </span>
       </div>

@@ -8,6 +8,7 @@ import {
   Search, Plus, Trash2, GripVertical, Sparkles, Globe2, FileUp,
   ToggleLeft, Cpu, Layers, X,
 } from "lucide-react";
+import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 import { IntegrationsGrid, LLM_PROVIDERS, SERVICE_PROVIDERS } from "@/components/shared/IntegrationsGrid";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -452,7 +453,7 @@ const ChannelsTab = ({ channel, onChannelChange }: { channel: AppChannel; onChan
 
       {channel === "whatsapp" && (
         <>
-          <Section title="WhatsApp Business API" icon={Phone}>
+          <Section title="WhatsApp Business API" icon={() => <WhatsAppIcon className="w-4 h-4" />}>
             <div className="space-y-3">
               <div className="flex items-center gap-2.5 p-3 rounded-lg border border-border bg-card/50">
                 <div className="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center">
@@ -568,7 +569,7 @@ const AppConfigPanel = ({ channel, onChannelChange, open, onClose }: AppConfigPa
           <div className="flex items-center justify-between gap-2 mb-2.5">
             <SheetTitle className="text-sm font-semibold text-foreground truncate min-w-0">Configurações</SheetTitle>
             <Badge variant="outline" className="text-[10px] gap-1 h-5">
-              {channel === "whatsapp" ? <Phone className="w-3 h-3 text-emerald-500" /> : <Monitor className="w-3 h-3 text-primary" />}
+              {channel === "whatsapp" ? <WhatsAppIcon className="w-3 h-3 text-emerald-500" /> : <Monitor className="w-3 h-3 text-primary" />}
               {channel === "whatsapp" ? "WhatsApp" : "Web"}
             </Badge>
           </div>

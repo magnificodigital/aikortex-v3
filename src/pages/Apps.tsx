@@ -3,10 +3,11 @@ import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import {
-  ArrowRight, Phone, Monitor, Heart, Target, Building2,
+  ArrowRight, Monitor, Heart, Target, Building2,
   GraduationCap, Dumbbell, Briefcase, BookOpen, Hotel, ShoppingBag, Globe,
   Plus, Trash2, Pencil, Clock, MoreVertical,
 } from "lucide-react";
+import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -127,7 +128,7 @@ const Apps = () => {
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                         app.channel === "whatsapp" ? "bg-green-500/10 text-green-500" : "bg-primary/10 text-primary"
                       }`}>
-                        {app.channel === "whatsapp" ? <Phone className="w-4 h-4" /> : <Monitor className="w-4 h-4" />}
+                        {app.channel === "whatsapp" ? <WhatsAppIcon className="w-4 h-4" /> : <Monitor className="w-4 h-4" />}
                       </div>
                       <div>
                         <p className="text-sm font-bold text-foreground">{app.name}</p>
@@ -174,7 +175,7 @@ const Apps = () => {
             <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
               channel === "whatsapp" ? "bg-green-500/15 text-green-500" : "bg-muted text-muted-foreground"
             }`}>
-              <Phone className="w-4 h-4" />
+              <WhatsAppIcon className="w-4 h-4" />
             </div>
             <div className="text-left">
               <p className="text-sm font-semibold text-foreground">WhatsApp App</p>
@@ -219,7 +220,7 @@ const Apps = () => {
                     <span key={ch} className={`w-6 h-6 rounded-md flex items-center justify-center ${
                       ch === "whatsapp" ? "bg-green-500/10 text-green-500" : "bg-primary/10 text-primary"
                     }`}>
-                      {ch === "whatsapp" ? <Phone className="w-3 h-3" /> : <Globe className="w-3 h-3" />}
+                      {ch === "whatsapp" ? <WhatsAppIcon className="w-3 h-3" /> : <Globe className="w-3 h-3" />}
                     </span>
                   ))}
                 </div>
