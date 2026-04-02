@@ -594,7 +594,7 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
             ].map((btn) => (
               <Button
                 key={btn.tab}
-                variant="ghost"
+                variant={showConfig && rightPanelTab === btn.tab ? "secondary" : "ghost"}
                 size="sm"
                 className="h-7 text-xs gap-1 px-2"
                 onClick={() => { setRightPanelTab(btn.tab); setShowConfig(true); }}
