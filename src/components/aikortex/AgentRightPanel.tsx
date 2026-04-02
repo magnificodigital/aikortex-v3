@@ -445,40 +445,6 @@ const AgentRightPanel = ({
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
 
-      {/* ── Top bar: Salvar + Publicar ── */}
-      <div className="h-12 border-b border-border flex items-center justify-end px-4 gap-2 shrink-0">
-        <Button
-          variant="outline" size="sm" className="gap-1.5 text-xs h-8"
-          disabled={!agentName.trim() || isSaving}
-          onClick={() => onSaveAgent?.(buildSavePayload())}
-        >
-          {isSaving ? "Salvando..." : "💾 Salvar"}
-        </Button>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span>
-                <Button
-                  size="sm" className="gap-1.5 text-xs h-8"
-                  disabled={!canPublish || isSaving}
-                  onClick={() => onPublish?.()}
-                >
-                  <Rocket className="w-3.5 h-3.5" />
-                  {isSaving ? "Publicando..." : "Publicar"}
-                </Button>
-              </span>
-            </TooltipTrigger>
-            {!canPublish && (
-              <TooltipContent>
-                <p className="text-xs">
-                  {!agentName.trim() ? "Dê um nome ao agente para publicar" : "Configure uma API key em Integrações para publicar"}
-                </p>
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
-      </div>
-
       <Tabs value={rightTab} onValueChange={handleTabChange} className="flex flex-col flex-1 min-h-0">
 
         {/* ── Aba Agente ── */}

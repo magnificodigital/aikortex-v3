@@ -274,7 +274,7 @@ const AgentDetail = () => {
       if (config.name?.trim()) {
         saveAgentRef.current({ ...config, model: agentModelRef.current, agentType: agentTypeRef.current });
       }
-    }, 2000);
+    }, 1200);
   }, []);
 
   // Cleanup timer on unmount
