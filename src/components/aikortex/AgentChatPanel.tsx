@@ -144,6 +144,7 @@ const AgentChatPanel = ({
   onBuildAgent,
   isStructuring,
   isBuilding,
+  onOpenConfig,
 }: AgentChatPanelProps) => {
   const [input, setInput] = useState("");
   const [editingConfig, setEditingConfig] = useState(false);
