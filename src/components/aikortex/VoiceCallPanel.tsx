@@ -284,7 +284,7 @@ const VoiceCallPanel = ({
   };
 
   // No ElevenLabs key warning
-  if (!hasElevenLabsKey && !import.meta.env.VITE_ELEVENLABS_AGENT_ID) {
+  if (!hasElevenLabsKey) {
     return (
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="text-center max-w-[300px] space-y-4">
