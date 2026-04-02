@@ -103,9 +103,10 @@ const AgentDetail = () => {
 
   /* ── Wizard state ── */
 
-  // Agentes novos (template) começam no wizard. Agentes salvos (UUID) pulam direto para "done".
+  // Templates com autoPrompt pulam discover. Custom começa no discover. Agentes salvos vão para "done".
+  const hasAutoPrompt = isTemplate && !!templateAgent?.autoPrompt;
   const [wizardStep, setWizardStep] = useState<"discover" | "structure" | "build" | "done">(
-    isTemplate ? "discover" : "done"
+    isTemplate ? (hasAutoPrompt ? "structure" : "discover") : "done"
   );
   const [structuredConfig, setStructuredConfig] = useState<StructuredAgentConfig | null>(null);
 
