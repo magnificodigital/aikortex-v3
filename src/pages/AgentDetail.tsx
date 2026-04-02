@@ -211,6 +211,8 @@ const AgentDetail = () => {
 
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null);
   const [wizardMessages, setWizardMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>([]);
+  const [setupMessagesSnapshot, setSetupMessagesSnapshot] = useState<any[] | null>(null);
+  const [testMessagesSnapshot, setTestMessagesSnapshot] = useState<any[] | null>(null);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /* ── Save agent ── */
