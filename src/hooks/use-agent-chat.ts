@@ -219,6 +219,7 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
 
       if (!resp.body) throw new Error("Sem resposta do servidor");
 
+      if (!mountedRef.current) return;
       const withPlaceholder = [...messagesRef.current, { role: "agent", text: "" } as ChatMessage];
       messagesRef.current = withPlaceholder;
       setMessages(withPlaceholder);
