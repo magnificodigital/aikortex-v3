@@ -157,7 +157,7 @@ const AgentChatPanel = ({
     }
   }, [messages, wizardMessages, isStructuring, isBuilding]);
 
-  const canSendTest = chatMode === "test" ? hasApiKey : true;
+  const canSendTest = chatMode === "test" ? (hasAnyLLMKey || hasApiKey) : true;
   const isDiscoverEmpty = wizardStep === "discover" && wizardMessages.length === 0;
   const suggestions = AGENT_SUGGESTIONS[agentType] || AGENT_SUGGESTIONS.Custom;
 
@@ -572,11 +572,25 @@ const AgentChatPanel = ({
 
       {/* Input area */}
       <div className="p-3 border-t border-border shrink-0">
-        {chatMode === "test" && !hasApiKey && !keysLoading && wizardStep === "done" && (
+        {chatMode === "test" && !keysLoading && wizardStep === "done" && !hasAnyLLMKey && (
           <div className="mb-2 text-xs text-destructive flex items-center gap-1">
             <AlertTriangle className="w-3 h-3" />
-            API key de {currentProvider} não configurada.{" "}
+            API key de LLM não configurada.{" "}
             <button className="underline" onClick={onGoToIntegrations}>Configurar</button>
+          </div>
+        )}
+        {chatMode === "test" && !keysLoading && wizardStep === "done" && hasAnyLLMKey && availableModels.length > 0 && (
+          <div className="mb-2 flex items-center gap-2">
+            <span className="text-xs text-muted-foreground shrink-0">Modelo:</span>
+            <select
+              value={agentModel}
+              onChange={e => setAgentModel(e.target.value)}
+              className="text-xs h-7 rounded-md border border-input bg-background px-2 py-0.5 text-foreground outline-none focus:ring-1 focus:ring-ring flex-1 max-w-[220px]"
+            >
+              {availableModels.map(m => (
+                <option key={m.value} value={m.value}>{m.label}</option>
+              ))}
+            </select>
           </div>
         )}
         <div className={`rounded-xl border border-border bg-card/50 p-1 transition-colors ${
