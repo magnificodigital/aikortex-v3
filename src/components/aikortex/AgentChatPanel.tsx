@@ -60,6 +60,8 @@ interface AgentChatPanelProps {
   isBuilding: boolean;
   onOpenConfig?: () => void;
   initialPrompt?: string;
+  initialWizardMessages?: Array<{ role: "user" | "assistant"; content: string }>;
+  onWizardMessagesChange?: (messages: Array<{ role: "user" | "assistant"; content: string }>) => void;
 }
 
 const AGENT_SUGGESTIONS: Record<string, string[]> = {
