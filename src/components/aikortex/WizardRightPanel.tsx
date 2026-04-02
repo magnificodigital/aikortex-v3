@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { IntegrationsGrid, LLM_PROVIDERS, SERVICE_PROVIDERS } from "@/components/shared/IntegrationsGrid";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -400,7 +401,7 @@ const WizardRightPanel = ({
           </TabsList>
         </div>
 
-        {/* Integrações — com sub-seções MCP, API, Webhook */}
+        {/* Integrações — usando componente compartilhado */}
         <TabsContent value="connectors" className="flex-1 mt-0 overflow-hidden">
           <ScrollArea className="h-full">
             <div className="p-6 space-y-6">
@@ -410,6 +411,18 @@ const WizardRightPanel = ({
                   Conecte integrações para expandir as capacidades do seu agente.
                 </p>
               </div>
+
+              <IntegrationsGrid
+                providers={LLM_PROVIDERS}
+                title="Modelos de IA (LLMs)"
+                subtitle="Conecte suas chaves de API para utilizar modelos de IA."
+              />
+
+              <IntegrationsGrid
+                providers={SERVICE_PROVIDERS}
+                title="Serviços & Ferramentas"
+                subtitle="Conecte serviços externos para expandir as capacidades."
+              />
 
               {/* MCPs */}
               <div className="space-y-2">
@@ -421,55 +434,6 @@ const WizardRightPanel = ({
                 <Button variant="outline" size="sm" className="text-xs gap-1.5">
                   <Plus className="w-3 h-3" /> Adicionar MCP
                 </Button>
-              </div>
-
-              {/* APIs */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <KeyRound className="w-4 h-4 text-primary" />
-                  <h3 className="text-sm font-semibold text-foreground">APIs</h3>
-                </div>
-                <p className="text-xs text-muted-foreground">Conecte APIs externas via chave de acesso.</p>
-                <div className="space-y-1">
-                  {INTEGRATIONS.map((c) => {
-                    const isConnected = connectorKeys[c.label]?.configured;
-                    return (
-                      <div key={c.label} className="flex items-center justify-between py-3 px-3 rounded-lg hover:bg-muted/50 transition-colors">
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={c.logo}
-                            alt={c.label}
-                            className="w-7 h-7 rounded object-contain shrink-0"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                          />
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-medium text-foreground">{c.label}</p>
-                              {isConnected && (
-                                <span className="flex items-center gap-1 text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
-                                  <Check className="w-2.5 h-2.5" /> Conectado
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-xs text-muted-foreground">{c.desc}</p>
-                          </div>
-                        </div>
-                        <Button
-                          variant={isConnected ? "outline" : "ghost"}
-                          size="sm"
-                          className={`text-xs gap-1 ${isConnected ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                          onClick={() => handleConnectIntegration(c)}
-                        >
-                          {isConnected ? (
-                            <><Settings className="w-3 h-3" /> Gerenciar</>
-                          ) : (
-                            "+ Conectar"
-                          )}
-                        </Button>
-                      </div>
-                    );
-                  })}
-                </div>
               </div>
 
               {/* Webhooks */}
@@ -888,107 +852,7 @@ const WizardRightPanel = ({
           </ScrollArea>
         </TabsContent>
       </Tabs>
-      {/* API Key Dialog */}
-      <Dialog open={!!connectorDialog} onOpenChange={(open) => { if (!open) { setConnectorDialog(null); setKeyInput(""); } }}>
-        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <div className="flex items-center gap-3">
-              {connectorDialog && (
-                <img src={connectorDialog.logo} alt={connectorDialog.label} className="w-8 h-8 rounded object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-              )}
-              <div>
-                <DialogTitle className="text-base">
-                  {connectorKeys[connectorDialog?.label || ""]?.configured ? "Gerenciar" : "Conectar"} {connectorDialog?.label}
-                </DialogTitle>
-                <DialogDescription className="text-xs mt-0.5">{connectorDialog?.desc}</DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-          <div className="space-y-5 pt-2">
-            {/* API Key */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">API Key</label>
-              <div className="relative">
-                <Input
-                  type={showKey ? "text" : "password"}
-                  value={keyInput}
-                  onChange={(e) => setKeyInput(e.target.value)}
-                  placeholder={`Cole sua ${connectorDialog?.label} API Key aqui`}
-                  className="pr-10 text-sm font-mono"
-                />
-                <button type="button" onClick={() => setShowKey(!showKey)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                  {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              <p className="text-[11px] text-muted-foreground">
-                {connectorDialog?.label === "OpenAI" && (<>Encontre sua API Key em <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-0.5">platform.openai.com <ExternalLink className="w-3 h-3" /></a></>)}
-                {connectorDialog?.label === "Anthropic" && (<>Encontre sua API Key em <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-0.5">console.anthropic.com <ExternalLink className="w-3 h-3" /></a></>)}
-                {connectorDialog?.label === "Gemini" && (<>Encontre sua API Key em <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-0.5">aistudio.google.com <ExternalLink className="w-3 h-3" /></a></>)}
-                {connectorDialog?.label === "ElevenLabs" && (<>Encontre sua API Key em <a href="https://elevenlabs.io/settings/api-keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-0.5">elevenlabs.io <ExternalLink className="w-3 h-3" /></a></>)}
-                {!["OpenAI", "Anthropic", "Gemini", "ElevenLabs"].includes(connectorDialog?.label || "") && (<>Cole a chave de API fornecida pelo serviço.</>)}
-              </p>
-            </div>
-
-            {/* Model Selection — gated for providers that require API key first */}
-            {connectorDialog && LLM_PROVIDER_MODELS[connectorDialog.label] && !shouldShowDialogModels && (
-              <div className="space-y-2 rounded-lg border border-dashed border-border bg-muted/30 p-3">
-                <label className="text-sm font-medium text-foreground">Modelo padrão</label>
-                <p className="text-[11px] text-muted-foreground">
-                  Os modelos da {connectorDialog.label} aparecem somente depois que a chave de API for conectada.
-                </p>
-              </div>
-            )}
-
-            {/* Model Selection — only for eligible LLM providers */}
-            {shouldShowDialogModels && (
-              <div className="space-y-3">
-                <label className="text-sm font-medium text-foreground">Modelo padrão</label>
-                <p className="text-[11px] text-muted-foreground -mt-1">Escolha o modelo que será usado pelo agente.</p>
-                <RadioGroup value={selectedDialogModel} onValueChange={setSelectedDialogModel} className="space-y-2">
-                  {LLM_PROVIDER_MODELS[connectorDialog.label].models.map((m) => (
-                    <div key={m.value} className={`flex items-start gap-3 rounded-lg border p-3 transition-colors cursor-pointer ${selectedDialogModel === m.value ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"}`} onClick={() => setSelectedDialogModel(m.value)}>
-                      <RadioGroupItem value={m.value} id={`wiz-${m.value}`} className="mt-0.5" />
-                      <Label htmlFor={`wiz-${m.value}`} className="cursor-pointer flex-1">
-                        <span className="text-sm font-medium text-foreground">{m.label}</span>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">{m.desc}</p>
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              </div>
-            )}
-
-            {/* Capabilities — only for LLM providers */}
-            {connectorDialog && LLM_PROVIDER_MODELS[connectorDialog.label] && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Recursos disponíveis</label>
-                <div className="flex flex-wrap gap-1.5">
-                  {LLM_PROVIDER_MODELS[connectorDialog.label].capabilities.map((cap) => (
-                    <span key={cap} className="text-[11px] px-2 py-1 rounded-full bg-muted text-muted-foreground border border-border">
-                      {cap}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Actions */}
-            <div className="flex items-center justify-between pt-2 border-t border-border">
-              {connectorKeys[connectorDialog?.label || ""]?.configured ? (
-                <Button variant="destructive" size="sm" className="text-xs gap-1.5" onClick={handleDisconnect}>
-                  <Trash2 className="w-3 h-3" /> Desconectar
-                </Button>
-              ) : <div />}
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => { setConnectorDialog(null); setKeyInput(""); }}>Cancelar</Button>
-                <Button size="sm" onClick={handleSaveKey} disabled={!keyInput.trim() || savingKey}>
-                  {connectorKeys[connectorDialog?.label || ""]?.configured ? "Atualizar" : "Conectar"}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Dialog de integração agora é gerido pelo IntegrationsGrid */}
 
     </div>
   );
