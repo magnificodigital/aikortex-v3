@@ -1,8 +1,9 @@
+// Lovable AI Gateway models — same models used in the App Builder
 export const GATEWAY_MODELS = [
-  { value: "google/gemma-3-12b-it:free", label: "Gemma 3 12B (Grátis)" },
-  { value: "meta-llama/llama-3.3-70b-instruct:free", label: "Llama 3.3 70B (Grátis)" },
-  { value: "mistralai/mistral-small-3.1-24b-instruct:free", label: "Mistral Small 3.1 (Grátis)" },
-  { value: "openai/gpt-oss-20b:free", label: "GPT OSS 20B (Grátis)" },
+  { value: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+  { value: "google/gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite" },
+  { value: "google/gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+  { value: "google/gemini-3-flash-preview", label: "Gemini 3 Flash (Preview)" },
 ] as const;
 
 export const DEFAULT_FREE_SETUP_MODEL = GATEWAY_MODELS[0].value;
