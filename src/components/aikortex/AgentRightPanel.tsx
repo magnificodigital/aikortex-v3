@@ -469,26 +469,6 @@ const AgentRightPanel = ({
       </div>
 
       <Tabs value={rightTab} onValueChange={handleTabChange} className="flex flex-col flex-1 min-h-0">
-        <div className="border-b border-border px-2">
-          <TabsList className="bg-transparent h-11 gap-0 p-0">
-            {[
-              { value: "agent",      label: "Agente" },
-              { value: "voice",      label: "Voz" },
-              { value: "connectors", label: "Integrações" },
-              { value: "channels",   label: "Canais" },
-              { value: "advanced",   label: "Avançado" },
-              { value: "danger",     label: "Danger Zone" },
-            ].map((tab) => (
-              <TabsTrigger
-                key={tab.value}
-                value={tab.value}
-                className={`rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-3 text-xs ${tab.value === "danger" ? "data-[state=active]:text-destructive data-[state=active]:border-destructive" : ""}`}
-              >
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </div>
 
         {/* ── Aba Agente ── */}
         <TabsContent value="agent" className="flex-1 mt-0 min-h-0 overflow-hidden">
