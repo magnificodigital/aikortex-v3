@@ -333,6 +333,23 @@ const VoiceCallPanel = ({
         {formatTime(duration)}
       </p>
 
+      {/* Voice selector */}
+      {(callStatus === "idle" || callStatus === "ended") && (
+        <div className="mb-6 w-full max-w-[220px]">
+          <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5 block">Voz</label>
+          <Select value={selectedVoice} onValueChange={setSelectedVoice}>
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {VOICES.map(v => (
+                <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       {/* Controls */}
       <div className="flex items-center gap-4">
         {callStatus === "connected" && (
@@ -400,7 +417,7 @@ const VoiceCallPanel = ({
       {/* Hint text */}
       {callStatus === "idle" && (
         <p className="text-xs text-muted-foreground text-center mt-6 max-w-[260px]">
-          Clique no botão acima para iniciar uma ligação de voz com o agente.
+          Selecione uma voz e clique no botão para iniciar uma ligação.
         </p>
       )}
     </div>
