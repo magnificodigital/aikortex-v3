@@ -154,10 +154,10 @@ const AgentChatPanel = ({
 }: AgentChatPanelProps) => {
   const [input, setInput] = useState("");
   const [editingConfig, setEditingConfig] = useState(false);
-  const [wizardMessages, setWizardMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>([]);
+  const [wizardMessages, setWizardMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>(() => initialWizardMessages || []);
   const scrollRef = useRef<HTMLDivElement>(null);
   const initialPromptUsedRef = useRef(false);
-  const handleDiscoverRef = useRef<(text: string) => void>(() => {});
+  const handleDiscoverRef = useRef<(text: string) => Promise<void>>(async () => {});
 
   useEffect(() => {
     if (scrollRef.current) {
