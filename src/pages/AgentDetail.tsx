@@ -210,6 +210,7 @@ const AgentDetail = () => {
   /* ── Agent config (from right panel) ── */
 
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null);
+  const [wizardMessages, setWizardMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>([]);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /* ── Save agent ── */
