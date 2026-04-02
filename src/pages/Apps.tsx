@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import {
-  ArrowRight, Phone, Monitor, Heart, Target, Building2,
+  ArrowRight, Monitor, Heart, Target, Building2,
   GraduationCap, Dumbbell, Briefcase, BookOpen, Hotel, ShoppingBag, Globe,
   Plus, Trash2, Pencil, Clock, MoreVertical,
 } from "lucide-react";
