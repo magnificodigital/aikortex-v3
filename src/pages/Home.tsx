@@ -62,13 +62,13 @@ const Home = () => {
     return "app";
   };
 
-  const detectAgentType = (text: string): { id: string; type: AgentType; name: string } => {
+  const detectAgentType = (text: string): { id: string; type: AgentType; name: string } | null => {
     const lower = text.toLowerCase();
     if (lower.includes("sdr") || lower.includes("qualificação") || lower.includes("qualificacao") || lower.includes("qualificador"))
       return { id: "sdr-1", type: "SDR", name: "Agente SDR" };
     if (lower.includes("sac") || lower.includes("suporte") || lower.includes("atendimento") || lower.includes("customer success") || lower.includes("cs "))
       return { id: "sac-1", type: "SAC", name: "Agente SAC" };
-    return { id: "sac-1", type: "SAC", name: "Agente SAC" };
+    return null; // Custom agent — no template match
   };
 
   const handleSubmit = () => {
