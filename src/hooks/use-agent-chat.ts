@@ -130,29 +130,38 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
       let resp: Response | null = null;
       const maxRetries = 2;
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        const payload: Record<string, any> = {
+          messages: apiMessages,
+          useGateway: options.useGateway ?? false,
+        };
+
+        if (options.useGateway) {
+          // Use Lovable AI Gateway via app-chat edge function
+          payload.mode = "agent-chat";
+          payload.model = options.gatewayModel || "google/gemini-2.5-flash";
+        } else {
+          // Use user's own API key via agent-chat edge function
+          payload.provider = options.provider || inferredProvider;
+          payload.model = options.model;
+          payload.agentContext = options.agentContext;
+          if (options.apiConfig) {
+            payload.temperature = options.apiConfig.temperature;
+            payload.max_tokens = options.apiConfig.maxTokens;
+            payload.top_p = options.apiConfig.topP;
+            payload.frequency_penalty = options.apiConfig.frequencyPenalty;
+            payload.presence_penalty = options.apiConfig.presencePenalty;
+            payload.response_format = options.apiConfig.responseFormat === "json" ? { type: "json_object" } : undefined;
+            payload.stop = options.apiConfig.stopSequences?.length ? options.apiConfig.stopSequences : undefined;
+          }
+        }
+
         resp = await fetch(CHAT_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
           },
-          body: JSON.stringify({
-            messages: apiMessages,
-            provider: options.provider || inferredProvider,
-            model: options.model,
-            useGateway: options.useGateway ?? false,
-            gatewayModel: options.gatewayModel,
-            agentContext: options.agentContext,
-            ...(options.apiConfig && {
-              temperature: options.apiConfig.temperature,
-              max_tokens: options.apiConfig.maxTokens,
-              top_p: options.apiConfig.topP,
-              frequency_penalty: options.apiConfig.frequencyPenalty,
-              presence_penalty: options.apiConfig.presencePenalty,
-              response_format: options.apiConfig.responseFormat === "json" ? { type: "json_object" } : undefined,
-              stop: options.apiConfig.stopSequences?.length ? options.apiConfig.stopSequences : undefined,
-            }),
-          }),
+          body: JSON.stringify(payload),
         });
         if (resp.status !== 429 || attempt === maxRetries) break;
         const waitMs = (attempt + 1) * 2000;
