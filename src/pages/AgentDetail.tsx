@@ -25,14 +25,11 @@ import avatar8 from "@/assets/avatars/avatar-8.png";
 
 const TEMPLATE_MAP: Record<string, { name: string; avatar: string; model: string; agentType: AgentType; autoPrompt: string }> = {
   "sdr-1":    { name: "Agente SDR",           avatar: avatar1, model: "gemini-2.5-flash", agentType: "SDR",    autoPrompt: "Crie um agente SDR para qualificação de leads inbound. Ele deve coletar nome, email, empresa e interesse do lead, qualificar com base em critérios BANT e agendar reuniões com o time comercial." },
-  "bdr-1":    { name: "Agente BDR",           avatar: avatar2, model: "gemini-2.5-flash", agentType: "BDR",    autoPrompt: "Crie um agente BDR para prospecção outbound. Ele deve abordar leads frios de forma consultiva, identificar dores e necessidades, qualificar oportunidades e agendar reuniões com executivos de vendas." },
   "sac-1":    { name: "Agente SAC",           avatar: avatar3, model: "gemini-2.5-flash", agentType: "SAC",    autoPrompt: "Crie um agente de atendimento ao cliente (SAC). Ele deve responder dúvidas frequentes, resolver problemas comuns, escalar casos complexos para humanos e manter um tom empático e profissional." },
-  "social-1": { name: "Social Media Manager", avatar: avatar8, model: "gemini-2.5-flash", agentType: "Custom", autoPrompt: "Crie um agente gerenciador de redes sociais. Ele deve sugerir conteúdos, responder comentários e mensagens diretas, manter a voz da marca e gerar relatórios de engajamento." },
-  "custom-1": { name: "Agente Personalizado", avatar: avatar1, model: "gemini-2.5-flash", agentType: "Custom", autoPrompt: "" },
 };
 
 const AVATAR_BY_TYPE: Record<string, string> = {
-  SDR: avatar1, BDR: avatar2, SAC: avatar3, CS: avatar3, Custom: avatar1,
+  SDR: avatar1, SAC: avatar3, Custom: avatar1,
 };
 
 const LLM_MODELS = [

@@ -4,7 +4,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import {
   Plus, Bot, Trash2, Pencil, Clock, MoreVertical,
-  ArrowRight, Settings2, Sparkles, Target, Headphones, Share2,
+  ArrowRight, Settings2, Sparkles, Target, Headphones,
 } from "lucide-react";
 import { useUserAgents, type UserAgent } from "@/hooks/use-user-agents";
 import { AGENT_PRESETS } from "@/types/agent-presets";
@@ -33,15 +33,6 @@ const TEMPLATE_CARDS = [
     icon: Target,
   },
   {
-    id: "bdr-1",
-    name: "Agente BDR",
-    description: "Prospecta leads outbound, pesquisa empresas-alvo e gera oportunidades via abordagem personalizada.",
-    avatar: avatar2,
-    type: "BDR" as const,
-    cat: "Vendas",
-    icon: Target,
-  },
-  {
     id: "sac-1",
     name: "Agente SAC",
     description: "Atende clientes automaticamente, resolve dúvidas e reduz tickets com suporte inteligente.",
@@ -50,19 +41,10 @@ const TEMPLATE_CARDS = [
     cat: "Suporte",
     icon: Headphones,
   },
-  {
-    id: "social-1",
-    name: "Social Media Manager",
-    description: "Planeja conteúdo semanal, escreve na sua voz, responde DMs e acompanha o que funciona.",
-    avatar: avatar8,
-    type: "Custom" as const,
-    cat: "Marketing",
-    icon: Share2,
-  },
 ];
 
 const AVATAR_MAP: Record<string, string> = {
-  "sdr-1": avatar1, "bdr-1": avatar2, "sac-1": avatar3, "social-1": avatar8, "custom-1": avatar1,
+  "sdr-1": avatar1, "sac-1": avatar3,
 };
 
 const Aikortex = () => {
@@ -102,26 +84,12 @@ const Aikortex = () => {
   };
 
   const handleNewCustom = () => {
-    const storagePrefix = `agent-detail-custom-1`;
-    try {
-      ["name", "desc", "objective", "instructions", "toneOfVoice", "greetingMessage"].forEach(k =>
-        localStorage.removeItem(`${storagePrefix}-${k}`)
-      );
-    } catch {}
-
-    navigate(`/aikortex/agents/custom-1`, {
+    const newId = `new-${Date.now()}`;
+    navigate(`/aikortex/agents/${newId}`, {
       state: {
-        fromTemplate: true,
+        fromTemplate: false,
         agentType: "Custom",
-        agentName: "Agente Personalizado",
-        preset: {
-          agentName: "Agente Personalizado",
-          agentObjective: "Configure um agente sob medida.",
-          context: AGENT_PRESETS["Custom"]?.context || {},
-          intents: AGENT_PRESETS["Custom"]?.intents || [],
-          stages: AGENT_PRESETS["Custom"]?.stages || [],
-          advancedConfig: AGENT_PRESETS["Custom"]?.advancedConfig || {},
-        },
+        agentName: "Novo Agente",
       },
     });
   };
@@ -141,9 +109,8 @@ const Aikortex = () => {
   const getAvatarSrc = (agent: UserAgent) => {
     if (agent.avatar_url) return agent.avatar_url;
     const key = agent.agent_type?.toLowerCase() === "sdr" ? "sdr-1"
-      : agent.agent_type?.toLowerCase() === "bdr" ? "bdr-1"
       : agent.agent_type?.toLowerCase() === "sac" ? "sac-1"
-      : "custom-1";
+      : "sdr-1";
     return AVATAR_MAP[key] || avatar1;
   };
 

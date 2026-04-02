@@ -66,11 +66,9 @@ const Home = () => {
     const lower = text.toLowerCase();
     if (lower.includes("sdr") || lower.includes("qualificação") || lower.includes("qualificacao") || lower.includes("qualificador"))
       return { id: "sdr-1", type: "SDR", name: "Agente SDR" };
-    if (lower.includes("bdr") || lower.includes("prospecção") || lower.includes("prospeccao") || lower.includes("outbound") || lower.includes("linkedin"))
-      return { id: "bdr-1", type: "BDR", name: "Agente BDR" };
     if (lower.includes("sac") || lower.includes("suporte") || lower.includes("atendimento") || lower.includes("customer success") || lower.includes("cs "))
       return { id: "sac-1", type: "SAC", name: "Agente SAC" };
-    return { id: "custom-1", type: "Custom", name: "Agente Personalizado" };
+    return { id: "sac-1", type: "SAC", name: "Agente SAC" };
   };
 
   const handleSubmit = () => {
