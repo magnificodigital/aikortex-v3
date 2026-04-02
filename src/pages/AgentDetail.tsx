@@ -158,6 +158,19 @@ const AgentDetail = () => {
   const hasApiKey    = !!keys[currentProvider]?.configured;
   const hasAnyLLMKey = useMemo(() => ["openai", "anthropic", "gemini"].some(p => keys[p]?.configured), [keys]);
 
+  // Auto-select first available model when keys load and current model's provider isn't configured
+  useEffect(() => {
+    if (keysLoading) return;
+    const provider = getProviderForModel(agentModel);
+    const hasCurrentKey = keys[provider]?.configured;
+    if (!hasCurrentKey) {
+      const firstAvailable = LLM_MODELS.find(m => keys[m.provider]?.configured);
+      if (firstAvailable) {
+        setAgentModel(firstAvailable.value);
+      }
+    }
+  }, [keysLoading, keys]);
+
   /* ── Agent config (from right panel) ── */
 
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null);
