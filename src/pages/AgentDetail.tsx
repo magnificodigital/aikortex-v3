@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { Loader2, ArrowLeft, Sparkles, Bot, Settings, Mic, Plug, Share2, SlidersHorizontal, Save, Rocket } from "lucide-react";
+import { Loader2, ArrowLeft, Sparkles, Bot, Settings, Mic, Plug, Share2, SlidersHorizontal, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ConversationProvider } from "@elevenlabs/react";
@@ -161,7 +161,7 @@ const AgentDetail = () => {
   /* ── Agent config (from right panel) ── */
 
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null);
-  const handleConfigChange = useCallback((config: AgentConfig) => setAgentConfig(config), []);
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /* ── Save agent ── */
 
@@ -194,7 +194,6 @@ const AgentDetail = () => {
         },
       });
       if (result) {
-        toast.success("Agente salvo!");
         if (agentId && TEMPLATE_MAP[agentId] && result.id !== agentId) {
           navigate(`/aikortex/agents/${result.id}`, { replace: true });
         }
@@ -203,6 +202,24 @@ const AgentDetail = () => {
       setIsSaving(false);
     }
   }, [agentId, saveAgent, navigate]);
+
+  const saveAgentRef = useRef(handleSaveAgent);
+  saveAgentRef.current = handleSaveAgent;
+
+  const handleConfigChange = useCallback((config: AgentConfig) => {
+    setAgentConfig(config);
+
+    // Auto-save with debounce
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
+      if (config.name?.trim()) {
+        saveAgentRef.current({ ...config, model: agentModel, agentType: loadedAgent.agentType });
+      }
+    }, 2000);
+  }, [agentModel, loadedAgent.agentType]);
+
+  // Cleanup timer on unmount
+  useEffect(() => () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); }, []);
 
   /* ── Wizard: preencher painel direito ── */
 
@@ -604,20 +621,9 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
               </Button>
             ))}
             <div className="w-px h-5 bg-border mx-1" />
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs gap-1 px-2"
-              disabled={isSaving}
-              onClick={() => {
-                if (agentConfig) {
-                  handleSaveAgent({ ...agentConfig, model: agentModel, agentType: loadedAgent.agentType });
-                }
-              }}
-            >
-              <Save className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">{isSaving ? "Salvando..." : "Salvar"}</span>
-            </Button>
+            {isSaving && (
+              <span className="text-[10px] text-muted-foreground animate-pulse">Salvando...</span>
+            )}
             <Button
               size="sm"
               className="h-7 text-xs gap-1 px-2"
