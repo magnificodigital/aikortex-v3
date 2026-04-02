@@ -29,7 +29,7 @@ const TEMPLATE_MAP: Record<string, { name: string; avatar: string; model: string
 };
 
 const AVATAR_BY_TYPE: Record<string, string> = {
-  SDR: avatar1, BDR: avatar2, SAC: avatar3, CS: avatar3, Custom: avatar1,
+  SDR: avatar1, SAC: avatar3, Custom: avatar1,
 };
 
 const LLM_MODELS = [
