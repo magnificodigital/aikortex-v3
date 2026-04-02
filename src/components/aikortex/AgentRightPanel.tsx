@@ -427,7 +427,7 @@ const AgentRightPanel = ({
     greetingMessage: agentGreetingMessage, avatarUrl: avatarPreview || agent.avatar || "",
     channels: connectedChannels,
     integrations: Object.entries(connectorKeys).filter(([, v]) => v.configured).map(([k]) => k),
-    knowledgeFiles: knowledgeFiles.map(f => f.name), urls, apiConfig,
+    knowledgeFiles: knowledgeFiles.map(f => f.name), urls, apiConfig, voiceConfig,
     model: agentModel, agentType,
   });
 
