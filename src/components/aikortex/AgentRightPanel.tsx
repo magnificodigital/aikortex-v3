@@ -365,9 +365,10 @@ const AgentRightPanel = ({
       channels: connectedChannels,
       integrations: Object.entries(connectorKeys).filter(([, v]) => v.configured).map(([k]) => k),
       knowledgeFiles: knowledgeFiles.map(f => f.name), urls, apiConfig,
+      voiceConfig,
     });
   }, [agentName, agentDesc, agentObjective, agentInstructions, agentToneOfVoice, agentGreetingMessage,
-      avatarPreview, connectedChannels, connectorKeys, knowledgeFiles, urls, apiConfig]);
+      avatarPreview, connectedChannels, connectorKeys, knowledgeFiles, urls, apiConfig, voiceConfig]);
 
   // ── Helpers ──
   const handleFiles = (files: FileList) => {
