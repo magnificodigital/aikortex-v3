@@ -124,14 +124,13 @@ const VoiceOrb = ({ isSpeaking, isConnected, avatarUrl }: { isSpeaking: boolean;
 
       // Agent avatar in center
       if (imgRef.current) {
-        const imgSize = baseRadius * 1.6;
+        const imgRadius = baseRadius;
         ctx.save();
         ctx.beginPath();
-        ctx.arc(center, center, imgSize / 2, 0, Math.PI * 2);
+        ctx.arc(center, center, imgRadius, 0, Math.PI * 2);
         ctx.closePath();
         ctx.clip();
-        ctx.globalAlpha = 0.85 + intensity * 0.15;
-        ctx.drawImage(imgRef.current, center - imgSize / 2, center - imgSize / 2, imgSize, imgSize);
+        ctx.drawImage(imgRef.current, center - imgRadius, center - imgRadius, imgRadius * 2, imgRadius * 2);
         ctx.restore();
       }
 
