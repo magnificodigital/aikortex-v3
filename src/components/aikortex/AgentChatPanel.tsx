@@ -324,29 +324,33 @@ const AgentChatPanel = ({
           </div>
         )}
 
-        {/* Chat messages */}
-        {messages.map((msg, i) => (
-          <div key={i}>
-            {msg.role === "user" ? (
-              <div className="flex justify-end">
-                <div className="bg-primary/10 border border-primary/20 rounded-2xl rounded-br-sm px-4 py-2.5 max-w-[90%] text-sm">
-                  <p className="whitespace-pre-wrap text-foreground">{msg.text}</p>
-                </div>
-              </div>
-            ) : (
-              <div className="flex gap-2.5">
-                <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <Bot className="w-3.5 h-3.5 text-primary" />
-                </div>
-                <div className="text-sm leading-relaxed text-foreground flex-1 min-w-0">
-                  <div className="prose prose-sm dark:prose-invert max-w-none [&>p]:m-0 [&>ul]:my-1 [&>ol]:my-1 [&_strong]:text-foreground">
-                    <ReactMarkdown>{msg.text}</ReactMarkdown>
+        {/* Chat messages — hide initial greeting during discover empty state */}
+        {messages.map((msg, i) => {
+          // Skip initial agent greeting when showing discover empty state
+          if (isDiscoverEmpty && msg.role === "agent" && i === 0) return null;
+          return (
+            <div key={i}>
+              {msg.role === "user" ? (
+                <div className="flex justify-end">
+                  <div className="bg-primary/10 border border-primary/20 rounded-2xl rounded-br-sm px-4 py-2.5 max-w-[90%] text-sm">
+                    <p className="whitespace-pre-wrap text-foreground">{msg.text}</p>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
-        ))}
+              ) : (
+                <div className="flex gap-2.5">
+                  <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                    <Bot className="w-3.5 h-3.5 text-primary" />
+                  </div>
+                  <div className="text-sm leading-relaxed text-foreground flex-1 min-w-0">
+                    <div className="prose prose-sm dark:prose-invert max-w-none [&>p]:m-0 [&>ul]:my-1 [&>ol]:my-1 [&_strong]:text-foreground">
+                      <ReactMarkdown>{msg.text}</ReactMarkdown>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
 
         {isStreaming && messages[messages.length - 1]?.role !== "agent" && (
           <div className="flex gap-2.5">
