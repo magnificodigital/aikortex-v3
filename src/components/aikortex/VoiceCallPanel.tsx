@@ -5,7 +5,21 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+
+const VOICES = [
+  { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah" },
+  { id: "FGY2WhTYpPnrIDTdsKH5", name: "Laura" },
+  { id: "IKne3meq5aSn9XLyUdCD", name: "Charlie" },
+  { id: "JBFqnCBsd6RMkjVDRZzb", name: "George" },
+  { id: "CwhRBWXzGAHq8TQ4Fs17", name: "Roger" },
+  { id: "TX3LPaxmHKxFdv7VOQHJ", name: "Liam" },
+  { id: "Xb7hH8MSUJpSbSDYk0k2", name: "Alice" },
+  { id: "XrExE9yKIg1WjnnlVkGX", name: "Matilda" },
+  { id: "pFZP5JQG7iQjIQuC4Bku", name: "Lily" },
+  { id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel" },
+];
 
 type CallStatus = "idle" | "connecting" | "connected" | "ended";
 
@@ -138,6 +152,8 @@ const VoiceCallPanel = ({
   hasElevenLabsKey,
   onGoToIntegrations,
 }: VoiceCallPanelProps) => {
+  const [selectedVoice, setSelectedVoice] = useState(VOICES[0].id);
+
   const [callStatus, setCallStatus] = useState<CallStatus>("idle");
   const [isMuted, setIsMuted] = useState(false);
   const [duration, setDuration] = useState(0);
@@ -317,6 +333,23 @@ const VoiceCallPanel = ({
         {formatTime(duration)}
       </p>
 
+      {/* Voice selector */}
+      {(callStatus === "idle" || callStatus === "ended") && (
+        <div className="mb-6 w-full max-w-[220px]">
+          <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5 block">Voz</label>
+          <Select value={selectedVoice} onValueChange={setSelectedVoice}>
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {VOICES.map(v => (
+                <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       {/* Controls */}
       <div className="flex items-center gap-4">
         {callStatus === "connected" && (
@@ -384,7 +417,7 @@ const VoiceCallPanel = ({
       {/* Hint text */}
       {callStatus === "idle" && (
         <p className="text-xs text-muted-foreground text-center mt-6 max-w-[260px]">
-          Clique no botão acima para iniciar uma ligação de voz com o agente.
+          Selecione uma voz e clique no botão para iniciar uma ligação.
         </p>
       )}
     </div>
