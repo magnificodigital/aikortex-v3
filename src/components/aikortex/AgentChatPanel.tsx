@@ -54,11 +54,11 @@ interface AgentChatPanelProps {
   messages: ChatMessage[];
   sendMessage: (text: string) => void;
   isStreaming: boolean;
-  // Wizard-specific
   onStructureRequest: (description: string) => Promise<StructuredAgentConfig | null>;
   onBuildAgent: (config: StructuredAgentConfig) => Promise<void>;
   isStructuring: boolean;
   isBuilding: boolean;
+  onOpenConfig?: () => void;
 }
 
 const AGENT_SUGGESTIONS: Record<string, string[]> = {
