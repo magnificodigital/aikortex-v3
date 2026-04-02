@@ -64,6 +64,24 @@ interface LoadedAgent {
   savedConfig: Record<string, any> | null;
 }
 
+const buildSavedConfig = (config: AgentConfig, agentType: string) => ({
+  name: config.name,
+  description: config.description,
+  objective: config.objective,
+  instructions: config.instructions,
+  toneOfVoice: config.toneOfVoice,
+  greetingMessage: config.greetingMessage,
+  avatarUrl: config.avatarUrl,
+  channels: config.channels,
+  integrations: config.integrations,
+  integrationConfigs: config.integrationConfigs,
+  knowledgeFiles: config.knowledgeFiles,
+  urls: config.urls,
+  apiConfig: config.apiConfig,
+  voiceConfig: config.voiceConfig,
+  agentType,
+});
+
 /* ── Component ── */
 
 const AgentDetail = () => {
@@ -144,6 +162,17 @@ const AgentDetail = () => {
     try { localStorage.setItem(`${storagePrefix}-model`, agentModel); } catch {}
   }, [agentModel, storagePrefix]);
   useEffect(() => {
+    if (!loadedAgent.model) return;
+    setAgentModel((currentModel) => {
+      try {
+        const storedModel = localStorage.getItem(`${storagePrefix}-model`);
+        return storedModel || loadedAgent.model || currentModel;
+      } catch {
+        return loadedAgent.model || currentModel;
+      }
+    });
+  }, [loadedAgent.model, storagePrefix]);
+  useEffect(() => {
     try { localStorage.setItem(`${storagePrefix}-setupModel`, setupModel); } catch {}
   }, [setupModel, storagePrefix]);
 
@@ -197,6 +226,7 @@ const AgentDetail = () => {
           greetingMessage: config.greetingMessage,
           channels:        config.channels,
           integrations:    config.integrations,
+          integrationConfigs: config.integrationConfigs,
           knowledgeFiles:  config.knowledgeFiles,
           urls:            config.urls,
           apiConfig:       config.apiConfig,
@@ -204,6 +234,14 @@ const AgentDetail = () => {
         },
       });
       if (result) {
+        setLoadedAgent({
+          name: config.name,
+          avatar: config.avatarUrl || AVATAR_BY_TYPE[config.agentType] || avatar1,
+          model: config.model,
+          agentType: (config.agentType as AgentType) || "Custom",
+          savedConfig: buildSavedConfig(config, config.agentType),
+        });
+        setAgentConfig(config);
         if (agentId && TEMPLATE_MAP[agentId] && result.id !== agentId) {
           navigate(`/aikortex/agents/${result.id}`, { replace: true });
         }
@@ -311,6 +349,7 @@ const AgentDetail = () => {
           greetingMessage: config.greeting_message,
           channels:        config.channels,
           integrations:    [],
+          integrationConfigs: {},
           knowledgeFiles:  [],
           urls:            [],
         },
@@ -324,11 +363,18 @@ const AgentDetail = () => {
           model: agentModel,
           agentType: resolvedType,
           savedConfig: {
+            name: config.agent_name,
+            description: config.description,
             objective: config.objective,
             instructions: config.instructions,
             toneOfVoice: config.tone,
             greetingMessage: config.greeting_message,
+            avatarUrl: AVATAR_BY_TYPE[resolvedType] || avatar1,
             channels: config.channels,
+            integrations: [],
+            integrationConfigs: {},
+            knowledgeFiles: [],
+            urls: [],
           },
         });
         setPresetData({
@@ -446,6 +492,7 @@ const AgentDetail = () => {
             greetingMessage: finalConfig.greeting_message,
             channels: finalConfig.channels,
             integrations: [],
+            integrationConfigs: {},
             knowledgeFiles: [],
             urls: [],
           },
@@ -459,11 +506,18 @@ const AgentDetail = () => {
             model: agentModel,
             agentType: resolvedType,
             savedConfig: {
+              name: finalConfig.agent_name,
+              description: finalConfig.description,
               objective: finalConfig.objective,
               instructions: finalConfig.instructions,
               toneOfVoice: finalConfig.tone,
               greetingMessage: finalConfig.greeting_message,
+              avatarUrl: AVATAR_BY_TYPE[resolvedType] || avatar1,
               channels: finalConfig.channels,
+              integrations: [],
+              integrationConfigs: {},
+              knowledgeFiles: [],
+              urls: [],
             },
           });
           if (result.id !== agentId) {
