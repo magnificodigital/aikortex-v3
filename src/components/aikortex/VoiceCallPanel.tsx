@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useConversation } from "@elevenlabs/react";
 import {
-  Phone, PhoneOff, Mic, MicOff, User, FileText, AlertTriangle, ExternalLink,
+  Phone, PhoneOff, Mic, MicOff, FileText, AlertTriangle, ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,115 @@ interface VoiceCallPanelProps {
   onGoToIntegrations: () => void;
 }
 
+/* ── Animated Orb ── */
+const VoiceOrb = ({ isSpeaking, isConnected }: { isSpeaking: boolean; isConnected: boolean }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animRef = useRef<number>(0);
+  const phaseRef = useRef(0);
+  const intensityRef = useRef(0);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d")!;
+    const size = 280;
+    canvas.width = size * 2;
+    canvas.height = size * 2;
+    ctx.scale(2, 2);
+
+    const center = size / 2;
+    const baseRadius = 70;
+
+    const draw = () => {
+      phaseRef.current += 0.02;
+      const targetIntensity = isSpeaking ? 1 : isConnected ? 0.3 : 0;
+      intensityRef.current += (targetIntensity - intensityRef.current) * 0.08;
+      const intensity = intensityRef.current;
+
+      ctx.clearRect(0, 0, size, size);
+
+      // Outer glow layers
+      for (let i = 3; i >= 0; i--) {
+        const glowRadius = baseRadius + 20 + i * 15 + intensity * 12 * Math.sin(phaseRef.current * (1.2 + i * 0.3));
+        const alpha = (0.03 + intensity * 0.04) * (1 - i * 0.2);
+        const gradient = ctx.createRadialGradient(center, center, 0, center, center, glowRadius);
+        gradient.addColorStop(0, `hsla(var(--primary) / ${alpha})`);
+        gradient.addColorStop(0.6, `hsla(var(--primary) / ${alpha * 0.5})`);
+        gradient.addColorStop(1, `hsla(var(--primary) / 0)`);
+        ctx.beginPath();
+        ctx.arc(center, center, glowRadius, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+      }
+
+      // Main orb with organic deformation
+      const points = 120;
+      ctx.beginPath();
+      for (let i = 0; i <= points; i++) {
+        const angle = (i / points) * Math.PI * 2;
+        const wave1 = Math.sin(angle * 3 + phaseRef.current * 2) * intensity * 8;
+        const wave2 = Math.sin(angle * 5 - phaseRef.current * 1.5) * intensity * 5;
+        const wave3 = Math.sin(angle * 7 + phaseRef.current * 3) * intensity * 3;
+        const breathe = Math.sin(phaseRef.current * 0.8) * 3;
+        const r = baseRadius + wave1 + wave2 + wave3 + breathe;
+        const x = center + r * Math.cos(angle);
+        const y = center + r * Math.sin(angle);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+
+      const mainGradient = ctx.createRadialGradient(
+        center - 15, center - 15, 0,
+        center, center, baseRadius + 15
+      );
+      mainGradient.addColorStop(0, `hsla(var(--primary) / ${0.25 + intensity * 0.15})`);
+      mainGradient.addColorStop(0.5, `hsla(var(--primary) / ${0.15 + intensity * 0.1})`);
+      mainGradient.addColorStop(1, `hsla(var(--primary) / ${0.05 + intensity * 0.05})`);
+      ctx.fillStyle = mainGradient;
+      ctx.fill();
+
+      // Inner bright core
+      const coreGradient = ctx.createRadialGradient(center, center, 0, center, center, 30 + intensity * 10);
+      coreGradient.addColorStop(0, `hsla(var(--primary) / ${0.3 + intensity * 0.2})`);
+      coreGradient.addColorStop(1, `hsla(var(--primary) / 0)`);
+      ctx.beginPath();
+      ctx.arc(center, center, 30 + intensity * 10, 0, Math.PI * 2);
+      ctx.fillStyle = coreGradient;
+      ctx.fill();
+
+      // Orbiting particles when speaking
+      if (intensity > 0.2) {
+        for (let i = 0; i < 6; i++) {
+          const pAngle = phaseRef.current * (0.8 + i * 0.15) + (i * Math.PI * 2) / 6;
+          const pDist = baseRadius + 25 + Math.sin(phaseRef.current * 2 + i) * 10;
+          const px = center + pDist * Math.cos(pAngle);
+          const py = center + pDist * Math.sin(pAngle);
+          const pSize = 2 + intensity * 2;
+          const pAlpha = intensity * 0.4;
+          ctx.beginPath();
+          ctx.arc(px, py, pSize, 0, Math.PI * 2);
+          ctx.fillStyle = `hsla(var(--primary) / ${pAlpha})`;
+          ctx.fill();
+        }
+      }
+
+      animRef.current = requestAnimationFrame(draw);
+    };
+
+    draw();
+    return () => cancelAnimationFrame(animRef.current);
+  }, [isSpeaking, isConnected]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="w-[280px] h-[280px]"
+      style={{ imageRendering: "auto" }}
+    />
+  );
+};
+
 const VoiceCallPanel = ({
   agentName,
   agentAvatar,
@@ -31,10 +140,6 @@ const VoiceCallPanel = ({
   const [showTranscript, setShowTranscript] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval>>();
   const startTimeRef = useRef<number>(0);
-
-  // Volume animation
-  const [bars, setBars] = useState<number[]>(Array(20).fill(4));
-  const animRef = useRef<ReturnType<typeof setInterval>>();
 
   const conversation = useConversation({
     onConnect: () => {
@@ -63,28 +168,9 @@ const VoiceCallPanel = ({
     },
   });
 
-  // Animate voice bars when connected
-  useEffect(() => {
-    if (callStatus === "connected") {
-      animRef.current = setInterval(() => {
-        setBars(Array.from({ length: 20 }, () => {
-          const isSpeaking = conversation.isSpeaking;
-          const base = isSpeaking ? 20 : 8;
-          const variance = isSpeaking ? 28 : 12;
-          return Math.max(4, Math.random() * variance + base);
-        }));
-      }, 120);
-      return () => { if (animRef.current) clearInterval(animRef.current); };
-    } else {
-      setBars(Array(20).fill(4));
-    }
-  }, [callStatus, conversation.isSpeaking]);
-
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
-      if (animRef.current) clearInterval(animRef.current);
     };
   }, []);
 
@@ -144,7 +230,7 @@ const VoiceCallPanel = ({
           </div>
           <h3 className="text-sm font-semibold">ElevenLabs não configurado</h3>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Para usar o modo de voz, configure sua chave de API da ElevenLabs na aba de Integrações.
+            Para usar o modo de voz, configure sua chave de API da ElevenLabs nas Integrações.
           </p>
           <Button size="sm" onClick={onGoToIntegrations} className="gap-1.5">
             <ExternalLink className="w-3.5 h-3.5" /> Ir para Integrações
@@ -191,11 +277,7 @@ const VoiceCallPanel = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-6 relative"
-      style={{
-        background: "radial-gradient(ellipse at center, hsl(var(--primary) / 0.05) 0%, transparent 70%)",
-      }}
-    >
+    <div className="flex-1 flex flex-col items-center justify-center p-6 relative">
       {/* Status badge */}
       <Badge
         variant="outline"
@@ -212,49 +294,23 @@ const VoiceCallPanel = ({
         {callStatus === "ended" && "Encerrada"}
       </Badge>
 
-      {/* Silhouette / avatar area */}
-      <div className="relative mb-6">
-        {callStatus === "connected" && (
-          <>
-            <div className="absolute -inset-4 rounded-full bg-primary/5 animate-pulse" />
-            <div className="absolute -inset-8 rounded-full bg-primary/3 animate-ping" style={{ animationDuration: "3s" }} />
-          </>
-        )}
-        <div className={`relative w-32 h-32 rounded-full flex items-center justify-center transition-all duration-500 ${
-          callStatus === "connected"
-            ? "bg-gradient-to-br from-primary/20 to-emerald-500/10 shadow-xl shadow-primary/10"
-            : "bg-muted/30"
-        }`}>
-          <User className={`w-16 h-16 transition-colors ${
-            callStatus === "connected" ? "text-primary/40" : "text-muted-foreground/20"
-          }`} />
-        </div>
+      {/* Animated Orb */}
+      <div className="relative mb-2">
+        <VoiceOrb
+          isSpeaking={callStatus === "connected" && conversation.isSpeaking}
+          isConnected={callStatus === "connected"}
+        />
       </div>
 
       {/* Agent name */}
       <h3 className="text-sm font-semibold mb-1">{agentName}</h3>
 
       {/* Duration */}
-      <p className={`text-2xl font-mono font-light mb-4 tabular-nums ${
+      <p className={`text-2xl font-mono font-light mb-6 tabular-nums ${
         callStatus === "connected" ? "text-foreground" : "text-muted-foreground/50"
       }`}>
         {formatTime(duration)}
       </p>
-
-      {/* Voice waveform */}
-      <div className="flex items-center gap-[2px] h-12 w-full max-w-[240px] mb-8">
-        {bars.map((h, i) => (
-          <div
-            key={i}
-            className={`flex-1 rounded-full transition-all duration-100 ${
-              callStatus === "connected"
-                ? conversation.isSpeaking ? "bg-primary/50" : "bg-blue-400/40"
-                : "bg-muted-foreground/10"
-            }`}
-            style={{ height: `${h}px` }}
-          />
-        ))}
-      </div>
 
       {/* Controls */}
       <div className="flex items-center gap-4">
