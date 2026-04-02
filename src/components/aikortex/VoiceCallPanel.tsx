@@ -32,11 +32,20 @@ interface VoiceCallPanelProps {
 }
 
 /* ── Animated Orb ── */
-const VoiceOrb = ({ isSpeaking, isConnected }: { isSpeaking: boolean; isConnected: boolean }) => {
+const VoiceOrb = ({ isSpeaking, isConnected, avatarUrl }: { isSpeaking: boolean; isConnected: boolean; avatarUrl?: string }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
   const phaseRef = useRef(0);
   const intensityRef = useRef(0);
+  const imgRef = useRef<HTMLImageElement | null>(null);
+
+  useEffect(() => {
+    if (!avatarUrl) return;
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = avatarUrl;
+    img.onload = () => { imgRef.current = img; };
+  }, [avatarUrl]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -113,6 +122,19 @@ const VoiceOrb = ({ isSpeaking, isConnected }: { isSpeaking: boolean; isConnecte
       ctx.fillStyle = coreGradient;
       ctx.fill();
 
+      // Agent avatar in center
+      if (imgRef.current) {
+        const imgSize = baseRadius * 1.1;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(center, center, imgSize / 2, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        ctx.globalAlpha = 0.85 + intensity * 0.15;
+        ctx.drawImage(imgRef.current, center - imgSize / 2, center - imgSize / 2, imgSize, imgSize);
+        ctx.restore();
+      }
+
       // Orbiting particles when speaking
       if (intensity > 0.2) {
         for (let i = 0; i < 6; i++) {
@@ -134,7 +156,7 @@ const VoiceOrb = ({ isSpeaking, isConnected }: { isSpeaking: boolean; isConnecte
 
     draw();
     return () => cancelAnimationFrame(animRef.current);
-  }, [isSpeaking, isConnected]);
+  }, [isSpeaking, isConnected, avatarUrl]);
 
   return (
     <canvas
@@ -320,11 +342,9 @@ const VoiceCallPanel = ({
         <VoiceOrb
           isSpeaking={callStatus === "connected" && conversation.isSpeaking}
           isConnected={callStatus === "connected"}
+          avatarUrl={agentAvatar}
         />
       </div>
-
-      {/* Agent name */}
-      <h3 className="text-sm font-semibold mb-1">{agentName}</h3>
 
       {/* Duration */}
       <p className={`text-2xl font-mono font-light mb-6 tabular-nums ${

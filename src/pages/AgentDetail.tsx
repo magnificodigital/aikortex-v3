@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { Loader2, ArrowLeft, Sparkles, Bot, Settings, Plug, Share2, SlidersHorizontal, Rocket } from "lucide-react";
+import { Loader2, ArrowLeft, Sparkles, Bot, Settings, Plug, Share2, SlidersHorizontal, Rocket, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ConversationProvider } from "@elevenlabs/react";
@@ -697,9 +697,8 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
         {/* Top bar */}
         <div className="h-12 border-b border-border flex items-center justify-between px-4 shrink-0 bg-card/30">
           <div className="flex items-center gap-2">
-            <img src={loadedAgent.avatar} className="w-6 h-6 rounded-full object-cover" alt="" />
-            <span className="text-sm font-semibold">{loadedAgent.name}</span>
-            <span className="text-[10px] text-muted-foreground">— Agente de Voz</span>
+            <Phone className="w-4 h-4 text-primary" />
+            <span className="text-sm font-semibold">Agente de Ligação</span>
           </div>
           <div className="flex items-center gap-1">
             {[
