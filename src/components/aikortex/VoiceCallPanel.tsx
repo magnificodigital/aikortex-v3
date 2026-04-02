@@ -171,7 +171,8 @@ const VoiceOrb = ({ isSpeaking, isConnected, avatarUrl }: { isSpeaking: boolean;
 const VoiceCallPanel = ({
   agentName,
   agentAvatar,
-  elevenLabsAgentId,
+  agentPrompt,
+  agentGreeting,
   hasElevenLabsKey,
   onGoToIntegrations,
 }: VoiceCallPanelProps) => {
