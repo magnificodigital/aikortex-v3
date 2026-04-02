@@ -152,6 +152,8 @@ const AgentChatPanel = ({
   const [editingConfig, setEditingConfig] = useState(false);
   const [wizardMessages, setWizardMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const initialPromptUsedRef = useRef(false);
+  const handleDiscoverRef = useRef<(text: string) => void>(() => {});
 
   useEffect(() => {
     if (scrollRef.current) {
