@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import AgentRightPanel, { type AgentConfig } from "@/components/aikortex/AgentRightPanel";
@@ -9,6 +9,7 @@ import { useUserAgents } from "@/hooks/use-user-agents";
 import { toast } from "sonner";
 import type { AgentType } from "@/types/agent-builder";
 import { supabase } from "@/integrations/supabase/client";
+import { AGENT_PRESETS } from "@/types/agent-presets";
 import { DEFAULT_FREE_SETUP_MODEL, GATEWAY_MODELS, normalizeFreeSetupModel } from "@/lib/free-setup-models";
 
 import avatar1 from "@/assets/avatars/avatar-1.png";
