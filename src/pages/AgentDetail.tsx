@@ -658,6 +658,21 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
     }
   );
 
+  useEffect(() => {
+    if (testMessagesSnapshot?.length) {
+      testChat.setMessages(testMessagesSnapshot as any);
+      setTestMessagesSnapshot(null);
+    }
+  }, [testMessagesSnapshot, testChat.setMessages]);
+
+  useEffect(() => {
+    setSetupMessagesSnapshot(setupChat.messages);
+  }, [setupChat.messages]);
+
+  useEffect(() => {
+    setTestMessagesSnapshot(testChat.messages);
+  }, [testChat.messages]);
+
   const activeChat = chatMode === "setup" ? setupChat : testChat;
 
   /* ── Limpar localStorage ao abrir template ── */
