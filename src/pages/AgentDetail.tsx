@@ -115,7 +115,12 @@ const AgentDetail = () => {
           avatar:      data.avatar_url || AVATAR_BY_TYPE[data.agent_type] || avatar1,
           model:       data.model || "gemini-2.5-flash",
           agentType:   (data.agent_type as AgentType) || "Custom",
-          savedConfig: (typeof data.config === "object" && data.config !== null ? data.config : null) as Record<string, any> | null,
+          savedConfig: {
+            ...(typeof data.config === "object" && data.config !== null ? data.config : {}),
+            name: data.name,
+            description: data.description || "",
+            avatarUrl: data.avatar_url || AVATAR_BY_TYPE[data.agent_type] || avatar1,
+          } as Record<string, any>,
         });
       }
       setAgentLoading(false);
