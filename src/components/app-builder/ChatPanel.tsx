@@ -807,30 +807,55 @@ ${structuredConfig.constraints ? `Restrições: ${structuredConfig.constraints}`
 
       {/* Input - only active after wizard is done (patch mode) */}
       <div className="p-3 border-t border-border">
-        <div className={`rounded-xl border border-border bg-card/50 p-1 transition-colors ${wizardStep === "done" ? "focus-within:border-primary/30" : "opacity-60"}`}>
+        <div className={`rounded-xl border border-border bg-card/50 p-1 transition-colors ${(wizardStep === "done" || wizardStep === "discover") ? "focus-within:border-primary/30" : "opacity-60"}`}>
           <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
+            value={wizardStep === "discover" ? (input || wizardData.prompt) : input}
+            onChange={(e) => {
+              if (wizardStep === "discover") {
+                setInput(e.target.value);
+                setWizardData(prev => ({ ...prev, prompt: e.target.value }));
+              } else {
+                setInput(e.target.value);
+              }
+            }}
             onKeyDown={handleKeyDown}
-            placeholder={wizardStep === "done" ? "Peça alterações... (modo patch)" : "Complete as etapas acima para começar..."}
-            rows={1}
-            disabled={wizardStep !== "done"}
+            placeholder={wizardStep === "discover"
+              ? (channel === "whatsapp"
+                ? "Ex: Um bot de qualificação de leads que coleta nome, email e interesse via WhatsApp..."
+                : "Ex: Um painel de gestão com dashboard de métricas, cadastro de clientes e relatórios...")
+              : wizardStep === "done"
+                ? "Peça alterações... (modo patch)"
+                : "Complete as etapas acima para começar..."}
+            rows={2}
+            disabled={wizardStep !== "done" && wizardStep !== "discover"}
             className="w-full bg-transparent border-none outline-none resize-none text-sm text-foreground placeholder:text-muted-foreground px-3 py-2 min-h-[36px] max-h-[120px] disabled:cursor-not-allowed"
           />
           <div className="flex items-center justify-between px-2 pb-1">
             <div className="flex items-center gap-1">
-              <button className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded" disabled={wizardStep !== "done"}>
+              <button className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded" disabled={wizardStep !== "done" && wizardStep !== "discover"}>
                 <Mic className="w-3.5 h-3.5" />
               </button>
             </div>
-            <Button
-              size="icon"
-              onClick={() => sendMessage(input)}
-              disabled={!input.trim() || isLoading || wizardStep !== "done"}
-              className="h-8 w-8 rounded-full bg-primary hover:bg-primary/90"
-            >
-              <ArrowUp className="w-3.5 h-3.5" />
-            </Button>
+            {wizardStep === "discover" ? (
+              <Button
+                size="sm"
+                onClick={handleDiscover}
+                disabled={wizardData.prompt.length < 10 || structuring}
+                className="h-8 rounded-full bg-primary hover:bg-primary/90 gap-1.5 text-xs px-4"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Estruturar com IA
+              </Button>
+            ) : (
+              <Button
+                size="icon"
+                onClick={() => sendMessage(input)}
+                disabled={!input.trim() || isLoading || wizardStep !== "done"}
+                className="h-8 w-8 rounded-full bg-primary hover:bg-primary/90"
+              >
+                <ArrowUp className="w-3.5 h-3.5" />
+              </Button>
+            )}
           </div>
         </div>
       </div>
