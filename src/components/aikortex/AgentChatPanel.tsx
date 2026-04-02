@@ -138,8 +138,8 @@ const AgentChatPanel = ({
   };
 
   const canSendTest = chatMode === "test" ? hasApiKey : true;
-  const isEmpty = messages.length === 0;
-  const isDiscoverEmpty = wizardStep === "discover" && isEmpty;
+  // During discover phase, treat a single initial greeting as "empty" so the empty state shows
+  const isDiscoverEmpty = wizardStep === "discover" && messages.filter(m => m.role === "user").length === 0;
   const suggestions = AGENT_SUGGESTIONS[agentType] || AGENT_SUGGESTIONS.Custom;
 
   const typeLabel: Record<string, string> = {
