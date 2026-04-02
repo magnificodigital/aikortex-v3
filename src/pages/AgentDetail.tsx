@@ -163,18 +163,6 @@ const AgentDetail = () => {
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleConfigChange = useCallback((config: AgentConfig) => {
-    setAgentConfig(config);
-
-    // Auto-save with debounce when config panel is open
-    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-    autoSaveTimerRef.current = setTimeout(() => {
-      if (config.name?.trim()) {
-        handleSaveAgent({ ...config, model: agentModel, agentType: loadedAgent.agentType });
-      }
-    }, 1500);
-  }, [agentModel, loadedAgent.agentType]);
-
   /* ── Save agent ── */
 
   const { saveAgent } = useUserAgents();
@@ -206,7 +194,6 @@ const AgentDetail = () => {
         },
       });
       if (result) {
-        toast.success("Agente salvo!");
         if (agentId && TEMPLATE_MAP[agentId] && result.id !== agentId) {
           navigate(`/aikortex/agents/${result.id}`, { replace: true });
         }
@@ -215,6 +202,24 @@ const AgentDetail = () => {
       setIsSaving(false);
     }
   }, [agentId, saveAgent, navigate]);
+
+  const saveAgentRef = useRef(handleSaveAgent);
+  saveAgentRef.current = handleSaveAgent;
+
+  const handleConfigChange = useCallback((config: AgentConfig) => {
+    setAgentConfig(config);
+
+    // Auto-save with debounce
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
+      if (config.name?.trim()) {
+        saveAgentRef.current({ ...config, model: agentModel, agentType: loadedAgent.agentType });
+      }
+    }, 2000);
+  }, [agentModel, loadedAgent.agentType]);
+
+  // Cleanup timer on unmount
+  useEffect(() => () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); }, []);
 
   /* ── Wizard: preencher painel direito ── */
 
