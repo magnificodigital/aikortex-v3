@@ -210,6 +210,9 @@ const AgentDetail = () => {
   /* ── Agent config (from right panel) ── */
 
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null);
+  const [wizardMessages, setWizardMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>([]);
+  const [setupMessagesSnapshot, setSetupMessagesSnapshot] = useState<any[] | null>(null);
+  const [testMessagesSnapshot, setTestMessagesSnapshot] = useState<any[] | null>(null);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /* ── Save agent ── */
@@ -241,6 +244,12 @@ const AgentDetail = () => {
           urls:            config.urls,
           apiConfig:       config.apiConfig,
           voiceConfig:     config.voiceConfig,
+          wizardStep,
+          wizardMessages,
+          setupMessages: setupMessagesSnapshot || [],
+          testMessages: testMessagesSnapshot || [],
+          setupModel,
+          chatMode,
         },
       });
       if (result) {
@@ -259,7 +268,7 @@ const AgentDetail = () => {
     } finally {
       setIsSaving(false);
     }
-  }, [agentId, saveAgent, navigate]);
+  }, [agentId, saveAgent, navigate, wizardStep, wizardMessages, setupModel, chatMode, setupMessagesSnapshot, testMessagesSnapshot]);
 
   const saveAgentRef = useRef(handleSaveAgent);
   saveAgentRef.current = handleSaveAgent;
@@ -284,6 +293,17 @@ const AgentDetail = () => {
 
   // Cleanup timer on unmount
   useEffect(() => () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); }, []);
+
+  useEffect(() => {
+    const savedDraft = loadedAgent.savedConfig;
+    if (!savedDraft || typeof savedDraft !== "object") return;
+    if (Array.isArray(savedDraft.wizardMessages)) setWizardMessages(savedDraft.wizardMessages);
+    if (Array.isArray(savedDraft.setupMessages) && savedDraft.setupMessages.length > 0) setSetupMessagesSnapshot(savedDraft.setupMessages);
+    if (Array.isArray(savedDraft.testMessages) && savedDraft.testMessages.length > 0) setTestMessagesSnapshot(savedDraft.testMessages);
+    if (savedDraft.wizardStep && ["discover", "structure", "build", "done"].includes(savedDraft.wizardStep)) {
+      setWizardStep(savedDraft.wizardStep);
+    }
+  }, [loadedAgent.savedConfig]);
 
   /* ── Wizard: preencher painel direito ── */
 
@@ -580,6 +600,13 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
     }
   );
 
+  useEffect(() => {
+    if (setupMessagesSnapshot?.length) {
+      setupChat.setMessages(setupMessagesSnapshot as any);
+      setSetupMessagesSnapshot(null);
+    }
+  }, [setupMessagesSnapshot, setupChat.setMessages]);
+
   /* ── Chat (test mode) ── */
 
   const testSystemPrompt = useMemo(() => {
@@ -630,6 +657,21 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
       agentContext: testAgentContext,
     }
   );
+
+  useEffect(() => {
+    if (testMessagesSnapshot?.length) {
+      testChat.setMessages(testMessagesSnapshot as any);
+      setTestMessagesSnapshot(null);
+    }
+  }, [testMessagesSnapshot, testChat.setMessages]);
+
+  useEffect(() => {
+    setSetupMessagesSnapshot(setupChat.messages);
+  }, [setupChat.messages]);
+
+  useEffect(() => {
+    setTestMessagesSnapshot(testChat.messages);
+  }, [testChat.messages]);
 
   const activeChat = chatMode === "setup" ? setupChat : testChat;
 
@@ -696,6 +738,8 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
         isBuilding={isBuilding}
         onOpenConfig={() => setShowConfig(true)}
         initialPrompt={isNewCustomFromHome ? navState?.initialPrompt : undefined}
+        initialWizardMessages={wizardMessages}
+        onWizardMessagesChange={setWizardMessages}
       />
 
       {/* ── RIGHT: Voice Agent ── */}

@@ -60,6 +60,8 @@ interface AgentChatPanelProps {
   isBuilding: boolean;
   onOpenConfig?: () => void;
   initialPrompt?: string;
+  initialWizardMessages?: Array<{ role: "user" | "assistant"; content: string }>;
+  onWizardMessagesChange?: (messages: Array<{ role: "user" | "assistant"; content: string }>) => void;
 }
 
 const AGENT_SUGGESTIONS: Record<string, string[]> = {
@@ -147,13 +149,15 @@ const AgentChatPanel = ({
   isBuilding,
   onOpenConfig,
   initialPrompt,
+  initialWizardMessages,
+  onWizardMessagesChange,
 }: AgentChatPanelProps) => {
   const [input, setInput] = useState("");
   const [editingConfig, setEditingConfig] = useState(false);
-  const [wizardMessages, setWizardMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>([]);
+  const [wizardMessages, setWizardMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>(() => initialWizardMessages || []);
   const scrollRef = useRef<HTMLDivElement>(null);
   const initialPromptUsedRef = useRef(false);
-  const handleDiscoverRef = useRef<(text: string) => void>(() => {});
+  const handleDiscoverRef = useRef<(text: string) => Promise<void>>(async () => {});
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -202,11 +206,21 @@ const AgentChatPanel = ({
   // Keep ref in sync for auto-trigger
   handleDiscoverRef.current = handleDiscover;
 
+  useEffect(() => {
+    if (wizardMessages.length === 0 && initialWizardMessages?.length) {
+      setWizardMessages(initialWizardMessages);
+    }
+  }, [initialWizardMessages, wizardMessages.length]);
+
+  useEffect(() => {
+    onWizardMessagesChange?.(wizardMessages);
+  }, [wizardMessages, onWizardMessagesChange]);
+
   // Auto-trigger discover when initialPrompt is provided (custom agent from Home)
   useEffect(() => {
     if (initialPrompt && wizardStep === "discover" && !initialPromptUsedRef.current && !isStructuring) {
       initialPromptUsedRef.current = true;
-      handleDiscoverRef.current(initialPrompt);
+      void handleDiscoverRef.current(initialPrompt);
     }
   }, [initialPrompt, wizardStep, isStructuring]);
 
