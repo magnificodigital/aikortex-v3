@@ -308,18 +308,18 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
 
   const activeChat = chatMode === "setup" ? setupChat : testChat;
 
-  /* ── Limpar localStorage ao abrir template ── */
+  /* ── Limpar localStorage ao abrir template (sempre começa limpo) ── */
 
   useEffect(() => {
-    if (!navState?.fromTemplate || !agentId) return;
+    if (!isTemplate || !agentId) return;
     const prefix = `agent-detail-${agentId}`;
     try {
       ["name","desc","objective","instructions","toneOfVoice","greetingMessage",
-       "files","urls","channels","apiConfig","avatar","setup-messages","test-messages","chatMode"].forEach(k =>
+       "files","urls","channels","apiConfig","avatar","setup-messages","test-messages","chatMode","model","setupModel"].forEach(k =>
         localStorage.removeItem(`${prefix}-${k}`)
       );
     } catch {}
-  }, [navState?.fromTemplate, agentId]);
+  }, [isTemplate, agentId]);
 
   /* ── Auto-send template prompt ── */
 
