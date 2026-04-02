@@ -657,6 +657,11 @@ const AgentRightPanel = ({
           </div>
         </TabsContent>
 
+        {/* ── Aba Voz ── */}
+        <TabsContent value="voice" className="flex-1 mt-0 min-h-0 overflow-hidden">
+          <VoiceConfigPanel config={voiceConfig} onChange={setVoiceConfig} />
+        </TabsContent>
+
         {/* ── Aba Integrações ── */}
         <TabsContent value="connectors" className="flex-1 mt-0 min-h-0 overflow-hidden">
           <ScrollArea className="h-full">
