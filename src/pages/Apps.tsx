@@ -7,6 +7,7 @@ import {
   GraduationCap, Dumbbell, Briefcase, BookOpen, Hotel, ShoppingBag, Globe,
   Plus, Trash2, Pencil, Clock, MoreVertical,
 } from "lucide-react";
+import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
