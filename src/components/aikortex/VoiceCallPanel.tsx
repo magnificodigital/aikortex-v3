@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useConversation } from "@elevenlabs/react";
 import {
-  Phone, PhoneOff, Mic, MicOff, FileText, AlertTriangle, ExternalLink,
+  Phone, PhoneOff, Mic, MicOff, FileText, AlertTriangle, ExternalLink, Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const VOICES = [
   { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah" },
@@ -26,7 +27,8 @@ type CallStatus = "idle" | "connecting" | "connected" | "ended";
 interface VoiceCallPanelProps {
   agentName: string;
   agentAvatar: string;
-  elevenLabsAgentId?: string;
+  agentPrompt?: string;
+  agentGreeting?: string;
   hasElevenLabsKey: boolean;
   onGoToIntegrations: () => void;
 }
@@ -169,7 +171,8 @@ const VoiceOrb = ({ isSpeaking, isConnected, avatarUrl }: { isSpeaking: boolean;
 const VoiceCallPanel = ({
   agentName,
   agentAvatar,
-  elevenLabsAgentId,
+  agentPrompt,
+  agentGreeting,
   hasElevenLabsKey,
   onGoToIntegrations,
 }: VoiceCallPanelProps) => {
@@ -223,29 +226,47 @@ const VoiceCallPanel = ({
   };
 
   const handleStart = useCallback(async () => {
-    const agentId = elevenLabsAgentId || import.meta.env.VITE_ELEVENLABS_AGENT_ID;
-    if (!agentId) {
-      toast.error("Agent ID da ElevenLabs não configurado.");
-      return;
-    }
-
     setCallStatus("connecting");
     setTranscript([]);
     setDuration(0);
 
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
-      await conversation.startSession({ agentId });
+
+      // Call edge function to auto-create agent and get signed URL
+      const { data: sessionData, error: fnError } = await supabase.functions.invoke(
+        "elevenlabs-voice-session",
+        {
+          body: {
+            agentName,
+            agentPrompt,
+            voiceId: selectedVoice,
+            firstMessage: agentGreeting,
+            language: "pt",
+          },
+        }
+      );
+
+      if (fnError || !sessionData?.signed_url) {
+        const msg = sessionData?.error || fnError?.message || "Erro ao criar sessão de voz";
+        toast.error(msg);
+        setCallStatus("idle");
+        return;
+      }
+
+      await conversation.startSession({
+        signedUrl: sessionData.signed_url,
+      });
     } catch (err: any) {
       console.error("Failed to start voice:", err);
       if (err?.name === "NotAllowedError") {
         toast.error("Permissão de microfone necessária para usar voz.");
       } else {
-        toast.error("Erro ao iniciar ligação.");
+        toast.error(err?.message || "Erro ao iniciar ligação.");
       }
       setCallStatus("idle");
     }
-  }, [conversation, elevenLabsAgentId]);
+  }, [conversation, agentName, agentPrompt, agentGreeting, selectedVoice]);
 
   const handleEnd = useCallback(async () => {
     try {
@@ -263,7 +284,7 @@ const VoiceCallPanel = ({
   };
 
   // No ElevenLabs key warning
-  if (!hasElevenLabsKey && !import.meta.env.VITE_ELEVENLABS_AGENT_ID) {
+  if (!hasElevenLabsKey) {
     return (
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="text-center max-w-[300px] space-y-4">
