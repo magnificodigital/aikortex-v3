@@ -213,13 +213,14 @@ const AgentDetail = () => {
 
   const handleAgentCreated = useCallback(async (config: StructuredAgentConfig) => {
     setIsSaving(true);
+    const resolvedType = loadedAgent.agentType || "Custom";
     try {
       const result = await saveAgent({
         id:          agentId && !TEMPLATE_MAP[agentId] ? agentId : undefined,
         name:        config.agent_name,
-        agent_type:  config.agent_type,
+        agent_type:  resolvedType,
         description: config.description,
-        avatar_url:  AVATAR_BY_TYPE[config.agent_type] || avatar1,
+        avatar_url:  AVATAR_BY_TYPE[resolvedType] || avatar1,
         model:       agentModel,
         status:      "configuring",
         config: {
