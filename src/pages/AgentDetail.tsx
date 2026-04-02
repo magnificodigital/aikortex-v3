@@ -91,6 +91,7 @@ const AgentDetail = () => {
   const navState    = location.state as any;
 
   const isTemplate    = !!agentId && !!TEMPLATE_MAP[agentId];
+  const isNewCustomFromHome = navState?.fromTemplate === false && !!navState?.initialPrompt;
   const templateAgent = isTemplate ? TEMPLATE_MAP[agentId!] : null;
   const initialType: AgentType = (navState?.agentType as AgentType) || templateAgent?.agentType || "Custom";
 
@@ -105,7 +106,7 @@ const AgentDetail = () => {
   const [agentLoading, setAgentLoading] = useState(!isTemplate);
 
   useEffect(() => {
-    if (isTemplate || !agentId) { setAgentLoading(false); return; }
+    if (isTemplate || !agentId || agentId === "new" || agentId.startsWith("new-")) { setAgentLoading(false); return; }
     const load = async () => {
       setAgentLoading(true);
       const { data } = await supabase.from("user_agents").select("*").eq("id", agentId).single();
@@ -132,9 +133,13 @@ const AgentDetail = () => {
 
   const hasAutoPrompt = isTemplate && !!templateAgent?.autoPrompt;
   // Templates skip wizard entirely — start at "done" and auto-save in background
-  const [wizardStep, setWizardStep] = useState<"discover" | "structure" | "build" | "done">(
-    isTemplate && hasAutoPrompt ? "done" : (isTemplate ? "discover" : "done")
-  );
+  const [wizardStep, setWizardStep] = useState<"discover" | "structure" | "build" | "done">(() => {
+    if (isTemplate && hasAutoPrompt) return "done";
+    if (isTemplate) return "discover";
+    if (isNewCustomFromHome) return "discover";
+    // Existing saved agent
+    return "done";
+  });
   const [structuredConfig, setStructuredConfig] = useState<StructuredAgentConfig | null>(null);
   const [isStructuring, setIsStructuring] = useState(false);
   const [isBuilding, setIsBuilding] = useState(false);
@@ -217,7 +222,7 @@ const AgentDetail = () => {
     setIsSaving(true);
     try {
       const result = await saveAgent({
-        id:          agentId && !TEMPLATE_MAP[agentId] ? agentId : undefined,
+        id:          agentId && !TEMPLATE_MAP[agentId] && agentId !== "new" && !agentId.startsWith("new-") ? agentId : undefined,
         name:        config.name,
         agent_type:  config.agentType,
         description: config.description,
@@ -340,7 +345,7 @@ const AgentDetail = () => {
     const resolvedType = loadedAgent.agentType || "Custom";
     try {
       const result = await saveAgent({
-        id:          agentId && !TEMPLATE_MAP[agentId] ? agentId : undefined,
+        id:          agentId && !TEMPLATE_MAP[agentId] && agentId !== "new" && !agentId.startsWith("new-") ? agentId : undefined,
         name:        config.agent_name,
         agent_type:  resolvedType,
         description: config.description,
@@ -690,6 +695,7 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
         isStructuring={isStructuring}
         isBuilding={isBuilding}
         onOpenConfig={() => setShowConfig(true)}
+        initialPrompt={isNewCustomFromHome ? navState?.initialPrompt : undefined}
       />
 
       {/* ── RIGHT: Voice Agent ── */}

@@ -59,6 +59,7 @@ interface AgentChatPanelProps {
   isStructuring: boolean;
   isBuilding: boolean;
   onOpenConfig?: () => void;
+  initialPrompt?: string;
 }
 
 const AGENT_SUGGESTIONS: Record<string, string[]> = {
@@ -145,11 +146,14 @@ const AgentChatPanel = ({
   isStructuring,
   isBuilding,
   onOpenConfig,
+  initialPrompt,
 }: AgentChatPanelProps) => {
   const [input, setInput] = useState("");
   const [editingConfig, setEditingConfig] = useState(false);
   const [wizardMessages, setWizardMessages] = useState<Array<{ role: "user" | "assistant"; content: string }>>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const initialPromptUsedRef = useRef(false);
+  const handleDiscoverRef = useRef<(text: string) => void>(() => {});
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -194,6 +198,17 @@ const AgentChatPanel = ({
       setWizardMessages(prev => prev.filter(m => m.content !== "🧠 Analisando sua ideia e estruturando o agente..."));
     }
   }, [onStructureRequest, setStructuredConfig, onConfigStructured, setWizardStep]);
+
+  // Keep ref in sync for auto-trigger
+  handleDiscoverRef.current = handleDiscover;
+
+  // Auto-trigger discover when initialPrompt is provided (custom agent from Home)
+  useEffect(() => {
+    if (initialPrompt && wizardStep === "discover" && !initialPromptUsedRef.current && !isStructuring) {
+      initialPromptUsedRef.current = true;
+      handleDiscoverRef.current(initialPrompt);
+    }
+  }, [initialPrompt, wizardStep, isStructuring]);
 
   /* ── Re-structure ── */
   const handleRestructure = useCallback(() => {
