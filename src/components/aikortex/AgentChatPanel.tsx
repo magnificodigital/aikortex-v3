@@ -206,11 +206,21 @@ const AgentChatPanel = ({
   // Keep ref in sync for auto-trigger
   handleDiscoverRef.current = handleDiscover;
 
+  useEffect(() => {
+    if (wizardMessages.length === 0 && initialWizardMessages?.length) {
+      setWizardMessages(initialWizardMessages);
+    }
+  }, [initialWizardMessages, wizardMessages.length]);
+
+  useEffect(() => {
+    onWizardMessagesChange?.(wizardMessages);
+  }, [wizardMessages, onWizardMessagesChange]);
+
   // Auto-trigger discover when initialPrompt is provided (custom agent from Home)
   useEffect(() => {
     if (initialPrompt && wizardStep === "discover" && !initialPromptUsedRef.current && !isStructuring) {
       initialPromptUsedRef.current = true;
-      handleDiscoverRef.current(initialPrompt);
+      void handleDiscoverRef.current(initialPrompt);
     }
   }, [initialPrompt, wizardStep, isStructuring]);
 
