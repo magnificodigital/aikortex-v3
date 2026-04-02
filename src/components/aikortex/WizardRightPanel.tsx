@@ -401,7 +401,7 @@ const WizardRightPanel = ({
           </TabsList>
         </div>
 
-        {/* Integrações — com sub-seções MCP, API, Webhook */}
+        {/* Integrações — usando componente compartilhado */}
         <TabsContent value="connectors" className="flex-1 mt-0 overflow-hidden">
           <ScrollArea className="h-full">
             <div className="p-6 space-y-6">
@@ -411,6 +411,18 @@ const WizardRightPanel = ({
                   Conecte integrações para expandir as capacidades do seu agente.
                 </p>
               </div>
+
+              <IntegrationsGrid
+                providers={LLM_PROVIDERS}
+                title="Modelos de IA (LLMs)"
+                subtitle="Conecte suas chaves de API para utilizar modelos de IA."
+              />
+
+              <IntegrationsGrid
+                providers={SERVICE_PROVIDERS}
+                title="Serviços & Ferramentas"
+                subtitle="Conecte serviços externos para expandir as capacidades."
+              />
 
               {/* MCPs */}
               <div className="space-y-2">
@@ -422,55 +434,6 @@ const WizardRightPanel = ({
                 <Button variant="outline" size="sm" className="text-xs gap-1.5">
                   <Plus className="w-3 h-3" /> Adicionar MCP
                 </Button>
-              </div>
-
-              {/* APIs */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <KeyRound className="w-4 h-4 text-primary" />
-                  <h3 className="text-sm font-semibold text-foreground">APIs</h3>
-                </div>
-                <p className="text-xs text-muted-foreground">Conecte APIs externas via chave de acesso.</p>
-                <div className="space-y-1">
-                  {INTEGRATIONS.map((c) => {
-                    const isConnected = connectorKeys[c.label]?.configured;
-                    return (
-                      <div key={c.label} className="flex items-center justify-between py-3 px-3 rounded-lg hover:bg-muted/50 transition-colors">
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={c.logo}
-                            alt={c.label}
-                            className="w-7 h-7 rounded object-contain shrink-0"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                          />
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-medium text-foreground">{c.label}</p>
-                              {isConnected && (
-                                <span className="flex items-center gap-1 text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
-                                  <Check className="w-2.5 h-2.5" /> Conectado
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-xs text-muted-foreground">{c.desc}</p>
-                          </div>
-                        </div>
-                        <Button
-                          variant={isConnected ? "outline" : "ghost"}
-                          size="sm"
-                          className={`text-xs gap-1 ${isConnected ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                          onClick={() => handleConnectIntegration(c)}
-                        >
-                          {isConnected ? (
-                            <><Settings className="w-3 h-3" /> Gerenciar</>
-                          ) : (
-                            "+ Conectar"
-                          )}
-                        </Button>
-                      </div>
-                    );
-                  })}
-                </div>
               </div>
 
               {/* Webhooks */}
