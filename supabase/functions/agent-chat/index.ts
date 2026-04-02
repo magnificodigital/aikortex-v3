@@ -201,7 +201,7 @@ serve(async (req) => {
     const modelMapping = MODEL_MAP[model] || null;
 
     let apiUrl: string;
-    let apiKey = "";
+    let apiKey: string | null = "";
     let apiModel = modelMapping?.gateway || model || "google/gemini-3-flash-preview";
     let headers: Record<string, string>;
     let openRouterKeyCandidates: Array<string | null> = [];
