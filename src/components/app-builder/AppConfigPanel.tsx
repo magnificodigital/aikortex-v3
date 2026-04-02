@@ -8,6 +8,7 @@ import {
   Search, Plus, Trash2, GripVertical, Sparkles, Globe2, FileUp,
   ToggleLeft, Cpu, Layers, X,
 } from "lucide-react";
+import { IntegrationsGrid, LLM_PROVIDERS, SERVICE_PROVIDERS } from "@/components/shared/IntegrationsGrid";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -212,99 +213,19 @@ const OverviewTab = ({ channel }: { channel: AppChannel }) => {
 
 /* ──── Tab: Intelligence (LLM) ──── */
 const IntelligenceTab = () => {
-  const [selectedProvider, setSelectedProvider] = useState("aikortex");
-  const [selectedModel, setSelectedModel] = useState("gemini-2.5-flash");
-  const [temperature, setTemperature] = useState(0.7);
-
-  const providers = [
-    { id: "aikortex", name: "Aikortex AI", desc: "Modelos integrados, sem API key", models: ["gemini-2.5-flash", "gemini-2.5-pro", "gpt-5-mini", "gpt-5"] },
-    { id: "openai", name: "OpenAI", desc: "Requer chave de API", models: ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"] },
-    { id: "anthropic", name: "Anthropic", desc: "Requer chave de API", models: ["claude-sonnet-4", "claude-3.5-haiku"] },
-    { id: "google", name: "Google AI", desc: "Requer chave de API", models: ["gemini-2.5-pro", "gemini-2.5-flash"] },
-  ];
-
-  const current = providers.find(p => p.id === selectedProvider);
-
   return (
     <div className="space-y-5">
-      <Section title="Provedor de IA" icon={Cpu} badge="LLM">
-        <div className="space-y-1.5">
-          {providers.map((p) => (
-            <button
-              key={p.id}
-              onClick={() => { setSelectedProvider(p.id); setSelectedModel(p.models[0]); }}
-              className={`w-full flex items-center gap-2.5 p-2.5 rounded-lg border transition-all text-left ${
-                selectedProvider === p.id
-                  ? "bg-primary/10 border-primary/30 shadow-sm"
-                  : "bg-card/50 border-border hover:border-border/80"
-              }`}
-            >
-              <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold ${
-                selectedProvider === p.id ? "bg-primary/20 text-primary" : "bg-muted/50 text-muted-foreground"
-              }`}>
-                {p.id === "aikortex" ? <Sparkles className="w-3.5 h-3.5" /> : <Key className="w-3.5 h-3.5" />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-foreground">{p.name}</p>
-                <p className="text-[10px] text-muted-foreground">{p.desc}</p>
-              </div>
-              {selectedProvider === p.id && <Check className="w-3.5 h-3.5 text-primary shrink-0" />}
-            </button>
-          ))}
-        </div>
-      </Section>
+      <IntegrationsGrid
+        providers={LLM_PROVIDERS}
+        title="Modelos de IA (LLMs)"
+        subtitle="Conecte provedores de IA para potencializar seu app."
+      />
 
-      {selectedProvider !== "aikortex" && (
-        <Section title="Chave de API" icon={Key}>
-          <Input type="password" placeholder={`Sua ${current?.name} API Key`} className="h-8 text-xs bg-card/50" />
-          <p className="text-[10px] text-muted-foreground mt-1.5">Armazenada de forma criptografada.</p>
-        </Section>
-      )}
-
-      <Section title="Modelo" icon={Brain}>
-        <div className="space-y-1.5">
-          {current?.models.map((m) => (
-            <button
-              key={m}
-              onClick={() => setSelectedModel(m)}
-              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs transition-all ${
-                selectedModel === m
-                  ? "bg-primary/10 text-primary font-medium border border-primary/20"
-                  : "text-foreground hover:bg-muted/30 border border-transparent"
-              }`}
-            >
-              <div className={`w-1.5 h-1.5 rounded-full ${selectedModel === m ? "bg-primary" : "bg-muted-foreground/30"}`} />
-              <span className="font-mono text-[11px]">{m}</span>
-            </button>
-          ))}
-        </div>
-      </Section>
-
-      <Section title="Parâmetros" icon={Settings}>
-        <div className="space-y-3">
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-[11px] font-medium text-muted-foreground">Temperatura</label>
-              <span className="text-[11px] font-mono text-primary">{temperature}</span>
-            </div>
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.1}
-              value={temperature}
-              onChange={(e) => setTemperature(parseFloat(e.target.value))}
-              className="w-full h-1.5 rounded-full appearance-none bg-muted/50 accent-primary cursor-pointer"
-            />
-            <div className="flex justify-between mt-1">
-              <span className="text-[9px] text-muted-foreground">Preciso</span>
-              <span className="text-[9px] text-muted-foreground">Criativo</span>
-            </div>
-          </div>
-          <ToggleRow label="Memória de conversa" desc="Manter contexto entre mensagens" defaultOn />
-          <ToggleRow label="Streaming" desc="Respostas em tempo real" defaultOn />
-        </div>
-      </Section>
+      <IntegrationsGrid
+        providers={SERVICE_PROVIDERS}
+        title="Serviços & Ferramentas"
+        subtitle="Conecte ferramentas externas para expandir as capacidades."
+      />
     </div>
   );
 };
