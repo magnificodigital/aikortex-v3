@@ -27,7 +27,8 @@ type CallStatus = "idle" | "connecting" | "connected" | "ended";
 interface VoiceCallPanelProps {
   agentName: string;
   agentAvatar: string;
-  elevenLabsAgentId?: string;
+  agentPrompt?: string;
+  agentGreeting?: string;
   hasElevenLabsKey: boolean;
   onGoToIntegrations: () => void;
 }
