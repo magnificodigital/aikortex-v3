@@ -252,7 +252,7 @@ const Home = () => {
                         : "border-border text-muted-foreground hover:text-foreground hover:bg-accent/50"
                     }`}
                   >
-                    <Phone className="w-3.5 h-3.5" />
+                    <WhatsAppIcon className="w-3.5 h-3.5" />
                     WhatsApp
                   </button>
                 </>
