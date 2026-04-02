@@ -513,26 +513,51 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
   /* ── Chat (test mode) ── */
 
   const testSystemPrompt = useMemo(() => {
-    if (!agentConfig) return undefined;
+    const name = agentConfig?.name || loadedAgent.name;
     const parts = [
-      `Você é o agente "${agentConfig.name}".`,
-      agentConfig.description    ? `\nDescrição: ${agentConfig.description}` : "",
-      agentConfig.objective      ? `\nObjetivo: ${agentConfig.objective}` : "",
-      agentConfig.instructions   ? `\nInstruções: ${agentConfig.instructions}` : "",
-      agentConfig.toneOfVoice    ? `\nTom de voz: ${agentConfig.toneOfVoice}` : "",
-      agentConfig.greetingMessage ? `\nMensagem de saudação: ${agentConfig.greetingMessage}` : "",
-      "\nResponda sempre em português brasileiro. Seja coerente com a configuração acima.",
+      `Você é o agente "${name}". Você deve agir EXATAMENTE como este agente em todas as interações.`,
+      `\nTipo de agente: ${loadedAgent.agentType}`,
+      agentConfig?.description    ? `\nDescrição: ${agentConfig.description}` : "",
+      agentConfig?.objective      ? `\nObjetivo: ${agentConfig.objective}` : "",
+      agentConfig?.instructions   ? `\nInstruções que você DEVE seguir:\n${agentConfig.instructions}` : "",
+      agentConfig?.toneOfVoice    ? `\nTom de voz obrigatório: ${agentConfig.toneOfVoice}` : "",
+      agentConfig?.greetingMessage ? `\nSua mensagem de saudação padrão: ${agentConfig.greetingMessage}` : "",
+      agentConfig?.channels?.length ? `\nCanais ativos: ${agentConfig.channels.join(", ")}` : "",
+      "\n\n## Regras obrigatórias:",
+      "- Responda SEMPRE em português brasileiro.",
+      "- NUNCA saia do personagem. Você É este agente, não um assistente genérico.",
+      "- Mantenha o tom de voz configurado em TODAS as respostas.",
+      "- Se não souber algo específico do negócio, diga educadamente que pode encaminhar.",
+      "- Seja conciso e direto (máximo 3 parágrafos por resposta).",
     ];
-    return parts.join("");
-  }, [agentConfig]);
+    return parts.filter(Boolean).join("");
+  }, [agentConfig, loadedAgent.name, loadedAgent.agentType]);
+
+  const testAgentContext = useMemo(() => {
+    if (!agentConfig) return undefined;
+    return {
+      name: agentConfig.name || loadedAgent.name,
+      role: loadedAgent.agentType,
+      description: agentConfig.description,
+      objective: agentConfig.objective,
+      instructions: agentConfig.instructions,
+      toneOfVoice: agentConfig.toneOfVoice,
+      greetingMessage: agentConfig.greetingMessage,
+      channels: agentConfig.channels,
+      integrations: agentConfig.integrations,
+      knowledgeFiles: agentConfig.knowledgeFiles,
+      urls: agentConfig.urls,
+    };
+  }, [agentConfig, loadedAgent.name, loadedAgent.agentType]);
 
   const testChat = useAgentChat(
-    [{ role: "agent", text: `🧪 Modo de Teste ativado! Respondendo como **${loadedAgent.name}**. Envie uma mensagem.` }],
+    [{ role: "agent", text: agentConfig?.greetingMessage || `🧪 Modo de Teste ativado! Respondendo como **${loadedAgent.name}**. Envie uma mensagem.` }],
     {
       provider:     currentProvider,
       model:        agentModel,
       systemPrompt: testSystemPrompt,
       persistKey:   `${storagePrefix}-test-messages`,
+      agentContext: testAgentContext,
     }
   );
 
