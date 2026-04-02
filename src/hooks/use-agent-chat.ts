@@ -1,7 +1,8 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/app-chat`;
+const STREAM_UPDATE_INTERVAL_MS = 48;
 
 export interface ChatMessage {
   role: "user" | "agent" | "assistant";
@@ -47,17 +48,11 @@ export interface AgentChatContext {
 interface UseAgentChatOptions {
   provider?: string;
   model?: string;
-  /** When true, uses OpenRouter free model instead of requiring a user API key */
   useGateway?: boolean;
-  /** Specific free model to use when useGateway is true */
   gatewayModel?: string;
-  /** System prompt override */
   systemPrompt?: string;
-  /** localStorage key to persist messages across reloads */
   persistKey?: string;
-  /** Advanced API configuration */
   apiConfig?: ApiConfigParams;
-  /** Agent runtime context mirrored on backend during test mode */
   agentContext?: AgentChatContext;
 }
 
@@ -79,25 +74,70 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed) && parsed.length > 0) return parsed;
         }
-      } catch { /* ignore */ }
+      } catch {
+        // ignore
+      }
     }
     return initialMessages;
   });
   const [isStreaming, setIsStreaming] = useState(false);
 
-  // Persist messages to localStorage on change
+  const messagesRef = useRef(messages);
+  const pendingAssistantTextRef = useRef("");
+  const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
   useEffect(() => {
     if (options.persistKey && messages.length > 0) {
       localStorage.setItem(options.persistKey, JSON.stringify(messages));
     }
   }, [messages, options.persistKey]);
 
+  const flushAssistantMessage = useCallback((force = false) => {
+    const commit = () => {
+      flushTimerRef.current = null;
+      const finalText = pendingAssistantTextRef.current;
+      setMessages((prev) => {
+        if (!prev.length) return prev;
+        const lastMessage = prev[prev.length - 1];
+        if (lastMessage?.role !== "agent") return prev;
+        if (lastMessage.text === finalText) return prev;
+
+        const next = [...prev];
+        next[next.length - 1] = { role: "agent", text: finalText };
+        return next;
+      });
+    };
+
+    if (force) {
+      if (flushTimerRef.current) {
+        clearTimeout(flushTimerRef.current);
+      }
+      commit();
+      return;
+    }
+
+    if (flushTimerRef.current) return;
+    flushTimerRef.current = setTimeout(commit, STREAM_UPDATE_INTERVAL_MS);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (flushTimerRef.current) {
+        clearTimeout(flushTimerRef.current);
+      }
+    };
+  }, []);
+
   const sendMessage = useCallback(async (userText: string) => {
     if (!userText.trim() || isStreaming) return;
 
     const inferredProvider = deriveProvider(options.model);
     if (options.provider && inferredProvider && options.provider !== inferredProvider) {
-      setMessages(prev => [
+      setMessages((prev) => [
         ...prev,
         {
           role: "agent",
@@ -108,23 +148,24 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
     }
 
     const userMsg: ChatMessage = { role: "user", text: userText };
-    setMessages(prev => [...prev, userMsg]);
+    const nextMessages = [...messagesRef.current, userMsg];
+    messagesRef.current = nextMessages;
+    setMessages(nextMessages);
     setIsStreaming(true);
 
-    // Build messages array for API (convert our format to OpenAI format)
-    const apiMessages: Array<{role: string; content: string}> = [...messages, userMsg].map(m => ({
+    const apiMessages: Array<{ role: string; content: string }> = nextMessages.map((m) => ({
       role: m.role === "agent" ? "assistant" : m.role,
       content: m.text,
     }));
 
-    // Add system prompt if provided
     if (options.systemPrompt) {
       apiMessages.unshift({ role: "system", content: options.systemPrompt });
     }
 
     try {
-      // Get user session token for auth
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       const accessToken = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
       let resp: Response | null = null;
@@ -139,7 +180,6 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
         if (options.useGateway) {
           payload.model = options.gatewayModel || "google/gemini-2.5-flash";
         } else {
-          // Use user's own API key via agent-chat edge function
           payload.provider = options.provider || inferredProvider;
           payload.model = options.model;
           payload.agentContext = options.agentContext;
@@ -167,20 +207,21 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
         await new Promise((r) => setTimeout(r, waitMs));
       }
 
-      if (!resp!.ok) {
-        const err = await resp!.json().catch(() => ({ error: "Erro desconhecido" }));
-        throw new Error(err.error || `Erro ${resp!.status}`);
+      if (!resp?.ok) {
+        const err = await resp?.json().catch(() => ({ error: "Erro desconhecido" }));
+        throw new Error(err?.error || `Erro ${resp?.status}`);
       }
 
-      if (!resp!.body) throw new Error("Sem resposta do servidor");
+      if (!resp.body) throw new Error("Sem resposta do servidor");
 
-      const reader = resp!.body!.getReader();
+      const withPlaceholder = [...messagesRef.current, { role: "agent", text: "" } as ChatMessage];
+      messagesRef.current = withPlaceholder;
+      setMessages(withPlaceholder);
+      pendingAssistantTextRef.current = "";
+
+      const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
-      let assistantText = "";
-
-      // Add empty agent message
-      setMessages(prev => [...prev, { role: "agent", text: "" }]);
 
       while (true) {
         const { done, value } = await reader.read();
@@ -195,35 +236,40 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
           if (!line.startsWith("data: ")) continue;
 
           const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") break;
+          if (jsonStr === "[DONE]") {
+            flushAssistantMessage(true);
+            continue;
+          }
 
           try {
             const parsed = JSON.parse(jsonStr);
             const content = parsed.choices?.[0]?.delta?.content;
             if (content) {
-              assistantText += content;
-              const finalText = assistantText;
-              setMessages(prev => {
-                const arr = [...prev];
-                arr[arr.length - 1] = { role: "agent", text: finalText };
-                return arr;
-              });
+              pendingAssistantTextRef.current += content;
+              flushAssistantMessage();
             }
           } catch {
             // partial JSON, skip
           }
         }
       }
+
+      flushAssistantMessage(true);
     } catch (e: any) {
       console.error("Agent chat error:", e);
-      setMessages(prev => [
+      setMessages((prev) => [
         ...prev,
         { role: "agent", text: `⚠️ ${e.message || "Erro ao conectar com a IA."}` },
       ]);
     } finally {
+      if (flushTimerRef.current) {
+        clearTimeout(flushTimerRef.current);
+        flushTimerRef.current = null;
+      }
       setIsStreaming(false);
     }
-  }, [messages, isStreaming, options.provider, options.model, options.useGateway, options.gatewayModel, options.systemPrompt, options.apiConfig, options.agentContext]);
+  }, [isStreaming, options.provider, options.model, options.useGateway, options.gatewayModel, options.systemPrompt, options.apiConfig, options.agentContext, flushAssistantMessage]);
 
   return { messages, setMessages, sendMessage, isStreaming };
 }
+
