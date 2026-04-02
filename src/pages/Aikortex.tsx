@@ -3,11 +3,10 @@ import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import {
-  Plus, Bot, Trash2, Pencil, Clock, MoreVertical,
-  ArrowRight, Settings2, Sparkles, Target, Headphones, Share2,
+  Plus, Bot, Trash2, Clock, MoreVertical,
+  ArrowRight, Settings2, Sparkles, Target, Headphones,
 } from "lucide-react";
 import { useUserAgents, type UserAgent } from "@/hooks/use-user-agents";
-import { AGENT_PRESETS } from "@/types/agent-presets";
 import { toast } from "sonner";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
