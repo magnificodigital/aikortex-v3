@@ -603,11 +603,11 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
   );
 
   useEffect(() => {
-    if (setupMessagesSnapshot?.length) {
-      setupChat.setMessages(setupMessagesSnapshot as any);
-      setSetupMessagesSnapshot(null);
+    if (pendingSetupRestore?.length) {
+      setupChat.setMessages(pendingSetupRestore as any);
+      setPendingSetupRestore(null);
     }
-  }, [setupMessagesSnapshot, setupChat.setMessages]);
+  }, [pendingSetupRestore, setupChat.setMessages]);
 
   /* ── Chat (test mode) ── */
 
@@ -661,18 +661,19 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
   );
 
   useEffect(() => {
-    if (testMessagesSnapshot?.length) {
-      testChat.setMessages(testMessagesSnapshot as any);
-      setTestMessagesSnapshot(null);
+    if (pendingTestRestore?.length) {
+      testChat.setMessages(pendingTestRestore as any);
+      setPendingTestRestore(null);
     }
-  }, [testMessagesSnapshot, testChat.setMessages]);
+  }, [pendingTestRestore, testChat.setMessages]);
 
+  // Sync message refs for auto-save (no re-renders)
   useEffect(() => {
-    setSetupMessagesSnapshot(setupChat.messages);
+    setupMessagesRef.current = setupChat.messages;
   }, [setupChat.messages]);
 
   useEffect(() => {
-    setTestMessagesSnapshot(testChat.messages);
+    testMessagesRef.current = testChat.messages;
   }, [testChat.messages]);
 
   const activeChat = chatMode === "setup" ? setupChat : testChat;
