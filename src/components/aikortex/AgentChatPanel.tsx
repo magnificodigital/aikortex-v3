@@ -199,6 +199,17 @@ const AgentChatPanel = ({
     }
   }, [onStructureRequest, setStructuredConfig, onConfigStructured, setWizardStep]);
 
+  // Keep ref in sync for auto-trigger
+  handleDiscoverRef.current = handleDiscover;
+
+  // Auto-trigger discover when initialPrompt is provided (custom agent from Home)
+  useEffect(() => {
+    if (initialPrompt && wizardStep === "discover" && !initialPromptUsedRef.current && !isStructuring) {
+      initialPromptUsedRef.current = true;
+      handleDiscoverRef.current(initialPrompt);
+    }
+  }, [initialPrompt, wizardStep, isStructuring]);
+
   /* ── Re-structure ── */
   const handleRestructure = useCallback(() => {
     const lastUserMsg = wizardMessages.filter(m => m.role === "user").pop();
