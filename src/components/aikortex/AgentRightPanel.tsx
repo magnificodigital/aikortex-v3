@@ -315,6 +315,9 @@ const AgentRightPanel = ({
   const [apiConfig,         setApiConfig]         = useState<ApiConfig>(() =>
     savedConfig?.apiConfig ? { ...DEFAULT_API_CONFIG, ...savedConfig.apiConfig } : DEFAULT_API_CONFIG
   );
+  const [voiceConfig, setVoiceConfig] = useState<VoiceConfig>(() =>
+    savedConfig?.voiceConfig ? { ...DEFAULT_VOICE_CONFIG, ...savedConfig.voiceConfig } : { ...DEFAULT_VOICE_CONFIG, agentName: agent.name }
+  );
 
   const fileInputRef   = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
