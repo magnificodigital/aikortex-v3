@@ -357,9 +357,12 @@ const AgentRightPanel = ({
     });
   }, [fieldUpdates]);
 
-  // Emitir config para o pai
+  // Emitir config para o pai — use ref to avoid stale closure
+  const onConfigChangeRef = useRef(onConfigChange);
+  onConfigChangeRef.current = onConfigChange;
+
   useEffect(() => {
-    onConfigChange?.({
+    const config: AgentConfig = {
       name: agentName, description: agentDesc, objective: agentObjective,
       instructions: agentInstructions, toneOfVoice: agentToneOfVoice,
       greetingMessage: agentGreetingMessage,
@@ -368,9 +371,10 @@ const AgentRightPanel = ({
       integrations: Object.entries(connectorKeys).filter(([, v]) => v.configured).map(([k]) => k),
       knowledgeFiles: knowledgeFiles.map(f => f.name), urls, apiConfig,
       voiceConfig,
-    });
+    };
+    onConfigChangeRef.current?.(config);
   }, [agentName, agentDesc, agentObjective, agentInstructions, agentToneOfVoice, agentGreetingMessage,
-      avatarPreview, connectedChannels, connectorKeys, knowledgeFiles, urls, apiConfig, voiceConfig]);
+      avatarPreview, connectedChannels, connectorKeys, knowledgeFiles, urls, apiConfig, voiceConfig, agent.avatar]);
 
   // ── Helpers ──
   const handleFiles = (files: FileList) => {

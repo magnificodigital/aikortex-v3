@@ -216,6 +216,12 @@ const AgentDetail = () => {
   const saveAgentRef = useRef(handleSaveAgent);
   saveAgentRef.current = handleSaveAgent;
 
+  // Use refs for values that change but shouldn't recreate the callback
+  const agentModelRef = useRef(agentModel);
+  agentModelRef.current = agentModel;
+  const agentTypeRef = useRef(loadedAgent.agentType);
+  agentTypeRef.current = loadedAgent.agentType;
+
   const handleConfigChange = useCallback((config: AgentConfig) => {
     setAgentConfig(config);
 
@@ -223,10 +229,10 @@ const AgentDetail = () => {
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(() => {
       if (config.name?.trim()) {
-        saveAgentRef.current({ ...config, model: agentModel, agentType: loadedAgent.agentType });
+        saveAgentRef.current({ ...config, model: agentModelRef.current, agentType: agentTypeRef.current });
       }
     }, 2000);
-  }, [agentModel, loadedAgent.agentType]);
+  }, []);
 
   // Cleanup timer on unmount
   useEffect(() => () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); }, []);
