@@ -569,7 +569,7 @@ const AppConfigPanel = ({ channel, onChannelChange, open, onClose }: AppConfigPa
           <div className="flex items-center justify-between gap-2 mb-2.5">
             <SheetTitle className="text-sm font-semibold text-foreground truncate min-w-0">Configurações</SheetTitle>
             <Badge variant="outline" className="text-[10px] gap-1 h-5">
-              {channel === "whatsapp" ? <Phone className="w-3 h-3 text-emerald-500" /> : <Monitor className="w-3 h-3 text-primary" />}
+              {channel === "whatsapp" ? <WhatsAppIcon className="w-3 h-3 text-emerald-500" /> : <Monitor className="w-3 h-3 text-primary" />}
               {channel === "whatsapp" ? "WhatsApp" : "Web"}
             </Badge>
           </div>

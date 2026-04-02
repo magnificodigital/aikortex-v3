@@ -109,7 +109,7 @@ const DashboardPanel = ({}: DashboardPanelProps) => {
               ? "bg-green-500/10 text-green-600 border-green-500/20"
               : "bg-primary/10 text-primary border-primary/20"
           }`}>
-            {appType === "whatsapp" ? <Phone className="w-3 h-3" /> : <Monitor className="w-3 h-3" />}
+            {appType === "whatsapp" ? <WhatsAppIcon className="w-3 h-3" /> : <Monitor className="w-3 h-3" />}
             {appType === "whatsapp" ? "WhatsApp" : "Web App"}
           </span>
         </div>
