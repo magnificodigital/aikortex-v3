@@ -539,106 +539,96 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
 
-      {/* ── LEFT: Chat Panel or Voice Panel ── */}
-      {chatMode === "voice" ? (
-        <div className="w-[420px] min-w-[360px] border-r border-border flex flex-col bg-background">
-          {/* Header */}
-          <div className="h-12 border-b border-border flex items-center px-3 gap-2 shrink-0">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate("/aikortex/agents")}>
-              <ArrowLeft className="w-4 h-4" />
+      {/* ── LEFT: Studio (Chat Panel) ── */}
+      <AgentChatPanel
+        onBack={() => navigate("/aikortex/agents")}
+        agentType={loadedAgent.agentType}
+        agentName={loadedAgent.name}
+        agentAvatar={loadedAgent.avatar}
+        wizardStep={wizardStep}
+        setWizardStep={setWizardStep}
+        structuredConfig={structuredConfig}
+        setStructuredConfig={setStructuredConfig}
+        chatMode={chatMode}
+        setChatMode={setChatMode as any}
+        hasApiKey={hasApiKey}
+        hasAnyLLMKey={hasAnyLLMKey}
+        keysLoading={keysLoading}
+        currentProvider={currentProvider}
+        agentModel={agentModel}
+        availableModels={availableModels as any}
+        setupModel={setupModel}
+        setSetupModel={setSetupModel}
+        setAgentModel={setAgentModel}
+        gatewayModels={GATEWAY_MODELS}
+        onGoToIntegrations={() => { setShowConfig(true); setRightPanelTab("connectors"); }}
+        onConfigStructured={handleConfigStructured}
+        onAgentCreated={handleBuildAgent}
+        messages={activeChat.messages}
+        sendMessage={activeChat.sendMessage}
+        isStreaming={activeChat.isStreaming}
+        onStructureRequest={handleStructureRequest}
+        onBuildAgent={handleBuildAgent}
+        isStructuring={isStructuring}
+        isBuilding={isBuilding}
+        onOpenConfig={() => setShowConfig(true)}
+      />
+
+      {/* ── RIGHT: Voice Agent ── */}
+      <div className="flex-1 flex flex-col overflow-hidden border-l border-border">
+        {/* Top bar */}
+        <div className="h-12 border-b border-border flex items-center justify-between px-4 shrink-0 bg-card/30">
+          <div className="flex items-center gap-2">
+            <img src={loadedAgent.avatar} className="w-6 h-6 rounded-full object-cover" alt="" />
+            <span className="text-sm font-semibold">{loadedAgent.name}</span>
+            <span className="text-[10px] text-muted-foreground">— Agente de Voz</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Button
+              variant={showConfig ? "secondary" : "ghost"}
+              size="icon"
+              className="h-7 w-7"
+              title="Configurações do Agente"
+              onClick={() => setShowConfig(!showConfig)}
+            >
+              <Settings className="w-3.5 h-3.5" />
             </Button>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-md bg-primary/15 flex items-center justify-center">
-                <Sparkles className="w-3.5 h-3.5 text-primary" />
-              </div>
-              <span className="text-sm font-semibold tracking-tight">Studio</span>
-            </div>
-            <span className="flex-1" />
-            <span className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium bg-primary/10 text-primary border border-primary/20">
-              <Bot className="w-3 h-3" />
-              {loadedAgent.agentType}
-            </span>
           </div>
-
-          {/* Mode toggle */}
-          <div className="h-10 border-b border-border flex items-center px-3 gap-1 shrink-0">
-            <img src={loadedAgent.avatar} className="w-6 h-6 rounded-full object-cover mr-1" alt="" />
-            <span className="text-xs font-medium truncate mr-auto">{loadedAgent.name}</span>
-            <div className="flex items-center bg-muted rounded-lg p-0.5">
-              <button onClick={() => setChatMode("setup")} className="px-2.5 py-1 rounded-md text-[10px] font-medium transition-all text-muted-foreground hover:text-foreground">
-                Configurar
-              </button>
-              <button onClick={() => setChatMode("test")} className="px-2.5 py-1 rounded-md text-[10px] font-medium transition-all text-muted-foreground hover:text-foreground">
-                Testar Texto
-              </button>
-              <button className="px-2.5 py-1 rounded-md text-[10px] font-medium transition-all bg-background text-foreground shadow-sm">
-                Testar Voz
-              </button>
-            </div>
-          </div>
-
-          {/* Voice call interface */}
-          <VoiceCallPanel
-            agentName={loadedAgent.name}
-            agentAvatar={loadedAgent.avatar}
-            elevenLabsAgentId={(agentConfig as any)?.voiceConfig?.elevenLabsAgentId}
-            hasElevenLabsKey={!!keys["elevenlabs"]?.configured}
-            onGoToIntegrations={() => setRightPanelTab("connectors")}
-          />
         </div>
-      ) : (
-        <AgentChatPanel
-          onBack={() => navigate("/aikortex/agents")}
-          agentType={loadedAgent.agentType}
+
+        {/* Voice call interface */}
+        <VoiceCallPanel
           agentName={loadedAgent.name}
           agentAvatar={loadedAgent.avatar}
-          wizardStep={wizardStep}
-          setWizardStep={setWizardStep}
-          structuredConfig={structuredConfig}
-          setStructuredConfig={setStructuredConfig}
-          chatMode={chatMode}
-          setChatMode={setChatMode}
-          hasApiKey={hasApiKey}
-          hasAnyLLMKey={hasAnyLLMKey}
-          keysLoading={keysLoading}
-          currentProvider={currentProvider}
-          agentModel={agentModel}
-          availableModels={availableModels as any}
-          setupModel={setupModel}
-          setSetupModel={setSetupModel}
-          setAgentModel={setAgentModel}
-          gatewayModels={GATEWAY_MODELS}
-          onGoToIntegrations={() => setRightPanelTab("connectors")}
-          onConfigStructured={handleConfigStructured}
-          onAgentCreated={handleBuildAgent}
-          messages={activeChat.messages}
-          sendMessage={activeChat.sendMessage}
-          isStreaming={activeChat.isStreaming}
-          onStructureRequest={handleStructureRequest}
-          onBuildAgent={handleBuildAgent}
-          isStructuring={isStructuring}
-          isBuilding={isBuilding}
-        />
-      )}
-
-      {/* ── RIGHT: Config Panel ── */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <AgentRightPanel
-          agent={loadedAgent}
-          agentType={loadedAgent.agentType}
-          agentModel={agentModel}
-          onModelChange={setAgentModel}
-          activeTab={rightPanelTab}
-          onTabChange={setRightPanelTab}
-          onApiKeysChanged={refetchKeys}
-          onConfigChange={handleConfigChange}
-          onSaveAgent={handleSaveAgent}
-          isSaving={isSaving}
-          storagePrefix={storagePrefix}
-          presetData={presetData}
-          savedConfig={loadedAgent.savedConfig}
+          elevenLabsAgentId={(agentConfig as any)?.voiceConfig?.elevenLabsAgentId}
+          hasElevenLabsKey={!!keys["elevenlabs"]?.configured}
+          onGoToIntegrations={() => { setShowConfig(true); setRightPanelTab("connectors"); }}
         />
       </div>
+
+      {/* ── Config Panel (Sheet overlay like AppBuilder) ── */}
+      <Sheet open={showConfig} onOpenChange={setShowConfig}>
+        <SheetContent side="right" className="w-full sm:w-[580px] md:w-[640px] lg:w-[720px] p-0 border-l border-border">
+          <SheetHeader className="sr-only">
+            <SheetTitle>Configurações do Agente</SheetTitle>
+          </SheetHeader>
+          <AgentRightPanel
+            agent={loadedAgent}
+            agentType={loadedAgent.agentType}
+            agentModel={agentModel}
+            onModelChange={setAgentModel}
+            activeTab={rightPanelTab}
+            onTabChange={setRightPanelTab}
+            onApiKeysChanged={refetchKeys}
+            onConfigChange={handleConfigChange}
+            onSaveAgent={handleSaveAgent}
+            isSaving={isSaving}
+            storagePrefix={storagePrefix}
+            presetData={presetData}
+            savedConfig={loadedAgent.savedConfig}
+          />
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
