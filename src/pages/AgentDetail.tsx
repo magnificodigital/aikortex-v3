@@ -268,7 +268,7 @@ const AgentDetail = () => {
     } finally {
       setIsSaving(false);
     }
-  }, [agentId, saveAgent, navigate, wizardStep, wizardMessages, setupModel, chatMode, setupChat.messages, testChat.messages]);
+  }, [agentId, saveAgent, navigate, wizardStep, wizardMessages, setupModel, chatMode, setupMessagesSnapshot, testMessagesSnapshot]);
 
   const saveAgentRef = useRef(handleSaveAgent);
   saveAgentRef.current = handleSaveAgent;
