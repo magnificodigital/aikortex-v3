@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
-import { IntegrationsGrid, LLM_PROVIDERS, SERVICE_PROVIDERS } from "@/components/shared/IntegrationsGrid";
+import { IntegrationsGrid, LLM_PROVIDERS, SERVICE_PROVIDERS, type ProviderConfig } from "@/components/shared/IntegrationsGrid";
 import { Button } from "@/components/ui/button";
 import type { AgentType } from "@/types/agent-builder";
 import { CHANNELS_BY_AGENT_TYPE, TOOLS_BY_AGENT_TYPE } from "@/types/agent-builder";
@@ -128,6 +128,7 @@ export interface AgentConfig {
   avatarUrl: string;
   channels: string[];
   integrations: string[];
+  integrationConfigs?: Record<string, ProviderConfig>;
   knowledgeFiles: string[];
   urls: string[];
   apiConfig: ApiConfig;
@@ -314,6 +315,8 @@ const AgentRightPanel = ({
   const [urlInput,          setUrlInput]          = useState("");
   const [urls,              setUrls]              = useState<string[]>(() => savedConfig?.urls?.length     ? savedConfig.urls     : []);
   const [connectedChannels, setConnectedChannels] = useState<string[]>(() => savedConfig?.channels?.length ? savedConfig.channels : []);
+  const [savedIntegrations, setSavedIntegrations] = useState<string[]>(() => savedConfig?.integrations?.length ? savedConfig.integrations : []);
+  const [integrationConfigs, setIntegrationConfigs] = useState<Record<string, ProviderConfig>>(() => savedConfig?.integrationConfigs || {});
   const [apiConfig,         setApiConfig]         = useState<ApiConfig>(() =>
     savedConfig?.apiConfig ? { ...DEFAULT_API_CONFIG, ...savedConfig.apiConfig } : DEFAULT_API_CONFIG
   );
@@ -335,6 +338,28 @@ const AgentRightPanel = ({
     if (presetData.toneOfVoice)     setAgentToneOfVoice(presetData.toneOfVoice);
     if (presetData.greetingMessage) setAgentGreetingMessage(presetData.greetingMessage);
   }, [presetData]);
+
+  useEffect(() => {
+    if (!savedConfig) return;
+    setAgentName(savedConfig.name ?? agent.name ?? "");
+    setAgentDesc(savedConfig.description ?? "");
+    setAgentObjective(savedConfig.objective ?? "");
+    setAgentInstructions(savedConfig.instructions ?? "");
+    setAgentToneOfVoice(savedConfig.toneOfVoice ?? "");
+    setAgentGreetingMessage(savedConfig.greetingMessage ?? "");
+    setKnowledgeFiles(
+      savedConfig.knowledgeFiles?.length
+        ? savedConfig.knowledgeFiles.map((n: string, i: number) => ({ id: `saved-${i}-${n}`, name: n, size: 0, type: "" }))
+        : []
+    );
+    setUrls(savedConfig.urls?.length ? savedConfig.urls : []);
+    setConnectedChannels(savedConfig.channels?.length ? savedConfig.channels : []);
+    setSavedIntegrations(savedConfig.integrations?.length ? savedConfig.integrations : []);
+    setIntegrationConfigs(savedConfig.integrationConfigs || {});
+    setApiConfig(savedConfig.apiConfig ? { ...DEFAULT_API_CONFIG, ...savedConfig.apiConfig } : DEFAULT_API_CONFIG);
+    setVoiceConfig(savedConfig.voiceConfig ? { ...DEFAULT_VOICE_CONFIG, ...savedConfig.voiceConfig } : { ...DEFAULT_VOICE_CONFIG, agentName: savedConfig.name || agent.name });
+    setAvatarPreview(savedConfig.avatarUrl || agent.avatar || null);
+  }, [savedConfig, agent.name, agent.avatar]);
 
   // FIX: fieldUpdates do chat — atualiza campos em tempo real
   useEffect(() => {
@@ -368,13 +393,14 @@ const AgentRightPanel = ({
       greetingMessage: agentGreetingMessage,
       avatarUrl: avatarPreview || agent.avatar || "",
       channels: connectedChannels,
-      integrations: Object.entries(connectorKeys).filter(([, v]) => v.configured).map(([k]) => k),
+      integrations: savedIntegrations,
+      integrationConfigs,
       knowledgeFiles: knowledgeFiles.map(f => f.name), urls, apiConfig,
       voiceConfig,
     };
     onConfigChangeRef.current?.(config);
   }, [agentName, agentDesc, agentObjective, agentInstructions, agentToneOfVoice, agentGreetingMessage,
-      avatarPreview, connectedChannels, connectorKeys, knowledgeFiles, urls, apiConfig, voiceConfig, agent.avatar]);
+      avatarPreview, connectedChannels, savedIntegrations, integrationConfigs, knowledgeFiles, urls, apiConfig, voiceConfig, agent.avatar]);
 
   // ── Helpers ──
   const handleFiles = (files: FileList) => {
@@ -432,7 +458,8 @@ const AgentRightPanel = ({
     instructions: agentInstructions, toneOfVoice: agentToneOfVoice,
     greetingMessage: agentGreetingMessage, avatarUrl: avatarPreview || agent.avatar || "",
     channels: connectedChannels,
-    integrations: Object.entries(connectorKeys).filter(([, v]) => v.configured).map(([k]) => k),
+    integrations: savedIntegrations,
+    integrationConfigs,
     knowledgeFiles: knowledgeFiles.map(f => f.name), urls, apiConfig, voiceConfig,
     model: agentModel, agentType,
   });
@@ -667,12 +694,20 @@ const AgentRightPanel = ({
                 providers={LLM_PROVIDERS}
                 title="Modelos de IA (LLMs)"
                 subtitle="Conecte suas chaves de API para utilizar modelos de IA."
+                onConnectedProvidersChange={setSavedIntegrations}
+                onProviderConfigsChange={setIntegrationConfigs}
+                initialProviderConfigs={integrationConfigs}
+                storageKey={`${storagePrefix || "agent-detail"}-provider-configs`}
               />
 
               <IntegrationsGrid
                 providers={SERVICE_PROVIDERS}
                 title="Serviços & Ferramentas"
                 subtitle="Conecte serviços externos para expandir as capacidades."
+                onConnectedProvidersChange={(providers) => setSavedIntegrations(prev => Array.from(new Set([...prev.filter((provider) => !SERVICE_PROVIDERS.some((service) => service.provider === provider)), ...providers]))) }
+                onProviderConfigsChange={(configs) => setIntegrationConfigs(prev => ({ ...prev, ...configs }))}
+                initialProviderConfigs={integrationConfigs}
+                storageKey={`${storagePrefix || "agent-detail"}-provider-configs`}
               />
 
               <div className="space-y-2">
