@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -125,7 +125,7 @@ const DEFAULT_MODELS: Record<string, string> = {
   elevenlabs: "eleven_multilingual_v2",
 };
 
-interface ProviderConfig {
+export interface ProviderConfig {
   defaultModel?: string;
   temperature?: number;
   maxTokens?: number;
@@ -174,6 +174,14 @@ interface IntegrationsGridProps {
   title?: string;
   /** Custom subtitle */
   subtitle?: string;
+  /** Persist and expose currently connected providers */
+  onConnectedProvidersChange?: (providers: string[]) => void;
+  /** Persist provider-level configuration outside this component */
+  onProviderConfigsChange?: (configs: Record<string, ProviderConfig>) => void;
+  /** Initial provider configs when restoring a saved agent/app */
+  initialProviderConfigs?: Record<string, ProviderConfig>;
+  /** Optional local storage key for provider configs */
+  storageKey?: string;
 }
 
 export function IntegrationsGrid({
@@ -183,6 +191,10 @@ export function IntegrationsGrid({
   showTitle = true,
   title = "APIs & Provedores de IA",
   subtitle = "Conecte suas chaves de API para habilitar integrações.",
+  onConnectedProvidersChange,
+  onProviderConfigsChange,
+  initialProviderConfigs,
+  storageKey = "aikortex-provider-configs",
 }: IntegrationsGridProps) {
   const [connectorKeys, setConnectorKeys] = useState<Record<string, { configured: boolean }>>({});
   const [loading, setLoading] = useState(true);
@@ -190,23 +202,55 @@ export function IntegrationsGrid({
   const [keyInput, setKeyInput] = useState("");
   const [showKey, setShowKey] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [providerConfigs, setProviderConfigs] = useState<Record<string, ProviderConfig>>({});
+  const [providerConfigs, setProviderConfigs] = useState<Record<string, ProviderConfig>>(() => {
+    if (initialProviderConfigs) return initialProviderConfigs;
+    try {
+      const stored = localStorage.getItem(storageKey);
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  });
   const [dialogConfig, setDialogConfig] = useState<ProviderConfig>({});
 
-  useEffect(() => {
-    const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setLoading(false); return; }
-      const { data } = await supabase.from("user_api_keys").select("provider").eq("user_id", user.id);
-      const map: Record<string, { configured: boolean }> = {};
-      data?.forEach((row: any) => {
-        map[row.provider] = { configured: true };
-      });
-      setConnectorKeys(map);
+  const load = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setConnectorKeys({});
       setLoading(false);
-    };
-    load();
+      return;
+    }
+
+    const { data } = await supabase.from("user_api_keys").select("provider").eq("user_id", user.id);
+    const map: Record<string, { configured: boolean }> = {};
+    data?.forEach((row: any) => {
+      map[row.provider] = { configured: true };
+    });
+    setConnectorKeys(map);
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useEffect(() => {
+    if (initialProviderConfigs) {
+      setProviderConfigs(initialProviderConfigs);
+    }
+  }, [initialProviderConfigs]);
+
+  useEffect(() => {
+    onConnectedProvidersChange?.(
+      Object.entries(connectorKeys)
+        .filter(([, value]) => value.configured)
+        .map(([provider]) => provider)
+    );
+  }, [connectorKeys, onConnectedProvidersChange]);
+
+  useEffect(() => {
+    onProviderConfigsChange?.(providerConfigs);
+  }, [providerConfigs, onProviderConfigsChange]);
 
   let displayProviders = providers || ALL_PROVIDERS;
   if (filterProviders) {
@@ -247,13 +291,13 @@ export function IntegrationsGrid({
         if (error) { toast.error("Erro ao salvar chave."); console.error(error); return; }
         setConnectorKeys(prev => ({ ...prev, [dialogProvider.provider]: { configured: true } }));
       }
-      // Save provider config to localStorage
       const newConfigs = { ...providerConfigs, [dialogProvider.provider]: dialogConfig };
       setProviderConfigs(newConfigs);
-      try { localStorage.setItem("aikortex-provider-configs", JSON.stringify(newConfigs)); } catch {}
+      try { localStorage.setItem(storageKey, JSON.stringify(newConfigs)); } catch {}
       setDialogProvider(null);
       setKeyInput("");
       toast.success(`${dialogProvider.label} ${keyInput.trim() ? "conectado e configurado" : "configurações salvas"} com sucesso!`);
+      await load();
     } finally { setSaving(false); }
   };
 
@@ -268,16 +312,9 @@ export function IntegrationsGrid({
       setDialogProvider(null);
       setKeyInput("");
       toast.success(`${dialogProvider.label} desconectado.`);
+      await load();
     } finally { setSaving(false); }
   };
-
-  // Load provider configs from localStorage
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem("aikortex-provider-configs");
-      if (stored) setProviderConfigs(JSON.parse(stored));
-    } catch {}
-  }, []);
 
   const isConnected = (p: IntegrationProvider) => p.native || !!connectorKeys[p.provider]?.configured;
   const isLLMProvider = (p: IntegrationProvider) => LLM_PROVIDER_IDS.has(p.provider);
