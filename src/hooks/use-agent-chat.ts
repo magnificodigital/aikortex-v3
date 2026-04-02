@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/app-chat`;
-const STREAM_UPDATE_INTERVAL_MS = 48;
+const FLUSH_INTERVAL_MS = 60;
 
 export interface ChatMessage {
   role: "user" | "agent" | "assistant";
@@ -83,18 +83,14 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
   const [isStreaming, setIsStreaming] = useState(false);
 
   const messagesRef = useRef(messages);
-  const pendingAssistantTextRef = useRef("");
-  const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingTextRef = useRef("");
+  const flushScheduledRef = useRef(false);
   const mountedRef = useRef(true);
 
   useEffect(() => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
-      if (flushTimerRef.current) {
-        clearTimeout(flushTimerRef.current);
-        flushTimerRef.current = null;
-      }
     };
   }, []);
 
@@ -108,33 +104,31 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
     }
   }, [messages, options.persistKey]);
 
-  const flushAssistantMessage = useCallback((force = false) => {
-    const commit = () => {
-      flushTimerRef.current = null;
+  /** Batched state update for streaming tokens — uses RAF to stay in React's scheduling */
+  const flushPendingText = useCallback((force = false) => {
+    const doFlush = () => {
+      flushScheduledRef.current = false;
       if (!mountedRef.current) return;
-      const finalText = pendingAssistantTextRef.current;
+      const text = pendingTextRef.current;
       setMessages((prev) => {
         if (!prev.length) return prev;
-        const lastMessage = prev[prev.length - 1];
-        if (lastMessage?.role !== "agent") return prev;
-        if (lastMessage.text === finalText) return prev;
-
-        const next = [...prev];
-        next[next.length - 1] = { role: "agent", text: finalText };
+        const last = prev[prev.length - 1];
+        if (last.role !== "agent" || last.text === text) return prev;
+        const next = prev.slice();
+        next[next.length - 1] = { role: "agent", text };
         return next;
       });
     };
 
     if (force) {
-      if (flushTimerRef.current) {
-        clearTimeout(flushTimerRef.current);
-      }
-      commit();
+      flushScheduledRef.current = false;
+      doFlush();
       return;
     }
-
-    if (flushTimerRef.current) return;
-    flushTimerRef.current = setTimeout(commit, STREAM_UPDATE_INTERVAL_MS);
+    if (flushScheduledRef.current) return;
+    flushScheduledRef.current = true;
+    // Use setTimeout with a safe interval; React batches these automatically in v18
+    setTimeout(doFlush, FLUSH_INTERVAL_MS);
   }, []);
 
   const sendMessage = useCallback(async (userText: string) => {
@@ -220,10 +214,11 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
       if (!resp.body) throw new Error("Sem resposta do servidor");
 
       if (!mountedRef.current) return;
-      const withPlaceholder = [...messagesRef.current, { role: "agent", text: "" } as ChatMessage];
+
+      const withPlaceholder = [...messagesRef.current, { role: "agent" as const, text: "" }];
       messagesRef.current = withPlaceholder;
       setMessages(withPlaceholder);
-      pendingAssistantTextRef.current = "";
+      pendingTextRef.current = "";
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
@@ -232,6 +227,8 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
+        if (!mountedRef.current) { reader.cancel(); return; }
+
         buffer += decoder.decode(value, { stream: true });
 
         let newlineIndex: number;
@@ -243,7 +240,7 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
 
           const jsonStr = line.slice(6).trim();
           if (jsonStr === "[DONE]") {
-            flushAssistantMessage(true);
+            flushPendingText(true);
             continue;
           }
 
@@ -251,8 +248,8 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
             const parsed = JSON.parse(jsonStr);
             const content = parsed.choices?.[0]?.delta?.content;
             if (content) {
-              pendingAssistantTextRef.current += content;
-              flushAssistantMessage();
+              pendingTextRef.current += content;
+              flushPendingText();
             }
           } catch {
             // partial JSON, skip
@@ -260,7 +257,7 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
         }
       }
 
-      flushAssistantMessage(true);
+      flushPendingText(true);
     } catch (e: any) {
       console.error("Agent chat error:", e);
       if (mountedRef.current) {
@@ -270,16 +267,11 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
         ]);
       }
     } finally {
-      if (flushTimerRef.current) {
-        clearTimeout(flushTimerRef.current);
-        flushTimerRef.current = null;
-      }
       if (mountedRef.current) {
         setIsStreaming(false);
       }
     }
-  }, [isStreaming, options.provider, options.model, options.useGateway, options.gatewayModel, options.systemPrompt, options.apiConfig, options.agentContext, flushAssistantMessage]);
+  }, [isStreaming, options.provider, options.model, options.useGateway, options.gatewayModel, options.systemPrompt, options.apiConfig, options.agentContext, flushPendingText]);
 
   return { messages, setMessages, sendMessage, isStreaming };
 }
-
