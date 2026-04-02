@@ -5,7 +5,21 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+
+const VOICES = [
+  { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah" },
+  { id: "FGY2WhTYpPnrIDTdsKH5", name: "Laura" },
+  { id: "IKne3meq5aSn9XLyUdCD", name: "Charlie" },
+  { id: "JBFqnCBsd6RMkjVDRZzb", name: "George" },
+  { id: "CwhRBWXzGAHq8TQ4Fs17", name: "Roger" },
+  { id: "TX3LPaxmHKxFdv7VOQHJ", name: "Liam" },
+  { id: "Xb7hH8MSUJpSbSDYk0k2", name: "Alice" },
+  { id: "XrExE9yKIg1WjnnlVkGX", name: "Matilda" },
+  { id: "pFZP5JQG7iQjIQuC4Bku", name: "Lily" },
+  { id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel" },
+];
 
 type CallStatus = "idle" | "connecting" | "connected" | "ended";
 
