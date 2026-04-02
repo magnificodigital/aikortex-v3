@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { Phone } from "lucide-react";
 import {
   ArrowLeft, ArrowUp, Send, AlertTriangle,
   Sparkles, Bot, Mic, Check, Loader2, Pencil, RotateCw,
