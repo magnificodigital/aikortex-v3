@@ -512,6 +512,31 @@ const AgentChatPanel = ({
           </div>
         )}
 
+        {/* ══ Test prompt — shown when agent is ready and in setup mode ══ */}
+        {wizardStep === "done" && chatMode === "setup" && !isBuilding && !isStreaming && messages.length <= 2 && (
+          <div className="bg-card/50 border border-primary/20 rounded-xl p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <Check className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-foreground">Agente pronto! 🎉</p>
+                <p className="text-[10px] text-muted-foreground">Teste seu agente antes de publicar</p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Seu agente foi configurado com sucesso. Agora você pode testá-lo em tempo real para verificar se as respostas estão de acordo com o esperado.
+            </p>
+            <Button
+              size="sm"
+              className="w-full h-8 text-xs rounded-lg gap-1.5"
+              onClick={() => setChatMode("test")}
+            >
+              <Bot className="w-3.5 h-3.5" /> Testar agente agora
+            </Button>
+          </div>
+        )}
+
         {/* Streaming indicator (post-wizard) */}
         {wizardStep === "done" && isStreaming && messages[messages.length - 1]?.role !== "agent" && (
           <div className="flex gap-2.5">
