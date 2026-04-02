@@ -83,6 +83,7 @@ const partnersItems: NavItem[] = [
 ];
 
 const aikortexItems: NavItem[] = [
+  { label: "Agentes", icon: Bot, path: "/aikortex/agents" },
   { label: "Flows", icon: Workflow, path: "/aikortex/automations" },
   { label: "Apps", icon: AppWindow, path: "/apps" },
   { label: "Templates", icon: LayoutTemplate, path: "/templates" },
@@ -252,14 +253,6 @@ const AppSidebar = () => {
           <Link to="/dashboard" className={linkClasses(isItemActive("/dashboard"))} title={collapsed ? "Dashboard" : undefined}>
             <LayoutDashboard className={`w-4 h-4 shrink-0 ${isItemActive("/dashboard") ? "text-primary" : ""}`} />
             {!collapsed && <span>Dashboard</span>}
-          </Link>
-        </div>
-
-        {/* Agentes — fixo no topo */}
-        <div className="mt-2">
-          <Link to="/aikortex/agents" className={linkClasses(isItemActive("/aikortex/agents"))} title={collapsed ? "Agentes" : undefined}>
-            <Bot className={`w-4 h-4 shrink-0 ${isItemActive("/aikortex/agents") ? "text-primary" : ""}`} />
-            {!collapsed && <span>Agentes</span>}
           </Link>
         </div>
 
