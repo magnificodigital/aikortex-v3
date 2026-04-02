@@ -302,13 +302,7 @@ const AgentChatPanel = ({
               onClick={() => setChatMode("test")}
               className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-all ${chatMode === "test" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
             >
-              Testar Texto
-            </button>
-            <button
-              onClick={() => setChatMode("voice")}
-              className={`px-2.5 py-1 rounded-md text-[10px] font-medium transition-all flex items-center gap-1 ${chatMode === "voice" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              <Phone className="w-3 h-3" /> Testar Voz
+              Testar
             </button>
           </div>
         </div>
