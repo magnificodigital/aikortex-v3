@@ -4,6 +4,7 @@ import {
   Sparkles, Bot, Mic, Check, Loader2, Pencil, RotateCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
