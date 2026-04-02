@@ -598,13 +598,15 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
         </div>
 
         {/* Voice call interface */}
-        <VoiceCallPanel
-          agentName={loadedAgent.name}
-          agentAvatar={loadedAgent.avatar}
-          elevenLabsAgentId={(agentConfig as any)?.voiceConfig?.elevenLabsAgentId}
-          hasElevenLabsKey={!!keys["elevenlabs"]?.configured}
-          onGoToIntegrations={() => { setShowConfig(true); setRightPanelTab("connectors"); }}
-        />
+        <ConversationProvider>
+          <VoiceCallPanel
+            agentName={loadedAgent.name}
+            agentAvatar={loadedAgent.avatar}
+            elevenLabsAgentId={(agentConfig as any)?.voiceConfig?.elevenLabsAgentId}
+            hasElevenLabsKey={!!keys["elevenlabs"]?.configured}
+            onGoToIntegrations={() => { setShowConfig(true); setRightPanelTab("connectors"); }}
+          />
+        </ConversationProvider>
       </div>
 
       {/* ── Config Panel (Sheet overlay like AppBuilder) ── */}
