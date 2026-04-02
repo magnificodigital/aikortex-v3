@@ -247,9 +247,22 @@ const VoiceCallPanel = ({
         }
       );
 
-      if (fnError || !sessionData?.signed_url) {
-        const msg = sessionData?.error || fnError?.message || "Erro ao criar sessão de voz";
+      if (fnError) {
+        // Try to extract detailed error from the response context
+        let msg = "Erro ao criar sessão de voz";
+        try {
+          if (fnError.context && typeof fnError.context.json === "function") {
+            const body = await fnError.context.json();
+            msg = body?.error || msg;
+          }
+        } catch { /* ignore */ }
         toast.error(msg);
+        setCallStatus("idle");
+        return;
+      }
+
+      if (!sessionData?.signed_url) {
+        toast.error(sessionData?.error || "Erro ao obter URL de sessão");
         setCallStatus("idle");
         return;
       }
