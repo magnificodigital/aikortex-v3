@@ -33,6 +33,11 @@ const VoiceOrb = ({ isSpeaking, isConnected }: { isSpeaking: boolean; isConnecte
     canvas.height = size * 2;
     ctx.scale(2, 2);
 
+    // Read the --primary CSS variable (HSL values) from :root
+    const rootStyles = getComputedStyle(document.documentElement);
+    const primaryHSL = rootStyles.getPropertyValue("--primary").trim(); // e.g. "221 83% 53%"
+    const makeColor = (alpha: number) => `hsla(${primaryHSL} / ${alpha})`;
+
     const center = size / 2;
     const baseRadius = 70;
 
@@ -49,9 +54,9 @@ const VoiceOrb = ({ isSpeaking, isConnected }: { isSpeaking: boolean; isConnecte
         const glowRadius = baseRadius + 20 + i * 15 + intensity * 12 * Math.sin(phaseRef.current * (1.2 + i * 0.3));
         const alpha = (0.03 + intensity * 0.04) * (1 - i * 0.2);
         const gradient = ctx.createRadialGradient(center, center, 0, center, center, glowRadius);
-        gradient.addColorStop(0, `hsla(var(--primary) / ${alpha})`);
-        gradient.addColorStop(0.6, `hsla(var(--primary) / ${alpha * 0.5})`);
-        gradient.addColorStop(1, `hsla(var(--primary) / 0)`);
+        gradient.addColorStop(0, makeColor(alpha));
+        gradient.addColorStop(0.6, makeColor(alpha * 0.5));
+        gradient.addColorStop(1, makeColor(0));
         ctx.beginPath();
         ctx.arc(center, center, glowRadius, 0, Math.PI * 2);
         ctx.fillStyle = gradient;
@@ -79,16 +84,16 @@ const VoiceOrb = ({ isSpeaking, isConnected }: { isSpeaking: boolean; isConnecte
         center - 15, center - 15, 0,
         center, center, baseRadius + 15
       );
-      mainGradient.addColorStop(0, `hsla(var(--primary) / ${0.25 + intensity * 0.15})`);
-      mainGradient.addColorStop(0.5, `hsla(var(--primary) / ${0.15 + intensity * 0.1})`);
-      mainGradient.addColorStop(1, `hsla(var(--primary) / ${0.05 + intensity * 0.05})`);
+      mainGradient.addColorStop(0, makeColor(0.25 + intensity * 0.15));
+      mainGradient.addColorStop(0.5, makeColor(0.15 + intensity * 0.1));
+      mainGradient.addColorStop(1, makeColor(0.05 + intensity * 0.05));
       ctx.fillStyle = mainGradient;
       ctx.fill();
 
       // Inner bright core
       const coreGradient = ctx.createRadialGradient(center, center, 0, center, center, 30 + intensity * 10);
-      coreGradient.addColorStop(0, `hsla(var(--primary) / ${0.3 + intensity * 0.2})`);
-      coreGradient.addColorStop(1, `hsla(var(--primary) / 0)`);
+      coreGradient.addColorStop(0, makeColor(0.3 + intensity * 0.2));
+      coreGradient.addColorStop(1, makeColor(0));
       ctx.beginPath();
       ctx.arc(center, center, 30 + intensity * 10, 0, Math.PI * 2);
       ctx.fillStyle = coreGradient;
@@ -105,7 +110,7 @@ const VoiceOrb = ({ isSpeaking, isConnected }: { isSpeaking: boolean; isConnecte
           const pAlpha = intensity * 0.4;
           ctx.beginPath();
           ctx.arc(px, py, pSize, 0, Math.PI * 2);
-          ctx.fillStyle = `hsla(var(--primary) / ${pAlpha})`;
+          ctx.fillStyle = makeColor(pAlpha);
           ctx.fill();
         }
       }
