@@ -4,6 +4,7 @@ import {
   CheckCircle2, AlertCircle, ChevronUp, FileCode, Sparkles,
   Phone, Monitor, Check, Loader2, Pencil, RotateCw,
 } from "lucide-react";
+import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
