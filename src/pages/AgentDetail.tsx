@@ -345,7 +345,7 @@ const AgentDetail = () => {
     const resolvedType = loadedAgent.agentType || "Custom";
     try {
       const result = await saveAgent({
-        id:          agentId && !TEMPLATE_MAP[agentId] ? agentId : undefined,
+        id:          agentId && !TEMPLATE_MAP[agentId] && agentId !== "new" && !agentId.startsWith("new-") ? agentId : undefined,
         name:        config.agent_name,
         agent_type:  resolvedType,
         description: config.description,
