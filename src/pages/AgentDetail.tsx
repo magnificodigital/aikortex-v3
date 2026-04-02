@@ -119,9 +119,10 @@ const AgentDetail = () => {
 
   const storagePrefix = `agent-detail-${agentId || "new"}`;
 
-  const [chatMode, setChatMode] = useState<"setup" | "test">(() => {
+  const [chatMode, setChatMode] = useState<"setup" | "test" | "voice">(() => {
     if (navState?.chatMode === "test") return "test";
-    try { return (localStorage.getItem(`${storagePrefix}-chatMode`) as "setup" | "test") || "setup"; } catch { return "setup"; }
+    if (navState?.chatMode === "voice") return "voice";
+    try { return (localStorage.getItem(`${storagePrefix}-chatMode`) as "setup" | "test" | "voice") || "setup"; } catch { return "setup"; }
   });
 
   useEffect(() => {
