@@ -50,6 +50,8 @@ const getProviderForModel = (model: string): string => {
   return "openai";
 };
 
+const STRUCTURE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-structure`;
+
 /* ── Types ── */
 
 interface LoadedAgent {
@@ -103,12 +105,13 @@ const AgentDetail = () => {
 
   /* ── Wizard state ── */
 
-  // Templates com autoPrompt pulam discover. Custom começa no discover. Agentes salvos vão para "done".
   const hasAutoPrompt = isTemplate && !!templateAgent?.autoPrompt;
   const [wizardStep, setWizardStep] = useState<"discover" | "structure" | "build" | "done">(
-    isTemplate ? (hasAutoPrompt ? "structure" : "discover") : "done"
+    isTemplate ? "discover" : "done"
   );
   const [structuredConfig, setStructuredConfig] = useState<StructuredAgentConfig | null>(null);
+  const [isStructuring, setIsStructuring] = useState(false);
+  const [isBuilding, setIsBuilding] = useState(false);
 
   /* ── Chat mode ── */
 
@@ -192,7 +195,7 @@ const AgentDetail = () => {
     }
   }, [agentId, saveAgent, navigate]);
 
-  /* ── Wizard: quando IA estrutura, preencher painel direito ── */
+  /* ── Wizard: preencher painel direito ── */
 
   const [presetData, setPresetData] = useState<{
     name?: string; description?: string; objective?: string;
@@ -210,10 +213,45 @@ const AgentDetail = () => {
     });
   }, []);
 
-  /* ── Wizard: criar agente ao concluir ── */
+  /* ── Wizard: structure request (calls edge function) ── */
 
-  const handleAgentCreated = useCallback(async (config: StructuredAgentConfig) => {
-    setIsSaving(true);
+  const handleStructureRequest = useCallback(async (description: string): Promise<StructuredAgentConfig | null> => {
+    setIsStructuring(true);
+    try {
+      const resp = await fetch(STRUCTURE_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
+          description,
+          agent_type: loadedAgent.agentType,
+          language: "pt-BR",
+        }),
+      });
+
+      if (!resp.ok) {
+        const data = await resp.json().catch(() => ({}));
+        toast.error(data.error || "Erro ao estruturar agente");
+        return null;
+      }
+
+      const data = await resp.json();
+      return data.structuredConfig as StructuredAgentConfig;
+    } catch (e) {
+      console.error("Structure request error:", e);
+      toast.error("Erro de conexão ao estruturar agente");
+      return null;
+    } finally {
+      setIsStructuring(false);
+    }
+  }, [loadedAgent.agentType]);
+
+  /* ── Wizard: build (save agent) ── */
+
+  const handleBuildAgent = useCallback(async (config: StructuredAgentConfig) => {
+    setIsBuilding(true);
     const resolvedType = loadedAgent.agentType || "Custom";
     try {
       const result = await saveAgent({
@@ -235,13 +273,66 @@ const AgentDetail = () => {
           urls:            [],
         },
       });
-      if (result && agentId && TEMPLATE_MAP[agentId] && result.id !== agentId) {
-        navigate(`/aikortex/agents/${result.id}`, { replace: true });
+
+      if (result) {
+        toast.success(`✅ ${config.agent_name} criado com sucesso!`);
+        // Update loaded agent state
+        setLoadedAgent({
+          name: config.agent_name,
+          avatar: AVATAR_BY_TYPE[resolvedType] || avatar1,
+          model: agentModel,
+          agentType: resolvedType,
+          savedConfig: {
+            objective: config.objective,
+            instructions: config.instructions,
+            toneOfVoice: config.tone,
+            greetingMessage: config.greeting_message,
+            channels: config.channels,
+          },
+        });
+        setPresetData({
+          name: config.agent_name,
+          description: config.description,
+          objective: config.objective,
+          toneOfVoice: config.tone,
+          greetingMessage: config.greeting_message,
+          instructions: config.instructions,
+        });
+        setWizardStep("done");
+
+        if (agentId && TEMPLATE_MAP[agentId] && result.id !== agentId) {
+          navigate(`/aikortex/agents/${result.id}`, { replace: true });
+        }
       }
+    } catch (e) {
+      console.error("Build agent error:", e);
+      toast.error("Erro ao criar agente");
     } finally {
-      setIsSaving(false);
+      setIsBuilding(false);
     }
-  }, [agentId, saveAgent, navigate, agentModel]);
+  }, [agentId, saveAgent, navigate, agentModel, loadedAgent.agentType]);
+
+  /* ── Auto-structure for templates with autoPrompt ── */
+
+  const [autoStructured, setAutoStructured] = useState(false);
+  useEffect(() => {
+    if (autoStructured || !isTemplate || !templateAgent?.autoPrompt) return;
+    setAutoStructured(true);
+    // Trigger structuring automatically
+    const run = async () => {
+      setWizardStep("structure");
+      const result = await handleStructureRequest(templateAgent.autoPrompt);
+      if (result) {
+        setStructuredConfig(result);
+        handleConfigStructured(result);
+      } else {
+        setWizardStep("discover");
+      }
+    };
+    // Small delay to let UI mount
+    const timer = setTimeout(run, 300);
+    return () => clearTimeout(timer);
+  }, [isTemplate, templateAgent, autoStructured, handleStructureRequest, handleConfigStructured]);
 
   /* ── Chat (setup mode — gratuito) ── */
 
@@ -265,11 +356,8 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
   }, [agentConfig, loadedAgent.agentType]);
 
   const setupInitialMessage = useMemo(() => {
-    if (wizardStep === "done") {
-      return `Olá! 👋 Sou o assistente de configuração do **${loadedAgent.name}**. O que gostaria de ajustar?`;
-    }
-    return `Olá! 👋 Vamos configurar seu novo agente ${loadedAgent.agentType}. Descreva o que ele deve fazer.`;
-  }, [loadedAgent.name, loadedAgent.agentType, wizardStep]);
+    return `Olá! 👋 Sou o assistente de configuração do **${loadedAgent.name}**. O que gostaria de ajustar?`;
+  }, [loadedAgent.name]);
 
   const setupChat = useAgentChat(
     [{ role: "agent", text: setupInitialMessage }],
@@ -281,7 +369,7 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
     }
   );
 
-  /* ── Chat (test mode — usa API key do usuário) ── */
+  /* ── Chat (test mode) ── */
 
   const testSystemPrompt = useMemo(() => {
     if (!agentConfig) return undefined;
@@ -309,7 +397,7 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
 
   const activeChat = chatMode === "setup" ? setupChat : testChat;
 
-  /* ── Limpar localStorage ao abrir template (sempre começa limpo) ── */
+  /* ── Limpar localStorage ao abrir template ── */
 
   useEffect(() => {
     if (!isTemplate || !agentId) return;
@@ -321,18 +409,6 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
       );
     } catch {}
   }, [isTemplate, agentId]);
-
-  /* ── Auto-send template prompt immediately ── */
-
-  const [autoSent, setAutoSent] = useState(false);
-  useEffect(() => {
-    if (autoSent || !isTemplate || !templateAgent?.autoPrompt) return;
-    const timer = setTimeout(() => {
-      setupChat.sendMessage(templateAgent.autoPrompt);
-      setAutoSent(true);
-    }, 600);
-    return () => clearTimeout(timer);
-  }, [isTemplate, templateAgent, autoSent, setupChat]);
 
   /* ── Loading screen ── */
 
@@ -374,10 +450,14 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
         gatewayModels={GATEWAY_MODELS}
         onGoToIntegrations={() => setRightPanelTab("connectors")}
         onConfigStructured={handleConfigStructured}
-        onAgentCreated={handleAgentCreated}
+        onAgentCreated={handleBuildAgent}
         messages={activeChat.messages}
         sendMessage={activeChat.sendMessage}
         isStreaming={activeChat.isStreaming}
+        onStructureRequest={handleStructureRequest}
+        onBuildAgent={handleBuildAgent}
+        isStructuring={isStructuring}
+        isBuilding={isBuilding}
       />
 
       {/* ── RIGHT: Config Panel ── */}
