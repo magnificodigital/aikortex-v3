@@ -1,937 +1,830 @@
-import { useState, useRef, useEffect, useMemo } from "react";
-import { Button } from "@/components/ui/button";
-import type { AgentType } from "@/types/agent-builder";
-import { CHANNELS_BY_AGENT_TYPE, TOOLS_BY_AGENT_TYPE } from "@/types/agent-builder";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
-  User, Zap, Settings2, AlertTriangle,
-  Upload, X, FileText, Image, File, Plus, Globe, Link2, Check, Camera,
-  Webhook, KeyRound, Blocks, Eye, EyeOff, ExternalLink, Trash2, Settings, Cpu,
-  Rocket,
+  ArrowUp, Bot, ChevronDown, ChevronLeft, Mic, Wrench,
+  CheckCircle2, AlertCircle, ChevronUp, Sparkles,
+  Check, Loader2, Pencil, RotateCw, TestTube,
+  KeyRound, AlertTriangle,
 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
-/* ── LLM Provider Models ── */
-
-const LLM_PROVIDER_MODELS: Record<string, { models: { value: string; label: string; desc: string }[]; capabilities: string[] }> = {
-  OpenAI: {
-    models: [
-      { value: "gpt-5.2", label: "GPT-5.2", desc: "Mais recente. Raciocínio aprimorado." },
-      { value: "gpt-5", label: "GPT-5", desc: "Poderoso. Raciocínio complexo e multimodal." },
-      { value: "gpt-5-mini", label: "GPT-5 Mini", desc: "Equilíbrio entre custo e desempenho." },
-      { value: "gpt-4o", label: "GPT-4o", desc: "Multimodal com visão e áudio." },
-      { value: "gpt-4o-mini", label: "GPT-4o Mini", desc: "Versão leve do GPT-4o." },
-      { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo", desc: "Rápido e econômico." },
-    ],
-    capabilities: ["Chat e completions", "Visão (imagens)", "Function calling", "JSON mode"],
-  },
-  Anthropic: {
-    models: [
-      { value: "claude-4-sonnet", label: "Claude 4 Sonnet", desc: "Mais inteligente e versátil." },
-      { value: "claude-3.5-sonnet", label: "Claude 3.5 Sonnet", desc: "Excelente raciocínio e código." },
-      { value: "claude-3-opus", label: "Claude 3 Opus", desc: "Mais poderoso da família Claude 3." },
-      { value: "claude-3-haiku", label: "Claude 3 Haiku", desc: "Rápido e econômico." },
-    ],
-    capabilities: ["Chat e completions", "Visão (imagens)", "Function calling", "Contexto de 200K tokens"],
-  },
-  Gemini: {
-    models: [
-      { value: "gemini-3.1-pro-preview", label: "Gemini 3.1 Pro", desc: "Raciocínio de próxima geração." },
-      { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro", desc: "Top-tier com raciocínio avançado." },
-      { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash", desc: "Rápido e equilibrado." },
-      { value: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite", desc: "Mais econômico." },
-    ],
-    capabilities: ["Chat e completions", "Visão (imagens e vídeo)", "Function calling", "Contexto de 1M tokens"],
-  },
-  ElevenLabs: {
-    models: [
-      { value: "eleven_multilingual_v2", label: "Multilingual v2", desc: "Voz multilíngue de alta qualidade." },
-      { value: "eleven_turbo_v2_5", label: "Turbo v2.5", desc: "Baixa latência para tempo real." },
-    ],
-    capabilities: ["Text-to-speech", "Clonagem de voz", "Streaming de áudio"],
-  },
-  DeepSeek: {
-    models: [
-      { value: "deepseek-r1", label: "DeepSeek R1", desc: "Raciocínio avançado open-source." },
-      { value: "deepseek-v3", label: "DeepSeek V3", desc: "Modelo geral de alta performance." },
-    ],
-    capabilities: ["Chat e completions", "Raciocínio avançado", "Geração de código"],
-  },
-};
-
-/* ── Integrations list ── */
-
-const INTEGRATIONS = [
-  { label: "OpenAI", desc: "Modelos GPT para geração de texto e análise.", logo: "https://cdn.simpleicons.org/openai" },
-  { label: "Anthropic", desc: "Modelos Claude para raciocínio avançado.", logo: "https://cdn.simpleicons.org/anthropic" },
-  { label: "Gemini", desc: "IA multimodal do Google.", logo: "https://cdn.simpleicons.org/googlegemini" },
-  { label: "ElevenLabs", desc: "Geração de voz e text-to-speech.", logo: "https://cdn.simpleicons.org/elevenlabs" },
-  { label: "DeepSeek", desc: "Modelos open-source de alto desempenho.", logo: "https://cdn.simpleicons.org/deepseek" },
-  { label: "OpenRouter", desc: "Acesso unificado a múltiplos LLMs.", logo: "https://openrouter.ai/favicon.ico" },
-  { label: "Google Calendar", desc: "Ler e gerenciar eventos.", logo: "https://cdn.simpleicons.org/googlecalendar" },
-  { label: "Google Sheets", desc: "Ler e escrever planilhas.", logo: "https://cdn.simpleicons.org/googlesheets" },
-  { label: "Google Drive", desc: "Ler, enviar e gerenciar arquivos.", logo: "https://cdn.simpleicons.org/googledrive" },
-  { label: "Calendly", desc: "Agendamento automático.", logo: "https://cdn.simpleicons.org/calendly" },
-  { label: "Outlook Calendar", desc: "Gerenciar calendário Microsoft.", logo: "https://cdn.simpleicons.org/microsoftoutlook" },
-  { label: "Piperun", desc: "CRM de vendas e automação.", logo: "https://www.piperun.com/wp-content/uploads/2023/07/favicon-piperun-crm.png" },
-  { label: "HubSpot", desc: "CRM, marketing e vendas.", logo: "https://cdn.simpleicons.org/hubspot" },
-  { label: "RD Station", desc: "Automação de marketing e CRM.", logo: "https://cdn.simpleicons.org/rdstation" },
-];
-
-/* ── Channels ── */
-
-const CHANNELS = [
-  { value: "whatsapp", label: "WhatsApp", logo: "https://cdn.simpleicons.org/whatsapp" },
-  { value: "instagram", label: "Instagram", logo: "https://cdn.simpleicons.org/instagram" },
-  { value: "facebook", label: "Facebook", logo: "https://cdn.simpleicons.org/facebook" },
-  { value: "linkedin", label: "LinkedIn", logo: "https://cdn.simpleicons.org/linkedin" },
-  { value: "tiktok", label: "TikTok", logo: "https://cdn.simpleicons.org/tiktok" },
-  { value: "website", label: "WebSite", logo: "" },
-];
-
-/* ── Settings nav ── */
-
-const SETTINGS_NAV = [
-  { section: "AGENTE", items: [
-    { key: "general", icon: User, label: "Identidade" },
-    { key: "objective", icon: Zap, label: "Objetivo" },
-    { key: "instructions", icon: Settings2, label: "Instruções" },
-    { key: "files_nav", icon: FileText, label: "Arquivos" },
-  ]},
-];
+import type { AgentType } from "@/types/agent-builder";
+import { AGENT_PRESETS } from "@/types/agent-presets";
 
 /* ── Types ── */
 
-export interface ApiConfig {
-  temperature: number;
-  maxTokens: number;
-  topP: number;
-  frequencyPenalty: number;
-  presencePenalty: number;
-  responseFormat: "text" | "json";
-  stopSequences: string[];
+type Msg = { role: "user" | "assistant"; content: string };
+
+interface ToolLog {
+  label: string;
+  status: "success" | "error";
 }
 
-export const DEFAULT_API_CONFIG: ApiConfig = {
-  temperature: 0.7, maxTokens: 2048, topP: 1,
-  frequencyPenalty: 0, presencePenalty: 0,
-  responseFormat: "text", stopSequences: [],
-};
-
-export interface AgentConfig {
-  name: string;
+export interface StructuredAgentConfig {
+  agent_name: string;
+  agent_type: AgentType;
   description: string;
   objective: string;
+  tone: string;
+  language: string;
+  greeting_message: string;
+  quick_replies: string[];
   instructions: string;
-  toneOfVoice: string;
-  greetingMessage: string;
-  avatarUrl: string;
   channels: string[];
-  integrations: string[];
-  knowledgeFiles: string[];
-  urls: string[];
-  apiConfig: ApiConfig;
 }
 
-interface Props {
-  agent: { name: string; avatar: string };
-  agentType: AgentType;
-  agentModel: string;
-  onModelChange: (model: string) => void;
-  activeTab?: string;
-  onTabChange?: (tab: string) => void;
-  onApiKeysChanged?: () => void | Promise<void>;
-  onConfigChange?: (config: AgentConfig) => void;
-  onSaveAgent?: (config: AgentConfig & { model: string; agentType: string }) => void | Promise<void>;
-  onPublish?: () => void | Promise<void>;
-  canPublish?: boolean;
-  isSaving?: boolean;
-  storagePrefix?: string;
-  savedConfig?: Record<string, any> | null;
-  fieldUpdates?: Record<string, string>;
-  onDeleteAgent?: () => void | Promise<void>;
-}
+/* ── Constants ── */
 
-interface KnowledgeFileLocal {
-  id: string; name: string; size: number; type: string;
-}
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/app-chat`;
 
-const PROVIDER_MAP: Record<string, string> = {
-  "OpenAI": "openai", "Anthropic": "anthropic", "Gemini": "gemini",
-  "ElevenLabs": "elevenlabs", "OpenRouter": "openrouter", "DeepSeek": "deepseek",
-  "Google Calendar": "google_calendar", "Outlook Calendar": "outlook_calendar",
-  "Calendly": "calendly", "Google Sheets": "google_sheets", "Google Drive": "google_drive",
-  "Piperun": "piperun", "HubSpot": "hubspot", "RD Station": "rdstation",
+const STEP_LABELS = [
+  { id: "discover" as const,  label: "Descrever",    num: 1 },
+  { id: "structure" as const, label: "Personalizar", num: 2 },
+  { id: "build" as const,     label: "Criar",        num: 3 },
+];
+
+const TONE_LABELS: Record<string, string> = {
+  professional_friendly: "Profissional e Amigável",
+  formal:                "Formal",
+  casual:                "Casual e Descontraído",
+  empathetic:            "Empático e Acolhedor",
+  direct:                "Direto e Objetivo",
 };
 
-const AgentRightPanel = ({
-  agent, agentType, agentModel, onModelChange,
-  activeTab, onTabChange, onApiKeysChanged,
-  onConfigChange, onSaveAgent, onPublish, canPublish,
-  isSaving, storagePrefix, savedConfig,
-  fieldUpdates, onDeleteAgent,
-}: Props) => {
-  const [rightTab, setRightTab] = useState(activeTab || "agent");
+const SUGGESTIONS_BY_TYPE: Record<AgentType, string[]> = {
+  SDR: [
+    "Agente que qualifica leads inbound e agenda reuniões com o time comercial",
+    "SDR que coleta nome, empresa e cargo antes de passar para o closer",
+    "Assistente que responde leads em segundos e aplica critérios BANT",
+    "Bot de qualificação que envia material e agenda demo automaticamente",
+  ],
+  BDR: [
+    "Agente de prospecção outbound para empresas de tecnologia",
+    "BDR que pesquisa empresas-alvo e envia mensagens personalizadas",
+    "Assistente que aborda decisores no LinkedIn com contexto da empresa",
+    "Bot de cold outreach que qualifica e agenda reuniões com C-level",
+  ],
+  SAC: [
+    "Agente de suporte que resolve dúvidas e abre chamados automaticamente",
+    "Atendente que resolve problemas técnicos e coleta feedback de satisfação",
+    "SAC que responde 24/7 e escala para humano quando necessário",
+    "Assistente de suporte que consulta status de pedidos e resolve reclamações",
+  ],
+  CS: [
+    "Agente de customer success que acompanha onboarding de novos clientes",
+    "CS que faz check-in mensal e identifica riscos de churn",
+    "Assistente que guia o cliente nos primeiros 30 dias de uso",
+    "Bot de NPS que coleta feedback e aciona retenção proativamente",
+  ],
+  Custom: [
+    "Assistente virtual para atendimento ao cliente no WhatsApp",
+    "Agente de vendas consultivo para e-commerce",
+    "Bot de agendamento para clínicas e consultórios",
+    "Assistente de RH para triagem de candidatos",
+  ],
+};
 
-  const relevantToolKeys = TOOLS_BY_AGENT_TYPE[agentType] || TOOLS_BY_AGENT_TYPE["Custom"];
-  const relevantChannelKeys = CHANNELS_BY_AGENT_TYPE[agentType] || CHANNELS_BY_AGENT_TYPE["Custom"];
+/* ── JSON extraction ── */
 
-  const filteredIntegrations = useMemo(() => {
-    const toolLabelMap: Record<string, string[]> = {
-      openai: ["OpenAI"], anthropic: ["Anthropic"], gemini: ["Gemini"],
-      elevenlabs: ["ElevenLabs"], google_calendar: ["Google Calendar"],
-      outlook: ["Outlook Calendar"], piperun: ["Piperun"],
-      rd_station: ["RD Station"], crm_generic: ["HubSpot"], deepseek: ["DeepSeek"],
-    };
-    const allowedLabels = new Set<string>(["OpenRouter"]);
-    relevantToolKeys.forEach(key => (toolLabelMap[key] || []).forEach(l => allowedLabels.add(l)));
-    if (relevantToolKeys.includes("google_calendar")) {
-      ["Google Sheets", "Google Drive", "Calendly"].forEach(l => allowedLabels.add(l));
-    }
-    if (agentType === "Custom") {
-      ["OpenAI", "Anthropic", "Gemini", "ElevenLabs", "DeepSeek"].forEach(l => allowedLabels.add(l));
-    }
-    return INTEGRATIONS.filter(i => allowedLabels.has(i.label));
-  }, [relevantToolKeys, agentType]);
+function extractJson(raw: string): any {
+  let cleaned = raw.replace(/^```(?:json)?\s*\n?/gm, "").replace(/\n?```\s*$/gm, "").trim();
+  cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "");
+  cleaned = cleaned.replace(/,\s*([}\]])/g, "$1");
+  return JSON.parse(cleaned);
+}
 
-  const filteredChannels = useMemo(() => {
-    if (agentType === "Custom") return CHANNELS;
-    return CHANNELS.filter(ch => relevantChannelKeys.includes(ch.value as any));
-  }, [relevantChannelKeys, agentType]);
-
-  // ── Connector keys state ──
-  const [connectorDialog, setConnectorDialog] = useState<null | typeof INTEGRATIONS[0]>(null);
-  const [connectorKeys, setConnectorKeys] = useState<Record<string, { key: string; configured: boolean }>>({});
-  const [keyInput, setKeyInput] = useState("");
-  const [showKey, setShowKey] = useState(false);
-  const [savingKey, setSavingKey] = useState(false);
-  const [selectedDialogModel, setSelectedDialogModel] = useState("");
-  const currentIntegrationConfigured = connectorDialog ? !!connectorKeys[connectorDialog.label]?.configured : false;
-  const shouldShowDialogModels = !!connectorDialog && !!LLM_PROVIDER_MODELS[connectorDialog.label] && currentIntegrationConfigured;
-
-  useEffect(() => {
-    const loadKeys = async () => {
-      const { supabase } = await import("@/integrations/supabase/client");
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data } = await supabase.from("user_api_keys").select("provider, api_key").eq("user_id", user.id);
-      if (data) {
-        const map: Record<string, { key: string; configured: boolean }> = {};
-        data.forEach((row: any) => {
-          const label = Object.entries(PROVIDER_MAP).find(([, v]) => v === row.provider)?.[0] || row.provider;
-          map[label] = { key: row.api_key, configured: true };
-        });
-        setConnectorKeys(map);
-      }
-    };
-    loadKeys();
-  }, []);
-
-  const handleTabChange = (tab: string) => { setRightTab(tab); onTabChange?.(tab); };
-  useEffect(() => { if (activeTab && activeTab !== rightTab) setRightTab(activeTab); }, [activeTab]);
-
-  const handleConnectIntegration = (integration: typeof INTEGRATIONS[0]) => {
-    const existing = connectorKeys[integration.label];
-    setKeyInput(existing?.configured ? existing.key : "");
-    setShowKey(false);
-    setSelectedDialogModel(LLM_PROVIDER_MODELS[integration.label]?.models[0]?.value || "");
-    setConnectorDialog(integration);
+function validateAgentConfig(obj: any): StructuredAgentConfig | null {
+  const cfg = obj?.agent_config || obj;
+  if (!cfg?.agent_name && !cfg?.greeting_message) return null;
+  return {
+    agent_name:       cfg.agent_name       || "Meu Agente",
+    agent_type:       cfg.agent_type       || "Custom",
+    description:      cfg.description      || "",
+    objective:        cfg.objective        || "",
+    tone:             cfg.tone             || "professional_friendly",
+    language:         cfg.language         || "pt-BR",
+    greeting_message: cfg.greeting_message || "Olá! Como posso te ajudar?",
+    quick_replies:    cfg.quick_replies    || [],
+    instructions:     cfg.instructions    || "",
+    channels:         cfg.channels         || [],
   };
+}
 
-  const handleSaveKey = async () => {
-    if (!connectorDialog || !keyInput.trim()) return;
-    setSavingKey(true);
-    try {
-      const { supabase } = await import("@/integrations/supabase/client");
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { toast.error("Faça login para salvar chaves."); return; }
-      const provider = PROVIDER_MAP[connectorDialog.label] || connectorDialog.label.toLowerCase();
-      const { error } = await supabase.from("user_api_keys")
-        .upsert({ user_id: user.id, provider, api_key: keyInput.trim() }, { onConflict: "user_id,provider" });
-      if (error) { toast.error("Erro ao salvar chave."); return; }
-      setConnectorKeys(prev => ({ ...prev, [connectorDialog.label]: { key: keyInput.trim(), configured: true } }));
-      await onApiKeysChanged?.();
-      if (selectedDialogModel && LLM_PROVIDER_MODELS[connectorDialog.label]) onModelChange(selectedDialogModel);
-      setConnectorDialog(null);
-      setKeyInput("");
-      toast.success(`${connectorDialog.label} conectado com sucesso!`);
-    } finally { setSavingKey(false); }
-  };
+/* ── API calls ── */
 
-  const handleDisconnect = async () => {
-    if (!connectorDialog) return;
-    setSavingKey(true);
-    try {
-      const { supabase } = await import("@/integrations/supabase/client");
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const provider = PROVIDER_MAP[connectorDialog.label] || connectorDialog.label.toLowerCase();
-      await supabase.from("user_api_keys").delete().eq("user_id", user.id).eq("provider", provider);
-      setConnectorKeys(prev => { const next = { ...prev }; delete next[connectorDialog.label]; return next; });
-      await onApiKeysChanged?.();
-      setConnectorDialog(null);
-      setKeyInput("");
-      toast.success(`${connectorDialog.label} desconectado.`);
-    } finally { setSavingKey(false); }
-  };
-
-  // ── Agent fields state ──
-  const [settingsNav, setSettingsNav] = useState("general");
-  const resolveInitial = (key: string, fromSaved?: string): string => {
-    if (fromSaved) return fromSaved;
-    if (storagePrefix) { try { const v = localStorage.getItem(`${storagePrefix}-${key}`); if (v) return v; } catch {} }
-    return "";
-  };
-
-  const [agentName, setAgentName] = useState(() => resolveInitial("name", savedConfig?.name) || agent.name || "");
-  const [agentDesc, setAgentDesc] = useState(() => resolveInitial("desc", savedConfig?.objective));
-  const [agentObjective, setAgentObjective] = useState(() => resolveInitial("objective", savedConfig?.objective));
-  const [agentInstructions, setAgentInstructions] = useState(() => resolveInitial("instructions", savedConfig?.instructions));
-  const [agentToneOfVoice, setAgentToneOfVoice] = useState(() => resolveInitial("toneOfVoice", savedConfig?.toneOfVoice));
-  const [agentGreetingMessage, setAgentGreetingMessage] = useState(() => resolveInitial("greetingMessage", savedConfig?.greetingMessage));
-  const [knowledgeFiles, setKnowledgeFiles] = useState<KnowledgeFileLocal[]>(() => {
-    if (savedConfig?.knowledgeFiles?.length) return savedConfig.knowledgeFiles.map((n: string, i: number) => ({ id: String(i), name: n, size: 0, type: "" }));
-    return [];
+async function requestAgentStructure(
+  description: string,
+  agentType: AgentType,
+  language: string,
+): Promise<StructuredAgentConfig | null> {
+  const resp = await fetch(CHAT_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+    },
+    body: JSON.stringify({
+      messages: [{ role: "user", content: description }],
+      appContext: { app_type: "agent", agent_type: agentType, language },
+      mode: "structure",
+    }),
   });
-  const [urlInput, setUrlInput] = useState("");
-  const [urls, setUrls] = useState<string[]>(() => savedConfig?.urls?.length ? savedConfig.urls : []);
-  const [connectedChannels, setConnectedChannels] = useState<string[]>(() => savedConfig?.channels?.length ? savedConfig.channels : []);
-  const [apiConfig, setApiConfig] = useState<ApiConfig>(() =>
-    savedConfig?.apiConfig ? { ...DEFAULT_API_CONFIG, ...savedConfig.apiConfig } : DEFAULT_API_CONFIG
-  );
+  if (!resp.ok) return null;
+  const data = await resp.json();
+  try {
+    // Try structuredConfig first, then agentConfig, then raw
+    const raw = data.structuredConfig
+      ? (typeof data.structuredConfig === "string" ? extractJson(data.structuredConfig) : data.structuredConfig)
+      : data.agentConfig
+        ? (typeof data.agentConfig === "string" ? extractJson(data.agentConfig) : data.agentConfig)
+        : data;
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const avatarInputRef = useRef<HTMLInputElement>(null);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(() => savedConfig?.avatarUrl || null);
-
-  // ── Apply fieldUpdates from chat ──
-  useEffect(() => {
-    if (!fieldUpdates) return;
-    const map: Record<string, (v: string) => void> = {
-      name: setAgentName,
-      description: setAgentDesc,
-      objective: setAgentObjective,
-      instructions: setAgentInstructions,
-      toneOfVoice: setAgentToneOfVoice,
-      greetingMessage: setAgentGreetingMessage,
+    // Map app-chat structure response to agent config
+    const mapped: StructuredAgentConfig = {
+      agent_name:       raw.app_name || raw.agent_name || "Meu Agente",
+      agent_type:       agentType,
+      description:      raw.app_description || raw.description || description.slice(0, 200),
+      objective:        raw.app_description || raw.objective || "",
+      tone:             raw.tone || "professional_friendly",
+      language:         raw.language || language,
+      greeting_message: raw.intro_message || raw.greeting_message || `Olá! Sou seu agente ${agentType}. Como posso ajudar?`,
+      quick_replies:    raw.quick_replies || [],
+      instructions:     raw.instructions || "",
+      channels:         raw.channels || [],
     };
-    Object.entries(fieldUpdates).forEach(([field, value]) => {
-      if (field === "channels") {
-        const chs = value.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
-        setConnectedChannels(prev => {
-          const next = new Set([...prev, ...chs]);
-          return Array.from(next);
-        });
-      } else if (map[field]) {
-        map[field](value);
-      }
-    });
-  }, [fieldUpdates]);
+    return validateAgentConfig(mapped);
+  } catch {
+    return null;
+  }
+}
 
-  // ── Emit config to parent ──
-  useEffect(() => {
-    onConfigChange?.({
-      name: agentName,
-      description: agentDesc,
-      objective: agentObjective,
-      instructions: agentInstructions,
-      toneOfVoice: agentToneOfVoice,
-      greetingMessage: agentGreetingMessage,
-      avatarUrl: avatarPreview || agent.avatar || "",
-      channels: connectedChannels,
-      integrations: Object.entries(connectorKeys).filter(([, v]) => v.configured).map(([k]) => k),
-      knowledgeFiles: knowledgeFiles.map(f => f.name),
-      urls,
-      apiConfig,
-    });
-  }, [agentName, agentDesc, agentObjective, agentInstructions, agentToneOfVoice, agentGreetingMessage, avatarPreview, connectedChannels, connectorKeys, knowledgeFiles, urls, apiConfig]);
+async function requestAgentBuild(
+  config: StructuredAgentConfig,
+  agentType: AgentType,
+): Promise<{ summary: string; error?: string }> {
+  const contextPrompt = `Crie um agente de IA do tipo ${agentType} chamado "${config.agent_name}".
+Descrição: ${config.description}
+Objetivo: ${config.objective}
+Tom: ${TONE_LABELS[config.tone] || config.tone}
+Idioma: ${config.language}
+Mensagem de saudação: ${config.greeting_message}
+Instruções: ${config.instructions}
+Canais: ${config.channels.join(", ")}`;
 
-  // ── Helpers ──
-  const handleFiles = (files: FileList) => {
-    const newFiles: KnowledgeFileLocal[] = Array.from(files)
-      .filter(f => f.size <= 10 * 1024 * 1024)
-      .map(f => ({ id: crypto.randomUUID(), name: f.name, size: f.size, type: f.type }));
-    setKnowledgeFiles(prev => [...prev, ...newFiles]);
+  const appContext: Record<string, string> = {
+    app_type:    "agent",
+    agent_type:  agentType,
+    app_name:    config.agent_name,
+    app_description: config.description,
+    tone:        config.tone,
+    language:    config.language,
+    intro_message: config.greeting_message,
+    is_patch:    "false",
   };
 
-  const getFileIcon = (type: string) => {
-    if (type.startsWith("image/")) return <Image className="w-4 h-4 text-primary shrink-0" />;
-    if (type === "application/pdf") return <FileText className="w-4 h-4 text-destructive shrink-0" />;
-    return <File className="w-4 h-4 text-muted-foreground shrink-0" />;
-  };
-
-  const formatSize = (bytes: number) => {
-    if (bytes === 0) return "";
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
-
-  const addUrl = () => {
-    if (urlInput.trim() && !urls.includes(urlInput.trim())) {
-      setUrls([...urls, urlInput.trim()]);
-      setUrlInput("");
-    }
-  };
-
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => setAvatarPreview(ev.target?.result as string);
-    reader.readAsDataURL(file);
-    try {
-      const { supabase } = await import("@/integrations/supabase/client");
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const ext = file.name.split(".").pop() || "png";
-      const path = `${user.id}/agent-avatar-${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from("agent-avatars").upload(path, file, { upsert: true });
-      if (error) { toast.error("Erro ao enviar imagem."); return; }
-      const { data: urlData } = supabase.storage.from("agent-avatars").getPublicUrl(path);
-      if (urlData?.publicUrl) { setAvatarPreview(urlData.publicUrl); toast.success("Avatar atualizado!"); }
-    } catch { toast.error("Erro ao enviar avatar."); }
-  };
-
-  const toggleChannel = (value: string) => {
-    setConnectedChannels(prev => prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]);
-  };
-
-  const buildSavePayload = () => ({
-    name: agentName, description: agentDesc, objective: agentObjective,
-    instructions: agentInstructions, toneOfVoice: agentToneOfVoice,
-    greetingMessage: agentGreetingMessage, avatarUrl: avatarPreview || agent.avatar || "",
-    channels: connectedChannels,
-    integrations: Object.entries(connectorKeys).filter(([, v]) => v.configured).map(([k]) => k),
-    knowledgeFiles: knowledgeFiles.map(f => f.name), urls, apiConfig,
-    model: agentModel, agentType,
+  const resp = await fetch(CHAT_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+    },
+    body: JSON.stringify({
+      messages: [{ role: "user", content: contextPrompt }],
+      appContext,
+      mode: "build",
+    }),
   });
 
-  // ── Model Section ──
-  const ModelSection = () => {
-    const llmProviders = ["OpenAI", "Anthropic", "Gemini"];
-    return (
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-lg font-bold text-foreground">Modelo de IA</h2>
-          <p className="text-sm text-muted-foreground mt-1">Escolha o modelo que este agente usará.</p>
+  if (resp.status === 429) return { summary: "", error: "Limite de requisições excedido." };
+  if (resp.status === 402) return { summary: "", error: "Créditos insuficientes." };
+  if (!resp.ok) return { summary: "", error: "Erro no serviço de IA" };
+
+  const data = await resp.json();
+  if (data.error) return { summary: "", error: data.error };
+
+  const summary = data.chatSummary || data.chat_summary || "";
+  return { summary };
+}
+
+/* ── Component ── */
+
+export interface AgentChatPanelProps {
+  onBack: () => void;
+  agentType: AgentType;
+  agentName: string;
+  agentAvatar: string;
+  // Wizard state — lifted to parent
+  wizardStep: "discover" | "structure" | "build" | "done";
+  setWizardStep: (s: "discover" | "structure" | "build" | "done") => void;
+  structuredConfig: StructuredAgentConfig | null;
+  setStructuredConfig: (c: StructuredAgentConfig | null) => void;
+  // Chat mode
+  chatMode: "setup" | "test";
+  setChatMode: (m: "setup" | "test") => void;
+  // API keys
+  hasApiKey: boolean;
+  hasAnyLLMKey: boolean;
+  keysLoading: boolean;
+  currentProvider: string;
+  agentModel: string;
+  availableModels: { value: string; label: string; provider: string }[];
+  setupModel: string;
+  setSetupModel: (m: string) => void;
+  setAgentModel: (m: string) => void;
+  gatewayModels: { value: string; label: string }[];
+  onGoToIntegrations: () => void;
+  // Callbacks
+  onConfigStructured: (config: StructuredAgentConfig) => void;
+  onAgentCreated: (config: StructuredAgentConfig) => Promise<void>;
+  // Messages
+  messages: { role: "user" | "agent"; text: string }[];
+  sendMessage: (text: string) => void;
+  isStreaming: boolean;
+}
+
+const AgentChatPanel = ({
+  onBack, agentType, agentName, agentAvatar,
+  wizardStep, setWizardStep, structuredConfig, setStructuredConfig,
+  chatMode, setChatMode,
+  hasApiKey, hasAnyLLMKey, keysLoading, currentProvider,
+  agentModel, availableModels, setupModel, setSetupModel, setAgentModel,
+  gatewayModels, onGoToIntegrations,
+  onConfigStructured, onAgentCreated,
+  messages, sendMessage, isStreaming,
+}: AgentChatPanelProps) => {
+
+  const [input,          setInput]          = useState("");
+  const [isLoading,      setIsLoading]      = useState(false);
+  const [toolsUsed,      setToolsUsed]      = useState(0);
+  const [toolsExpanded,  setToolsExpanded]  = useState(true);
+  const [toolLogs,       setToolLogs]       = useState<ToolLog[]>([]);
+  const [structuring,    setStructuring]    = useState(false);
+  const [building,       setBuilding]       = useState(false);
+  const [editingConfig,  setEditingConfig]  = useState(false);
+  const [prompt,         setPrompt]         = useState("");
+  const [companyName,    setCompanyName]    = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const isEmpty = messages.length === 0 && wizardStep === "discover";
+  const suggestions = SUGGESTIONS_BY_TYPE[agentType] || SUGGESTIONS_BY_TYPE["Custom"];
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages, structuring, building]);
+
+  /* ── Step 1 → Step 2: Estruturar ── */
+
+  const handleDiscover = () => {
+    if (prompt.length < 10) {
+      toast.error("Descreva com pelo menos 10 caracteres.");
+      return;
+    }
+    handleStructure(prompt);
+  };
+
+  const handleStructure = async (description: string) => {
+    setWizardStep("structure");
+    setStructuring(true);
+    setToolsUsed(p => p + 1);
+    setToolLogs(prev => [...prev, { label: "Analisando descrição do agente...", status: "success" }]);
+
+    const result = await requestAgentStructure(
+      companyName ? `Empresa: ${companyName}. ${description}` : description,
+      agentType,
+      "pt-BR",
+    );
+
+    if (result) {
+      setStructuredConfig(result);
+      onConfigStructured(result);
+      setToolLogs(prev => [...prev, { label: `Agente "${result.agent_name}" estruturado`, status: "success" }]);
+    } else {
+      toast.error("Erro ao estruturar. Tente novamente.");
+      setWizardStep("discover");
+      setToolLogs(prev => [...prev, { label: "Erro ao estruturar agente", status: "error" }]);
+    }
+    setStructuring(false);
+  };
+
+  /* ── Step 2 → Step 3: Construir ── */
+
+  const handleBuild = async () => {
+    if (!structuredConfig) return;
+    setWizardStep("build");
+    setBuilding(true);
+    setToolsUsed(p => p + 1);
+    setToolLogs(prev => [...prev, { label: `Criando agente "${structuredConfig.agent_name}"...`, status: "success" }]);
+
+    const { summary, error } = await requestAgentBuild(structuredConfig, agentType);
+
+    if (error) {
+      toast.error(error);
+      setToolLogs(prev => [...prev, { label: error, status: "error" }]);
+      setWizardStep("structure");
+      setBuilding(false);
+      return;
+    }
+
+    // Salvar agente
+    await onAgentCreated(structuredConfig);
+
+    setToolLogs(prev => [
+      ...prev,
+      { label: "Configuração salva com sucesso", status: "success" },
+      { label: "Pronto para testar", status: "success" },
+    ]);
+
+    setBuilding(false);
+    setWizardStep("done");
+    setChatMode("test");
+
+    toast.success(`✅ Agente "${structuredConfig.agent_name}" criado com sucesso!`);
+  };
+
+  /* ── Patch mode (após done) ── */
+
+  const handleSend = () => {
+    if (!input.trim() || isStreaming || isLoading) return;
+    const text = input.trim();
+    setInput("");
+    sendMessage(text);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (wizardStep === "done") handleSend();
+    }
+  };
+
+  const canSend = chatMode === "setup"
+    ? wizardStep === "done"
+    : !keysLoading && hasApiKey;
+
+  return (
+    <div className="w-full max-w-[55%] min-w-[360px] border-r border-border flex flex-col bg-card/20">
+
+      {/* ── Header ── */}
+      <div className="h-12 border-b border-border flex items-center justify-between px-4 shrink-0">
+        <div className="flex items-center gap-2.5">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onBack}>
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <img src={agentAvatar} alt={agentName} className="w-6 h-6 rounded-full object-cover" />
+          <span className="text-sm font-semibold tracking-tight">{agentName}</span>
+          <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{agentType}</span>
         </div>
-        {llmProviders.map(provider => {
-          const isConnected = connectorKeys[provider]?.configured;
-          const models = LLM_PROVIDER_MODELS[provider]?.models || [];
-          return (
-            <div key={provider} className="rounded-lg border border-border p-3 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-foreground">{provider}</span>
-                {isConnected ? (
-                  <span className="text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full flex items-center gap-1">
-                    <Check className="w-2.5 h-2.5" /> Conectado
-                  </span>
-                ) : (
-                  <Button variant="ghost" size="sm" className="text-xs" onClick={() => {
-                    const integ = INTEGRATIONS.find(i => i.label === provider);
-                    if (integ) handleConnectIntegration(integ);
-                  }}>
-                    Conectar
-                  </Button>
-                )}
+
+        {/* Mode toggle — só aparece após wizard concluído */}
+        {wizardStep === "done" && (
+          <div className="flex items-center gap-1">
+            <Button
+              variant={chatMode === "setup" ? "default" : "ghost"}
+              size="sm" className="text-xs gap-1 h-7"
+              onClick={() => setChatMode("setup")}
+            >
+              <Bot className="w-3 h-3" /> Configurar
+            </Button>
+            <Button
+              variant={chatMode === "test" ? "default" : "ghost"}
+              size="sm" className="text-xs gap-1 h-7"
+              onClick={() => setChatMode("test")}
+            >
+              <TestTube className="w-3 h-3" /> Testar
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* ── Stepper — só durante o wizard ── */}
+      {wizardStep !== "done" && (
+        <div className="px-4 py-2.5 border-b border-border bg-card/30">
+          <div className="flex items-center gap-1">
+            {STEP_LABELS.map((s, i) => {
+              const order   = ["discover", "structure", "build"];
+              const currIdx = order.indexOf(wizardStep);
+              const thisIdx = order.indexOf(s.id);
+              const isDone  = thisIdx < currIdx;
+              const isActive = s.id === wizardStep;
+              return (
+                <div key={s.id} className="flex items-center flex-1 last:flex-none">
+                  <div className="flex items-center gap-1.5">
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold transition-all ${
+                      isDone || isActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                    }`}>
+                      {isDone ? <Check className="w-3 h-3" /> : s.num}
+                    </div>
+                    <span className={`text-[10px] font-medium ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
+                      {s.label}
+                    </span>
+                  </div>
+                  {i < STEP_LABELS.length - 1 && (
+                    <div className={`flex-1 h-px mx-2 ${isDone ? "bg-primary" : "bg-border"}`} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Mode badge — após wizard concluído ── */}
+      {wizardStep === "done" && (
+        <div className="px-4 py-1.5 border-b border-border bg-muted/30 flex items-center gap-2">
+          {chatMode === "setup" ? (
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Bot className="w-3 h-3 text-primary" />
+              Assistente de configuração — modelo gratuito
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <TestTube className="w-3 h-3 text-primary" />
+              Modo Teste — {hasApiKey
+                ? (availableModels.find(m => m.value === agentModel)?.label || agentModel)
+                : "Configure sua chave de API"}
+              <span className={`w-1.5 h-1.5 rounded-full ${hasApiKey ? "bg-emerald-500" : "bg-destructive"}`} />
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* ── Tool logs ── */}
+      {toolsUsed > 0 && wizardStep !== "done" && (
+        <div className="px-3 py-2">
+          <button
+            onClick={() => setToolsExpanded(!toolsExpanded)}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors bg-muted/30 rounded-lg px-2.5 py-1.5 w-full"
+          >
+            <Wrench className="w-3 h-3" />
+            <span>{toolsUsed} ações</span>
+            {toolsExpanded ? <ChevronUp className="w-3 h-3 ml-auto" /> : <ChevronDown className="w-3 h-3 ml-auto" />}
+          </button>
+          {toolsExpanded && toolLogs.length > 0 && (
+            <div className="mt-1.5 space-y-0.5 pl-1">
+              {toolLogs.slice(-6).map((log, i) => (
+                <div key={i} className="flex items-center gap-1.5 text-[11px]">
+                  {log.status === "success"
+                    ? <CheckCircle2 className="w-3 h-3 text-green-500 shrink-0" />
+                    : <AlertCircle  className="w-3 h-3 text-destructive shrink-0" />}
+                  <span className="text-muted-foreground truncate">{log.label}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Main area ── */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
+
+        {/* ══ Step 1: Discover ══ */}
+        {wizardStep === "discover" && isEmpty && (
+          <div className="flex flex-col items-center justify-center h-full pt-8">
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+              <Sparkles className="w-6 h-6 text-primary" />
+            </div>
+            <h2 className="text-base font-semibold text-foreground mb-1">Descreva seu agente</h2>
+            <p className="text-xs text-muted-foreground text-center max-w-[280px] mb-6">
+              Conte o que seu agente {agentType} deve fazer. A IA vai estruturar tudo automaticamente.
+            </p>
+
+            <div className="w-full max-w-[340px] space-y-3">
+              <Input
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                placeholder="Nome da empresa (opcional)"
+                className="h-9 text-xs bg-card/50"
+              />
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder={suggestions[0]}
+                className="w-full bg-card/50 border border-border rounded-lg outline-none resize-none text-xs text-foreground placeholder:text-muted-foreground px-3 py-2.5 min-h-[100px] focus:border-primary/30 transition-colors"
+              />
+              <Button
+                onClick={handleDiscover}
+                disabled={prompt.length < 10}
+                className="w-full gap-2 h-9 text-xs rounded-lg"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Estruturar com IA
+              </Button>
+            </div>
+
+            <div className="mt-6 w-full max-w-[340px]">
+              <p className="text-[10px] text-muted-foreground mb-2 text-center">ou comece com uma ideia:</p>
+              <div className="space-y-1.5">
+                {suggestions.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setPrompt(s)}
+                    className="w-full text-left text-[11px] px-3 py-2 rounded-lg border border-border hover:border-primary/30 hover:bg-accent/20 text-muted-foreground hover:text-foreground transition-all"
+                  >
+                    {s}
+                  </button>
+                ))}
               </div>
-              {isConnected && (
-                <Select value={models.some(m => m.value === agentModel) ? agentModel : ""} onValueChange={onModelChange}>
-                  <SelectTrigger className="text-xs h-8"><SelectValue placeholder="Selecione um modelo" /></SelectTrigger>
-                  <SelectContent>
-                    {models.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+            </div>
+          </div>
+        )}
+
+        {/* Mensagens do chat (modo done) */}
+        {messages.map((m, i) => {
+          if (m.role === "agent" && !m.text) return null;
+          return (
+            <div key={i}>
+              {m.role === "user" ? (
+                <div className="flex justify-end">
+                  <div className="bg-primary/10 border border-primary/20 rounded-2xl rounded-br-sm px-4 py-2.5 max-w-[90%] text-sm">
+                    <p className="whitespace-pre-wrap text-foreground">{m.text}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex gap-2.5">
+                  <img src={agentAvatar} alt="" className="w-6 h-6 rounded-full object-cover shrink-0 mt-0.5" />
+                  <div className="text-sm leading-relaxed text-foreground flex-1 min-w-0">
+                    <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:mb-2 [&_strong]:text-foreground [&_h2]:text-sm [&_h3]:text-sm">
+                      <ReactMarkdown>{m.text}</ReactMarkdown>
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
           );
         })}
-      </div>
-    );
-  };
 
-  return (
-    <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-      {/* ── Save + Publish buttons in top bar ── */}
-      <div className="h-12 border-b border-border flex items-center justify-end px-4 gap-2 shrink-0">
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-1.5 text-xs h-8"
-          disabled={!agentName.trim() || isSaving}
-          onClick={() => onSaveAgent?.(buildSavePayload())}
-        >
-          {isSaving ? "Salvando..." : "💾 Salvar"}
-        </Button>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span>
-                <Button
-                  size="sm"
-                  className="gap-1.5 text-xs h-8"
-                  disabled={!canPublish || isSaving}
-                  onClick={() => onPublish?.()}
-                >
-                  <Rocket className="w-3.5 h-3.5" />
-                  {isSaving ? "Publicando..." : "Publicar"}
-                </Button>
-              </span>
-            </TooltipTrigger>
-            {!canPublish && (
-              <TooltipContent>
-                <p className="text-xs">
-                  {!agentName.trim() ? "Dê um nome ao agente para publicar" : "Configure uma API key em Integrações para publicar"}
-                </p>
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
-      </div>
+        {/* ══ Step 2: Structuring loader ══ */}
+        {structuring && (
+          <div className="flex items-center gap-3 bg-card/50 border border-border rounded-xl p-4">
+            <Loader2 className="w-5 h-5 text-primary animate-spin" />
+            <div>
+              <p className="text-xs font-medium text-foreground">Estruturando com IA...</p>
+              <p className="text-[10px] text-muted-foreground">Analisando descrição e definindo configuração do agente</p>
+            </div>
+          </div>
+        )}
 
-      <Tabs value={rightTab} onValueChange={handleTabChange} className="flex flex-col flex-1 min-h-0">
-        <div className="border-b border-border px-2">
-          <TabsList className="bg-transparent h-11 gap-0 p-0">
-            {[
-              { value: "agent", label: "Agente" },
-              { value: "connectors", label: "Integrações" },
-              { value: "channels", label: "Canais" },
-              { value: "advanced", label: "Avançado" },
-              { value: "danger", label: "Danger Zone" },
-            ].map((tab) => (
-              <TabsTrigger
-                key={tab.value}
-                value={tab.value}
-                className={`rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-3 text-xs ${tab.value === "danger" ? "data-[state=active]:text-destructive data-[state=active]:border-destructive" : ""}`}
-              >
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </div>
-
-        {/* ── Agente Tab ── */}
-        <TabsContent value="agent" className="flex-1 mt-0 min-h-0 overflow-hidden">
-          <div className="flex h-full max-h-[calc(100vh-160px)]">
-            <div className="w-48 border-r border-border p-4 space-y-4 shrink-0">
-              {SETTINGS_NAV.map((section) => (
-                <div key={section.section}>
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">{section.section}</p>
-                  <div className="space-y-0.5">
-                    {section.items.map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <button
-                          key={item.key}
-                          onClick={() => setSettingsNav(item.key)}
-                          className={`w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-                            settingsNav === item.key ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                          }`}
-                        >
-                          <Icon className="w-4 h-4" />
-                          {item.label}
-                        </button>
-                      );
-                    })}
-                  </div>
+        {/* ══ Step 2: Config card ══ */}
+        {wizardStep === "structure" && structuredConfig && !structuring && (
+          <div className="bg-card/50 border border-border rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded-full bg-primary/15 flex items-center justify-center">
+                  <Check className="w-3 h-3 text-primary" />
                 </div>
-              ))}
+                <h3 className="text-xs font-semibold text-foreground">Configuração Estruturada</h3>
+              </div>
+              <button
+                onClick={() => setEditingConfig(!editingConfig)}
+                className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+              >
+                <Pencil className="w-3 h-3" />
+                {editingConfig ? "Fechar" : "Editar"}
+              </button>
             </div>
 
-            <ScrollArea className="flex-1">
-              <div className="p-6 max-w-lg space-y-8">
-                {/* Identidade */}
-                {settingsNav === "general" && (
-                  <>
-                    <div>
-                      <h2 className="text-lg font-bold text-foreground">Identidade</h2>
-                      <p className="text-sm text-muted-foreground mt-1">Identidade e propósito do agente.</p>
-                    </div>
-                    <div className="space-y-2">
-                      <h3 className="text-sm font-semibold text-foreground">Avatar</h3>
-                      <div className="flex items-center gap-4">
-                        <div
-                          className="w-16 h-16 rounded-full bg-muted border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors overflow-hidden"
-                          onClick={() => avatarInputRef.current?.click()}
-                        >
-                          {avatarPreview ? (
-                            <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
-                          ) : agent.avatar ? (
-                            <img src={agent.avatar} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <Camera className="w-6 h-6 text-muted-foreground" />
-                          )}
-                        </div>
-                        <Button variant="outline" size="sm" onClick={() => avatarInputRef.current?.click()} className="text-xs">Enviar foto</Button>
-                        <input ref={avatarInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleAvatarChange} />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <h3 className="text-sm font-semibold text-foreground">Nome do agente</h3>
-                      <Input value={agentName} onChange={(e) => setAgentName(e.target.value)} className="text-sm" />
-                    </div>
-                    <div className="space-y-2">
-                      <h3 className="text-sm font-semibold text-foreground">Cargo / Função</h3>
-                      <Input value={agentDesc} onChange={(e) => setAgentDesc(e.target.value)} placeholder="Ex: Especialista em qualificação de leads" className="text-sm" />
-                    </div>
-                    <div className="space-y-2">
-                      <h3 className="text-sm font-semibold text-foreground">Tom de voz</h3>
-                      <Select value={agentToneOfVoice} onValueChange={setAgentToneOfVoice}>
-                        <SelectTrigger className="text-sm"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Profissional e Amigável">Profissional e Amigável</SelectItem>
-                          <SelectItem value="Formal">Formal</SelectItem>
-                          <SelectItem value="Casual e Descontraído">Casual e Descontraído</SelectItem>
-                          <SelectItem value="Empático e Acolhedor">Empático e Acolhedor</SelectItem>
-                          <SelectItem value="Direto e Objetivo">Direto e Objetivo</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <h3 className="text-sm font-semibold text-foreground">Mensagem de saudação</h3>
-                      <Textarea value={agentGreetingMessage} onChange={(e) => setAgentGreetingMessage(e.target.value)}
-                        placeholder="Ex: Olá! Sou a assistente virtual. Como posso te ajudar?" className="text-sm min-h-[80px]" />
-                    </div>
-                  </>
-                )}
-
-                {/* Objetivo */}
-                {settingsNav === "objective" && (
-                  <div className="space-y-6">
-                    <div>
-                      <h2 className="text-lg font-bold text-foreground">Objetivo</h2>
-                      <p className="text-sm text-muted-foreground mt-1">Defina a missão principal do agente.</p>
-                    </div>
-                    <Textarea value={agentObjective} onChange={(e) => setAgentObjective(e.target.value)}
-                      placeholder="Ex: Qualificar leads e agendar reuniões." className="text-sm min-h-[100px]" />
-                  </div>
-                )}
-
-                {/* Instruções */}
-                {settingsNav === "instructions" && (
-                  <div className="space-y-6">
-                    <div>
-                      <h2 className="text-lg font-bold text-foreground">Instruções</h2>
-                      <p className="text-sm text-muted-foreground mt-1">Regras e comportamento do agente.</p>
-                    </div>
-                    <Textarea value={agentInstructions} onChange={(e) => setAgentInstructions(e.target.value)}
-                      placeholder="Ex: Sempre pergunte o nome antes de agendar." className="text-sm min-h-[140px]" />
-                  </div>
-                )}
-
-                {/* Arquivos (within agent tab) */}
-                {settingsNav === "files_nav" && (
-                  <div className="space-y-6">
-                    <div>
-                      <h2 className="text-lg font-bold text-foreground">Conhecimento</h2>
-                      <p className="text-sm text-muted-foreground mt-1">Fontes de dados para alimentar o agente.</p>
-                    </div>
-                    <div
-                      className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
-                      onClick={() => fileInputRef.current?.click()}
-                      onDragOver={(e) => { e.preventDefault(); }}
-                      onDrop={(e) => { e.preventDefault(); if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); }}
-                    >
-                      <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-                      <p className="text-sm font-medium text-foreground">Arraste arquivos ou clique para enviar</p>
-                      <p className="text-xs text-muted-foreground mt-1">PDFs, documentos, FAQ</p>
-                      <input ref={fileInputRef} type="file" multiple accept=".pdf,.doc,.docx,.txt,.md,.csv" className="hidden"
-                        onChange={(e) => e.target.files && handleFiles(e.target.files)} />
-                    </div>
-                    {knowledgeFiles.length > 0 && (
-                      <div className="space-y-2">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase">Arquivos enviados</p>
-                        {knowledgeFiles.map((f) => (
-                          <div key={f.id} className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2">
-                            {getFileIcon(f.type)}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm text-foreground truncate">{f.name}</p>
-                              {f.size > 0 && <p className="text-[11px] text-muted-foreground">{formatSize(f.size)}</p>}
-                            </div>
-                            <button onClick={() => setKnowledgeFiles(prev => prev.filter(x => x.id !== f.id))} className="text-muted-foreground hover:text-destructive">
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <div className="space-y-3">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase">URLs</p>
-                      <div className="flex gap-2">
-                        <div className="flex-1 relative">
-                          <Link2 className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                          <Input value={urlInput} onChange={(e) => setUrlInput(e.target.value)} placeholder="https://exemplo.com/faq" className="pl-9"
-                            onKeyDown={(e) => e.key === "Enter" && addUrl()} />
-                        </div>
-                        <Button size="sm" onClick={addUrl} disabled={!urlInput.trim()} className="gap-1 shrink-0"><Plus className="w-4 h-4" /></Button>
-                      </div>
-                      {urls.map((url, i) => (
-                        <div key={i} className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2">
-                          <Globe className="w-4 h-4 text-primary shrink-0" />
-                          <p className="text-sm text-foreground truncate flex-1">{url}</p>
-                          <button onClick={() => setUrls(urls.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive"><X className="w-4 h-4" /></button>
-                        </div>
+            {!editingConfig ? (
+              <div className="space-y-2 text-[11px]">
+                <div className="flex justify-between py-1 border-b border-border/50">
+                  <span className="text-muted-foreground">Nome</span>
+                  <span className="font-medium text-foreground">{structuredConfig.agent_name}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-border/50">
+                  <span className="text-muted-foreground">Tipo</span>
+                  <span className="font-medium text-foreground">{structuredConfig.agent_type}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-border/50">
+                  <span className="text-muted-foreground">Tom</span>
+                  <span className="font-medium text-foreground">{TONE_LABELS[structuredConfig.tone] || structuredConfig.tone}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-border/50">
+                  <span className="text-muted-foreground">Idioma</span>
+                  <span className="font-medium text-foreground">{structuredConfig.language}</span>
+                </div>
+                <div className="py-1 border-b border-border/50">
+                  <span className="text-muted-foreground block mb-1">Mensagem de saudação</span>
+                  <span className="text-foreground italic">"{structuredConfig.greeting_message}"</span>
+                </div>
+                {structuredConfig.quick_replies.length > 0 && (
+                  <div className="py-1">
+                    <span className="text-muted-foreground block mb-1">Quick replies</span>
+                    <div className="flex flex-wrap gap-1">
+                      {structuredConfig.quick_replies.map((qr, i) => (
+                        <Badge key={i} variant="secondary" className="text-[9px] px-1.5 py-0.5">{qr}</Badge>
                       ))}
                     </div>
                   </div>
                 )}
               </div>
-            </ScrollArea>
-          </div>
-        </TabsContent>
-
-        {/* ── Integrações ── */}
-        <TabsContent value="connectors" className="flex-1 mt-0 min-h-0 overflow-hidden">
-          <ScrollArea className="h-full max-h-[calc(100vh-160px)]">
-            <div className="p-6 space-y-6">
-              <div>
-                <h2 className="text-lg font-bold text-foreground">Integrações</h2>
-                <p className="text-sm text-muted-foreground mt-1">Conecte integrações para expandir as capacidades do agente.</p>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2"><Blocks className="w-4 h-4 text-primary" /><h3 className="text-sm font-semibold">MCPs</h3></div>
-                <p className="text-xs text-muted-foreground">Conecte servidores MCP para estender o contexto.</p>
-                <Button variant="outline" size="sm" className="text-xs gap-1.5"><Plus className="w-3 h-3" /> Adicionar MCP</Button>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2"><KeyRound className="w-4 h-4 text-primary" /><h3 className="text-sm font-semibold">APIs</h3></div>
-                <div className="space-y-1">
-                  {filteredIntegrations.map((c) => {
-                    const isConnected = connectorKeys[c.label]?.configured;
-                    return (
-                      <div key={c.label} className="flex items-center justify-between py-3 px-3 rounded-lg hover:bg-muted/50 transition-colors">
-                        <div className="flex items-center gap-3">
-                          <img src={c.logo} alt={c.label} className="w-7 h-7 rounded object-contain shrink-0"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-medium text-foreground">{c.label}</p>
-                              {isConnected && (
-                                <span className="flex items-center gap-1 text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
-                                  <Check className="w-2.5 h-2.5" /> Conectado
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-xs text-muted-foreground">{c.desc}</p>
-                          </div>
-                        </div>
-                        <Button variant={isConnected ? "outline" : "ghost"} size="sm"
-                          className={`text-xs gap-1 ${isConnected ? "" : "text-muted-foreground hover:text-foreground"}`}
-                          onClick={() => handleConnectIntegration(c)}>
-                          {isConnected ? <><Settings className="w-3 h-3" /> Gerenciar</> : "+ Conectar"}
-                        </Button>
-                      </div>
-                    );
-                  })}
+            ) : (
+              <div className="space-y-2.5">
+                <div>
+                  <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Nome do agente</label>
+                  <Input
+                    value={structuredConfig.agent_name}
+                    onChange={(e) => setStructuredConfig({ ...structuredConfig, agent_name: e.target.value })}
+                    className="h-7 text-xs bg-background"
+                  />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2"><Webhook className="w-4 h-4 text-primary" /><h3 className="text-sm font-semibold">Webhooks</h3></div>
-                <Button variant="outline" size="sm" className="text-xs gap-1.5"><Plus className="w-3 h-3" /> Adicionar Webhook</Button>
-              </div>
-            </div>
-          </ScrollArea>
-        </TabsContent>
-
-
-        {/* ── Canais (top-level tab) ── */}
-        <TabsContent value="channels" className="flex-1 mt-0 min-h-0 overflow-hidden">
-          <ScrollArea className="h-full max-h-[calc(100vh-160px)]">
-            <div className="p-6 max-w-lg space-y-6">
-              <div>
-                <h2 className="text-lg font-bold text-foreground">Canais</h2>
-                <p className="text-sm text-muted-foreground mt-1">Onde seu agente será publicado.</p>
-              </div>
-              {filteredChannels.map((ch) => {
-                const isSelected = connectedChannels.includes(ch.value);
-                return (
-                  <div key={ch.value} className={`flex items-center gap-4 rounded-xl border-2 p-4 transition-all ${isSelected ? "border-primary bg-primary/5" : "border-border bg-card"}`}>
-                    {ch.logo ? (
-                      <img src={ch.logo} alt={ch.label} className="w-8 h-8 rounded-lg object-contain shrink-0"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                    ) : <Globe className="w-8 h-8 text-primary shrink-0" />}
-                    <span className="text-sm font-semibold text-foreground flex-1">{ch.label}</span>
-                    <Button size="sm" variant={isSelected ? "default" : "outline"} onClick={() => toggleChannel(ch.value)} className="text-xs h-8 gap-1.5">
-                      {isSelected ? <><Check className="w-3 h-3" /> Conectado</> : "Conectar"}
-                    </Button>
+                <div>
+                  <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Tom de voz</label>
+                  <div className="flex flex-wrap gap-1">
+                    {Object.entries(TONE_LABELS).map(([key, label]) => (
+                      <button
+                        key={key}
+                        onClick={() => setStructuredConfig({ ...structuredConfig, tone: key })}
+                        className={`px-2 py-1 rounded-md text-[9px] font-medium border transition-all ${
+                          structuredConfig.tone === key
+                            ? "bg-primary/10 border-primary/30 text-primary"
+                            : "bg-card border-border text-muted-foreground"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
                   </div>
-                );
-              })}
-            </div>
-          </ScrollArea>
-        </TabsContent>
-
-        {/* ── Avançado ── */}
-        <TabsContent value="advanced" className="flex-1 mt-0 min-h-0 overflow-hidden">
-          <ScrollArea className="h-full max-h-[calc(100vh-160px)]">
-            <div className="p-6 max-w-lg space-y-8">
-              <div>
-                <h2 className="text-lg font-bold text-foreground">Configurações da API</h2>
-                <p className="text-sm text-muted-foreground mt-1">Parâmetros avançados do LLM.</p>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium">Temperature</label>
-                  <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">{apiConfig.temperature}</span>
                 </div>
-                <input type="range" min="0" max="2" step="0.1" value={apiConfig.temperature}
-                  onChange={(e) => setApiConfig(prev => ({ ...prev, temperature: parseFloat(e.target.value) }))} className="w-full accent-primary" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Max Tokens</label>
-                <Input type="number" min={1} max={128000} value={apiConfig.maxTokens}
-                  onChange={(e) => setApiConfig(prev => ({ ...prev, maxTokens: parseInt(e.target.value) || 2048 }))} className="text-sm font-mono" />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium">Top P</label>
-                  <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">{apiConfig.topP}</span>
+                <div>
+                  <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Idioma</label>
+                  <div className="flex gap-1">
+                    {[["pt-BR", "🇧🇷 PT"], ["en", "🇺🇸 EN"], ["es", "🇪🇸 ES"]].map(([k, l]) => (
+                      <button
+                        key={k}
+                        onClick={() => setStructuredConfig({ ...structuredConfig, language: k })}
+                        className={`px-2 py-1 rounded-md text-[9px] font-medium border transition-all ${
+                          structuredConfig.language === k
+                            ? "bg-primary/10 border-primary/30 text-primary"
+                            : "bg-card border-border text-muted-foreground"
+                        }`}
+                      >
+                        {l}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <input type="range" min="0" max="1" step="0.05" value={apiConfig.topP}
-                  onChange={(e) => setApiConfig(prev => ({ ...prev, topP: parseFloat(e.target.value) }))} className="w-full accent-primary" />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium">Frequency Penalty</label>
-                  <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">{apiConfig.frequencyPenalty}</span>
+                <div>
+                  <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Mensagem de saudação</label>
+                  <textarea
+                    value={structuredConfig.greeting_message}
+                    onChange={(e) => setStructuredConfig({ ...structuredConfig, greeting_message: e.target.value })}
+                    className="w-full bg-background border border-border rounded-md text-xs px-2 py-1.5 min-h-[60px] resize-none outline-none focus:border-primary/30 transition-colors"
+                  />
                 </div>
-                <input type="range" min="-2" max="2" step="0.1" value={apiConfig.frequencyPenalty}
-                  onChange={(e) => setApiConfig(prev => ({ ...prev, frequencyPenalty: parseFloat(e.target.value) }))} className="w-full accent-primary" />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium">Presence Penalty</label>
-                  <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">{apiConfig.presencePenalty}</span>
-                </div>
-                <input type="range" min="-2" max="2" step="0.1" value={apiConfig.presencePenalty}
-                  onChange={(e) => setApiConfig(prev => ({ ...prev, presencePenalty: parseFloat(e.target.value) }))} className="w-full accent-primary" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Formato de Resposta</label>
-                <Select value={apiConfig.responseFormat} onValueChange={(v) => setApiConfig(prev => ({ ...prev, responseFormat: v as "text" | "json" }))}>
-                  <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="text">Texto</SelectItem>
-                    <SelectItem value="json">JSON</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Stop Sequences</label>
-                <Input value={apiConfig.stopSequences.join(", ")}
-                  onChange={(e) => setApiConfig(prev => ({ ...prev, stopSequences: e.target.value ? e.target.value.split(",").map(s => s.trim()).filter(Boolean) : [] }))}
-                  placeholder='Ex: "###", "FIM"' className="text-sm font-mono" />
-              </div>
-              <Button variant="outline" size="sm" className="text-xs" onClick={() => setApiConfig(DEFAULT_API_CONFIG)}>Restaurar padrões</Button>
-            </div>
-          </ScrollArea>
-        </TabsContent>
-
-        {/* ── Danger Zone ── */}
-        <TabsContent value="danger" className="flex-1 mt-0 min-h-0 overflow-hidden">
-          <ScrollArea className="h-full max-h-[calc(100vh-160px)]">
-            <div className="p-6 max-w-lg space-y-4">
-              <h2 className="text-lg font-bold text-destructive">Danger Zone</h2>
-              <p className="text-sm text-muted-foreground">Ações irreversíveis para este agente.</p>
-              <div className="rounded-xl border-2 border-destructive/30 p-4 space-y-3">
-                <h3 className="text-sm font-semibold text-foreground">Excluir agente</h3>
-                <p className="text-xs text-muted-foreground">Esta ação não pode ser desfeita.</p>
-                <Button variant="destructive" size="sm" onClick={() => onDeleteAgent?.()}>Excluir Agente</Button>
-              </div>
-            </div>
-          </ScrollArea>
-        </TabsContent>
-      </Tabs>
-
-
-
-
-      {/* Integration Dialog */}
-      <Dialog open={!!connectorDialog} onOpenChange={(open) => { if (!open) { setConnectorDialog(null); setKeyInput(""); } }}>
-        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <div className="flex items-center gap-3">
-              {connectorDialog && (
-                <img src={connectorDialog.logo} alt={connectorDialog.label} className="w-8 h-8 rounded object-contain"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-              )}
-              <div>
-                <DialogTitle className="text-base">{connectorKeys[connectorDialog?.label || ""]?.configured ? "Gerenciar" : "Conectar"} {connectorDialog?.label}</DialogTitle>
-                <DialogDescription className="text-xs mt-0.5">{connectorDialog?.desc}</DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-          <div className="space-y-5 pt-2">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">API Key</label>
-              <div className="relative">
-                <Input type={showKey ? "text" : "password"} value={keyInput} onChange={(e) => setKeyInput(e.target.value)}
-                  placeholder={`Cole sua ${connectorDialog?.label} API Key`} className="pr-10 text-sm font-mono" />
-                <button type="button" onClick={() => setShowKey(!showKey)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                  {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              <p className="text-[11px] text-muted-foreground">
-                {connectorDialog?.label === "OpenAI" && (<>Encontre em <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-0.5">platform.openai.com <ExternalLink className="w-3 h-3" /></a></>)}
-                {connectorDialog?.label === "Anthropic" && (<>Encontre em <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-0.5">console.anthropic.com <ExternalLink className="w-3 h-3" /></a></>)}
-                {connectorDialog?.label === "Gemini" && (<>Encontre em <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-0.5">aistudio.google.com <ExternalLink className="w-3 h-3" /></a></>)}
-                {connectorDialog?.label === "ElevenLabs" && (<>Encontre em <a href="https://elevenlabs.io/settings/api-keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-0.5">elevenlabs.io <ExternalLink className="w-3 h-3" /></a></>)}
-                {connectorDialog?.label === "DeepSeek" && (<>Encontre em <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-0.5">platform.deepseek.com <ExternalLink className="w-3 h-3" /></a></>)}
-                {!["OpenAI","Anthropic","Gemini","ElevenLabs","DeepSeek"].includes(connectorDialog?.label || "") && <>Cole a chave de API fornecida pelo serviço.</>}
-              </p>
-            </div>
-            {shouldShowDialogModels && (
-              <div className="space-y-3">
-                <label className="text-sm font-medium">Modelo padrão</label>
-                <RadioGroup value={selectedDialogModel} onValueChange={setSelectedDialogModel} className="space-y-2">
-                  {LLM_PROVIDER_MODELS[connectorDialog!.label].models.map((m) => (
-                    <div key={m.value} className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer ${selectedDialogModel === m.value ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"}`}
-                      onClick={() => setSelectedDialogModel(m.value)}>
-                      <RadioGroupItem value={m.value} id={m.value} className="mt-0.5" />
-                      <Label htmlFor={m.value} className="cursor-pointer flex-1">
-                        <span className="text-sm font-medium">{m.label}</span>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">{m.desc}</p>
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              </div>
-            )}
-            {connectorDialog && LLM_PROVIDER_MODELS[connectorDialog.label] && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Recursos</label>
-                <div className="flex flex-wrap gap-1.5">
-                  {LLM_PROVIDER_MODELS[connectorDialog.label].capabilities.map((cap) => (
-                    <span key={cap} className="text-[11px] px-2 py-1 rounded-full bg-muted text-muted-foreground border border-border">{cap}</span>
-                  ))}
+                <div>
+                  <label className="text-[10px] font-medium text-muted-foreground mb-1 block">Objetivo</label>
+                  <textarea
+                    value={structuredConfig.objective}
+                    onChange={(e) => setStructuredConfig({ ...structuredConfig, objective: e.target.value })}
+                    className="w-full bg-background border border-border rounded-md text-xs px-2 py-1.5 min-h-[60px] resize-none outline-none focus:border-primary/30 transition-colors"
+                  />
                 </div>
               </div>
             )}
-            <div className="flex items-center justify-between pt-2 border-t border-border">
-              {connectorKeys[connectorDialog?.label || ""]?.configured ? (
-                <Button variant="destructive" size="sm" className="text-xs gap-1.5" onClick={handleDisconnect}><Trash2 className="w-3 h-3" /> Desconectar</Button>
-              ) : <div />}
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => { setConnectorDialog(null); setKeyInput(""); }}>Cancelar</Button>
-                <Button size="sm" onClick={handleSaveKey} disabled={!keyInput.trim() || savingKey}>
-                  {connectorKeys[connectorDialog?.label || ""]?.configured ? "Atualizar" : "Conectar"}
-                </Button>
+
+            <div className="flex gap-2 pt-1">
+              <Button
+                variant="outline" size="sm"
+                className="flex-1 h-8 text-xs rounded-lg gap-1"
+                onClick={() => { setWizardStep("discover"); setStructuredConfig(null); }}
+              >
+                <RotateCw className="w-3 h-3" />
+                Re-estruturar
+              </Button>
+              <Button
+                size="sm"
+                className="flex-1 h-8 text-xs rounded-lg gap-1 bg-primary"
+                onClick={handleBuild}
+              >
+                <Sparkles className="w-3 h-3" />
+                Criar Agente
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* ══ Step 3: Building loader ══ */}
+        {building && (
+          <div className="flex items-center gap-3 bg-card/50 border border-border rounded-xl p-4">
+            <Loader2 className="w-5 h-5 text-primary animate-spin" />
+            <div>
+              <p className="text-xs font-medium text-foreground">Criando {structuredConfig?.agent_name}...</p>
+              <p className="text-[10px] text-muted-foreground">Gerando configuração completa do agente</p>
+            </div>
+          </div>
+        )}
+
+        {/* Loading indicator (patch mode) */}
+        {isStreaming && messages[messages.length - 1]?.role === "user" && (
+          <div className="flex gap-2.5">
+            <img src={agentAvatar} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" />
+            <div className="text-sm text-muted-foreground animate-pulse flex items-center gap-2">
+              <div className="flex gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary/50 animate-bounce" style={{ animationDelay: "0ms" }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-primary/50 animate-bounce" style={{ animationDelay: "150ms" }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-primary/50 animate-bounce" style={{ animationDelay: "300ms" }} />
               </div>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        )}
+      </div>
+
+      {/* ── API key alerts ── */}
+      {wizardStep === "done" && chatMode === "setup" && !keysLoading && !hasAnyLLMKey && (
+        <div className="px-4 pt-2">
+          <Alert className="border-primary/30 bg-primary/5">
+            <KeyRound className="h-4 w-4 text-primary" />
+            <AlertDescription className="text-xs text-muted-foreground flex items-center justify-between">
+              <span>Configure uma chave de API em <strong className="text-foreground">Integrações</strong> para testar o agente.</span>
+              <Button variant="outline" size="sm" className="text-xs gap-1 ml-3 shrink-0" onClick={onGoToIntegrations}>
+                <KeyRound className="w-3 h-3" /> Configurar
+              </Button>
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+
+      {wizardStep === "done" && chatMode === "test" && !keysLoading && hasAnyLLMKey && !hasApiKey && (
+        <div className="px-4 pt-2">
+          <Alert className="border-yellow-500/30 bg-yellow-500/5">
+            <AlertTriangle className="h-4 w-4 text-yellow-500" />
+            <AlertDescription className="text-xs text-muted-foreground flex items-center justify-between">
+              <span>Configure a chave do provedor <strong className="text-foreground">{currentProvider}</strong> para testar.</span>
+              <Button variant="outline" size="sm" className="text-xs gap-1 ml-3 shrink-0" onClick={onGoToIntegrations}>
+                <KeyRound className="w-3 h-3" /> Configurar
+              </Button>
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+
+      {/* ── Input ── */}
+      <div className="p-3 border-t border-border">
+        {wizardStep === "done" ? (
+          <div className={`rounded-xl border border-border bg-card/50 p-1 transition-colors focus-within:border-primary/30`}>
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={
+                chatMode === "test" && !hasApiKey
+                  ? "⚠️ Configure sua chave de API para testar..."
+                  : chatMode === "setup"
+                    ? "Peça alterações ao agente... (modo patch)"
+                    : "Envie uma mensagem para testar o agente..."
+              }
+              rows={1}
+              disabled={!canSend}
+              className="w-full bg-transparent border-none outline-none resize-none text-sm text-foreground placeholder:text-muted-foreground px-3 py-2 min-h-[36px] max-h-[120px] disabled:cursor-not-allowed"
+            />
+            <div className="flex items-center justify-between px-2 pb-1">
+              <div className="flex items-center gap-1">
+                <button className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded">
+                  <Mic className="w-3.5 h-3.5" />
+                </button>
+                {chatMode === "setup" && (
+                  <select
+                    value={setupModel}
+                    onChange={(e) => setSetupModel(e.target.value)}
+                    className="text-xs text-muted-foreground bg-transparent border border-border rounded-md px-2 py-1 cursor-pointer focus:outline-none"
+                  >
+                    {gatewayModels.map(m => (
+                      <option key={m.value} value={m.value}>{m.label}</option>
+                    ))}
+                  </select>
+                )}
+                {chatMode === "test" && availableModels.length > 0 && (
+                  <select
+                    value={agentModel}
+                    onChange={(e) => setAgentModel(e.target.value)}
+                    className="text-xs text-muted-foreground bg-transparent border border-border rounded-md px-2 py-1 cursor-pointer focus:outline-none"
+                  >
+                    {availableModels.map(m => (
+                      <option key={m.value} value={m.value}>{m.label}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+              <Button
+                size="icon"
+                onClick={handleSend}
+                disabled={!input.trim() || isStreaming || !canSend}
+                className="h-8 w-8 rounded-full bg-primary hover:bg-primary/90"
+              >
+                <ArrowUp className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-border/50 bg-card/30 px-3 py-2.5 text-xs text-muted-foreground text-center opacity-60">
+            Complete as etapas acima para começar...
+          </div>
+        )}
+      </div>
     </div>
   );
 };
 
-export default AgentRightPanel;
+export default AgentChatPanel;
