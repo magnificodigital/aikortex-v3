@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   ArrowLeft, ArrowUp, Send, AlertTriangle,
-  Sparkles, Bot, Mic, Check, Loader2, Pencil, RotateCw,
+  Sparkles, Bot, Mic, MicOff, Check, Loader2, Pencil, RotateCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -158,6 +158,93 @@ const AgentChatPanel = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   const initialPromptUsedRef = useRef(false);
   const handleDiscoverRef = useRef<(text: string) => Promise<void>>(async () => {});
+
+  // ── Audio recording via SpeechRecognition ──
+  const [isRecording, setIsRecording] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  const recordedTextRef = useRef("");
+
+  const stopRecording = useCallback(() => {
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch {}
+      recognitionRef.current = null;
+    }
+    setIsRecording(false);
+  }, []);
+
+  const handleMicClick = useCallback(() => {
+    if (isRecording) {
+      // Stop and send transcribed text
+      stopRecording();
+      const text = recordedTextRef.current.trim();
+      recordedTextRef.current = "";
+      if (text) {
+        if (wizardStep === "discover" && text.length >= 10) {
+          handleDiscoverRef.current(text);
+        } else if (wizardStep === "done") {
+          sendMessage(text);
+        } else {
+          setInput(prev => (prev + " " + text).trim());
+        }
+      } else {
+        toast.info("Nenhuma fala detectada. Tente novamente.");
+      }
+      return;
+    }
+
+    // Start recording
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error("Seu navegador não suporta reconhecimento de voz.");
+      return;
+    }
+
+    recordedTextRef.current = "";
+    const recognition = new SpeechRecognition();
+    recognition.lang = "pt-BR";
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    let finalText = "";
+
+    recognition.onresult = (event: any) => {
+      let interim = "";
+      finalText = "";
+      for (let i = 0; i < event.results.length; i++) {
+        const result = event.results[i];
+        if (result.isFinal) {
+          finalText += result[0].transcript + " ";
+        } else {
+          interim += result[0].transcript;
+        }
+      }
+      recordedTextRef.current = (finalText + interim).trim();
+      setInput(recordedTextRef.current);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.warn("SpeechRecognition error:", event.error);
+      if (event.error === "not-allowed") {
+        toast.error("Permissão de microfone negada. Habilite nas configurações do navegador.");
+      }
+      stopRecording();
+    };
+
+    recognition.onend = () => {
+      // Finalize
+      setIsRecording(false);
+      recognitionRef.current = null;
+    };
+
+    recognitionRef.current = recognition;
+    try {
+      recognition.start();
+      setIsRecording(true);
+    } catch (e) {
+      toast.error("Erro ao iniciar gravação de áudio.");
+    }
+  }, [isRecording, stopRecording, wizardStep, sendMessage]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -646,8 +733,17 @@ const AgentChatPanel = ({
           />
           <div className="flex items-center justify-between px-2 pb-1">
             <div className="flex items-center gap-1">
-              <button className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded" disabled={isStreaming}>
-                <Mic className="w-3.5 h-3.5" />
+              <button
+                onClick={handleMicClick}
+                className={`transition-colors p-1 rounded ${
+                  isRecording
+                    ? "text-destructive animate-pulse bg-destructive/10"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                disabled={isStreaming || isStructuring || isBuilding}
+                title={isRecording ? "Clique para parar e enviar" : "Clique para gravar áudio"}
+              >
+                {isRecording ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
               </button>
             </div>
             {wizardStep === "discover" && input.trim().length >= 10 ? (
