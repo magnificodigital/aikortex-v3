@@ -12,7 +12,9 @@ import {
   User, Zap, Settings2, AlertTriangle, Mic,
   Upload, X, FileText, Image, File, Plus, Globe, Link2, Check, Camera,
   Webhook, KeyRound, Blocks, Eye, EyeOff, ExternalLink, Trash2, Settings, Rocket,
+  Youtube, Rss, Map, CloudUpload, Type, ChevronDown, ChevronUp, BookOpen,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
