@@ -316,6 +316,16 @@ const AgentRightPanel = ({
   });
   const [urlInput,          setUrlInput]          = useState("");
   const [urls,              setUrls]              = useState<string[]>(() => savedConfig?.urls?.length     ? savedConfig.urls     : []);
+  const [knowledgeEnabled,  setKnowledgeEnabled]  = useState(true);
+  const [youtubeUrls,       setYoutubeUrls]       = useState<string[]>([]);
+  const [youtubeInput,      setYoutubeInput]      = useState("");
+  const [rssUrls,           setRssUrls]           = useState<string[]>([]);
+  const [rssInput,          setRssInput]           = useState("");
+  const [sitemapUrls,       setSitemapUrls]        = useState<string[]>([]);
+  const [sitemapInput,      setSitemapInput]       = useState("");
+  const [customTexts,       setCustomTexts]        = useState<string[]>([]);
+  const [customTextInput,   setCustomTextInput]    = useState("");
+  const [knowledgeSection,  setKnowledgeSection]   = useState<string | null>("web");
   const [connectedChannels, setConnectedChannels] = useState<string[]>(() => savedConfig?.channels?.length ? savedConfig.channels : []);
   const [savedIntegrations, setSavedIntegrations] = useState<string[]>(() => savedConfig?.integrations?.length ? savedConfig.integrations : []);
   const [integrationConfigs, setIntegrationConfigs] = useState<Record<string, ProviderConfig>>(() => savedConfig?.integrationConfigs || {});
