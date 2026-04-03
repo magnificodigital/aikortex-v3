@@ -733,8 +733,17 @@ const AgentChatPanel = ({
           />
           <div className="flex items-center justify-between px-2 pb-1">
             <div className="flex items-center gap-1">
-              <button className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded" disabled={isStreaming}>
-                <Mic className="w-3.5 h-3.5" />
+              <button
+                onClick={handleMicClick}
+                className={`transition-colors p-1 rounded ${
+                  isRecording
+                    ? "text-destructive animate-pulse bg-destructive/10"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                disabled={isStreaming || isStructuring || isBuilding}
+                title={isRecording ? "Clique para parar e enviar" : "Clique para gravar áudio"}
+              >
+                {isRecording ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
               </button>
             </div>
             {wizardStep === "discover" && input.trim().length >= 10 ? (
