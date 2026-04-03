@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   ArrowLeft, ArrowUp, Send, AlertTriangle,
-  Sparkles, Bot, Mic, Check, Loader2, Pencil, RotateCw,
+  Sparkles, Bot, Mic, MicOff, Check, Loader2, Pencil, RotateCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
