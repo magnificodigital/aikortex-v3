@@ -178,7 +178,7 @@ const Apps = () => {
               <WhatsAppIcon className="w-4 h-4" />
             </div>
             <div className="text-left">
-              <p className="text-sm font-semibold text-foreground">WhatsApp App</p>
+              <p className="text-sm font-semibold text-foreground">WhatsApp</p>
               <p className="text-[11px] text-muted-foreground">Conversacional e operacional</p>
             </div>
           </button>
