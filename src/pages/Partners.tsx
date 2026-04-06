@@ -72,7 +72,7 @@ const Partners = () => {
           </TabsList>
 
           <TabsContent value="profile"><PartnerProfileTab profile={profile} onUpdate={setProfile} /></TabsContent>
-          <TabsContent value="tiers"><PartnerTiersTab profile={profile} /></TabsContent>
+          <TabsContent value="tiers"><PartnerTiersTab /></TabsContent>
           <TabsContent value="training"><TrainingCenterTab /></TabsContent>
           <TabsContent value="certifications"><CertificationsTab /></TabsContent>
           <TabsContent value="marketplace"><MarketplaceTab /></TabsContent>
