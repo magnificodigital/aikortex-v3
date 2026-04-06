@@ -11,16 +11,16 @@ import TeamActivity from "@/components/team/TeamActivity";
 import TeamPerformance from "@/components/team/TeamPerformance";
 import TeamFeedback from "@/components/team/TeamFeedback";
 import TeamProductivity from "@/components/team/TeamProductivity";
-import InviteMemberDialog from "@/components/team/InviteMemberDialog";
 import EditMemberDialog from "@/components/team/EditMemberDialog";
 import MemberDetailDialog from "@/components/team/MemberDetailDialog";
+import CreateUserDialog from "@/components/shared/CreateUserDialog";
 
 const Team = () => {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("all");
-  const [showInvite, setShowInvite] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
   const [viewingMember, setViewingMember] = useState<TeamMember | null>(null);
 
@@ -64,7 +64,7 @@ const Team = () => {
               roleFilter={roleFilter} onRoleChange={setRoleFilter}
               statusFilter={statusFilter} onStatusChange={setStatusFilter}
               departmentFilter={departmentFilter} onDepartmentChange={setDepartmentFilter}
-              onInvite={() => setShowInvite(true)}
+              onInvite={() => setShowCreate(true)}
             />
             <TeamTable members={filtered} onView={setViewingMember} onEdit={setEditingMember} />
           </TabsContent>
@@ -90,7 +90,12 @@ const Team = () => {
         </Tabs>
       </div>
 
-      <InviteMemberDialog open={showInvite} onOpenChange={setShowInvite} />
+      <CreateUserDialog
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        onSuccess={() => { /* TODO: reload real data */ }}
+        context="agency"
+      />
       <EditMemberDialog member={editingMember} open={!!editingMember} onOpenChange={(o) => !o && setEditingMember(null)} />
       <MemberDetailDialog member={viewingMember} open={!!viewingMember} onOpenChange={(o) => !o && setViewingMember(null)} />
     </DashboardLayout>

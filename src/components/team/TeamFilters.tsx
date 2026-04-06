@@ -53,7 +53,7 @@ const TeamFilters = ({
       </SelectContent>
     </Select>
     <Button size="sm" className="gap-1.5" onClick={onInvite}>
-      <UserPlus className="w-4 h-4" /> Convidar
+      <UserPlus className="w-4 h-4" /> Adicionar Membro
     </Button>
   </div>
 );
