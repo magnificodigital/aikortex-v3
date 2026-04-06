@@ -349,7 +349,7 @@ const SettingsPage = () => {
         </div>
 
         <Tabs defaultValue={new URLSearchParams(window.location.search).get("tab") || "colors"} className="space-y-4">
-          <TabsList className="flex flex-wrap w-full max-w-2xl h-auto gap-1 bg-muted/50 p-1">
+          <TabsList className="flex w-full max-w-3xl h-auto gap-1 bg-muted/50 p-1 overflow-x-auto">
             <TabsTrigger value="colors" className="text-xs gap-1"><Palette className="w-3.5 h-3.5" /> Cores</TabsTrigger>
             <TabsTrigger value="logo" className="text-xs gap-1"><Image className="w-3.5 h-3.5" /> Logo</TabsTrigger>
             <TabsTrigger value="landing" className="text-xs gap-1"><Globe className="w-3.5 h-3.5" /> Landing Page</TabsTrigger>
