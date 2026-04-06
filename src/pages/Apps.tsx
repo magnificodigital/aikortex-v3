@@ -255,6 +255,7 @@ const Apps = () => {
           </AlertDialogContent>
         </AlertDialog>
       </div>
+      </FeatureGate>
     </DashboardLayout>
   );
 };
