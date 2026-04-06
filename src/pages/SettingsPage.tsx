@@ -334,12 +334,12 @@ const SettingsPage = () => {
 
   return (
     <DashboardLayout>
-      <div className="p-6 lg:p-8 max-w-7xl space-y-6">
+      <div className="max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Settings className="w-5 h-5 text-primary" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+              <Settings className="h-5 w-5 text-primary" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground">Configurações</h1>
@@ -349,15 +349,15 @@ const SettingsPage = () => {
         </div>
 
         <Tabs defaultValue={new URLSearchParams(window.location.search).get("tab") || "colors"} className="space-y-4">
-          <TabsList className="flex w-full max-w-3xl h-auto gap-1 bg-muted/50 p-1 overflow-x-auto">
-            <TabsTrigger value="colors" className="text-xs gap-1"><Palette className="w-3.5 h-3.5" /> Cores</TabsTrigger>
-            <TabsTrigger value="logo" className="text-xs gap-1"><Image className="w-3.5 h-3.5" /> Logo</TabsTrigger>
-            <TabsTrigger value="landing" className="text-xs gap-1"><Globe className="w-3.5 h-3.5" /> Landing Page</TabsTrigger>
-            <TabsTrigger value="biolink" className="text-xs gap-1"><Link2 className="w-3.5 h-3.5" /> Bio Link</TabsTrigger>
-            <TabsTrigger value="integrations" className="text-xs gap-1"><Plug className="w-3.5 h-3.5" /> Integrações</TabsTrigger>
-            <TabsTrigger value="channels" className="text-xs gap-1"><Radio className="w-3.5 h-3.5" /> Canais</TabsTrigger>
-            <TabsTrigger value="permissions" className="text-xs gap-1"><Shield className="w-3.5 h-3.5" /> Permissões</TabsTrigger>
-            <TabsTrigger value="subscription" className="text-xs gap-1"><CreditCard className="w-3.5 h-3.5" /> Assinatura</TabsTrigger>
+          <TabsList className="flex h-auto w-full max-w-full gap-1 overflow-x-auto bg-muted/50 p-1 justify-start [scrollbar-width:none]">
+            <TabsTrigger value="colors" className="shrink-0 gap-1 whitespace-nowrap text-xs"><Palette className="h-3.5 w-3.5" /> Cores</TabsTrigger>
+            <TabsTrigger value="logo" className="shrink-0 gap-1 whitespace-nowrap text-xs"><Image className="h-3.5 w-3.5" /> Logo</TabsTrigger>
+            <TabsTrigger value="landing" className="shrink-0 gap-1 whitespace-nowrap text-xs"><Globe className="h-3.5 w-3.5" /> Landing Page</TabsTrigger>
+            <TabsTrigger value="biolink" className="shrink-0 gap-1 whitespace-nowrap text-xs"><Link2 className="h-3.5 w-3.5" /> Bio Link</TabsTrigger>
+            <TabsTrigger value="integrations" className="shrink-0 gap-1 whitespace-nowrap text-xs"><Plug className="h-3.5 w-3.5" /> Integrações</TabsTrigger>
+            <TabsTrigger value="channels" className="shrink-0 gap-1 whitespace-nowrap text-xs"><Radio className="h-3.5 w-3.5" /> Canais</TabsTrigger>
+            <TabsTrigger value="permissions" className="shrink-0 gap-1 whitespace-nowrap text-xs"><Shield className="h-3.5 w-3.5" /> Permissões</TabsTrigger>
+            <TabsTrigger value="subscription" className="shrink-0 gap-1 whitespace-nowrap text-xs"><CreditCard className="h-3.5 w-3.5" /> Assinatura</TabsTrigger>
           </TabsList>
 
           {/* ── CORES ──────────────────────────────── */}
