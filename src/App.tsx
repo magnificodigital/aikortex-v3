@@ -65,6 +65,7 @@ const App = () => (
           <Suspense fallback={<Loading />}>
             <Routes>
               <Route path="/" element={<LandingPage />} />
+              <Route path="/pricing" element={<Pricing />} />
               <Route path="/home" element={<P><Home /></P>} />
               <Route path="/apps" element={<P><Apps /></P>} />
               <Route path="/app-builder" element={<P><AppBuilder /></P>} />

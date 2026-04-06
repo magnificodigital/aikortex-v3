@@ -698,6 +698,11 @@ const SettingsPage = () => {
           <TabsContent value="permissions">
             <PermissionsManager />
           </TabsContent>
+
+          {/* ── ASSINATURA ─────────────────────────── */}
+          <TabsContent value="subscription">
+            <SubscriptionTab />
+          </TabsContent>
         </Tabs>
       </div>
     </DashboardLayout>
