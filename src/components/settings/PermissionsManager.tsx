@@ -175,7 +175,7 @@ const PermissionsManager = () => {
                 <div key={group}>
                   <div className="px-3 py-2 mt-2">
                     <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
-                      {group === "core" ? "Core Modules" : "Ecosystem"}
+                      {group === "core" ? "Módulos Core" : "Ecossistema"}
                     </span>
                   </div>
                   {ALL_MODULES.filter(m => m.group === group).map(mod => {

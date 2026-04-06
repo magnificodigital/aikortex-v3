@@ -150,15 +150,15 @@ export const PERMISSION_ACTIONS: { key: PermissionAction; label: string }[] = [
 ];
 
 export const ROLE_CONFIG: Record<SystemRole, { label: string; level: "platform" | "agency" | "client"; color: string; bg: string; description: string }> = {
-  platform_owner: { label: "Platform Owner", level: "platform", color: "text-red-600", bg: "bg-red-500/10", description: "Acesso total à plataforma e todas as agências" },
-  platform_admin: { label: "Platform Admin", level: "platform", color: "text-red-500", bg: "bg-red-500/10", description: "Administração da plataforma com restrições" },
-  agency_owner: { label: "Agency Owner", level: "agency", color: "text-amber-600", bg: "bg-amber-500/10", description: "Proprietário da agência com acesso total ao workspace" },
-  agency_admin: { label: "Agency Admin", level: "agency", color: "text-purple-600", bg: "bg-purple-500/10", description: "Administrador da agência" },
-  agency_manager: { label: "Agency Manager", level: "agency", color: "text-blue-600", bg: "bg-blue-500/10", description: "Gerente com acesso a projetos e equipe" },
-  agency_member: { label: "Agency Member", level: "agency", color: "text-emerald-600", bg: "bg-emerald-500/10", description: "Membro da equipe com acesso operacional" },
-  client_owner: { label: "Client Owner", level: "client", color: "text-slate-700", bg: "bg-slate-500/10", description: "Proprietário do workspace do cliente" },
-  client_manager: { label: "Client Manager", level: "client", color: "text-slate-600", bg: "bg-slate-500/10", description: "Gerente do cliente com acesso parcial" },
-  client_viewer: { label: "Client Viewer", level: "client", color: "text-slate-500", bg: "bg-slate-500/10", description: "Visualização do workspace do cliente" },
+  platform_owner: { label: "Dono da Plataforma", level: "platform", color: "text-red-600", bg: "bg-red-500/10", description: "Acesso total ao Aikortex" },
+  platform_admin: { label: "Admin da Plataforma", level: "platform", color: "text-red-500", bg: "bg-red-500/10", description: "Equipe interna do Aikortex" },
+  agency_owner: { label: "Dono da Agência", level: "agency", color: "text-amber-600", bg: "bg-amber-500/10", description: "Dono do workspace" },
+  agency_admin: { label: "Administrador da Agência", level: "agency", color: "text-purple-600", bg: "bg-purple-500/10", description: "Gestão ampla do workspace" },
+  agency_manager: { label: "Gerente", level: "agency", color: "text-blue-600", bg: "bg-blue-500/10", description: "Gerencia projetos e clientes" },
+  agency_member: { label: "Membro", level: "agency", color: "text-emerald-600", bg: "bg-emerald-500/10", description: "Acesso básico" },
+  client_owner: { label: "Responsável do Cliente", level: "client", color: "text-slate-700", bg: "bg-slate-500/10", description: "Contato principal do cliente" },
+  client_manager: { label: "Gerente do Cliente", level: "client", color: "text-slate-600", bg: "bg-slate-500/10", description: "Gerente do cliente com acesso parcial" },
+  client_viewer: { label: "Visualizador", level: "client", color: "text-slate-500", bg: "bg-slate-500/10", description: "Apenas visualiza" },
 };
 
 export const TIER_FEATURE_CONFIG: Record<PartnerTier, TierFeatureConfig> = {
