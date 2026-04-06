@@ -15,6 +15,7 @@ import {
   FileText,
   Bot,
   Settings,
+  CreditCard,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
