@@ -18,8 +18,6 @@ interface CreateUserDialogProps {
 }
 
 const platformRoles = [
-  { value: "platform_owner", label: "Dono da Plataforma" },
-  { value: "platform_admin", label: "Admin da Plataforma" },
   { value: "agency_owner", label: "Dono da Agência" },
   { value: "agency_admin", label: "Admin da Agência" },
 ];

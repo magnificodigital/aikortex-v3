@@ -7,14 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { UserPlus, Search, MoreHorizontal, Key, Pencil, Trash2, Loader2 } from "lucide-react";
-import { ROLE_CONFIG, SystemRole } from "@/types/rbac";
+import { UserPlus, Search, MoreHorizontal, Pencil, Trash2, Loader2 } from "lucide-react";
+import { ROLE_CONFIG } from "@/types/rbac";
 import CreateUserDialog from "@/components/shared/CreateUserDialog";
-import ResetPasswordDialog from "@/components/shared/ResetPasswordDialog";
+import EditUserDialog from "@/components/admin/EditUserDialog";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface UserRow {
@@ -29,15 +27,6 @@ interface UserRow {
   subscription?: { status: string; plan?: { name: string } | null } | null;
 }
 
-const allRoles = [
-  { value: "platform_owner", label: "Dono da Plataforma" },
-  { value: "platform_admin", label: "Admin da Plataforma" },
-  { value: "agency_owner", label: "Dono da Agência" },
-  { value: "agency_admin", label: "Admin da Agência" },
-  { value: "agency_manager", label: "Gerente" },
-  { value: "agency_member", label: "Membro" },
-];
-
 const AdminUsersTab = () => {
   const { user } = useAuth();
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -45,33 +34,19 @@ const AdminUsersTab = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [createOpen, setCreateOpen] = useState(false);
-  const [resetTarget, setResetTarget] = useState<{ userId: string; name: string } | null>(null);
-
-  // Edit role state
   const [editTarget, setEditTarget] = useState<UserRow | null>(null);
-  const [editRole, setEditRole] = useState("");
-  const [editLoading, setEditLoading] = useState(false);
-
-  // Delete state
   const [deleteTarget, setDeleteTarget] = useState<UserRow | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  useEffect(() => { fetchUsers(); }, []);
 
   const fetchUsers = async () => {
     setLoading(true);
     const { data: profiles } = await supabase.from("profiles").select("*");
     const { data: subs } = await supabase.from("subscriptions").select("user_id, status, plans:plan_id(name)") as any;
-
     const subMap: Record<string, any> = {};
     subs?.forEach((s: any) => { subMap[s.user_id] = { status: s.status, plan: s.plans }; });
-
-    const merged = (profiles || []).map((p: any) => ({
-      ...p,
-      subscription: subMap[p.user_id] || null,
-    }));
+    const merged = (profiles || []).map((p: any) => ({ ...p, subscription: subMap[p.user_id] || null }));
     setUsers(merged);
     setLoading(false);
   };
@@ -82,13 +57,12 @@ const AdminUsersTab = () => {
     return <Badge className={`${config.bg} ${config.color} border-0 text-xs`}>{config.label}</Badge>;
   };
 
-  const getStatusBadge = (sub: UserRow["subscription"]) => {
+  const getStatusBadge = (sub: UserRow["subscription"], isActive: boolean) => {
+    if (!isActive) return <Badge className="bg-red-500/10 text-red-600 border-0 text-xs">Inativo</Badge>;
     if (!sub) return <Badge variant="secondary" className="text-xs">Sem plano</Badge>;
     const colors: Record<string, string> = {
-      trialing: "bg-yellow-500/10 text-yellow-600",
-      active: "bg-green-500/10 text-green-600",
-      past_due: "bg-red-500/10 text-red-600",
-      canceled: "bg-muted text-muted-foreground",
+      trialing: "bg-yellow-500/10 text-yellow-600", active: "bg-green-500/10 text-green-600",
+      past_due: "bg-red-500/10 text-red-600", canceled: "bg-muted text-muted-foreground",
       paused: "bg-orange-500/10 text-orange-600",
     };
     const labels: Record<string, string> = {
@@ -97,34 +71,11 @@ const AdminUsersTab = () => {
     return <Badge className={`${colors[sub.status] || ""} border-0 text-xs`}>{labels[sub.status] || sub.status}</Badge>;
   };
 
-  const handleEditRole = async () => {
-    if (!editTarget || !editRole) return;
-    setEditLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("update-user-role", {
-        body: { user_id: editTarget.user_id, role: editRole },
-      });
-      if (error || data?.error) {
-        toast.error(data?.error || "Erro ao atualizar função");
-      } else {
-        toast.success("Função atualizada com sucesso");
-        setEditTarget(null);
-        fetchUsers();
-      }
-    } catch {
-      toast.error("Erro ao atualizar função");
-    } finally {
-      setEditLoading(false);
-    }
-  };
-
   const handleDeleteUser = async () => {
     if (!deleteTarget) return;
     setDeleteLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("delete-user", {
-        body: { user_id: deleteTarget.user_id },
-      });
+      const { data, error } = await supabase.functions.invoke("delete-user", { body: { user_id: deleteTarget.user_id } });
       if (error || data?.error) {
         toast.error(data?.error || "Erro ao excluir usuário");
       } else {
@@ -132,17 +83,15 @@ const AdminUsersTab = () => {
         setDeleteTarget(null);
         fetchUsers();
       }
-    } catch {
-      toast.error("Erro ao excluir usuário");
-    } finally {
-      setDeleteLoading(false);
-    }
+    } catch { toast.error("Erro ao excluir usuário"); }
+    finally { setDeleteLoading(false); }
   };
 
   const filtered = users.filter(u => {
     const matchSearch = !search || (u.full_name || "").toLowerCase().includes(search.toLowerCase());
     if (statusFilter === "all") return matchSearch;
     if (statusFilter === "no_plan") return matchSearch && !u.subscription;
+    if (statusFilter === "inactive") return matchSearch && !u.is_active;
     return matchSearch && u.subscription?.status === statusFilter;
   });
 
@@ -163,6 +112,7 @@ const AdminUsersTab = () => {
               <SelectItem value="active">Ativos</SelectItem>
               <SelectItem value="trialing">Em Trial</SelectItem>
               <SelectItem value="canceled">Cancelados</SelectItem>
+              <SelectItem value="inactive">Inativos</SelectItem>
               <SelectItem value="no_plan">Sem plano</SelectItem>
             </SelectContent>
           </Select>
@@ -191,25 +141,20 @@ const AdminUsersTab = () => {
               ) : filtered.length === 0 ? (
                 <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum usuário encontrado</TableCell></TableRow>
               ) : filtered.map(u => (
-                <TableRow key={u.id}>
+                <TableRow key={u.id} className={!u.is_active ? "opacity-50" : ""}>
                   <TableCell className="font-medium">{u.full_name || "—"}</TableCell>
                   <TableCell>{getRoleBadge(u.role)}</TableCell>
                   <TableCell>{u.subscription?.plan?.name || "—"}</TableCell>
-                  <TableCell>{getStatusBadge(u.subscription)}</TableCell>
+                  <TableCell>{getStatusBadge(u.subscription, u.is_active)}</TableCell>
                   <TableCell className="text-muted-foreground text-sm">{new Date(u.created_at).toLocaleDateString("pt-BR")}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="w-4 h-4" /></Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => { setEditTarget(u); setEditRole(u.role); }}>
-                          <Pencil className="w-4 h-4 mr-2" /> Editar Função
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setResetTarget({ userId: u.user_id, name: u.full_name || "Usuário" })}>
-                          <Key className="w-4 h-4 mr-2" /> Redefinir Senha
+                        <DropdownMenuItem onClick={() => setEditTarget(u)}>
+                          <Pencil className="w-4 h-4 mr-2" /> Editar Usuário
                         </DropdownMenuItem>
                         {!isSelf(u) && (
                           <>
@@ -230,47 +175,8 @@ const AdminUsersTab = () => {
       </Card>
 
       <CreateUserDialog open={createOpen} onClose={() => setCreateOpen(false)} onSuccess={fetchUsers} context="platform" />
+      <EditUserDialog open={!!editTarget} onClose={() => setEditTarget(null)} onSuccess={fetchUsers} user={editTarget} />
 
-      {resetTarget && (
-        <ResetPasswordDialog open={!!resetTarget} onClose={() => setResetTarget(null)} userId={resetTarget.userId} userName={resetTarget.name} />
-      )}
-
-      {/* Edit Role Dialog */}
-      <Dialog open={!!editTarget} onOpenChange={(o) => !o && setEditTarget(null)}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Pencil className="w-5 h-5 text-primary" />
-              Editar Função
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Alterando a função de <span className="font-medium text-foreground">{editTarget?.full_name || "Usuário"}</span>
-            </p>
-            <div>
-              <Label>Nova Função</Label>
-              <Select value={editRole} onValueChange={setEditRole}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {allRoles.map(r => (
-                    <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditTarget(null)} disabled={editLoading}>Cancelar</Button>
-            <Button onClick={handleEditRole} disabled={editLoading || editRole === editTarget?.role}>
-              {editLoading && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
-              Salvar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
