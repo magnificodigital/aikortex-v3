@@ -36,6 +36,7 @@ const AppBuilder = lazy(() => import("./pages/AppBuilder"));
 const Apps = lazy(() => import("./pages/Apps"));
 
 
+const Pricing = lazy(() => import("./pages/Pricing"));
 const Templates = lazy(() => import("./pages/Templates"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Meetings = lazy(() => import("./pages/Meetings"));
