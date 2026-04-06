@@ -1,22 +1,26 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { Users, UserPlus, Search, Eye } from "lucide-react";
-import { ROLE_CONFIG, SystemRole } from "@/types/rbac";
+import { UserPlus, Search, MoreHorizontal, Key } from "lucide-react";
+import { ROLE_CONFIG } from "@/types/rbac";
+import CreateUserDialog from "@/components/shared/CreateUserDialog";
+import ResetPasswordDialog from "@/components/shared/ResetPasswordDialog";
 
 interface UserRow {
   id: string;
   user_id: string;
   full_name: string | null;
   avatar_url: string | null;
+  role: string;
+  tenant_type: string;
+  is_active: boolean;
   created_at: string;
   subscription?: { status: string; plan?: { name: string } | null } | null;
 }
@@ -26,9 +30,8 @@ const AdminUsersTab = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [inviteOpen, setInviteOpen] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<string>("agency_member");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [resetTarget, setResetTarget] = useState<{ userId: string; name: string } | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -42,12 +45,18 @@ const AdminUsersTab = () => {
     const subMap: Record<string, any> = {};
     subs?.forEach((s: any) => { subMap[s.user_id] = { status: s.status, plan: s.plans }; });
 
-    const merged = (profiles || []).map(p => ({
+    const merged = (profiles || []).map((p: any) => ({
       ...p,
       subscription: subMap[p.user_id] || null,
     }));
     setUsers(merged);
     setLoading(false);
+  };
+
+  const getRoleBadge = (role: string) => {
+    const config = ROLE_CONFIG[role as keyof typeof ROLE_CONFIG];
+    if (!config) return <Badge variant="secondary" className="text-xs">{role}</Badge>;
+    return <Badge className={`${config.bg} ${config.color} border-0 text-xs`}>{config.label}</Badge>;
   };
 
   const getStatusBadge = (sub: UserRow["subscription"]) => {
@@ -91,8 +100,8 @@ const AdminUsersTab = () => {
             </SelectContent>
           </Select>
         </div>
-        <Button size="sm" onClick={() => setInviteOpen(true)}>
-          <UserPlus className="w-4 h-4 mr-1.5" /> Convidar Usuário
+        <Button size="sm" onClick={() => setCreateOpen(true)}>
+          <UserPlus className="w-4 h-4 mr-1.5" /> Novo Usuário
         </Button>
       </div>
 
@@ -102,22 +111,39 @@ const AdminUsersTab = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
+                <TableHead>Papel</TableHead>
                 <TableHead>Plano</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Cadastro</TableHead>
+                <TableHead className="w-10" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
               ) : filtered.length === 0 ? (
-                <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Nenhum usuário encontrado</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum usuário encontrado</TableCell></TableRow>
               ) : filtered.map(u => (
                 <TableRow key={u.id}>
                   <TableCell className="font-medium">{u.full_name || "—"}</TableCell>
+                  <TableCell>{getRoleBadge(u.role)}</TableCell>
                   <TableCell>{u.subscription?.plan?.name || "—"}</TableCell>
                   <TableCell>{getStatusBadge(u.subscription)}</TableCell>
                   <TableCell className="text-muted-foreground text-sm">{new Date(u.created_at).toLocaleDateString("pt-BR")}</TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setResetTarget({ userId: u.user_id, name: u.full_name || "Usuário" })}>
+                          <Key className="w-4 h-4 mr-2" /> Redefinir Senha
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -125,32 +151,21 @@ const AdminUsersTab = () => {
         </CardContent>
       </Card>
 
-      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Convidar Usuário</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>E-mail</Label>
-              <Input placeholder="email@exemplo.com" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
-            </div>
-            <div>
-              <Label>Papel</Label>
-              <Select value={inviteRole} onValueChange={setInviteRole}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {(Object.keys(ROLE_CONFIG) as SystemRole[]).map(r => (
-                    <SelectItem key={r} value={r}>{ROLE_CONFIG[r].label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setInviteOpen(false)}>Cancelar</Button>
-            <Button onClick={() => { toast.success("Convite enviado para " + inviteEmail); setInviteOpen(false); setInviteEmail(""); }}>Enviar Convite</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <CreateUserDialog
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onSuccess={fetchUsers}
+        context="platform"
+      />
+
+      {resetTarget && (
+        <ResetPasswordDialog
+          open={!!resetTarget}
+          onClose={() => setResetTarget(null)}
+          userId={resetTarget.userId}
+          userName={resetTarget.name}
+        />
+      )}
     </div>
   );
 };
