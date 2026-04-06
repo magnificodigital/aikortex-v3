@@ -6,12 +6,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { UserPlus, Search, MoreHorizontal, Key } from "lucide-react";
-import { ROLE_CONFIG } from "@/types/rbac";
+import { UserPlus, Search, MoreHorizontal, Key, Pencil, Trash2, Loader2 } from "lucide-react";
+import { ROLE_CONFIG, SystemRole } from "@/types/rbac";
 import CreateUserDialog from "@/components/shared/CreateUserDialog";
 import ResetPasswordDialog from "@/components/shared/ResetPasswordDialog";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface UserRow {
   id: string;
@@ -25,13 +29,32 @@ interface UserRow {
   subscription?: { status: string; plan?: { name: string } | null } | null;
 }
 
+const allRoles = [
+  { value: "platform_owner", label: "Dono da Plataforma" },
+  { value: "platform_admin", label: "Admin da Plataforma" },
+  { value: "agency_owner", label: "Dono da Agência" },
+  { value: "agency_admin", label: "Admin da Agência" },
+  { value: "agency_manager", label: "Gerente" },
+  { value: "agency_member", label: "Membro" },
+];
+
 const AdminUsersTab = () => {
+  const { user } = useAuth();
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [createOpen, setCreateOpen] = useState(false);
   const [resetTarget, setResetTarget] = useState<{ userId: string; name: string } | null>(null);
+
+  // Edit role state
+  const [editTarget, setEditTarget] = useState<UserRow | null>(null);
+  const [editRole, setEditRole] = useState("");
+  const [editLoading, setEditLoading] = useState(false);
+
+  // Delete state
+  const [deleteTarget, setDeleteTarget] = useState<UserRow | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -74,12 +97,56 @@ const AdminUsersTab = () => {
     return <Badge className={`${colors[sub.status] || ""} border-0 text-xs`}>{labels[sub.status] || sub.status}</Badge>;
   };
 
+  const handleEditRole = async () => {
+    if (!editTarget || !editRole) return;
+    setEditLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("update-user-role", {
+        body: { user_id: editTarget.user_id, role: editRole },
+      });
+      if (error || data?.error) {
+        toast.error(data?.error || "Erro ao atualizar função");
+      } else {
+        toast.success("Função atualizada com sucesso");
+        setEditTarget(null);
+        fetchUsers();
+      }
+    } catch {
+      toast.error("Erro ao atualizar função");
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("delete-user", {
+        body: { user_id: deleteTarget.user_id },
+      });
+      if (error || data?.error) {
+        toast.error(data?.error || "Erro ao excluir usuário");
+      } else {
+        toast.success("Usuário excluído com sucesso");
+        setDeleteTarget(null);
+        fetchUsers();
+      }
+    } catch {
+      toast.error("Erro ao excluir usuário");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   const filtered = users.filter(u => {
     const matchSearch = !search || (u.full_name || "").toLowerCase().includes(search.toLowerCase());
     if (statusFilter === "all") return matchSearch;
     if (statusFilter === "no_plan") return matchSearch && !u.subscription;
     return matchSearch && u.subscription?.status === statusFilter;
   });
+
+  const isSelf = (u: UserRow) => u.user_id === user?.id;
 
   return (
     <div className="space-y-4">
@@ -138,9 +205,20 @@ const AdminUsersTab = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => { setEditTarget(u); setEditRole(u.role); }}>
+                          <Pencil className="w-4 h-4 mr-2" /> Editar Função
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setResetTarget({ userId: u.user_id, name: u.full_name || "Usuário" })}>
                           <Key className="w-4 h-4 mr-2" /> Redefinir Senha
                         </DropdownMenuItem>
+                        {!isSelf(u) && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setDeleteTarget(u)}>
+                              <Trash2 className="w-4 h-4 mr-2" /> Excluir Usuário
+                            </DropdownMenuItem>
+                          </>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -151,21 +229,66 @@ const AdminUsersTab = () => {
         </CardContent>
       </Card>
 
-      <CreateUserDialog
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        onSuccess={fetchUsers}
-        context="platform"
-      />
+      <CreateUserDialog open={createOpen} onClose={() => setCreateOpen(false)} onSuccess={fetchUsers} context="platform" />
 
       {resetTarget && (
-        <ResetPasswordDialog
-          open={!!resetTarget}
-          onClose={() => setResetTarget(null)}
-          userId={resetTarget.userId}
-          userName={resetTarget.name}
-        />
+        <ResetPasswordDialog open={!!resetTarget} onClose={() => setResetTarget(null)} userId={resetTarget.userId} userName={resetTarget.name} />
       )}
+
+      {/* Edit Role Dialog */}
+      <Dialog open={!!editTarget} onOpenChange={(o) => !o && setEditTarget(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="w-5 h-5 text-primary" />
+              Editar Função
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Alterando a função de <span className="font-medium text-foreground">{editTarget?.full_name || "Usuário"}</span>
+            </p>
+            <div>
+              <Label>Nova Função</Label>
+              <Select value={editRole} onValueChange={setEditRole}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {allRoles.map(r => (
+                    <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditTarget(null)} disabled={editLoading}>Cancelar</Button>
+            <Button onClick={handleEditRole} disabled={editLoading || editRole === editTarget?.role}>
+              {editLoading && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir usuário</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir <span className="font-medium">{deleteTarget?.full_name || "este usuário"}</span>?
+              Esta ação é irreversível e removerá todos os dados associados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteLoading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteUser} disabled={deleteLoading} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleteLoading && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
