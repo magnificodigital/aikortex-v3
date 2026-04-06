@@ -37,6 +37,7 @@ import {
   LayoutTemplate,
   Video,
   X,
+  ShieldCheck,
 } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -305,6 +306,15 @@ const AppSidebar = ({ mobileOpen = false, onMobileClose }: AppSidebarProps) => {
         </nav>
 
         <div className="space-y-0.5 border-t border-sidebar-border px-2 py-2">
+          <Link
+            to="/admin"
+            onClick={handleNavigate}
+            className={linkClasses(isItemActive("/admin"))}
+            title={collapsed && !isMobile ? "Painel Admin" : undefined}
+          >
+            <ShieldCheck className={`w-4 h-4 shrink-0 ${isItemActive("/admin") ? "text-primary" : ""}`} />
+            {(!collapsed || isMobile) && <span className="truncate">Painel Admin</span>}
+          </Link>
           <Link
             to="/pricing"
             onClick={handleNavigate}

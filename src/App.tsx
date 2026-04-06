@@ -34,7 +34,7 @@ const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const ClientRegistration = lazy(() => import("./pages/ClientRegistration"));
 const AppBuilder = lazy(() => import("./pages/AppBuilder"));
 const Apps = lazy(() => import("./pages/Apps"));
-
+const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 
 const Pricing = lazy(() => import("./pages/Pricing"));
 const Templates = lazy(() => import("./pages/Templates"));
@@ -94,6 +94,7 @@ const App = () => (
               <Route path="/alowdigital" element={<P><AlowDigital /></P>} />
               <Route path="/iagora" element={<P><IAgora /></P>} />
               <Route path="/sintonia" element={<P><SintonIA /></P>} />
+              <Route path="/admin" element={<P><AdminPanel /></P>} />
               <Route path="/settings" element={<P><SettingsPage /></P>} />
               <Route path="/meetings" element={<P><Meetings /></P>} />
               <Route path="/meetings/:roomId" element={<MeetingRoom />} />

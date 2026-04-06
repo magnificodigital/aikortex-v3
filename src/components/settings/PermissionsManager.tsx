@@ -115,7 +115,7 @@ const PermissionsManager = () => {
             <Shield className="w-3.5 h-3.5" /> Permissões
           </TabsTrigger>
           <TabsTrigger value="features" className="text-xs gap-1.5">
-            <Sparkles className="w-3.5 h-3.5" /> Feature Flags
+            <Sparkles className="w-3.5 h-3.5" /> Funcionalidades por Plano
           </TabsTrigger>
           <TabsTrigger value="audit" className="text-xs gap-1.5">
             <History className="w-3.5 h-3.5" /> Audit Log
@@ -175,7 +175,7 @@ const PermissionsManager = () => {
                 <div key={group}>
                   <div className="px-3 py-2 mt-2">
                     <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
-                      {group === "core" ? "Core Modules" : "Ecosystem"}
+                      {group === "core" ? "Módulos Core" : "Ecossistema"}
                     </span>
                   </div>
                   {ALL_MODULES.filter(m => m.group === group).map(mod => {
