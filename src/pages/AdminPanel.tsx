@@ -1,22 +1,42 @@
-import DashboardLayout from "@/components/DashboardLayout";
+import AdminLayout from "@/components/admin/AdminLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Users, CreditCard, BarChart3, Settings, Award } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import AdminUsersTab from "@/components/admin/AdminUsersTab";
 import AdminPlansTab from "@/components/admin/AdminPlansTab";
 import AdminSubscriptionsTab from "@/components/admin/AdminSubscriptionsTab";
 import AdminPaymentTab from "@/components/admin/AdminPaymentTab";
 import AdminPartnersTab from "@/components/admin/AdminPartnersTab";
+import { useSearchParams } from "react-router-dom";
+import { ShieldCheck } from "lucide-react";
 
 const AdminPanel = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "users";
+
+  const handleTabChange = (value: string) => {
+    setSearchParams({ tab: value });
+  };
+
   return (
-    <DashboardLayout>
+    <AdminLayout>
       <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Painel Administrativo</h1>
-          <p className="text-sm text-muted-foreground mt-1">Gerencie usuários, planos, assinaturas, pagamentos e parceiros</p>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <ShieldCheck className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-foreground">Painel Aikortex</h1>
+              <Badge className="bg-primary/10 text-primary border-0 text-[10px]">Admin</Badge>
+            </div>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Gerencie todas as agências, planos e configurações da plataforma.
+            </p>
+          </div>
         </div>
 
-        <Tabs defaultValue="users" className="space-y-4">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
           <TabsList className="bg-muted/50 p-1 flex-wrap">
             <TabsTrigger value="users" className="text-xs gap-1.5">
               <Users className="w-3.5 h-3.5" /> Usuários
@@ -42,7 +62,7 @@ const AdminPanel = () => {
           <TabsContent value="partners"><AdminPartnersTab /></TabsContent>
         </Tabs>
       </div>
-    </DashboardLayout>
+    </AdminLayout>
   );
 };
 
