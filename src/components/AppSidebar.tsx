@@ -37,6 +37,7 @@ import {
   LayoutTemplate,
   Video,
   X,
+  ShieldCheck,
 } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import { useIsMobile } from "@/hooks/use-mobile";
