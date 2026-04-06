@@ -223,6 +223,51 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_tiers: {
+        Row: {
+          certifications_earned: number | null
+          clients_served: number | null
+          created_at: string | null
+          id: string
+          notes: string | null
+          revenue: number | null
+          solutions_published: number | null
+          tier: string
+          tier_upgraded_at: string | null
+          tier_upgraded_by: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          certifications_earned?: number | null
+          clients_served?: number | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          revenue?: number | null
+          solutions_published?: number | null
+          tier?: string
+          tier_upgraded_at?: string | null
+          tier_upgraded_by?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          certifications_earned?: number | null
+          clients_served?: number | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          revenue?: number | null
+          solutions_published?: number | null
+          tier?: string
+          tier_upgraded_at?: string | null
+          tier_upgraded_by?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       plans: {
         Row: {
           created_at: string | null

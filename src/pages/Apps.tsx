@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
+import FeatureGate from "@/components/shared/FeatureGate";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight, Monitor, Heart, Target, Building2,
@@ -95,6 +96,7 @@ const Apps = () => {
 
   return (
     <DashboardLayout>
+      <FeatureGate feature="feature.saas_builder">
       <div className="max-w-5xl mx-auto px-6 py-10">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -253,6 +255,7 @@ const Apps = () => {
           </AlertDialogContent>
         </AlertDialog>
       </div>
+      </FeatureGate>
     </DashboardLayout>
   );
 };
