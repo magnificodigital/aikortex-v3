@@ -115,7 +115,7 @@ const PermissionsManager = () => {
             <Shield className="w-3.5 h-3.5" /> Permissões
           </TabsTrigger>
           <TabsTrigger value="features" className="text-xs gap-1.5">
-            <Sparkles className="w-3.5 h-3.5" /> Feature Flags
+            <Sparkles className="w-3.5 h-3.5" /> Funcionalidades por Plano
           </TabsTrigger>
           <TabsTrigger value="audit" className="text-xs gap-1.5">
             <History className="w-3.5 h-3.5" /> Audit Log
