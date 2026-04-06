@@ -584,6 +584,42 @@ export type Database = {
           },
         ]
       }
+      workspace_members: {
+        Row: {
+          created_at: string | null
+          department: string | null
+          id: string
+          job_title: string | null
+          member_user_id: string
+          role: string
+          status: string
+          updated_at: string | null
+          workspace_owner_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          department?: string | null
+          id?: string
+          job_title?: string | null
+          member_user_id: string
+          role?: string
+          status?: string
+          updated_at?: string | null
+          workspace_owner_id: string
+        }
+        Update: {
+          created_at?: string | null
+          department?: string | null
+          id?: string
+          job_title?: string | null
+          member_user_id?: string
+          role?: string
+          status?: string
+          updated_at?: string | null
+          workspace_owner_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
