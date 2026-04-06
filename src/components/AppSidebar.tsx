@@ -132,7 +132,7 @@ const AppSidebar = ({ mobileOpen = false, onMobileClose }: AppSidebarProps) => {
 
   const location = useLocation();
   const { theme, toggle } = useTheme();
-  const { signOut } = useAuth();
+  const { signOut, isPlatform } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
