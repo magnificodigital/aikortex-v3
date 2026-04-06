@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,7 @@ import {
 } from "lucide-react";
 import { IntegrationsPanel, ChannelsPanel } from "@/components/settings/IntegrationsPanel";
 import PermissionsManager from "@/components/settings/PermissionsManager";
+import SubscriptionTab from "@/components/settings/SubscriptionTab";
 
 // ─── TYPES ──────────────────────────────────────────
 interface BrandColors {
@@ -346,7 +348,7 @@ const SettingsPage = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="colors" className="space-y-4">
+        <Tabs defaultValue={new URLSearchParams(window.location.search).get("tab") || "colors"} className="space-y-4">
           <TabsList className="flex flex-wrap w-full max-w-2xl h-auto gap-1 bg-muted/50 p-1">
             <TabsTrigger value="colors" className="text-xs gap-1"><Palette className="w-3.5 h-3.5" /> Cores</TabsTrigger>
             <TabsTrigger value="logo" className="text-xs gap-1"><Image className="w-3.5 h-3.5" /> Logo</TabsTrigger>
@@ -355,6 +357,7 @@ const SettingsPage = () => {
             <TabsTrigger value="integrations" className="text-xs gap-1"><Plug className="w-3.5 h-3.5" /> Integrações</TabsTrigger>
             <TabsTrigger value="channels" className="text-xs gap-1"><Radio className="w-3.5 h-3.5" /> Canais</TabsTrigger>
             <TabsTrigger value="permissions" className="text-xs gap-1"><Shield className="w-3.5 h-3.5" /> Permissões</TabsTrigger>
+            <TabsTrigger value="subscription" className="text-xs gap-1"><CreditCard className="w-3.5 h-3.5" /> Assinatura</TabsTrigger>
           </TabsList>
 
           {/* ── CORES ──────────────────────────────── */}
@@ -695,6 +698,11 @@ const SettingsPage = () => {
           {/* ── PERMISSÕES ─────────────────────────── */}
           <TabsContent value="permissions">
             <PermissionsManager />
+          </TabsContent>
+
+          {/* ── ASSINATURA ─────────────────────────── */}
+          <TabsContent value="subscription">
+            <SubscriptionTab />
           </TabsContent>
         </Tabs>
       </div>

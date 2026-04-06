@@ -14,6 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      invoices: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          paid_at: string | null
+          payment_id: string | null
+          payment_provider: string | null
+          status: string | null
+          subscription_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_id?: string | null
+          payment_provider?: string | null
+          status?: string | null
+          subscription_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_id?: string | null
+          payment_provider?: string | null
+          status?: string | null
+          subscription_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meeting_messages: {
         Row: {
           content: string
@@ -170,6 +223,57 @@ export type Database = {
         }
         Relationships: []
       }
+      plans: {
+        Row: {
+          created_at: string | null
+          currency: string
+          description: string | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          limits: Json | null
+          name: string
+          price_monthly: number
+          price_yearly: number
+          slug: string
+          trial_days: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          limits?: Json | null
+          name: string
+          price_monthly?: number
+          price_yearly?: number
+          slug: string
+          trial_days?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          limits?: Json | null
+          name?: string
+          price_monthly?: number
+          price_yearly?: number
+          slug?: string
+          trial_days?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -196,6 +300,62 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          billing_cycle: string
+          canceled_at: string | null
+          created_at: string | null
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          payment_provider: string | null
+          payment_subscription_id: string | null
+          plan_id: string
+          status: string
+          trial_ends_at: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          billing_cycle?: string
+          canceled_at?: string | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          payment_provider?: string | null
+          payment_subscription_id?: string | null
+          plan_id: string
+          status?: string
+          trial_ends_at?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          billing_cycle?: string
+          canceled_at?: string | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          payment_provider?: string | null
+          payment_subscription_id?: string | null
+          plan_id?: string
+          status?: string
+          trial_ends_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_agents: {
         Row: {

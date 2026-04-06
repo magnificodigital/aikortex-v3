@@ -36,6 +36,7 @@ const AppBuilder = lazy(() => import("./pages/AppBuilder"));
 const Apps = lazy(() => import("./pages/Apps"));
 
 
+const Pricing = lazy(() => import("./pages/Pricing"));
 const Templates = lazy(() => import("./pages/Templates"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Meetings = lazy(() => import("./pages/Meetings"));
@@ -64,6 +65,7 @@ const App = () => (
           <Suspense fallback={<Loading />}>
             <Routes>
               <Route path="/" element={<LandingPage />} />
+              <Route path="/pricing" element={<Pricing />} />
               <Route path="/home" element={<P><Home /></P>} />
               <Route path="/apps" element={<P><Apps /></P>} />
               <Route path="/app-builder" element={<P><AppBuilder /></P>} />

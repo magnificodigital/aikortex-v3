@@ -15,6 +15,7 @@ import {
   FileText,
   Bot,
   Settings,
+  CreditCard,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
@@ -263,6 +264,14 @@ const AppSidebar = () => {
 
       {/* Bottom */}
       <div className="py-2 px-2 space-y-0.5 border-t border-sidebar-border">
+        <Link
+          to="/pricing"
+          className={linkClasses(isItemActive("/pricing"))}
+          title={collapsed ? "Planos" : undefined}
+        >
+          <CreditCard className={`w-4 h-4 shrink-0 ${isItemActive("/pricing") ? "text-primary" : ""}`} />
+          {!collapsed && <span className="truncate">Planos</span>}
+        </Link>
         <Link
           to="/settings"
           className={linkClasses(isItemActive("/settings"))}
