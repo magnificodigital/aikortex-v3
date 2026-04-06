@@ -356,6 +356,7 @@ const SettingsPage = () => {
             <TabsTrigger value="integrations" className="text-xs gap-1"><Plug className="w-3.5 h-3.5" /> Integrações</TabsTrigger>
             <TabsTrigger value="channels" className="text-xs gap-1"><Radio className="w-3.5 h-3.5" /> Canais</TabsTrigger>
             <TabsTrigger value="permissions" className="text-xs gap-1"><Shield className="w-3.5 h-3.5" /> Permissões</TabsTrigger>
+            <TabsTrigger value="subscription" className="text-xs gap-1"><CreditCard className="w-3.5 h-3.5" /> Assinatura</TabsTrigger>
           </TabsList>
 
           {/* ── CORES ──────────────────────────────── */}
