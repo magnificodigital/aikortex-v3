@@ -48,6 +48,7 @@ import {
 } from "lucide-react";
 import { IntegrationsPanel, ChannelsPanel } from "@/components/settings/IntegrationsPanel";
 import PermissionsManager from "@/components/settings/PermissionsManager";
+import SubscriptionTab from "@/components/settings/SubscriptionTab";
 
 // ─── TYPES ──────────────────────────────────────────
 interface BrandColors {
