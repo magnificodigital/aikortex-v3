@@ -36,8 +36,10 @@ import {
   AppWindow,
   LayoutTemplate,
   Video,
+  X,
 } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Select,
   SelectContent,
@@ -51,6 +53,11 @@ type NavItem = {
   icon: typeof Home;
   path: string;
   children?: NavItem[];
+};
+
+type AppSidebarProps = {
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
 };
 
 const gestaoItems: NavItem[] = [
@@ -108,7 +115,7 @@ const saveSidebarState = (state: Record<string, unknown>) => {
   } catch {}
 };
 
-const AppSidebar = () => {
+const AppSidebar = ({ mobileOpen = false, onMobileClose }: AppSidebarProps) => {
   const saved = loadSidebarState();
   const [collapsed, setCollapsed] = useState(saved?.collapsed ?? false);
   const [gestaoOpen, setGestaoOpen] = useState(saved?.gestaoOpen ?? true);
@@ -118,7 +125,6 @@ const AppSidebar = () => {
     saved?.expandedItems ?? { "/clients": true, "/sales": true }
   );
 
-  // Persist sidebar state to localStorage
   useEffect(() => {
     saveSidebarState({ collapsed, gestaoOpen, partnersOpen, aikortexOpen, expandedItems });
   }, [collapsed, gestaoOpen, partnersOpen, aikortexOpen, expandedItems]);
@@ -127,6 +133,14 @@ const AppSidebar = () => {
   const { theme, toggle } = useTheme();
   const { signOut } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+
+  useEffect(() => {
+    if (isMobile) {
+      onMobileClose?.();
+    }
+  }, [location.pathname, location.search, isMobile, onMobileClose]);
+
   const isItemActive = (path: string) => {
     if (path.includes("?tab=")) {
       const [base, query] = path.split("?");
@@ -138,6 +152,12 @@ const AppSidebar = () => {
   const toggleExpand = (path: string) => {
     setExpandedItems((prev) => ({ ...prev, [path]: !prev[path] }));
   };
+
+  const handleNavigate = useCallback(() => {
+    if (isMobile) {
+      onMobileClose?.();
+    }
+  }, [isMobile, onMobileClose]);
 
   const linkClasses = (active: boolean) =>
     `flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors overflow-hidden ${
@@ -156,14 +176,15 @@ const AppSidebar = () => {
         <div className="flex items-center">
           <Link
             to={item.path}
+            onClick={handleNavigate}
             className={`${linkClasses(isActive)} flex-1`}
             style={!collapsed && depth > 0 ? { paddingLeft: "2.75rem" } : undefined}
-            title={collapsed ? item.label : undefined}
+            title={collapsed && !isMobile ? item.label : undefined}
           >
             <item.icon className={`w-4 h-4 shrink-0 ${isActive ? "text-primary" : ""}`} />
-            {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
+            {(!collapsed || isMobile) && <span className="flex-1 truncate">{item.label}</span>}
           </Link>
-          {hasChildren && !collapsed && (
+          {hasChildren && !collapsed && !isMobile && (
             <button
               onClick={() => toggleExpand(item.path)}
               className="p-1 mr-1 text-muted-foreground hover:text-foreground rounded transition-colors"
@@ -174,7 +195,7 @@ const AppSidebar = () => {
             </button>
           )}
         </div>
-        {hasChildren && (isExpanded || collapsed) && !collapsed && (
+        {hasChildren && (isExpanded || collapsed || isMobile) && (!collapsed || isMobile) && (
           <div className="space-y-0.5">
             {item.children!.map((child) => renderItem(child, depth + 1))}
           </div>
@@ -190,10 +211,10 @@ const AppSidebar = () => {
     setOpen: (v: boolean) => void
   ) => (
     <div>
-      {!collapsed ? (
+      {!collapsed || isMobile ? (
         <button
           onClick={() => setOpen(!open)}
-          className="flex items-center justify-between w-full text-[10px] uppercase tracking-widest text-muted-foreground px-3 py-2 mt-4 hover:text-foreground transition-colors"
+          className="flex items-center justify-between w-full px-3 py-2 mt-4 text-[10px] uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
         >
           <span>{label}</span>
           <ChevronDown className={`w-3 h-3 transition-transform ${open ? "" : "-rotate-90"}`} />
@@ -201,7 +222,7 @@ const AppSidebar = () => {
       ) : (
         <div className="border-t border-sidebar-border my-2" />
       )}
-      {(open || collapsed) && (
+      {(open || collapsed || isMobile) && (
         <div className="space-y-0.5">
           {items.map((item) => renderItem(item))}
         </div>
@@ -210,121 +231,156 @@ const AppSidebar = () => {
   );
 
   return (
-    <aside
-      className={`flex flex-col h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300 ${
-        collapsed ? "w-16" : "w-56"
-      }`}
-    >
-      {/* Logo */}
-      <div className="flex items-center justify-center px-4 h-14 border-b border-sidebar-border">
-        <img
-          src={collapsed
-            ? (theme === "dark" ? aikortexIconWhite : aikortexIconBlack)
-            : (theme === "dark" ? aikortexLogoWhite : aikortexLogoBlack)
-          }
-          alt="Aikortex"
-          className={collapsed ? "h-7 w-7 object-contain" : "h-7 w-auto object-contain"}
+    <>
+      {isMobile && mobileOpen && (
+        <button
+          type="button"
+          aria-label="Fechar menu"
+          className="fixed inset-0 z-30 bg-background/80 backdrop-blur-sm md:hidden"
+          onClick={onMobileClose}
         />
-      </div>
-
-      {/* Workspace selector */}
-      {!collapsed && (
-        <div className="px-2 pt-3">
-          <Select defaultValue="workspace-1">
-            <SelectTrigger className="w-full h-8 text-xs border-sidebar-border">
-              <SelectValue placeholder="Workspace" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="workspace-1">Meu Workspace</SelectItem>
-              <SelectItem value="workspace-2">Agência Alpha</SelectItem>
-              <SelectItem value="workspace-3">Cliente Beta</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
       )}
 
-      {/* Nav */}
-      <nav className="flex-1 py-1 px-2 space-y-0.5 overflow-y-auto scrollbar-thin">
-        {/* Home & Dashboard */}
-        <div className="space-y-0.5 mt-2">
-          <Link to="/home" className={linkClasses(isItemActive("/home"))} title={collapsed ? "Home" : undefined}>
-            <Home className={`w-4 h-4 shrink-0 ${isItemActive("/home") ? "text-primary" : ""}`} />
-            {!collapsed && <span>Home</span>}
-          </Link>
-          <Link to="/dashboard" className={linkClasses(isItemActive("/dashboard"))} title={collapsed ? "Dashboard" : undefined}>
-            <LayoutDashboard className={`w-4 h-4 shrink-0 ${isItemActive("/dashboard") ? "text-primary" : ""}`} />
-            {!collapsed && <span>Dashboard</span>}
-          </Link>
+      <aside
+        className={`flex h-screen flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300 ${
+          isMobile
+            ? `fixed inset-y-0 left-0 z-40 w-72 max-w-[85vw] ${mobileOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"}`
+            : collapsed
+              ? "w-16"
+              : "w-56"
+        }`}
+      >
+        <div className={`flex h-14 items-center border-b border-sidebar-border px-4 ${isMobile ? "justify-between" : "justify-center"}`}>
+          <img
+            src={collapsed && !isMobile
+              ? (theme === "dark" ? aikortexIconWhite : aikortexIconBlack)
+              : (theme === "dark" ? aikortexLogoWhite : aikortexLogoBlack)
+            }
+            alt="Aikortex"
+            className={collapsed && !isMobile ? "h-7 w-7 object-contain" : "h-7 w-auto object-contain"}
+          />
+
+          {isMobile && (
+            <button
+              type="button"
+              onClick={onMobileClose}
+              className="rounded-md p-2 text-sidebar-foreground transition-colors hover:bg-sidebar-accent/60 hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Fechar menu</span>
+            </button>
+          )}
         </div>
 
-        {renderGroup("Aikortex", aikortexItems, aikortexOpen, setAikortexOpen)}
-        {renderGroup("Gestão", gestaoItems, gestaoOpen, setGestaoOpen)}
-        {renderGroup("Partners", partnersItems, partnersOpen, setPartnersOpen)}
-      </nav>
+        {(!collapsed || isMobile) && (
+          <div className="px-2 pt-3">
+            <Select defaultValue="workspace-1">
+              <SelectTrigger className="w-full h-8 text-xs border-sidebar-border">
+                <SelectValue placeholder="Workspace" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="workspace-1">Meu Workspace</SelectItem>
+                <SelectItem value="workspace-2">Agência Alpha</SelectItem>
+                <SelectItem value="workspace-3">Cliente Beta</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
-      {/* Bottom */}
-      <div className="py-2 px-2 space-y-0.5 border-t border-sidebar-border">
-        <Link
-          to="/pricing"
-          className={linkClasses(isItemActive("/pricing"))}
-          title={collapsed ? "Planos" : undefined}
-        >
-          <CreditCard className={`w-4 h-4 shrink-0 ${isItemActive("/pricing") ? "text-primary" : ""}`} />
-          {!collapsed && <span className="truncate">Planos</span>}
-        </Link>
-        <Link
-          to="/settings"
-          className={linkClasses(isItemActive("/settings"))}
-          title={collapsed ? "Configurações" : undefined}
-        >
-          <Settings className={`w-4 h-4 shrink-0 ${isItemActive("/settings") ? "text-primary" : ""}`} />
-          {!collapsed && <span className="truncate">Configurações</span>}
-        </Link>
-        <Link
-          to="/tutorials"
-          className={linkClasses(isItemActive("/tutorials"))}
-          title={collapsed ? "Tutoriais" : undefined}
-        >
-          <BookOpen className={`w-4 h-4 shrink-0 ${isItemActive("/tutorials") ? "text-primary" : ""}`} />
-          {!collapsed && <span className="truncate">Tutoriais</span>}
-        </Link>
+        <nav className="flex-1 overflow-y-auto px-2 py-1 space-y-0.5 scrollbar-thin">
+          <div className="mt-2 space-y-0.5">
+            <Link to="/home" onClick={handleNavigate} className={linkClasses(isItemActive("/home"))} title={collapsed && !isMobile ? "Home" : undefined}>
+              <Home className={`w-4 h-4 shrink-0 ${isItemActive("/home") ? "text-primary" : ""}`} />
+              {(!collapsed || isMobile) && <span>Home</span>}
+            </Link>
+            <Link to="/dashboard" onClick={handleNavigate} className={linkClasses(isItemActive("/dashboard"))} title={collapsed && !isMobile ? "Dashboard" : undefined}>
+              <LayoutDashboard className={`w-4 h-4 shrink-0 ${isItemActive("/dashboard") ? "text-primary" : ""}`} />
+              {(!collapsed || isMobile) && <span>Dashboard</span>}
+            </Link>
+          </div>
 
-        <button
-          onClick={toggle}
-          className={`${linkClasses(false)} w-full`}
-          title={theme === "dark" ? "Modo claro" : "Modo escuro"}
-        >
-          {theme === "dark" ? <Sun className="w-4 h-4 shrink-0" /> : <Moon className="w-4 h-4 shrink-0" />}
-          {!collapsed && <span className="truncate">{theme === "dark" ? "Modo claro" : "Modo escuro"}</span>}
-        </button>
+          {renderGroup("Aikortex", aikortexItems, aikortexOpen, setAikortexOpen)}
+          {renderGroup("Gestão", gestaoItems, gestaoOpen, setGestaoOpen)}
+          {renderGroup("Partners", partnersItems, partnersOpen, setPartnersOpen)}
+        </nav>
 
-        <button
-          onClick={async () => {
-            await signOut();
-            navigate("/");
-          }}
-          className={`${linkClasses(false)} w-full`}
-          title={collapsed ? "Sair" : undefined}
-        >
-          <LogOut className="w-4 h-4 shrink-0 text-destructive" />
-          {!collapsed && <span className="truncate text-destructive">Sair</span>}
-        </button>
+        <div className="space-y-0.5 border-t border-sidebar-border px-2 py-2">
+          <Link
+            to="/pricing"
+            onClick={handleNavigate}
+            className={linkClasses(isItemActive("/pricing"))}
+            title={collapsed && !isMobile ? "Planos" : undefined}
+          >
+            <CreditCard className={`w-4 h-4 shrink-0 ${isItemActive("/pricing") ? "text-primary" : ""}`} />
+            {(!collapsed || isMobile) && <span className="truncate">Planos</span>}
+          </Link>
+          <Link
+            to="/settings"
+            onClick={handleNavigate}
+            className={linkClasses(isItemActive("/settings"))}
+            title={collapsed && !isMobile ? "Configurações" : undefined}
+          >
+            <Settings className={`w-4 h-4 shrink-0 ${isItemActive("/settings") ? "text-primary" : ""}`} />
+            {(!collapsed || isMobile) && <span className="truncate">Configurações</span>}
+          </Link>
+          <Link
+            to="/tutorials"
+            onClick={handleNavigate}
+            className={linkClasses(isItemActive("/tutorials"))}
+            title={collapsed && !isMobile ? "Tutoriais" : undefined}
+          >
+            <BookOpen className={`w-4 h-4 shrink-0 ${isItemActive("/tutorials") ? "text-primary" : ""}`} />
+            {(!collapsed || isMobile) && <span className="truncate">Tutoriais</span>}
+          </Link>
 
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className={`${linkClasses(false)} w-full`}
-        >
-          {collapsed ? (
-            <ChevronRight className="w-4 h-4 shrink-0" />
+          <button
+            onClick={toggle}
+            className={`${linkClasses(false)} w-full`}
+            title={theme === "dark" ? "Modo claro" : "Modo escuro"}
+          >
+            {theme === "dark" ? <Sun className="w-4 h-4 shrink-0" /> : <Moon className="w-4 h-4 shrink-0" />}
+            {(!collapsed || isMobile) && <span className="truncate">{theme === "dark" ? "Modo claro" : "Modo escuro"}</span>}
+          </button>
+
+          <button
+            onClick={async () => {
+              await signOut();
+              navigate("/");
+            }}
+            className={`${linkClasses(false)} w-full`}
+            title={collapsed && !isMobile ? "Sair" : undefined}
+          >
+            <LogOut className="w-4 h-4 shrink-0 text-destructive" />
+            {(!collapsed || isMobile) && <span className="truncate text-destructive">Sair</span>}
+          </button>
+
+          {isMobile ? (
+            <button
+              type="button"
+              onClick={onMobileClose}
+              className={`${linkClasses(false)} w-full`}
+            >
+              <X className="w-4 h-4 shrink-0" />
+              <span>Fechar menu</span>
+            </button>
           ) : (
-            <>
-              <ChevronLeft className="w-4 h-4 shrink-0" />
-              <span>Recolher</span>
-            </>
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              className={`${linkClasses(false)} w-full`}
+            >
+              {collapsed ? (
+                <ChevronRight className="w-4 h-4 shrink-0" />
+              ) : (
+                <>
+                  <ChevronLeft className="w-4 h-4 shrink-0" />
+                  <span>Recolher</span>
+                </>
+              )}
+            </button>
           )}
-        </button>
-      </div>
-    </aside>
+        </div>
+      </aside>
+    </>
   );
 };
 
