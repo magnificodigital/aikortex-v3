@@ -7,6 +7,7 @@ const BodySchema = z.object({
   password: z.string().min(8, "Senha deve ter no mínimo 8 caracteres"),
   full_name: z.string().min(1, "Nome é obrigatório").max(255),
   role: z.enum([
+    "platform_owner", "platform_admin",
     "agency_owner", "agency_admin", "agency_manager", "agency_member",
     "client_owner", "client_viewer",
   ]),
