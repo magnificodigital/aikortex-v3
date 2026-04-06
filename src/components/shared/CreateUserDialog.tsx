@@ -102,7 +102,7 @@ const CreateUserDialog = ({ open, onClose, onSuccess, context }: CreateUserDialo
           password,
           full_name: fullName.trim(),
           role,
-          tenant_type: context === "platform" ? "agency" : "agency",
+          tenant_type: ["platform_owner", "platform_admin"].includes(role) ? "platform" : context === "platform" ? "agency" : "agency",
           department: department || undefined,
           job_title: jobTitle.trim() || undefined,
         },
