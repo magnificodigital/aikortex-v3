@@ -18,6 +18,8 @@ interface CreateUserDialogProps {
 }
 
 const platformRoles = [
+  { value: "platform_owner", label: "Dono da Plataforma" },
+  { value: "platform_admin", label: "Admin da Plataforma" },
   { value: "agency_owner", label: "Dono da Agência" },
   { value: "agency_admin", label: "Admin da Agência" },
 ];
@@ -100,7 +102,7 @@ const CreateUserDialog = ({ open, onClose, onSuccess, context }: CreateUserDialo
           password,
           full_name: fullName.trim(),
           role,
-          tenant_type: context === "platform" ? "agency" : "agency",
+          tenant_type: ["platform_owner", "platform_admin"].includes(role) ? "platform" : context === "platform" ? "agency" : "agency",
           department: department || undefined,
           job_title: jobTitle.trim() || undefined,
         },
