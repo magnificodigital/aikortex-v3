@@ -19,13 +19,13 @@ import {
   ChevronRight,
   Lock,
   Unlock,
+  Sparkles,
   History,
   Crown,
   Building2,
   UserCircle,
 } from "lucide-react";
 import TierFeatureCard, { initTierSubFeatures, TierSubFeatures } from "./TierFeatureCard";
-import { Sparkles } from "lucide-react";
 import {
   SystemRole,
   SystemModule,
@@ -56,6 +56,9 @@ const levelIcons: Record<string, React.ReactNode> = {
   agency: <Building2 className="w-4 h-4" />,
   client: <UserCircle className="w-4 h-4" />,
 };
+
+const AIKORTEX_FLAGS: FeatureFlag[] = ["module.agents","module.flows","module.apps","module.templates","module.messages","module.broadcasts"];
+const GESTAO_FLAGS: FeatureFlag[] = ["module.clients","module.contracts","module.sales","module.crm","module.meetings","module.financial","module.team","module.tasks"];
 
 const PermissionsManager = () => {
   const [selectedRole, setSelectedRole] = useState<SystemRole>("agency_owner");
@@ -116,7 +119,6 @@ const PermissionsManager = () => {
   };
 
   const saveTierFeatures = () => {
-    // Update the runtime config (in production this would persist to DB)
     for (const t of Object.keys(tierFeatures) as PartnerTier[]) {
       TIER_FEATURE_CONFIG[t].features = [...tierFeatures[t]];
     }
@@ -140,6 +142,26 @@ const PermissionsManager = () => {
     agency: (Object.keys(ROLE_CONFIG) as SystemRole[]).filter(r => ROLE_CONFIG[r].level === "agency"),
     client: (Object.keys(ROLE_CONFIG) as SystemRole[]).filter(r => ROLE_CONFIG[r].level === "client"),
   };
+
+  const renderFeatureSection = (title: string, flags: FeatureFlag[]) => (
+    <div className="space-y-2">
+      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</h4>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {flags.map(flag => (
+          <TierFeatureCard
+            key={flag}
+            flag={flag}
+            enabled={(tierFeatures[selectedTier] ?? []).includes(flag)}
+            onToggle={() => toggleTierFeature(selectedTier, flag)}
+            subFeatures={tierSubFeatures[selectedTier]}
+            onToggleSubFeature={(subKey) => toggleSubFeature(selectedTier, subKey)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+
+  const advancedFlags = (Object.keys(FEATURE_FLAG_LABELS) as FeatureFlag[]).filter(f => f.startsWith("feature."));
 
   return (
     <div className="space-y-6">
@@ -194,7 +216,6 @@ const PermissionsManager = () => {
 
           <ScrollArea className="h-[500px]">
             <div className="space-y-1">
-              {/* Header */}
               <div className="grid grid-cols-[200px_repeat(5,1fr)_60px] gap-2 px-3 py-2 text-xs font-medium text-muted-foreground sticky top-0 bg-background z-10 border-b border-border">
                 <span>Módulo</span>
                 {PERMISSION_ACTIONS.map(a => (
@@ -278,107 +299,9 @@ const PermissionsManager = () => {
             <Button size="sm" onClick={saveTierFeatures}>Salvar Alterações</Button>
           </div>
 
-          {/* Aikortex modules */}
-          <div className="space-y-2">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Aikortex</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {(Object.keys(FEATURE_FLAG_LABELS) as FeatureFlag[]).filter(f => f.startsWith("module.agents") || f.startsWith("module.flows") || f.startsWith("module.apps") || f.startsWith("module.templates") || f.startsWith("module.messages") || f.startsWith("module.broadcasts")).map(flag => {
-                const enabled = (tierFeatures[selectedTier] ?? []).includes(flag);
-                return (
-                  <div
-                    key={flag}
-                    className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
-                      enabled ? "border-primary/30 bg-primary/5" : "border-border bg-muted/30"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                        enabled ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-                      }`}>
-                        <Sparkles className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{FEATURE_FLAG_LABELS[flag]}</p>
-                        <p className="text-xs text-muted-foreground">{flag}</p>
-                      </div>
-                    </div>
-                    <Switch
-                      checked={enabled}
-                      onCheckedChange={() => toggleTierFeature(selectedTier, flag)}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Gestão modules */}
-          <div className="space-y-2">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Gestão</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {(Object.keys(FEATURE_FLAG_LABELS) as FeatureFlag[]).filter(f => f.startsWith("module.clients") || f.startsWith("module.contracts") || f.startsWith("module.sales") || f.startsWith("module.crm") || f.startsWith("module.meetings") || f.startsWith("module.financial") || f.startsWith("module.team") || f.startsWith("module.tasks")).map(flag => {
-                const enabled = (tierFeatures[selectedTier] ?? []).includes(flag);
-                return (
-                  <div
-                    key={flag}
-                    className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
-                      enabled ? "border-primary/30 bg-primary/5" : "border-border bg-muted/30"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                        enabled ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-                      }`}>
-                        <Sparkles className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{FEATURE_FLAG_LABELS[flag]}</p>
-                        <p className="text-xs text-muted-foreground">{flag}</p>
-                      </div>
-                    </div>
-                    <Switch
-                      checked={enabled}
-                      onCheckedChange={() => toggleTierFeature(selectedTier, flag)}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Feature extras */}
-          <div className="space-y-2">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Funcionalidades Avançadas</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {(Object.keys(FEATURE_FLAG_LABELS) as FeatureFlag[]).filter(f => f.startsWith("feature.")).map(flag => {
-                const enabled = (tierFeatures[selectedTier] ?? []).includes(flag);
-                return (
-                  <div
-                    key={flag}
-                    className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
-                      enabled ? "border-primary/30 bg-primary/5" : "border-border bg-muted/30"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                        enabled ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-                      }`}>
-                        <Sparkles className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{FEATURE_FLAG_LABELS[flag]}</p>
-                        <p className="text-xs text-muted-foreground">{flag}</p>
-                      </div>
-                    </div>
-                    <Switch
-                      checked={enabled}
-                      onCheckedChange={() => toggleTierFeature(selectedTier, flag)}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          {renderFeatureSection("Aikortex", AIKORTEX_FLAGS)}
+          {renderFeatureSection("Gestão", GESTAO_FLAGS)}
+          {renderFeatureSection("Funcionalidades Avançadas", advancedFlags)}
 
           {/* Tier progression */}
           <Separator />
