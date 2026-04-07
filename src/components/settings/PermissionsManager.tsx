@@ -96,6 +96,25 @@ const PermissionsManager = () => {
     }));
   };
 
+  const toggleTierFeature = (tier: PartnerTier, flag: FeatureFlag) => {
+    setTierFeatures(prev => {
+      const current = prev[tier];
+      const has = current.includes(flag);
+      return {
+        ...prev,
+        [tier]: has ? current.filter(f => f !== flag) : [...current, flag],
+      };
+    });
+  };
+
+  const saveTierFeatures = () => {
+    // Update the runtime config (in production this would persist to DB)
+    for (const t of Object.keys(tierFeatures) as PartnerTier[]) {
+      TIER_FEATURE_CONFIG[t].features = [...tierFeatures[t]];
+    }
+    toast({ title: "Funcionalidades salvas", description: `Configurações do tier ${TIER_FEATURE_CONFIG[selectedTier].label} atualizadas.` });
+  };
+
   const resetToDefaults = () => {
     setPermissions({ ...DEFAULT_ROLE_PERMISSIONS });
     toast({ title: "Permissões restauradas ao padrão" });
