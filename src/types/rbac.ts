@@ -57,7 +57,23 @@ export type FeatureFlag =
   | "feature.custom_reports"
   | "feature.white_label"
   | "feature.api_access"
-  | "feature.media_participation";
+  | "feature.media_participation"
+  // Aikortex modules
+  | "module.agents"
+  | "module.flows"
+  | "module.apps"
+  | "module.templates"
+  | "module.messages"
+  | "module.broadcasts"
+  // Gestão modules
+  | "module.clients"
+  | "module.contracts"
+  | "module.sales"
+  | "module.crm"
+  | "module.meetings"
+  | "module.financial"
+  | "module.team"
+  | "module.tasks";
 
 export type PartnerTier = "bronze" | "silver" | "gold" | "elite";
 
