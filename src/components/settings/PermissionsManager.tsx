@@ -108,6 +108,13 @@ const PermissionsManager = () => {
     });
   };
 
+  const toggleSubFeature = (tier: PartnerTier, subKey: string) => {
+    setTierSubFeatures(prev => ({
+      ...prev,
+      [tier]: { ...prev[tier], [subKey]: !prev[tier][subKey] },
+    }));
+  };
+
   const saveTierFeatures = () => {
     // Update the runtime config (in production this would persist to DB)
     for (const t of Object.keys(tierFeatures) as PartnerTier[]) {
