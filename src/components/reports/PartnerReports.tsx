@@ -8,9 +8,8 @@ const COLORS = [
 
 const tierDistribution = [
   { name: "Bronze", value: 42, fill: "hsl(30, 60%, 50%)" },
-  { name: "Silver", value: 28, fill: "hsl(0, 0%, 65%)" },
+  { name: "Prata", value: 28, fill: "hsl(0, 0%, 65%)" },
   { name: "Gold", value: 18, fill: "hsl(45, 90%, 50%)" },
-  { name: "Elite", value: 7, fill: "hsl(270, 70%, 55%)" },
 ];
 
 const marketplaceData = [
