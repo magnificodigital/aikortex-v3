@@ -25,6 +25,7 @@ import {
   UserCircle,
 } from "lucide-react";
 import TierFeatureCard, { initTierSubFeatures, TierSubFeatures } from "./TierFeatureCard";
+import { Sparkles } from "lucide-react";
 import {
   SystemRole,
   SystemModule,
