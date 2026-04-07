@@ -226,11 +226,11 @@ const PermissionsManager = () => {
                 <span className="text-center">Todos</span>
               </div>
 
-              {(["core", "ecosystem"] as const).map(group => (
+              {(["platform", "aikortex", "gestao"] as const).map(group => (
                 <div key={group}>
                   <div className="px-3 py-2 mt-2">
                     <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
-                      {group === "core" ? "Módulos Core" : "Ecossistema"}
+                      {group === "platform" ? "Plataforma" : group === "aikortex" ? "Aikortex" : "Gestão"}
                     </span>
                   </div>
                   {ALL_MODULES.filter(m => m.group === group).map(mod => {
