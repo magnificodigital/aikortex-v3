@@ -1,4 +1,4 @@
-export type PartnerTier = "bronze" | "silver" | "gold" | "elite";
+export type PartnerTier = "bronze" | "prata" | "gold";
 
 export interface PartnerProfile {
   id: string;
