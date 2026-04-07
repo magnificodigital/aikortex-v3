@@ -695,10 +695,6 @@ const SettingsPage = () => {
             <ChannelsPanel />
           </TabsContent>
 
-          {/* ── PERMISSÕES DA EQUIPE ─────────────────────────── */}
-          <TabsContent value="permissions">
-            <AgencyPermissions />
-          </TabsContent>
 
           {/* ── ASSINATURA ─────────────────────────── */}
           <TabsContent value="subscription">
