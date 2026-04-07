@@ -7,9 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Pencil, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Pencil, Eye, EyeOff, Loader2, Award } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { TIER_CONFIG, type PartnerTier } from "@/types/partner";
+import { FEATURE_FLAG_LABELS, TIER_FEATURE_CONFIG, type FeatureFlag } from "@/types/rbac";
 
 interface EditUserDialogProps {
   open: boolean;
@@ -34,10 +37,22 @@ const allRoles = [
   { value: "agency_member", label: "Membro" },
 ];
 
+const TIERS: PartnerTier[] = ["bronze", "silver", "gold", "elite"];
+
 interface PlanOption {
   id: string;
   name: string;
   slug: string;
+}
+
+interface PartnerTierData {
+  id: string;
+  tier: string;
+  clients_served: number;
+  revenue: number;
+  solutions_published: number;
+  certifications_earned: number;
+  notes: string | null;
 }
 
 const EditUserDialog = ({ open, onClose, onSuccess, user }: EditUserDialogProps) => {
@@ -54,8 +69,16 @@ const EditUserDialog = ({ open, onClose, onSuccess, user }: EditUserDialogProps)
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("info");
 
-  // Load user email from auth via edge function
-  const [userEmail, setUserEmail] = useState("");
+  // Agency / Partner tier state
+  const [partnerData, setPartnerData] = useState<PartnerTierData | null>(null);
+  const [agencyTier, setAgencyTier] = useState<PartnerTier>("bronze");
+  const [clientsServed, setClientsServed] = useState(0);
+  const [revenue, setRevenue] = useState(0);
+  const [solutionsPublished, setSolutionsPublished] = useState(0);
+  const [certificationsEarned, setCertificationsEarned] = useState(0);
+  const [tierNote, setTierNote] = useState("");
+
+  const isAgencyUser = user?.role?.startsWith("agency_") ?? false;
 
   useEffect(() => {
     if (open && user) {
@@ -67,7 +90,7 @@ const EditUserDialog = ({ open, onClose, onSuccess, user }: EditUserDialogProps)
       setError("");
       setActiveTab("info");
       setEmail("");
-      setUserEmail("");
+      setPartnerData(null);
 
       // Fetch plans
       supabase.from("plans").select("id, name, slug").eq("is_active", true).then(({ data }) => {
@@ -79,6 +102,32 @@ const EditUserDialog = ({ open, onClose, onSuccess, user }: EditUserDialogProps)
         setPlanId(data?.plan_id || "none");
         setBillingCycle(data?.billing_cycle || "monthly");
       });
+
+      // Fetch partner tier data
+      supabase
+        .from("partner_tiers" as any)
+        .select("*")
+        .eq("user_id", user.user_id)
+        .maybeSingle()
+        .then(({ data }: any) => {
+          if (data) {
+            setPartnerData(data);
+            setAgencyTier(data.tier as PartnerTier);
+            setClientsServed(data.clients_served ?? 0);
+            setRevenue(Number(data.revenue) ?? 0);
+            setSolutionsPublished(data.solutions_published ?? 0);
+            setCertificationsEarned(data.certifications_earned ?? 0);
+            setTierNote("");
+          } else {
+            setPartnerData(null);
+            setAgencyTier("bronze");
+            setClientsServed(0);
+            setRevenue(0);
+            setSolutionsPublished(0);
+            setCertificationsEarned(0);
+            setTierNote("");
+          }
+        });
     }
   }, [open, user]);
 
@@ -90,7 +139,6 @@ const EditUserDialog = ({ open, onClose, onSuccess, user }: EditUserDialogProps)
     try {
       const body: Record<string, any> = { user_id: user.user_id };
 
-      // Info tab
       if (fullName.trim() && fullName.trim() !== (user.full_name || "")) {
         body.full_name = fullName.trim();
       }
@@ -104,11 +152,9 @@ const EditUserDialog = ({ open, onClose, onSuccess, user }: EditUserDialogProps)
         body.password = password;
       }
 
-      // Role & status
       if (role !== user.role) body.role = role;
       if (isActive !== user.is_active) body.is_active = isActive;
 
-      // Plan
       const currentPlanId = planId === "none" ? null : planId;
       body.plan_id = currentPlanId;
       body.billing_cycle = billingCycle;
@@ -120,6 +166,38 @@ const EditUserDialog = ({ open, onClose, onSuccess, user }: EditUserDialogProps)
         setError(errMsg || "Erro ao atualizar usuário");
         setLoading(false);
         return;
+      }
+
+      // Save partner tier changes if agency user
+      if (isAgencyUser || role?.startsWith("agency_")) {
+        if (partnerData) {
+          // Update existing
+          await supabase
+            .from("partner_tiers" as any)
+            .update({
+              tier: agencyTier,
+              clients_served: clientsServed,
+              revenue: revenue,
+              solutions_published: solutionsPublished,
+              certifications_earned: certificationsEarned,
+              tier_upgraded_at: agencyTier !== partnerData.tier ? new Date().toISOString() : undefined,
+              notes: tierNote || partnerData.notes,
+            } as any)
+            .eq("id", partnerData.id);
+        } else {
+          // Create new tier record
+          await supabase
+            .from("partner_tiers" as any)
+            .insert({
+              user_id: user.user_id,
+              tier: agencyTier,
+              clients_served: clientsServed,
+              revenue: revenue,
+              solutions_published: solutionsPublished,
+              certifications_earned: certificationsEarned,
+              notes: tierNote || null,
+            } as any);
+        }
       }
 
       toast.success("Usuário atualizado com sucesso");
@@ -134,9 +212,11 @@ const EditUserDialog = ({ open, onClose, onSuccess, user }: EditUserDialogProps)
 
   if (!user) return null;
 
+  const currentTierFeatures = TIER_FEATURE_CONFIG[agencyTier]?.features ?? [];
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Pencil className="w-5 h-5 text-primary" />
@@ -149,8 +229,10 @@ const EditUserDialog = ({ open, onClose, onSuccess, user }: EditUserDialogProps)
             <TabsTrigger value="info" className="flex-1 text-xs">Dados</TabsTrigger>
             <TabsTrigger value="access" className="flex-1 text-xs">Acesso</TabsTrigger>
             <TabsTrigger value="plan" className="flex-1 text-xs">Plano</TabsTrigger>
+            <TabsTrigger value="agency" className="flex-1 text-xs">Agência</TabsTrigger>
           </TabsList>
 
+          {/* Tab: Dados */}
           <TabsContent value="info" className="space-y-4 mt-4">
             <div>
               <Label>Nome completo</Label>
@@ -180,6 +262,7 @@ const EditUserDialog = ({ open, onClose, onSuccess, user }: EditUserDialogProps)
             </div>
           </TabsContent>
 
+          {/* Tab: Acesso */}
           <TabsContent value="access" className="space-y-4 mt-4">
             <div>
               <Label>Função/Papel</Label>
@@ -202,6 +285,7 @@ const EditUserDialog = ({ open, onClose, onSuccess, user }: EditUserDialogProps)
             </div>
           </TabsContent>
 
+          {/* Tab: Plano */}
           <TabsContent value="plan" className="space-y-4 mt-4">
             <div>
               <Label>Plano</Label>
@@ -227,6 +311,86 @@ const EditUserDialog = ({ open, onClose, onSuccess, user }: EditUserDialogProps)
                 </Select>
               </div>
             )}
+          </TabsContent>
+
+          {/* Tab: Agência */}
+          <TabsContent value="agency" className="space-y-4 mt-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Award className="w-4 h-4 text-primary" />
+              <span className="text-sm font-medium text-foreground">Tier de Parceiro</span>
+            </div>
+
+            <div>
+              <Label>Tier atual</Label>
+              <Select value={agencyTier} onValueChange={(v) => setAgencyTier(v as PartnerTier)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {TIERS.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {TIER_CONFIG[t].label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-foreground">Métricas da Agência</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Clientes atendidos</Label>
+                  <Input type="number" min={0} value={clientsServed} onChange={(e) => setClientsServed(Number(e.target.value))} />
+                </div>
+                <div>
+                  <Label className="text-xs">Faturamento (R$)</Label>
+                  <Input type="number" min={0} value={revenue} onChange={(e) => setRevenue(Number(e.target.value))} />
+                </div>
+                <div>
+                  <Label className="text-xs">Soluções publicadas</Label>
+                  <Input type="number" min={0} value={solutionsPublished} onChange={(e) => setSolutionsPublished(Number(e.target.value))} />
+                </div>
+                <div>
+                  <Label className="text-xs">Certificações</Label>
+                  <Input type="number" min={0} value={certificationsEarned} onChange={(e) => setCertificationsEarned(Number(e.target.value))} />
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-foreground">Funcionalidades do Tier</p>
+              <p className="text-xs text-muted-foreground mb-2">
+                As funcionalidades abaixo são desbloqueadas automaticamente pelo tier selecionado.
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {(Object.keys(FEATURE_FLAG_LABELS) as FeatureFlag[]).map((flag) => {
+                  const active = currentTierFeatures.includes(flag);
+                  return (
+                    <Badge
+                      key={flag}
+                      variant={active ? "default" : "outline"}
+                      className={`text-xs ${active ? "bg-primary/15 text-primary border-primary/20" : "opacity-50"}`}
+                    >
+                      {active ? "✓" : "✗"} {FEATURE_FLAG_LABELS[flag]}
+                    </Badge>
+                  );
+                })}
+              </div>
+            </div>
+
+            <Separator />
+
+            <div>
+              <Label className="text-xs">Nota interna (opcional)</Label>
+              <Input
+                value={tierNote}
+                onChange={(e) => setTierNote(e.target.value)}
+                placeholder="Motivo da alteração de tier..."
+              />
+            </div>
           </TabsContent>
         </Tabs>
 
