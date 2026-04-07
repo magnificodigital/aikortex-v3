@@ -9,27 +9,15 @@ export type ClientRole = "client_owner" | "client_manager" | "client_viewer";
 export type SystemRole = PlatformRole | AgencyRole | ClientRole;
 
 // ─── MODULES ────────────────────────────────────────
+// Aligned with Tier Feature modules for consistency
 
-export type CoreModule =
-  | "dashboard"
-  | "clients"
-  | "projects"
-  | "tasks"
-  | "team"
-  | "finance"
-  | "contracts"
-  | "reports"
-  | "integrations"
-  | "partners";
+export type PlatformModule = "dashboard" | "reports" | "integrations" | "partners";
 
-export type EcosystemModule =
-  | "aikortex"
-  | "webedit"
-  | "alowdigital"
-  | "iagora"
-  | "sintonia";
+export type AikortexModule = "agents" | "flows" | "apps" | "templates" | "messages" | "broadcasts";
 
-export type SystemModule = CoreModule | EcosystemModule;
+export type GestaoModule = "clients" | "contracts" | "sales" | "crm" | "meetings" | "financial" | "team" | "tasks";
+
+export type SystemModule = PlatformModule | AikortexModule | GestaoModule;
 
 // ─── PERMISSIONS ────────────────────────────────────
 
@@ -116,7 +104,7 @@ export interface Tenant {
   id: string;
   name: string;
   type: "platform" | "agency" | "client";
-  parentId?: string; // agency parent for client tenants
+  parentId?: string;
   tier?: PartnerTier;
   createdAt: string;
 }
@@ -139,22 +127,34 @@ export interface PlatformUser {
 
 // ─── CONFIGS ────────────────────────────────────────
 
-export const ALL_MODULES: { key: SystemModule; label: string; group: "core" | "ecosystem" }[] = [
-  { key: "dashboard", label: "Dashboard", group: "core" },
-  { key: "clients", label: "Clientes", group: "core" },
-  { key: "projects", label: "Projetos", group: "core" },
-  { key: "tasks", label: "Tarefas", group: "core" },
-  { key: "team", label: "Equipe", group: "core" },
-  { key: "finance", label: "Financeiro", group: "core" },
-  { key: "contracts", label: "Contratos", group: "core" },
-  { key: "reports", label: "Relatórios", group: "core" },
-  { key: "integrations", label: "Integrações", group: "core" },
-  { key: "partners", label: "Partners", group: "core" },
-  { key: "aikortex", label: "Aikortex", group: "ecosystem" },
-  { key: "webedit", label: "WebEdit", group: "ecosystem" },
-  { key: "alowdigital", label: "AlowDigital", group: "ecosystem" },
-  { key: "iagora", label: "IAgora", group: "ecosystem" },
-  { key: "sintonia", label: "SintonIA", group: "ecosystem" },
+export const ALL_MODULES: { key: SystemModule; label: string; group: "platform" | "aikortex" | "gestao" }[] = [
+  // Plataforma
+  { key: "dashboard", label: "Dashboard", group: "platform" },
+  { key: "reports", label: "Relatórios", group: "platform" },
+  { key: "integrations", label: "Integrações", group: "platform" },
+  { key: "partners", label: "Parceiros", group: "platform" },
+  // Aikortex
+  { key: "agents", label: "Agentes", group: "aikortex" },
+  { key: "flows", label: "Flows", group: "aikortex" },
+  { key: "apps", label: "Apps", group: "aikortex" },
+  { key: "templates", label: "Templates", group: "aikortex" },
+  { key: "messages", label: "Mensagens", group: "aikortex" },
+  { key: "broadcasts", label: "Disparos", group: "aikortex" },
+  // Gestão
+  { key: "clients", label: "Clientes", group: "gestao" },
+  { key: "contracts", label: "Contratos", group: "gestao" },
+  { key: "sales", label: "Vendas", group: "gestao" },
+  { key: "crm", label: "CRM", group: "gestao" },
+  { key: "meetings", label: "Reuniões", group: "gestao" },
+  { key: "financial", label: "Financeiro", group: "gestao" },
+  { key: "team", label: "Equipe", group: "gestao" },
+  { key: "tasks", label: "Tarefas", group: "gestao" },
+];
+
+export const MODULE_GROUPS: { key: "platform" | "aikortex" | "gestao"; label: string }[] = [
+  { key: "platform", label: "Plataforma" },
+  { key: "aikortex", label: "Aikortex" },
+  { key: "gestao", label: "Gestão" },
 ];
 
 export const PERMISSION_ACTIONS: { key: PermissionAction; label: string }[] = [
@@ -296,91 +296,43 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<SystemRole, RolePermissionMap> = {
     ...allModulesNone(),
     dashboard: { ...readOnly },
     clients: { ...editAccess },
-    projects: { ...editAccess },
+    contracts: { ...readOnly },
     tasks: { ...fullAccess },
     team: { ...readOnly },
     reports: { ...readOnly },
-    finance: { ...readOnly },
-    contracts: { ...readOnly },
-    integrations: { ...noAccess },
-    partners: { ...noAccess },
-    aikortex: { ...readOnly },
-    webedit: { ...noAccess },
-    alowdigital: { ...noAccess },
-    iagora: { ...noAccess },
-    sintonia: { ...noAccess },
+    financial: { ...readOnly },
+    agents: { ...readOnly },
+    templates: { ...readOnly },
+    messages: { ...readOnly },
+    sales: { ...readOnly },
+    crm: { ...readOnly },
+    meetings: { ...readOnly },
   },
   agency_member: {
     ...allModulesNone(),
     dashboard: { ...readOnly },
-    projects: { ...editAccess },
     tasks: { ...editAccess },
     clients: { ...readOnly },
-    team: { ...noAccess },
-    finance: { ...noAccess },
-    contracts: { ...noAccess },
-    reports: { ...noAccess },
-    integrations: { ...noAccess },
-    partners: { ...noAccess },
-    aikortex: { ...readOnly },
-    webedit: { ...noAccess },
-    alowdigital: { ...noAccess },
-    iagora: { ...noAccess },
-    sintonia: { ...noAccess },
+    agents: { ...readOnly },
+    templates: { ...readOnly },
+    messages: { ...readOnly },
   },
   client_owner: {
     ...allModulesNone(),
     dashboard: { ...readOnly },
-    projects: { ...readOnly },
     tasks: { ...readOnly },
     contracts: { ...readOnly },
     reports: { ...readOnly },
-    clients: { ...noAccess },
-    team: { ...noAccess },
-    finance: { ...noAccess },
-    integrations: { ...noAccess },
-    partners: { ...noAccess },
-    aikortex: { ...noAccess },
-    webedit: { ...noAccess },
-    alowdigital: { ...noAccess },
-    iagora: { ...noAccess },
-    sintonia: { ...noAccess },
   },
   client_manager: {
     ...allModulesNone(),
     dashboard: { ...readOnly },
-    projects: { ...readOnly },
     tasks: { ...readOnly },
     contracts: { ...readOnly },
-    reports: { ...noAccess },
-    clients: { ...noAccess },
-    team: { ...noAccess },
-    finance: { ...noAccess },
-    integrations: { ...noAccess },
-    partners: { ...noAccess },
-    aikortex: { ...noAccess },
-    webedit: { ...noAccess },
-    alowdigital: { ...noAccess },
-    iagora: { ...noAccess },
-    sintonia: { ...noAccess },
   },
   client_viewer: {
     ...allModulesNone(),
     dashboard: { ...readOnly },
-    projects: { ...readOnly },
-    clients: { ...noAccess },
-    team: { ...noAccess },
-    finance: { ...noAccess },
-    contracts: { ...noAccess },
-    reports: { ...noAccess },
-    tasks: { ...noAccess },
-    integrations: { ...noAccess },
-    partners: { ...noAccess },
-    aikortex: { ...noAccess },
-    webedit: { ...noAccess },
-    alowdigital: { ...noAccess },
-    iagora: { ...noAccess },
-    sintonia: { ...noAccess },
   },
 };
 
