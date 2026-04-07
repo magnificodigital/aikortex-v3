@@ -356,7 +356,7 @@ const SettingsPage = () => {
             <TabsTrigger value="biolink" className="shrink-0 gap-1 whitespace-nowrap text-xs"><Link2 className="h-3.5 w-3.5" /> Bio Link</TabsTrigger>
             <TabsTrigger value="integrations" className="shrink-0 gap-1 whitespace-nowrap text-xs"><Plug className="h-3.5 w-3.5" /> Integrações</TabsTrigger>
             <TabsTrigger value="channels" className="shrink-0 gap-1 whitespace-nowrap text-xs"><Radio className="h-3.5 w-3.5" /> Canais</TabsTrigger>
-            <TabsTrigger value="permissions" className="shrink-0 gap-1 whitespace-nowrap text-xs"><Shield className="h-3.5 w-3.5" /> Permissões</TabsTrigger>
+            
             <TabsTrigger value="subscription" className="shrink-0 gap-1 whitespace-nowrap text-xs"><CreditCard className="h-3.5 w-3.5" /> Assinatura</TabsTrigger>
           </TabsList>
 
