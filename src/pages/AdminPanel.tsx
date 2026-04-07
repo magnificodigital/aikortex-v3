@@ -54,6 +54,9 @@ const AdminPanel = () => {
             <TabsTrigger value="partners" className="text-xs gap-1.5">
               <Award className="w-3.5 h-3.5" /> Parceiros
             </TabsTrigger>
+            <TabsTrigger value="permissions" className="text-xs gap-1.5">
+              <Shield className="w-3.5 h-3.5" /> Permissões & Features
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="users"><AdminUsersTab /></TabsContent>
