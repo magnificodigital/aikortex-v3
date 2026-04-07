@@ -75,7 +75,7 @@ export type FeatureFlag =
   | "module.team"
   | "module.tasks";
 
-export type PartnerTier = "bronze" | "silver" | "gold" | "elite";
+export type PartnerTier = "bronze" | "prata" | "gold";
 
 export interface TierFeatureConfig {
   label: string;
