@@ -63,6 +63,13 @@ const PermissionsManager = () => {
     () => ({ ...DEFAULT_ROLE_PERMISSIONS })
   );
   const [selectedTier, setSelectedTier] = useState<PartnerTier>("bronze");
+  const [tierFeatures, setTierFeatures] = useState<Record<PartnerTier, FeatureFlag[]>>(() => {
+    const initial: Record<string, FeatureFlag[]> = {};
+    for (const t of Object.keys(TIER_FEATURE_CONFIG) as PartnerTier[]) {
+      initial[t] = [...TIER_FEATURE_CONFIG[t].features];
+    }
+    return initial as Record<PartnerTier, FeatureFlag[]>;
+  });
 
   const currentPerms = permissions[selectedRole];
 
@@ -87,6 +94,25 @@ const PermissionsManager = () => {
       ...prev,
       [selectedRole]: { ...prev[selectedRole], [module]: perm },
     }));
+  };
+
+  const toggleTierFeature = (tier: PartnerTier, flag: FeatureFlag) => {
+    setTierFeatures(prev => {
+      const current = prev[tier];
+      const has = current.includes(flag);
+      return {
+        ...prev,
+        [tier]: has ? current.filter(f => f !== flag) : [...current, flag],
+      };
+    });
+  };
+
+  const saveTierFeatures = () => {
+    // Update the runtime config (in production this would persist to DB)
+    for (const t of Object.keys(tierFeatures) as PartnerTier[]) {
+      TIER_FEATURE_CONFIG[t].features = [...tierFeatures[t]];
+    }
+    toast({ title: "Funcionalidades salvas", description: `Configurações do tier ${TIER_FEATURE_CONFIG[selectedTier].label} atualizadas.` });
   };
 
   const resetToDefaults = () => {
@@ -220,56 +246,130 @@ const PermissionsManager = () => {
 
         {/* ── FEATURE FLAGS ──────────────────────── */}
         <TabsContent value="features" className="space-y-4">
-          <div className="flex items-center gap-3 mb-2">
-            <Select value={selectedTier} onValueChange={v => setSelectedTier(v as PartnerTier)}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {(Object.keys(TIER_FEATURE_CONFIG) as PartnerTier[]).map(t => (
-                  <SelectItem key={t} value={t}>
-                    <span className="flex items-center gap-2">
-                      <span>{TIER_FEATURE_CONFIG[t].icon}</span>
-                      <span className={TIER_FEATURE_CONFIG[t].color}>{TIER_FEATURE_CONFIG[t].label}</span>
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Badge className={`${tierConfig.bg} ${tierConfig.color} border-0`}>
-              {tierConfig.features.length} features
-            </Badge>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <Select value={selectedTier} onValueChange={v => setSelectedTier(v as PartnerTier)}>
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(TIER_FEATURE_CONFIG) as PartnerTier[]).map(t => (
+                    <SelectItem key={t} value={t}>
+                      <span className="flex items-center gap-2">
+                        <span>{TIER_FEATURE_CONFIG[t].icon}</span>
+                        <span className={TIER_FEATURE_CONFIG[t].color}>{TIER_FEATURE_CONFIG[t].label}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Badge className={`${tierConfig.bg} ${tierConfig.color} border-0`}>
+                {(tierFeatures[selectedTier] ?? []).length} features
+              </Badge>
+            </div>
+            <Button size="sm" onClick={saveTierFeatures}>Salvar Alterações</Button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {(Object.keys(FEATURE_FLAG_LABELS) as FeatureFlag[]).map(flag => {
-              const enabled = tierConfig.features.includes(flag);
-              return (
-                <div
-                  key={flag}
-                  className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
-                    enabled
-                      ? "border-primary/30 bg-primary/5"
-                      : "border-border bg-muted/30"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                      enabled ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-                    }`}>
-                      <Sparkles className="w-4 h-4" />
+          {/* Aikortex modules */}
+          <div className="space-y-2">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Aikortex</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {(Object.keys(FEATURE_FLAG_LABELS) as FeatureFlag[]).filter(f => f.startsWith("module.agents") || f.startsWith("module.flows") || f.startsWith("module.apps") || f.startsWith("module.templates") || f.startsWith("module.messages") || f.startsWith("module.broadcasts")).map(flag => {
+                const enabled = (tierFeatures[selectedTier] ?? []).includes(flag);
+                return (
+                  <div
+                    key={flag}
+                    className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                      enabled ? "border-primary/30 bg-primary/5" : "border-border bg-muted/30"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                        enabled ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                      }`}>
+                        <Sparkles className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{FEATURE_FLAG_LABELS[flag]}</p>
+                        <p className="text-xs text-muted-foreground">{flag}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{FEATURE_FLAG_LABELS[flag]}</p>
-                      <p className="text-xs text-muted-foreground">{flag}</p>
-                    </div>
+                    <Switch
+                      checked={enabled}
+                      onCheckedChange={() => toggleTierFeature(selectedTier, flag)}
+                    />
                   </div>
-                  <Badge variant={enabled ? "default" : "secondary"} className="text-xs">
-                    {enabled ? "Ativo" : "Bloqueado"}
-                  </Badge>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Gestão modules */}
+          <div className="space-y-2">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Gestão</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {(Object.keys(FEATURE_FLAG_LABELS) as FeatureFlag[]).filter(f => f.startsWith("module.clients") || f.startsWith("module.contracts") || f.startsWith("module.sales") || f.startsWith("module.crm") || f.startsWith("module.meetings") || f.startsWith("module.financial") || f.startsWith("module.team") || f.startsWith("module.tasks")).map(flag => {
+                const enabled = (tierFeatures[selectedTier] ?? []).includes(flag);
+                return (
+                  <div
+                    key={flag}
+                    className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                      enabled ? "border-primary/30 bg-primary/5" : "border-border bg-muted/30"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                        enabled ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                      }`}>
+                        <Sparkles className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{FEATURE_FLAG_LABELS[flag]}</p>
+                        <p className="text-xs text-muted-foreground">{flag}</p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={enabled}
+                      onCheckedChange={() => toggleTierFeature(selectedTier, flag)}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Feature extras */}
+          <div className="space-y-2">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Funcionalidades Avançadas</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {(Object.keys(FEATURE_FLAG_LABELS) as FeatureFlag[]).filter(f => f.startsWith("feature.")).map(flag => {
+                const enabled = (tierFeatures[selectedTier] ?? []).includes(flag);
+                return (
+                  <div
+                    key={flag}
+                    className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                      enabled ? "border-primary/30 bg-primary/5" : "border-border bg-muted/30"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                        enabled ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                      }`}>
+                        <Sparkles className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{FEATURE_FLAG_LABELS[flag]}</p>
+                        <p className="text-xs text-muted-foreground">{flag}</p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={enabled}
+                      onCheckedChange={() => toggleTierFeature(selectedTier, flag)}
+                    />
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* Tier progression */}
@@ -277,18 +377,18 @@ const PermissionsManager = () => {
           <div className="space-y-3">
             <h4 className="text-sm font-semibold text-foreground">Progressão de Tiers</h4>
             <div className="flex gap-2">
-              {(Object.keys(TIER_FEATURE_CONFIG) as PartnerTier[]).map((t, i) => {
+              {(Object.keys(TIER_FEATURE_CONFIG) as PartnerTier[]).map((t, i, arr) => {
                 const tc = TIER_FEATURE_CONFIG[t];
                 return (
                   <div key={t} className="flex items-center gap-2">
-                    <div className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border ${
-                      t === selectedTier ? "border-primary bg-primary/5" : "border-border"
-                    }`}>
+                    <div className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border cursor-pointer ${
+                      t === selectedTier ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"
+                    }`} onClick={() => setSelectedTier(t)}>
                       <span>{tc.icon}</span>
                       <span className={`text-sm font-medium ${tc.color}`}>{tc.label}</span>
-                      <span className="text-xs text-muted-foreground">({tc.features.length})</span>
+                      <span className="text-xs text-muted-foreground">({(tierFeatures[t] ?? []).length})</span>
                     </div>
-                    {i < 3 && <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                    {i < arr.length - 1 && <ChevronRight className="w-4 h-4 text-muted-foreground" />}
                   </div>
                 );
               })}

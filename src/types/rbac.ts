@@ -75,7 +75,7 @@ export type FeatureFlag =
   | "module.team"
   | "module.tasks";
 
-export type PartnerTier = "bronze" | "silver" | "gold" | "elite";
+export type PartnerTier = "bronze" | "prata" | "gold";
 
 export interface TierFeatureConfig {
   label: string;
@@ -184,17 +184,15 @@ export const TIER_FEATURE_CONFIG: Record<PartnerTier, TierFeatureConfig> = {
     bg: "bg-amber-500/10",
     icon: "🥉",
     features: [
-      // Gestão básica
       "module.clients",
       "module.tasks",
       "module.team",
-      // Aikortex básico
       "module.agents",
       "module.templates",
     ],
   },
-  silver: {
-    label: "Silver",
+  prata: {
+    label: "Prata",
     color: "text-gray-400",
     bg: "bg-gray-500/10",
     icon: "🥈",
@@ -217,33 +215,6 @@ export const TIER_FEATURE_CONFIG: Record<PartnerTier, TierFeatureConfig> = {
     color: "text-yellow-500",
     bg: "bg-yellow-500/10",
     icon: "🥇",
-    features: [
-      "module.clients",
-      "module.contracts",
-      "module.sales",
-      "module.crm",
-      "module.meetings",
-      "module.tasks",
-      "module.team",
-      "module.financial",
-      "module.agents",
-      "module.flows",
-      "module.apps",
-      "module.templates",
-      "module.messages",
-      "module.broadcasts",
-      "feature.marketplace_access",
-      "feature.custom_reports",
-      "feature.ai_agents",
-      "feature.advanced_automation",
-      "feature.api_access",
-    ],
-  },
-  elite: {
-    label: "Elite",
-    color: "text-purple-500",
-    bg: "bg-purple-500/10",
-    icon: "💎",
     features: [
       "module.clients",
       "module.contracts",

@@ -1,4 +1,4 @@
-export type PartnerTier = "bronze" | "silver" | "gold" | "elite";
+export type PartnerTier = "bronze" | "prata" | "gold";
 
 export interface PartnerProfile {
   id: string;
@@ -85,8 +85,8 @@ export const TIER_CONFIG: Record<PartnerTier, { label: string; color: string; mi
     minCerts: 0,
     benefits: ["Acesso à comunidade", "Treinamentos básicos", "Suporte padrão"],
   },
-  silver: {
-    label: "Silver",
+  prata: {
+    label: "Prata",
     color: "text-gray-400",
     minClients: 5,
     minRevenue: 10000,
@@ -101,15 +101,6 @@ export const TIER_CONFIG: Record<PartnerTier, { label: string; color: string; mi
     minRevenue: 50000,
     minSolutions: 5,
     minCerts: 3,
-    benefits: ["Marketplace destacado", "Co-marketing", "Early access a features", "Comissões aumentadas"],
-  },
-  elite: {
-    label: "Elite",
-    color: "text-purple-500",
-    minClients: 50,
-    minRevenue: 200000,
-    minSolutions: 15,
-    minCerts: 5,
-    benefits: ["Top marketplace", "Participação em roadmap", "SLA dedicado", "Revenue share premium", "Speaker em eventos"],
+    benefits: ["Top marketplace", "Co-marketing", "Early access a features", "Comissões aumentadas", "White-label", "SLA dedicado"],
   },
 };
