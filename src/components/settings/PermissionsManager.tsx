@@ -9,7 +9,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "@/hooks/use-toast";
 import {
   Shield,
-  Users,
   Eye,
   FilePlus,
   Pencil,
@@ -20,12 +19,12 @@ import {
   ChevronRight,
   Lock,
   Unlock,
-  Sparkles,
   History,
   Crown,
   Building2,
   UserCircle,
 } from "lucide-react";
+import TierFeatureCard, { initTierSubFeatures, TierSubFeatures } from "./TierFeatureCard";
 import {
   SystemRole,
   SystemModule,
