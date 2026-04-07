@@ -360,20 +360,41 @@ const EditUserDialog = ({ open, onClose, onSuccess, user }: EditUserDialogProps)
 
             <Separator />
 
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-foreground">Funcionalidades do Tier</p>
-              <p className="text-xs text-muted-foreground mb-2">
-                As funcionalidades abaixo são desbloqueadas automaticamente pelo tier selecionado.
-              </p>
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-foreground">Módulos Aikortex</p>
               <div className="flex flex-wrap gap-1.5">
-                {(Object.keys(FEATURE_FLAG_LABELS) as FeatureFlag[]).map((flag) => {
+                {(["module.agents", "module.flows", "module.apps", "module.templates", "module.messages", "module.broadcasts"] as FeatureFlag[]).map((flag) => {
                   const active = currentTierFeatures.includes(flag);
                   return (
-                    <Badge
-                      key={flag}
-                      variant={active ? "default" : "outline"}
-                      className={`text-xs ${active ? "bg-primary/15 text-primary border-primary/20" : "opacity-50"}`}
-                    >
+                    <Badge key={flag} variant={active ? "default" : "outline"} className={`text-xs ${active ? "bg-primary/15 text-primary border-primary/20" : "opacity-50"}`}>
+                      {active ? "✓" : "✗"} {FEATURE_FLAG_LABELS[flag]}
+                    </Badge>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-foreground">Módulos de Gestão</p>
+              <div className="flex flex-wrap gap-1.5">
+                {(["module.clients", "module.contracts", "module.sales", "module.crm", "module.meetings", "module.financial", "module.team", "module.tasks"] as FeatureFlag[]).map((flag) => {
+                  const active = currentTierFeatures.includes(flag);
+                  return (
+                    <Badge key={flag} variant={active ? "default" : "outline"} className={`text-xs ${active ? "bg-emerald-500/15 text-emerald-600 border-emerald-500/20" : "opacity-50"}`}>
+                      {active ? "✓" : "✗"} {FEATURE_FLAG_LABELS[flag]}
+                    </Badge>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-foreground">Funcionalidades Avançadas</p>
+              <div className="flex flex-wrap gap-1.5">
+                {(["feature.ai_agents", "feature.voice_agents", "feature.saas_builder", "feature.advanced_automation", "feature.marketplace_access", "feature.custom_reports", "feature.api_access", "feature.white_label", "feature.event_speaker", "feature.media_participation"] as FeatureFlag[]).map((flag) => {
+                  const active = currentTierFeatures.includes(flag);
+                  return (
+                    <Badge key={flag} variant={active ? "default" : "outline"} className={`text-xs ${active ? "bg-amber-500/15 text-amber-600 border-amber-500/20" : "opacity-50"}`}>
                       {active ? "✓" : "✗"} {FEATURE_FLAG_LABELS[flag]}
                     </Badge>
                   );

@@ -57,7 +57,23 @@ export type FeatureFlag =
   | "feature.custom_reports"
   | "feature.white_label"
   | "feature.api_access"
-  | "feature.media_participation";
+  | "feature.media_participation"
+  // Aikortex modules
+  | "module.agents"
+  | "module.flows"
+  | "module.apps"
+  | "module.templates"
+  | "module.messages"
+  | "module.broadcasts"
+  // Gestão modules
+  | "module.clients"
+  | "module.contracts"
+  | "module.sales"
+  | "module.crm"
+  | "module.meetings"
+  | "module.financial"
+  | "module.team"
+  | "module.tasks";
 
 export type PartnerTier = "bronze" | "silver" | "gold" | "elite";
 
@@ -167,14 +183,34 @@ export const TIER_FEATURE_CONFIG: Record<PartnerTier, TierFeatureConfig> = {
     color: "text-amber-700",
     bg: "bg-amber-500/10",
     icon: "🥉",
-    features: [],
+    features: [
+      // Gestão básica
+      "module.clients",
+      "module.tasks",
+      "module.team",
+      // Aikortex básico
+      "module.agents",
+      "module.templates",
+    ],
   },
   silver: {
     label: "Silver",
     color: "text-gray-400",
     bg: "bg-gray-500/10",
     icon: "🥈",
-    features: ["feature.marketplace_access", "feature.custom_reports"],
+    features: [
+      "module.clients",
+      "module.contracts",
+      "module.tasks",
+      "module.team",
+      "module.financial",
+      "module.messages",
+      "module.agents",
+      "module.flows",
+      "module.templates",
+      "feature.marketplace_access",
+      "feature.custom_reports",
+    ],
   },
   gold: {
     label: "Gold",
@@ -182,6 +218,20 @@ export const TIER_FEATURE_CONFIG: Record<PartnerTier, TierFeatureConfig> = {
     bg: "bg-yellow-500/10",
     icon: "🥇",
     features: [
+      "module.clients",
+      "module.contracts",
+      "module.sales",
+      "module.crm",
+      "module.meetings",
+      "module.tasks",
+      "module.team",
+      "module.financial",
+      "module.agents",
+      "module.flows",
+      "module.apps",
+      "module.templates",
+      "module.messages",
+      "module.broadcasts",
       "feature.marketplace_access",
       "feature.custom_reports",
       "feature.ai_agents",
@@ -195,6 +245,20 @@ export const TIER_FEATURE_CONFIG: Record<PartnerTier, TierFeatureConfig> = {
     bg: "bg-purple-500/10",
     icon: "💎",
     features: [
+      "module.clients",
+      "module.contracts",
+      "module.sales",
+      "module.crm",
+      "module.meetings",
+      "module.tasks",
+      "module.team",
+      "module.financial",
+      "module.agents",
+      "module.flows",
+      "module.apps",
+      "module.templates",
+      "module.messages",
+      "module.broadcasts",
       "feature.marketplace_access",
       "feature.custom_reports",
       "feature.ai_agents",
@@ -220,6 +284,20 @@ export const FEATURE_FLAG_LABELS: Record<FeatureFlag, string> = {
   "feature.white_label": "White Label",
   "feature.api_access": "Acesso via API",
   "feature.media_participation": "Participação em Mídia",
+  "module.agents": "Agentes",
+  "module.flows": "Flows",
+  "module.apps": "Apps",
+  "module.templates": "Templates",
+  "module.messages": "Mensagens",
+  "module.broadcasts": "Disparos",
+  "module.clients": "Clientes",
+  "module.contracts": "Contratos",
+  "module.sales": "Vendas",
+  "module.crm": "CRM",
+  "module.meetings": "Reuniões",
+  "module.financial": "Financeiro",
+  "module.team": "Equipe",
+  "module.tasks": "Tarefas",
 };
 
 // ─── DEFAULT PERMISSIONS PER ROLE ───────────────────
