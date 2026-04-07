@@ -63,6 +63,13 @@ const PermissionsManager = () => {
     () => ({ ...DEFAULT_ROLE_PERMISSIONS })
   );
   const [selectedTier, setSelectedTier] = useState<PartnerTier>("bronze");
+  const [tierFeatures, setTierFeatures] = useState<Record<PartnerTier, FeatureFlag[]>>(() => {
+    const initial: Record<string, FeatureFlag[]> = {};
+    for (const t of Object.keys(TIER_FEATURE_CONFIG) as PartnerTier[]) {
+      initial[t] = [...TIER_FEATURE_CONFIG[t].features];
+    }
+    return initial as Record<PartnerTier, FeatureFlag[]>;
+  });
 
   const currentPerms = permissions[selectedRole];
 
