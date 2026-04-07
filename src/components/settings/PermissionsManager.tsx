@@ -70,6 +70,7 @@ const PermissionsManager = () => {
     }
     return initial as Record<PartnerTier, FeatureFlag[]>;
   });
+  const [tierSubFeatures, setTierSubFeatures] = useState<TierSubFeatures>(initTierSubFeatures);
 
   const currentPerms = permissions[selectedRole];
 
