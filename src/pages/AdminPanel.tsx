@@ -7,6 +7,7 @@ import AdminPlansTab from "@/components/admin/AdminPlansTab";
 import AdminSubscriptionsTab from "@/components/admin/AdminSubscriptionsTab";
 import AdminPaymentTab from "@/components/admin/AdminPaymentTab";
 import AdminPartnersTab from "@/components/admin/AdminPartnersTab";
+import PermissionsManager from "@/components/settings/PermissionsManager";
 import { useSearchParams } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
 
