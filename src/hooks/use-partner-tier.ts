@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { TIER_FEATURE_CONFIG, type FeatureFlag, type PartnerTier } from "@/types/rbac";
 import { TIER_CONFIG } from "@/types/partner";
 
-const TIERS: PartnerTier[] = ["bronze", "silver", "gold", "elite"];
+const TIERS: PartnerTier[] = ["bronze", "prata", "gold"];
 
 export interface PartnerTierData {
   id: string;

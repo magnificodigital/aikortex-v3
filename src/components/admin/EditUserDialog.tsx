@@ -37,7 +37,7 @@ const allRoles = [
   { value: "agency_member", label: "Membro" },
 ];
 
-const TIERS: PartnerTier[] = ["bronze", "silver", "gold", "elite"];
+const TIERS: PartnerTier[] = ["bronze", "prata", "gold"];
 
 interface PlanOption {
   id: string;

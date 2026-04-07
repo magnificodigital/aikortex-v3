@@ -32,9 +32,8 @@ const certificationsTrend = [
 
 const revenueByTier = [
   { tier: "Bronze", receita: 12000 },
-  { tier: "Silver", receita: 45000 },
+  { tier: "Prata", receita: 45000 },
   { tier: "Gold", receita: 120000 },
-  { tier: "Elite", receita: 280000 },
 ];
 
 const engagementData = [
