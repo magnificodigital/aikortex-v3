@@ -48,7 +48,7 @@ import {
   Radio,
 } from "lucide-react";
 import { IntegrationsPanel, ChannelsPanel } from "@/components/settings/IntegrationsPanel";
-import PermissionsManager from "@/components/settings/PermissionsManager";
+import AgencyPermissions from "@/components/settings/AgencyPermissions";
 import SubscriptionTab from "@/components/settings/SubscriptionTab";
 
 // ─── TYPES ──────────────────────────────────────────
