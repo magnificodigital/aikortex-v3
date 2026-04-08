@@ -174,6 +174,7 @@ const AikortexAutomations = () => {
           />
         </div>
       </div>
+      </ModuleGate>
     );
   }
 
