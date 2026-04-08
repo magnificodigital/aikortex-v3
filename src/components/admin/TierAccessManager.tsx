@@ -191,7 +191,7 @@ const DEFAULT_ACCESS: Record<string, Record<string, boolean>> = {
     "gestao.crm": false, "gestao.reunioes": false, "gestao.financeiro": false,
     "gestao.equipe": true, "gestao.tarefas": true,
   },
-  silver: {
+  prata: {
     "aikortex.agentes": true, "aikortex.flows": true, "aikortex.apps": false,
     "aikortex.templates": true, "aikortex.mensagens": true, "aikortex.disparos": true,
     "gestao.clientes": true, "gestao.contratos": true, "gestao.vendas": true,
@@ -199,7 +199,6 @@ const DEFAULT_ACCESS: Record<string, Record<string, boolean>> = {
     "gestao.equipe": true, "gestao.tarefas": true,
   },
   gold: Object.fromEntries(ALL_MODULE_KEYS.map((k) => [k, true])),
-  elite: Object.fromEntries(ALL_MODULE_KEYS.map((k) => [k, true])),
 };
 
 interface AccessRow {
