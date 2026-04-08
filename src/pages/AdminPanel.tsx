@@ -7,7 +7,7 @@ import AdminPlansTab from "@/components/admin/AdminPlansTab";
 import AdminSubscriptionsTab from "@/components/admin/AdminSubscriptionsTab";
 import AdminPaymentTab from "@/components/admin/AdminPaymentTab";
 import AdminPartnersTab from "@/components/admin/AdminPartnersTab";
-import PermissionsManager from "@/components/settings/PermissionsManager";
+import TierAccessManager from "@/components/admin/TierAccessManager";
 import { useSearchParams } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
 
@@ -64,7 +64,7 @@ const AdminPanel = () => {
           <TabsContent value="subscriptions"><AdminSubscriptionsTab /></TabsContent>
           <TabsContent value="payment"><AdminPaymentTab /></TabsContent>
           <TabsContent value="partners"><AdminPartnersTab /></TabsContent>
-          <TabsContent value="permissions"><PermissionsManager /></TabsContent>
+          <TabsContent value="permissions"><TierAccessManager /></TabsContent>
         </Tabs>
       </div>
     </AdminLayout>

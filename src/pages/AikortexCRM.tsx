@@ -1,5 +1,6 @@
 import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
+import ModuleGate from "@/components/shared/ModuleGate";
 import CRMKanban from "@/components/crm/CRMKanban";
 import LeadDetailDialog from "@/components/crm/LeadDetailDialog";
 import NewLeadDialog from "@/components/crm/NewLeadDialog";
@@ -97,6 +98,7 @@ const AikortexCRM = () => {
   };
 
   return (
+    <ModuleGate moduleKey="gestao.crm">
     <DashboardLayout>
       <div className="p-4 lg:p-8 space-y-5">
         {/* Header */}
@@ -241,6 +243,7 @@ const AikortexCRM = () => {
       />
       <NewLeadDialog open={newLeadOpen} onOpenChange={setNewLeadOpen} onSave={handleNewLead} />
     </DashboardLayout>
+    </ModuleGate>
   );
 };
 

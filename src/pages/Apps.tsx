@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import FeatureGate from "@/components/shared/FeatureGate";
+import ModuleGate from "@/components/shared/ModuleGate";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight, Monitor, Heart, Target, Building2,
@@ -95,6 +96,7 @@ const Apps = () => {
   };
 
   return (
+    <ModuleGate moduleKey="aikortex.apps">
     <DashboardLayout>
       <FeatureGate feature="feature.saas_builder">
       <div className="max-w-5xl mx-auto px-6 py-10">
@@ -257,6 +259,7 @@ const Apps = () => {
       </div>
       </FeatureGate>
     </DashboardLayout>
+    </ModuleGate>
   );
 };
 

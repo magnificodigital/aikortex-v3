@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import ModuleGate from "@/components/shared/ModuleGate";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -228,9 +229,11 @@ const AppBuilder = () => {
   const existingAppId = state?.appId || null;
 
   return (
-    <AppBuilderProvider initialChannel={initialChannel} existingAppId={existingAppId}>
-      <AppBuilderInner initialPrompt={initialPrompt} />
-    </AppBuilderProvider>
+    <ModuleGate moduleKey="aikortex.apps">
+      <AppBuilderProvider initialChannel={initialChannel} existingAppId={existingAppId}>
+        <AppBuilderInner initialPrompt={initialPrompt} />
+      </AppBuilderProvider>
+    </ModuleGate>
   );
 };
 

@@ -411,6 +411,33 @@ export type Database = {
           },
         ]
       }
+      tier_module_access: {
+        Row: {
+          has_access: boolean
+          id: string
+          module_key: string
+          tier: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          has_access?: boolean
+          id?: string
+          module_key: string
+          tier: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          has_access?: boolean
+          id?: string
+          module_key?: string
+          tier?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       user_agents: {
         Row: {
           agent_type: string

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import ModuleGate from "@/components/shared/ModuleGate";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -88,6 +89,7 @@ const Meetings = () => {
   );
 
   return (
+    <ModuleGate moduleKey="gestao.reunioes">
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-7xl space-y-6">
         {/* Header */}
@@ -247,6 +249,7 @@ const Meetings = () => {
         </DialogContent>
       </Dialog>
     </DashboardLayout>
+    </ModuleGate>
   );
 };
 

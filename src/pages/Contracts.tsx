@@ -1,5 +1,6 @@
 import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
+import ModuleGate from "@/components/shared/ModuleGate";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { FileText, Plus } from "lucide-react";
@@ -30,6 +31,7 @@ const Contracts = () => {
   });
 
   return (
+    <ModuleGate moduleKey="gestao.contratos">
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-7xl space-y-6">
         <div className="flex items-center justify-between">
@@ -75,6 +77,7 @@ const Contracts = () => {
         <SignatureDialog contract={signingContract} open={!!signingContract} onOpenChange={o => !o && setSigningContract(null)} />
       </div>
     </DashboardLayout>
+    </ModuleGate>
   );
 };
 

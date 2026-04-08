@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import ModuleGate from "@/components/shared/ModuleGate";
 import { useLocation } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Workflow, Plus, ArrowLeft } from "lucide-react";
@@ -144,6 +145,7 @@ const AikortexAutomations = () => {
   // ── Building mode ──
   if (buildingFlow) {
     return (
+      <ModuleGate moduleKey="aikortex.flows">
       <div className="flex flex-col h-screen">
         <div className="flex items-center gap-3 px-3 py-1.5 border-b border-border bg-card/80 backdrop-blur-sm flex-shrink-0">
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setBuildingFlow(null)}>
@@ -172,11 +174,13 @@ const AikortexAutomations = () => {
           />
         </div>
       </div>
+      </ModuleGate>
     );
   }
 
   // ── Main list view ──
   return (
+    <ModuleGate moduleKey="aikortex.flows">
     <DashboardLayout>
       <div className="p-4 lg:p-8 max-w-6xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
@@ -222,6 +226,7 @@ const AikortexAutomations = () => {
         </Tabs>
       </div>
     </DashboardLayout>
+    </ModuleGate>
   );
 };
 

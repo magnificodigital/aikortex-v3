@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useModuleAccess } from "@/hooks/use-module-access";
 import aikortexLogoWhite from "@/assets/aikortex-logo-white.png";
 import aikortexLogoBlack from "@/assets/aikortex-logo-black.png";
 import aikortexIconWhite from "@/assets/aikortex-icon-white.png";
 import aikortexIconBlack from "@/assets/aikortex-icon-black.png";
-import { LogOut } from "lucide-react";
+import { LogOut, Lock } from "lucide-react";
 import {
   LayoutDashboard,
   Home,
@@ -100,6 +101,24 @@ const aikortexItems: NavItem[] = [
   { label: "Disparos", icon: Send, path: "/aikortex/broadcasts" },
 ];
 
+const MODULE_KEY_MAP: Record<string, string> = {
+  "/aikortex/agents": "aikortex.agentes",
+  "/aikortex/automations": "aikortex.flows",
+  "/apps": "aikortex.apps",
+  "/app-builder": "aikortex.apps",
+  "/templates": "aikortex.templates",
+  "/aikortex/messages": "aikortex.mensagens",
+  "/aikortex/broadcasts": "aikortex.disparos",
+  "/clients": "gestao.clientes",
+  "/contracts": "gestao.contratos",
+  "/sales": "gestao.vendas",
+  "/aikortex/crm": "gestao.crm",
+  "/meetings": "gestao.reunioes",
+  "/financial": "gestao.financeiro",
+  "/team": "gestao.equipe",
+  "/tasks": "gestao.tarefas",
+};
+
 const SIDEBAR_STATE_KEY = "sidebar-state";
 
 const loadSidebarState = () => {
@@ -133,6 +152,7 @@ const AppSidebar = ({ mobileOpen = false, onMobileClose }: AppSidebarProps) => {
   const location = useLocation();
   const { theme, toggle } = useTheme();
   const { signOut, isPlatform } = useAuth();
+  const { canAccess } = useModuleAccess();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
@@ -171,21 +191,36 @@ const AppSidebar = ({ mobileOpen = false, onMobileClose }: AppSidebarProps) => {
     const isActive = isItemActive(item.path);
     const hasChildren = item.children && item.children.length > 0;
     const isExpanded = expandedItems[item.path];
+    const basePath = item.path.split("?")[0];
+    const moduleKey = MODULE_KEY_MAP[basePath];
+    const isLocked = moduleKey ? !canAccess(moduleKey) : false;
 
     return (
       <div key={item.path}>
         <div className="flex items-center">
-          <Link
-            to={item.path}
-            onClick={handleNavigate}
-            className={`${linkClasses(isActive)} flex-1`}
-            style={!collapsed && depth > 0 ? { paddingLeft: "2.75rem" } : undefined}
-            title={collapsed && !isMobile ? item.label : undefined}
-          >
-            <item.icon className={`w-4 h-4 shrink-0 ${isActive ? "text-primary" : ""}`} />
-            {(!collapsed || isMobile) && <span className="flex-1 truncate">{item.label}</span>}
-          </Link>
-          {hasChildren && !collapsed && !isMobile && (
+          {isLocked ? (
+            <button
+              onClick={() => { handleNavigate(); navigate("/partners?tab=tiers"); }}
+              className={`${linkClasses(false)} flex-1 opacity-50 cursor-not-allowed`}
+              style={!collapsed && depth > 0 ? { paddingLeft: "2.75rem" } : undefined}
+              title={collapsed && !isMobile ? `${item.label} (bloqueado)` : "Disponível em um tier superior"}
+            >
+              <Lock className="w-4 h-4 shrink-0 text-muted-foreground" />
+              {(!collapsed || isMobile) && <span className="flex-1 truncate text-muted-foreground">{item.label}</span>}
+            </button>
+          ) : (
+            <Link
+              to={item.path}
+              onClick={handleNavigate}
+              className={`${linkClasses(isActive)} flex-1`}
+              style={!collapsed && depth > 0 ? { paddingLeft: "2.75rem" } : undefined}
+              title={collapsed && !isMobile ? item.label : undefined}
+            >
+              <item.icon className={`w-4 h-4 shrink-0 ${isActive ? "text-primary" : ""}`} />
+              {(!collapsed || isMobile) && <span className="flex-1 truncate">{item.label}</span>}
+            </Link>
+          )}
+          {hasChildren && !collapsed && !isMobile && !isLocked && (
             <button
               onClick={() => toggleExpand(item.path)}
               className="p-1 mr-1 text-muted-foreground hover:text-foreground rounded transition-colors"
@@ -196,7 +231,7 @@ const AppSidebar = ({ mobileOpen = false, onMobileClose }: AppSidebarProps) => {
             </button>
           )}
         </div>
-        {hasChildren && (isExpanded || collapsed || isMobile) && (!collapsed || isMobile) && (
+        {hasChildren && !isLocked && (isExpanded || collapsed || isMobile) && (!collapsed || isMobile) && (
           <div className="space-y-0.5">
             {item.children!.map((child) => renderItem(child, depth + 1))}
           </div>
