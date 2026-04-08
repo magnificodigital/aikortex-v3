@@ -64,7 +64,7 @@ const AdminPanel = () => {
           <TabsContent value="subscriptions"><AdminSubscriptionsTab /></TabsContent>
           <TabsContent value="payment"><AdminPaymentTab /></TabsContent>
           <TabsContent value="partners"><AdminPartnersTab /></TabsContent>
-          <TabsContent value="permissions"><PermissionsManager /></TabsContent>
+          <TabsContent value="permissions"><TierAccessManager /></TabsContent>
         </Tabs>
       </div>
     </AdminLayout>
