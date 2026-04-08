@@ -81,9 +81,14 @@ Deno.serve(async (req) => {
     if (Object.keys(authUpdate).length > 0) {
       const { error: authUpdateError } = await supabaseAdmin.auth.admin.updateUserById(user_id, authUpdate);
       if (authUpdateError) {
-        const msg = authUpdateError.message.includes("already been registered")
+        const errStr = authUpdateError.message || String(authUpdateError);
+        const isDuplicate = errStr.includes("already been registered") 
+          || errStr.includes("duplicate key") 
+          || errStr.includes("unique constraint")
+          || errStr.includes("users_email_partial_key");
+        const msg = isDuplicate
           ? "Este e-mail já está em uso por outro usuário"
-          : authUpdateError.message;
+          : errStr;
         return new Response(JSON.stringify({ error: msg }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
