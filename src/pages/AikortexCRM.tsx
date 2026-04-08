@@ -1,5 +1,6 @@
 import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
+import ModuleGate from "@/components/shared/ModuleGate";
 import CRMKanban from "@/components/crm/CRMKanban";
 import LeadDetailDialog from "@/components/crm/LeadDetailDialog";
 import NewLeadDialog from "@/components/crm/NewLeadDialog";
