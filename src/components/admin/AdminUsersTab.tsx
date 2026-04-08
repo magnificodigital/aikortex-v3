@@ -32,7 +32,7 @@ interface UserRow {
 }
 
 const AdminUsersTab = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -46,9 +46,21 @@ const AdminUsersTab = () => {
   const [toggleLoading, setToggleLoading] = useState(false);
   const [resetPwTarget, setResetPwTarget] = useState<UserRow | null>(null);
 
-  useEffect(() => { fetchUsers(); }, []);
+  useEffect(() => {
+    if (authLoading) return;
+
+    if (!user) {
+      setUsers([]);
+      setLoading(false);
+      return;
+    }
+
+    fetchUsers();
+  }, [authLoading, user?.id]);
 
   const fetchUsers = async () => {
+    if (authLoading || !user) return;
+
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("list-users");
@@ -172,7 +184,7 @@ const AdminUsersTab = () => {
           </Select>
         </div>
         <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={fetchUsers} disabled={loading}>
+          <Button size="sm" variant="outline" onClick={fetchUsers} disabled={loading || authLoading || !user}>
             <RefreshCw className={`w-4 h-4 mr-1.5 ${loading ? "animate-spin" : ""}`} /> Atualizar
           </Button>
           <Button size="sm" onClick={() => setCreateOpen(true)}>
