@@ -145,6 +145,7 @@ const AikortexAutomations = () => {
   // ── Building mode ──
   if (buildingFlow) {
     return (
+      <ModuleGate moduleKey="aikortex.flows">
       <div className="flex flex-col h-screen">
         <div className="flex items-center gap-3 px-3 py-1.5 border-b border-border bg-card/80 backdrop-blur-sm flex-shrink-0">
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setBuildingFlow(null)}>
