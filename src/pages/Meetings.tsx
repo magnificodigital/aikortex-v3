@@ -249,6 +249,7 @@ const Meetings = () => {
         </DialogContent>
       </Dialog>
     </DashboardLayout>
+    </ModuleGate>
   );
 };
 

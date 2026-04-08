@@ -243,6 +243,7 @@ const AikortexCRM = () => {
       />
       <NewLeadDialog open={newLeadOpen} onOpenChange={setNewLeadOpen} onSave={handleNewLead} />
     </DashboardLayout>
+    </ModuleGate>
   );
 };
 
