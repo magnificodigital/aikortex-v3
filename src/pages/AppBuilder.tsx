@@ -229,9 +229,11 @@ const AppBuilder = () => {
   const existingAppId = state?.appId || null;
 
   return (
-    <AppBuilderProvider initialChannel={initialChannel} existingAppId={existingAppId}>
-      <AppBuilderInner initialPrompt={initialPrompt} />
-    </AppBuilderProvider>
+    <ModuleGate moduleKey="aikortex.apps">
+      <AppBuilderProvider initialChannel={initialChannel} existingAppId={existingAppId}>
+        <AppBuilderInner initialPrompt={initialPrompt} />
+      </AppBuilderProvider>
+    </ModuleGate>
   );
 };
 
