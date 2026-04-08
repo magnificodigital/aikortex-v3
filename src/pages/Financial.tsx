@@ -145,6 +145,7 @@ const Financial = () => {
         <QuickSaleDialog open={showQuickSale} onOpenChange={setShowQuickSale} />
       </div>
     </DashboardLayout>
+    </ModuleGate>
   );
 };
 
