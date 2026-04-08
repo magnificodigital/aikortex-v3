@@ -96,6 +96,7 @@ const Apps = () => {
   };
 
   return (
+    <ModuleGate moduleKey="aikortex.apps">
     <DashboardLayout>
       <FeatureGate feature="feature.saas_builder">
       <div className="max-w-5xl mx-auto px-6 py-10">
