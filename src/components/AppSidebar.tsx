@@ -101,6 +101,24 @@ const aikortexItems: NavItem[] = [
   { label: "Disparos", icon: Send, path: "/aikortex/broadcasts" },
 ];
 
+const MODULE_KEY_MAP: Record<string, string> = {
+  "/aikortex/agents": "aikortex.agentes",
+  "/aikortex/automations": "aikortex.flows",
+  "/apps": "aikortex.apps",
+  "/app-builder": "aikortex.apps",
+  "/templates": "aikortex.templates",
+  "/aikortex/messages": "aikortex.mensagens",
+  "/aikortex/broadcasts": "aikortex.disparos",
+  "/clients": "gestao.clientes",
+  "/contracts": "gestao.contratos",
+  "/sales": "gestao.vendas",
+  "/aikortex/crm": "gestao.crm",
+  "/meetings": "gestao.reunioes",
+  "/financial": "gestao.financeiro",
+  "/team": "gestao.equipe",
+  "/tasks": "gestao.tarefas",
+};
+
 const SIDEBAR_STATE_KEY = "sidebar-state";
 
 const loadSidebarState = () => {
