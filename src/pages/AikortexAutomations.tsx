@@ -180,6 +180,7 @@ const AikortexAutomations = () => {
 
   // ── Main list view ──
   return (
+    <ModuleGate moduleKey="aikortex.flows">
     <DashboardLayout>
       <div className="p-4 lg:p-8 max-w-6xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
