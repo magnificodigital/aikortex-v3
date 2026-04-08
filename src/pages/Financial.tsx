@@ -38,6 +38,7 @@ const Financial = () => {
   );
 
   return (
+    <ModuleGate moduleKey="gestao.financeiro">
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-7xl space-y-6">
         {/* Header */}
