@@ -46,6 +46,7 @@ const AikortexBroadcasts = () => {
         </div>
       </div>
     </DashboardLayout>
+    </ModuleGate>
   );
 };
 
