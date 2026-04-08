@@ -416,6 +416,7 @@ export type Database = {
           has_access: boolean
           id: string
           module_key: string
+          sub_features: Json
           tier: string
           updated_at: string | null
           updated_by: string | null
@@ -424,6 +425,7 @@ export type Database = {
           has_access?: boolean
           id?: string
           module_key: string
+          sub_features?: Json
           tier: string
           updated_at?: string | null
           updated_by?: string | null
@@ -432,6 +434,7 @@ export type Database = {
           has_access?: boolean
           id?: string
           module_key?: string
+          sub_features?: Json
           tier?: string
           updated_at?: string | null
           updated_by?: string | null
