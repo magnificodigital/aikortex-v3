@@ -28,9 +28,23 @@ interface Plan {
 }
 
 const FEATURE_OPTIONS = [
-  "Agentes de IA", "Fluxos de automação", "App Builder", "WhatsApp",
-  "Instagram / Facebook / TikTok", "Voz e ligações", "Reuniões com vídeo",
-  "White-label", "Domínio customizado", "Programa de parceiros",
+  "Agentes de IA",
+  "Flows de automação",
+  "App Builder",
+  "Templates",
+  "Mensagens (WhatsApp/Web)",
+  "Disparos em massa",
+  "Clientes e Contratos",
+  "Vendas e CRM",
+  "Reuniões com vídeo",
+  "Financeiro",
+  "Equipe e Tarefas",
+  "Agentes de Voz",
+  "Automação Avançada",
+  "Relatórios Customizados",
+  "Acesso via API",
+  "White-label",
+  "Marketplace",
 ];
 
 const LIMIT_FIELDS = [
