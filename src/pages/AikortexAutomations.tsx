@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import ModuleGate from "@/components/shared/ModuleGate";
 import { useLocation } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Workflow, Plus, ArrowLeft } from "lucide-react";
