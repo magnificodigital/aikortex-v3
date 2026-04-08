@@ -259,6 +259,7 @@ const Apps = () => {
       </div>
       </FeatureGate>
     </DashboardLayout>
+    </ModuleGate>
   );
 };
 
