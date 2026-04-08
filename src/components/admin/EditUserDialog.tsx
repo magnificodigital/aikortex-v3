@@ -21,6 +21,7 @@ interface EditUserDialogProps {
   user: {
     user_id: string;
     full_name: string | null;
+    email?: string | null;
     role: string;
     tenant_type: string;
     is_active: boolean;
@@ -58,6 +59,7 @@ interface PartnerTierData {
 const EditUserDialog = ({ open, onClose, onSuccess, user }: EditUserDialogProps) => {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [currentEmail, setCurrentEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState("");
@@ -89,7 +91,8 @@ const EditUserDialog = ({ open, onClose, onSuccess, user }: EditUserDialogProps)
       setShowPassword(false);
       setError("");
       setActiveTab("info");
-      setEmail("");
+      setEmail(user.email || "");
+      setCurrentEmail(user.email || "");
       setPartnerData(null);
 
       // Fetch plans
@@ -142,7 +145,9 @@ const EditUserDialog = ({ open, onClose, onSuccess, user }: EditUserDialogProps)
       if (fullName.trim() && fullName.trim() !== (user.full_name || "")) {
         body.full_name = fullName.trim();
       }
-      if (email.trim()) body.email = email.trim();
+      const normalizedEmail = email.trim().toLowerCase();
+      const normalizedCurrentEmail = currentEmail.trim().toLowerCase();
+      if (normalizedEmail && normalizedEmail !== normalizedCurrentEmail) body.email = normalizedEmail;
       if (password) {
         if (password.length < 8) {
           setError("Senha deve ter no mínimo 8 caracteres");
@@ -239,8 +244,8 @@ const EditUserDialog = ({ open, onClose, onSuccess, user }: EditUserDialogProps)
               <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Nome completo" />
             </div>
             <div>
-              <Label>Novo e-mail (deixe vazio para manter)</Label>
-              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="novo@email.com" />
+              <Label>E-mail</Label>
+              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="usuario@email.com" />
             </div>
             <div>
               <Label>Nova senha (deixe vazio para manter)</Label>
