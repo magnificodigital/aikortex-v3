@@ -13,14 +13,13 @@ import {
   Loader2, RotateCcw, ShieldCheck, ChevronDown, ChevronRight, Settings2,
 } from "lucide-react";
 
-const TIERS = ["bronze", "silver", "gold", "elite"] as const;
+const TIERS = ["bronze", "prata", "gold"] as const;
 type Tier = (typeof TIERS)[number];
 
 const TIER_COLORS: Record<Tier, string> = {
   bronze: "bg-amber-700/10 text-amber-700 border-amber-700/20",
-  silver: "bg-slate-400/10 text-slate-500 border-slate-400/20",
+  prata: "bg-slate-400/10 text-slate-500 border-slate-400/20",
   gold: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
-  elite: "bg-purple-500/10 text-purple-600 border-purple-500/20",
 };
 
 interface SubFeatureDef {
@@ -192,7 +191,7 @@ const DEFAULT_ACCESS: Record<string, Record<string, boolean>> = {
     "gestao.crm": false, "gestao.reunioes": false, "gestao.financeiro": false,
     "gestao.equipe": true, "gestao.tarefas": true,
   },
-  silver: {
+  prata: {
     "aikortex.agentes": true, "aikortex.flows": true, "aikortex.apps": false,
     "aikortex.templates": true, "aikortex.mensagens": true, "aikortex.disparos": true,
     "gestao.clientes": true, "gestao.contratos": true, "gestao.vendas": true,
@@ -200,7 +199,6 @@ const DEFAULT_ACCESS: Record<string, Record<string, boolean>> = {
     "gestao.equipe": true, "gestao.tarefas": true,
   },
   gold: Object.fromEntries(ALL_MODULE_KEYS.map((k) => [k, true])),
-  elite: Object.fromEntries(ALL_MODULE_KEYS.map((k) => [k, true])),
 };
 
 interface AccessRow {
