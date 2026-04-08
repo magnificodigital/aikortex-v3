@@ -226,6 +226,7 @@ const AikortexAutomations = () => {
         </Tabs>
       </div>
     </DashboardLayout>
+    </ModuleGate>
   );
 };
 
