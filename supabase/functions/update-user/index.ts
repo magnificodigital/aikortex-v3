@@ -64,9 +64,18 @@ Deno.serve(async (req) => {
 
     const { user_id, full_name, email, password, role, is_active, plan_id, billing_cycle } = parsed.data;
 
+    // Fetch current user to avoid unnecessary email updates
+    const { data: { user: currentUser }, error: fetchError } = await supabaseAdmin.auth.admin.getUserById(user_id);
+    if (fetchError || !currentUser) {
+      return new Response(JSON.stringify({ error: "Usuário não encontrado" }), {
+        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Update auth user (email, password)
     const authUpdate: Record<string, any> = {};
-    if (email) authUpdate.email = email;
+    // Only update email if it's different from current
+    if (email && email !== currentUser.email) authUpdate.email = email;
     if (password) authUpdate.password = password;
     
     const metaUpdate: Record<string, any> = {};
