@@ -1,10 +1,34 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { TIER_FEATURE_CONFIG, type FeatureFlag, type PartnerTier } from "@/types/rbac";
+import { type FeatureFlag, type PartnerTier } from "@/types/rbac";
 import { TIER_CONFIG } from "@/types/partner";
 
 const TIERS: PartnerTier[] = ["bronze", "prata", "gold"];
+
+// Map FeatureFlag keys to tier_module_access module_key values in DB
+const FEATURE_TO_MODULE_KEY: Record<string, string> = {
+  "module.agents": "aikortex.agentes",
+  "module.flows": "aikortex.flows",
+  "module.apps": "aikortex.apps",
+  "module.templates": "aikortex.templates",
+  "module.messages": "aikortex.mensagens",
+  "module.broadcasts": "aikortex.disparos",
+  "module.clients": "gestao.clientes",
+  "module.contracts": "gestao.contratos",
+  "module.sales": "gestao.vendas",
+  "module.crm": "gestao.crm",
+  "module.meetings": "gestao.reunioes",
+  "module.financial": "gestao.financeiro",
+  "module.team": "gestao.equipe",
+  "module.tasks": "gestao.tarefas",
+};
+
+interface TierModuleAccessRow {
+  tier: string;
+  module_key: string;
+  has_access: boolean;
+}
 
 export interface PartnerTierData {
   id: string;
@@ -29,7 +53,7 @@ export function usePartnerTier() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading: tierLoading } = useQuery({
     queryKey: ["partner-tier", user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
@@ -60,13 +84,41 @@ export function usePartnerTier() {
   const tierIdx = TIERS.indexOf(tier);
   const nextTier = tierIdx < TIERS.length - 1 ? TIERS[tierIdx + 1] : null;
 
+  // Query tier_module_access from DB for the user's tier
+  const { data: allAccessRows, isLoading: accessLoading } = useQuery({
+    queryKey: ["tier-module-access-all"],
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const { data: rows, error } = await supabase
+        .from("tier_module_access" as any)
+        .select("tier, module_key, has_access");
+      if (error) throw error;
+      return (rows ?? []) as unknown as TierModuleAccessRow[];
+    },
+  });
+
+  // Build access map per tier
+  const tierAccessMap: Record<string, Record<string, boolean>> = {};
+  if (allAccessRows) {
+    for (const row of allAccessRows) {
+      if (!tierAccessMap[row.tier]) tierAccessMap[row.tier] = {};
+      tierAccessMap[row.tier][row.module_key] = row.has_access;
+    }
+  }
+
   const hasFeature = (flag: FeatureFlag): boolean => {
-    return TIER_FEATURE_CONFIG[tier]?.features?.includes(flag) ?? false;
+    const moduleKey = FEATURE_TO_MODULE_KEY[flag];
+    if (!moduleKey) return false; // standalone feature flags not in module system
+    if (!allAccessRows) return true; // still loading, don't block
+    return tierAccessMap[tier]?.[moduleKey] ?? false;
   };
 
   const getMinTierForFeature = (flag: FeatureFlag): PartnerTier | null => {
+    const moduleKey = FEATURE_TO_MODULE_KEY[flag];
+    if (!moduleKey) return null;
     for (const t of TIERS) {
-      if (TIER_FEATURE_CONFIG[t]?.features?.includes(flag)) return t;
+      if (tierAccessMap[t]?.[moduleKey]) return t;
     }
     return null;
   };
@@ -98,7 +150,7 @@ export function usePartnerTier() {
   return {
     tier,
     data,
-    isLoading,
+    isLoading: tierLoading || accessLoading,
     hasFeature,
     getMinTierForFeature,
     nextTier,
