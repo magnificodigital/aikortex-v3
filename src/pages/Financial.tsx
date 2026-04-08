@@ -1,5 +1,6 @@
 import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
+import ModuleGate from "@/components/shared/ModuleGate";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { DollarSign, Plus, Search, Download, FileText, Receipt, TrendingUp, TrendingDown, ShoppingCart, Tag, Users, QrCode, RefreshCw, Truck, BarChart3 } from "lucide-react";
