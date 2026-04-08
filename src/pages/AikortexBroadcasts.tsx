@@ -1,9 +1,11 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import ModuleGate from "@/components/shared/ModuleGate";
 import { Send, Plus, Users, CheckCircle2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const AikortexBroadcasts = () => {
   return (
+    <ModuleGate moduleKey="aikortex.disparos">
     <DashboardLayout>
       <div className="p-4 lg:p-8 max-w-6xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
