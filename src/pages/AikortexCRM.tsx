@@ -98,6 +98,7 @@ const AikortexCRM = () => {
   };
 
   return (
+    <ModuleGate moduleKey="gestao.crm">
     <DashboardLayout>
       <div className="p-4 lg:p-8 space-y-5">
         {/* Header */}

@@ -77,6 +77,7 @@ const Contracts = () => {
         <SignatureDialog contract={signingContract} open={!!signingContract} onOpenChange={o => !o && setSigningContract(null)} />
       </div>
     </DashboardLayout>
+    </ModuleGate>
   );
 };
 

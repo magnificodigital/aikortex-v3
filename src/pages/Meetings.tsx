@@ -89,6 +89,7 @@ const Meetings = () => {
   );
 
   return (
+    <ModuleGate moduleKey="gestao.reunioes">
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-7xl space-y-6">
         {/* Header */}
