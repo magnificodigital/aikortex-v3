@@ -343,6 +343,30 @@ const AppSidebar = ({ mobileOpen = false, onMobileClose }: AppSidebarProps) => {
         </nav>
 
         <div className="space-y-0.5 border-t border-sidebar-border px-2 py-2">
+          {/* Credits widget */}
+          <button
+            onClick={() => { handleNavigate(); navigate("/credits"); }}
+            className={`${linkClasses(false)} w-full group relative`}
+            title={collapsed && !isMobile ? `${balance} créditos` : undefined}
+          >
+            <div className="relative">
+              <Coins className="w-4 h-4 shrink-0 text-primary" />
+              {isLowBalance && collapsed && !isMobile && (
+                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-destructive animate-pulse" />
+              )}
+            </div>
+            {(!collapsed || isMobile) && (
+              <span className="flex-1 flex items-center gap-2 truncate">
+                <span className="font-medium">{balance} créditos</span>
+                {isLowBalance && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-destructive text-destructive-foreground animate-pulse">
+                    Saldo baixo
+                  </span>
+                )}
+              </span>
+            )}
+          </button>
+
           {isPlatform && (
             <Link
               to="/admin"
