@@ -1,13 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import type { Tables } from "@/integrations/supabase/types";
 import { usePartnerTier } from "@/hooks/use-partner-tier";
 
-interface TierModuleRow {
-  tier: string;
-  module_key: string;
-  has_access: boolean;
-}
+type TierModuleRow = Pick<Tables<"tier_module_access">, "tier" | "module_key" | "has_access">;
 
 export function useModuleAccess() {
   const { user, isPlatform } = useAuth();
@@ -19,11 +16,11 @@ export function useModuleAccess() {
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("tier_module_access" as any)
+        .from("tier_module_access")
         .select("tier, module_key, has_access")
         .eq("tier", tier);
       if (error) throw error;
-      return (data ?? []) as unknown as TierModuleRow[];
+      return (data ?? []) as TierModuleRow[];
     },
   });
 
