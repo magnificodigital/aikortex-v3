@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -18,7 +18,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
-import { NODE_TEMPLATES, type FlowNodeData } from "@/types/flow-builder";
+import { NODE_TEMPLATES, type FlowNodeData, type FlowExecution, type FlowNodeLog } from "@/types/flow-builder";
 import FlowNode from "./FlowNode";
 import FlowEdge from "./FlowEdge";
 import FlowNodeConfig from "./FlowNodeConfig";
@@ -26,6 +26,17 @@ import FlowCopilotPanel from "./FlowCopilotPanel";
 import FlowNodePalette from "./FlowNodePalette";
 import FlowBottomToolbar from "./FlowBottomToolbar";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Play,
   Rocket,
@@ -40,9 +51,17 @@ import {
   Database,
   ListChecks,
   ScrollText,
+  Loader2,
+  CheckCircle,
+  XCircle,
+  Clock,
+  ChevronDown,
+  ChevronRight,
+  Save,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 import type { SavedFlow } from "@/types/flow-builder";
 
 const nodeTypes: NodeTypes = {
