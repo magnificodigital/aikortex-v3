@@ -171,6 +171,8 @@ const AgentBuilderStudio = () => {
         name: structuredConfig.name,
         agent_type: agentType,
         description: structuredConfig.description,
+        provider: structuredConfig.provider || "auto",
+        model: structuredConfig.model || "gemini-2.5-flash",
         config: {
           objective: structuredConfig.objective,
           toneOfVoice: structuredConfig.toneOfVoice,
