@@ -367,7 +367,9 @@ export type Database = {
       }
       help_articles: {
         Row: {
+          article_type: string
           category: string
+          collection: string
           content: string
           created_at: string
           created_by: string | null
@@ -380,9 +382,12 @@ export type Database = {
           title: string
           updated_at: string
           updated_by: string | null
+          video_url: string | null
         }
         Insert: {
+          article_type?: string
           category?: string
+          collection?: string
           content?: string
           created_at?: string
           created_by?: string | null
@@ -395,9 +400,12 @@ export type Database = {
           title: string
           updated_at?: string
           updated_by?: string | null
+          video_url?: string | null
         }
         Update: {
+          article_type?: string
           category?: string
+          collection?: string
           content?: string
           created_at?: string
           created_by?: string | null
@@ -410,6 +418,7 @@ export type Database = {
           title?: string
           updated_at?: string
           updated_by?: string | null
+          video_url?: string | null
         }
         Relationships: []
       }
@@ -851,6 +860,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      support_tickets: {
+        Row: {
+          admin_replied_at: string | null
+          admin_replied_by: string | null
+          admin_reply: string | null
+          created_at: string
+          id: string
+          message: string
+          priority: string
+          status: string
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_replied_at?: string | null
+          admin_replied_by?: string | null
+          admin_reply?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          priority?: string
+          status?: string
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_replied_at?: string | null
+          admin_replied_by?: string | null
+          admin_reply?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          priority?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       tier_module_access: {
         Row: {
