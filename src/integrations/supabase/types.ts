@@ -135,6 +135,54 @@ export type Database = {
           },
         ]
       }
+      broadcast_logs: {
+        Row: {
+          agent_id: string | null
+          broadcast_name: string | null
+          channel: string | null
+          completed_at: string | null
+          created_at: string | null
+          failed: number | null
+          id: string
+          sent: number | null
+          started_at: string | null
+          status: string | null
+          total_contacts: number | null
+          use_ai: boolean | null
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          broadcast_name?: string | null
+          channel?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          failed?: number | null
+          id?: string
+          sent?: number | null
+          started_at?: string | null
+          status?: string | null
+          total_contacts?: number | null
+          use_ai?: boolean | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          broadcast_name?: string | null
+          channel?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          failed?: number | null
+          id?: string
+          sent?: number | null
+          started_at?: string | null
+          status?: string | null
+          total_contacts?: number | null
+          use_ai?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       credit_packages: {
         Row: {
           created_at: string | null

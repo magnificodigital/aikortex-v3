@@ -7,8 +7,8 @@ const corsHeaders = {
 };
 
 const GRAPH_API = "https://graph.facebook.com/v21.0";
-const MAX_CONCURRENT = 10;
-const CREDITS_PER_AI_MSG = 5;
+const BATCH_SIZE = 10;
+const MESSAGE_DELAY_MS = 100;
 
 interface Contact {
   phone: string;
@@ -20,94 +20,140 @@ function interpolateTemplate(template: string, contact: Contact): string {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key) => String(contact[key] ?? ""));
 }
 
-async function processChunk(
+async function personalizeWithAgent(
+  supabase: any,
+  agentDbId: string,
+  contact: Contact,
+  template: string,
+  userId: string,
+): Promise<string | null> {
+  try {
+    const interpolated = interpolateTemplate(template, contact);
+    const resp = await supabase.functions.invoke("managed-session-chat", {
+      body: {
+        agent_db_id: agentDbId,
+        message: `Personalize esta mensagem para ${contact.name || contact.phone}: ${interpolated}. Responda APENAS com a mensagem personalizada, sem explicações.`,
+        contact_identifier: `broadcast_${contact.phone}`,
+        channel: "whatsapp",
+        owner_user_id: userId,
+      },
+    });
+    return resp.data?.reply || null;
+  } catch (err) {
+    console.error(`AI personalization failed for ${contact.phone}:`, err);
+    return null;
+  }
+}
+
+async function sendWhatsApp(
+  waToken: string,
+  phoneNumberId: string,
+  to: string,
+  message: string,
+): Promise<{ ok: boolean; wamid?: string; error?: string }> {
+  const payload = {
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to,
+    type: "text",
+    text: { preview_url: false, body: message },
+  };
+
+  const resp = await fetch(`${GRAPH_API}/${phoneNumberId}/messages`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${waToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await resp.json();
+  if (resp.ok) {
+    return { ok: true, wamid: data.messages?.[0]?.id };
+  }
+  return { ok: false, error: data.error?.message || "Unknown error" };
+}
+
+async function processBroadcast(
+  supabase: any,
+  logId: string,
+  userId: string,
   contacts: Contact[],
   template: string,
   useAI: boolean,
   agentDbId: string | null,
   waToken: string,
   phoneNumberId: string,
-  userId: string,
-  supabase: any,
-  accessToken: string,
-): Promise<{ sent: number; failed: number; creditsUsed: number }> {
+) {
   let sent = 0;
   let failed = 0;
-  let creditsUsed = 0;
 
-  for (const contact of contacts) {
-    try {
-      let finalMessage = interpolateTemplate(template, contact);
+  for (let i = 0; i < contacts.length; i += BATCH_SIZE) {
+    const batch = contacts.slice(i, i + BATCH_SIZE);
 
-      // AI personalization
-      if (useAI && agentDbId) {
-        try {
-          const sessionResp = await supabase.functions.invoke("managed-session-chat", {
-            body: {
-              agent_db_id: agentDbId,
-              message: `Personalize esta mensagem para ${contact.name || contact.phone}: ${finalMessage}. Responda APENAS com a mensagem personalizada, sem explicações.`,
-              contact_identifier: `broadcast_${contact.phone}`,
-              channel: "whatsapp",
-              owner_user_id: userId,
-            },
-          });
+    const promises = batch.map(async (contact) => {
+      try {
+        let finalMessage = interpolateTemplate(template, contact);
 
-          if (sessionResp.data?.reply) {
-            finalMessage = sessionResp.data.reply;
-            creditsUsed += CREDITS_PER_AI_MSG;
-          }
-        } catch (aiErr) {
-          console.error(`AI personalization failed for ${contact.phone}:`, aiErr);
-          // Fall back to template message
+        if (useAI && agentDbId) {
+          const personalized = await personalizeWithAgent(supabase, agentDbId, contact, template, userId);
+          if (personalized) finalMessage = personalized;
         }
-      }
 
-      // Send via WhatsApp Graph API
-      const payload = {
-        messaging_product: "whatsapp",
-        recipient_type: "individual",
-        to: contact.phone,
-        type: "text",
-        text: { preview_url: false, body: finalMessage },
-      };
+        const result = await sendWhatsApp(waToken, phoneNumberId, contact.phone, finalMessage);
 
-      const resp = await fetch(`${GRAPH_API}/${phoneNumberId}/messages`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${waToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+        if (result.ok) {
+          sent++;
+          await supabase.from("whatsapp_messages").insert({
+            wamid: result.wamid || null,
+            from_number: phoneNumberId,
+            phone_number_id: phoneNumberId,
+            to_number: contact.phone,
+            message_type: "text",
+            content: finalMessage,
+            direction: "outgoing",
+            status: "sent",
+            user_id: userId,
+          }).catch(() => {});
+        } else {
+          failed++;
+          console.error(`Send failed to ${contact.phone}:`, result.error);
+        }
 
-      const data = await resp.json();
-
-      if (resp.ok) {
-        sent++;
-        // Store sent message
-        await supabase.from("whatsapp_messages").insert({
-          wamid: data.messages?.[0]?.id || null,
-          from_number: phoneNumberId,
-          phone_number_id: phoneNumberId,
-          to_number: contact.phone,
-          message_type: "text",
-          content: finalMessage,
-          raw_payload: payload,
-          direction: "outgoing",
-          status: "sent",
-          user_id: userId,
-        }).catch(() => {});
-      } else {
+        // Rate limit delay
+        await new Promise((r) => setTimeout(r, MESSAGE_DELAY_MS));
+      } catch (err) {
         failed++;
-        console.error(`Send failed to ${contact.phone}:`, data.error?.message);
+        console.error(`Error processing ${contact.phone}:`, err);
       }
-    } catch (err) {
-      failed++;
-      console.error(`Error processing ${contact.phone}:`, err);
+    });
+
+    await Promise.all(promises);
+
+    // Update progress
+    await supabase.from("broadcast_logs").update({ sent, failed }).eq("id", logId);
+
+    // Delay between batches
+    if (i + BATCH_SIZE < contacts.length) {
+      await new Promise((r) => setTimeout(r, 1000));
     }
   }
 
-  return { sent, failed, creditsUsed };
+  // Increment monthly usage
+  const yearMonth = new Date().toISOString().slice(0, 7);
+  const totalMsgs = useAI ? (sent * 2) : sent;
+  for (let m = 0; m < totalMsgs; m++) {
+    await supabase.rpc("increment_monthly_usage", { p_user_id: userId, p_year_month: yearMonth });
+  }
+
+  // Final update
+  await supabase.from("broadcast_logs").update({
+    sent,
+    failed,
+    status: failed === contacts.length ? "failed" : "completed",
+    completed_at: new Date().toISOString(),
+  }).eq("id", logId);
 }
 
 serve(async (req) => {
@@ -120,7 +166,6 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Auth
     const authHeader = req.headers.get("authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Authorization required" }), {
@@ -140,9 +185,10 @@ serve(async (req) => {
     const {
       contacts,
       message_template,
-      use_ai_personalization = false,
+      use_ai = false,
       agent_db_id = null,
       phone_number_id,
+      broadcast_name,
     } = body;
 
     if (!contacts?.length || !message_template) {
@@ -170,97 +216,61 @@ serve(async (req) => {
       });
     }
 
-    // Check credits if AI
-    if (use_ai_personalization) {
-      const estimatedCredits = contacts.length * CREDITS_PER_AI_MSG;
-      const { data: wallet } = await supabase
-        .from("agency_wallets")
-        .select("balance")
-        .eq("user_id", user.id)
-        .maybeSingle();
+    // Check monthly usage
+    const yearMonth = new Date().toISOString().slice(0, 7);
+    const estimatedMsgs = use_ai ? contacts.length * 2 : contacts.length;
 
-      if (!wallet || wallet.balance < estimatedCredits) {
+    const [usageRes, subRes, byokRes] = await Promise.all([
+      supabase.from("monthly_usage").select("message_count").eq("user_id", user.id).eq("year_month", yearMonth).maybeSingle(),
+      supabase.from("subscriptions").select("plan_id, plans(slug)").eq("user_id", user.id).in("status", ["active", "trialing"]).maybeSingle(),
+      supabase.from("user_api_keys").select("provider").eq("user_id", user.id).in("provider", ["openai", "anthropic", "gemini", "openrouter"]),
+    ]);
+
+    const hasByok = (byokRes.data?.length ?? 0) > 0;
+    const planSlug = (subRes.data?.plans as any)?.slug || "starter";
+    const currentUsage = usageRes.data?.message_count ?? 0;
+
+    if (!hasByok) {
+      const { data: limitData } = await supabase.from("plan_message_limits").select("monthly_limit").eq("plan_slug", planSlug).maybeSingle();
+      const monthlyLimit = limitData?.monthly_limit ?? 500;
+      if (monthlyLimit !== -1 && (currentUsage + estimatedMsgs) > monthlyLimit) {
         return new Response(JSON.stringify({
-          error: "Saldo de créditos insuficiente",
-          required: estimatedCredits,
-          available: wallet?.balance ?? 0,
+          error: "Limite mensal de mensagens insuficiente",
+          current: currentUsage,
+          estimated: estimatedMsgs,
+          limit: monthlyLimit,
         }), {
           status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
     }
 
-    // Process in chunks of MAX_CONCURRENT
-    let totalSent = 0;
-    let totalFailed = 0;
-    let totalCredits = 0;
+    // Create broadcast log
+    const { data: logRow } = await supabase.from("broadcast_logs").insert({
+      user_id: user.id,
+      broadcast_name: broadcast_name || `Disparo ${new Date().toLocaleDateString("pt-BR")}`,
+      total_contacts: contacts.length,
+      use_ai,
+      agent_id: agent_db_id || null,
+      channel: "whatsapp",
+      status: "running",
+    }).select("id").single();
 
-    for (let i = 0; i < contacts.length; i += MAX_CONCURRENT) {
-      const chunk = contacts.slice(i, i + MAX_CONCURRENT);
+    const logId = logRow?.id;
 
-      const promises = chunk.map((contact: Contact) =>
-        processChunk(
-          [contact], message_template, use_ai_personalization, agent_db_id,
-          waToken, waPhoneId, user.id, supabase, token,
-        )
-      );
-
-      const results = await Promise.allSettled(promises);
-      for (const r of results) {
-        if (r.status === "fulfilled") {
-          totalSent += r.value.sent;
-          totalFailed += r.value.failed;
-          totalCredits += r.value.creditsUsed;
-        } else {
-          totalFailed += 1;
-        }
-      }
-
-      // Small delay between chunks to avoid rate limits
-      if (i + MAX_CONCURRENT < contacts.length) {
-        await new Promise((r) => setTimeout(r, 1000));
-      }
-    }
-
-    // Debit total credits
-    if (totalCredits > 0) {
-      const { data: wallet } = await supabase
-        .from("agency_wallets")
-        .select("balance")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (wallet) {
-        const newBalance = Math.max(0, wallet.balance - totalCredits);
-        await supabase
-          .from("agency_wallets")
-          .update({ balance: newBalance, updated_at: new Date().toISOString() })
-          .eq("user_id", user.id);
-
-        await supabase.from("credit_transactions").insert({
-          user_id: user.id,
-          type: "consumption",
-          amount: -totalCredits,
-          balance_after: newBalance,
-          description: `Disparo em massa — ${totalSent} mensagens personalizadas com IA`,
-          provider: "broadcast",
-        });
-
-        await supabase.rpc("add_to_wallet_consumed", {
-          user_uuid: user.id,
-          consumed: totalCredits,
-        });
-      }
-    }
+    // Process async
+    EdgeRuntime.waitUntil(
+      processBroadcast(supabase, logId, user.id, contacts, message_template, use_ai, agent_db_id, waToken, waPhoneId)
+    );
 
     return new Response(JSON.stringify({
       success: true,
-      sent: totalSent,
-      failed: totalFailed,
-      credits_used: totalCredits,
+      broadcast_id: logId,
+      status: "running",
       total: contacts.length,
+      estimated_messages: estimatedMsgs,
     }), {
-      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("Broadcast error:", e);
