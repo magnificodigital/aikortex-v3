@@ -4,7 +4,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { type FeatureFlag, type PartnerTier } from "@/types/rbac";
 import { TIER_CONFIG } from "@/types/partner";
 import type { Tables } from "@/integrations/supabase/types";
-import { TIER_CONFIG } from "@/types/partner";
 
 const TIERS: PartnerTier[] = ["bronze", "prata", "gold"];
 
