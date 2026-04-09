@@ -272,21 +272,114 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
     [setNodes, setEdges]
   );
 
-  const handleSave = () => {
-    if (onSave) {
-      onSave(flowName || "Novo Fluxo", nodes, edges, flowId);
-    } else {
-      toast.success("Fluxo salvo com sucesso!");
-    }
-  };
+  const handleSave = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error("Faça login para salvar."); return; }
 
-  const handleRun = () => {
+      const payload = {
+        user_id: user.id,
+        name: flowName || "Novo Fluxo",
+        nodes: nodes as unknown as Record<string, unknown>[],
+        edges: edges as unknown as Record<string, unknown>[],
+      };
+
+      if (savedFlowId) {
+        await supabase.from("user_flows").update(payload).eq("id", savedFlowId);
+      } else {
+        const { data } = await supabase.from("user_flows").insert(payload).select().single();
+        if (data) setSavedFlowId((data as any).id);
+      }
+      toast.success("Fluxo salvo com sucesso!");
+      if (onSave) onSave(flowName || "Novo Fluxo", nodes, edges, savedFlowId);
+    } catch (e) {
+      console.error("Save error:", e);
+      toast.error("Erro ao salvar fluxo.");
+    }
+  }, [nodes, edges, flowName, savedFlowId, onSave]);
+
+  const handleRun = useCallback(() => {
     if (nodes.length < 2) {
       toast.error("Adicione pelo menos 2 blocos ao fluxo");
       return;
     }
-    toast.info("Executando fluxo...");
-  };
+    if (!savedFlowId) {
+      toast.info("Salve o fluxo antes de executar.");
+      handleSave();
+      return;
+    }
+    setShowRunModal(true);
+  }, [nodes, savedFlowId, handleSave]);
+
+  const executeFlow = useCallback(async () => {
+    if (!savedFlowId) return;
+    setIsExecuting(true);
+    setShowRunModal(false);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) { toast.error("Faça login."); return; }
+
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/execute-flow`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            flow_id: savedFlowId,
+            trigger_type: "manual",
+            test_message: runTestMessage,
+            contact_identifier: runContactId || undefined,
+          }),
+        }
+      );
+
+      const result = await resp.json();
+      if (!resp.ok) {
+        toast.error(result.error || "Erro ao executar fluxo.");
+      } else {
+        toast.success("Fluxo executado com sucesso!");
+        // Load execution logs
+        setRightTab("logs");
+        setShowRightPanel(true);
+        loadExecutions();
+      }
+    } catch (e) {
+      console.error("Execute error:", e);
+      toast.error("Erro ao executar fluxo.");
+    } finally {
+      setIsExecuting(false);
+      setRunTestMessage("");
+      setRunContactId("");
+    }
+  }, [savedFlowId, runTestMessage, runContactId]);
+
+  const loadExecutions = useCallback(async () => {
+    if (!savedFlowId) return;
+    const { data } = await supabase
+      .from("flow_executions")
+      .select("*")
+      .eq("flow_id", savedFlowId)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    if (data) setExecutions(data as unknown as FlowExecution[]);
+  }, [savedFlowId]);
+
+  const loadNodeLogs = useCallback(async (executionId: string) => {
+    const { data } = await supabase
+      .from("flow_node_logs")
+      .select("*")
+      .eq("execution_id", executionId)
+      .order("started_at", { ascending: true });
+    if (data) setNodeLogs(data as unknown as FlowNodeLog[]);
+  }, []);
+
+  useEffect(() => {
+    if (rightTab === "logs") loadExecutions();
+  }, [rightTab, loadExecutions]);
 
   const handleDeploy = () => {
     if (nodes.length < 2) {
