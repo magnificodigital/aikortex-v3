@@ -735,6 +735,33 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
           </div>
         </div>
       )}
+
+      {/* Run Modal */}
+      <Dialog open={showRunModal} onOpenChange={setShowRunModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Executar Fluxo</DialogTitle>
+            <DialogDescription>Configure os parâmetros de teste para executar o fluxo.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label className="text-xs">Mensagem de teste</Label>
+              <Input value={runTestMessage} onChange={e => setRunTestMessage(e.target.value)} placeholder="Olá, gostaria de saber mais..." className="text-sm" />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Contato de teste (opcional)</Label>
+              <Input value={runContactId} onChange={e => setRunContactId(e.target.value)} placeholder="5511999999999" className="text-sm" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRunModal(false)}>Cancelar</Button>
+            <Button onClick={executeFlow} disabled={isExecuting} className="gap-1.5">
+              {isExecuting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
+              Executar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
