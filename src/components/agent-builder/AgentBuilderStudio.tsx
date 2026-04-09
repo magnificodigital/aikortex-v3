@@ -302,6 +302,76 @@ const AgentBuilderStudio = () => {
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">Objetivo</label>
                 <Textarea value={structuredConfig.objective} onChange={e => updateConfigField("objective", e.target.value)} className="min-h-[60px] resize-none" />
               </div>
+
+              {/* Provider selector */}
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-2 block">Modelo de IA</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {PROVIDER_OPTIONS.map(opt => {
+                    const Icon = opt.icon;
+                    const isSelected = structuredConfig.provider === opt.id;
+                    const needsByok = opt.id !== "auto" && !keys[opt.id]?.configured;
+                    return (
+                      <div
+                        key={opt.id}
+                        onClick={() => {
+                          updateConfigField("provider", opt.id);
+                          if (opt.models?.length) updateConfigField("model", opt.models[0].value);
+                          else updateConfigField("model", "gemini-2.5-flash");
+                        }}
+                        className={`relative rounded-lg border p-3 cursor-pointer transition-all ${
+                          isSelected
+                            ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                            : "border-border hover:border-primary/30"
+                        }`}
+                      >
+                        <div className="flex items-start gap-2">
+                          <Icon className={`h-4 w-4 mt-0.5 shrink-0 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-semibold">{opt.label}</span>
+                              {opt.badge && (
+                                <Badge variant="secondary" className="text-[9px] px-1.5 py-0">{opt.badge}</Badge>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{opt.description}</p>
+                          </div>
+                        </div>
+                        {isSelected && needsByok && (
+                          <Alert className="mt-2 py-1.5 px-2 border-amber-500/30 bg-amber-500/5">
+                            <AlertDescription className="text-[10px] text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                              <AlertTriangle className="h-3 w-3 shrink-0" />
+                              Configure sua chave em{" "}
+                              <a href="/settings?tab=integrations" className="underline font-medium">Integrações</a>
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Model selector (when provider has models) */}
+              {structuredConfig.provider !== "auto" && (() => {
+                const providerOpt = PROVIDER_OPTIONS.find(p => p.id === structuredConfig.provider);
+                if (!providerOpt?.models?.length) return null;
+                return (
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Modelo</label>
+                    <Select value={structuredConfig.model} onValueChange={v => updateConfigField("model", v)}>
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {providerOpt.models.map(m => (
+                          <SelectItem key={m.value} value={m.value} className="text-xs">{m.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                );
+              })()}
             </div>
 
             <div className="flex gap-2">
