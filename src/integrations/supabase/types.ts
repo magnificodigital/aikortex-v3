@@ -769,6 +769,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_to_wallet_consumed: {
+        Args: { consumed: number; user_uuid: string }
+        Returns: undefined
+      }
       is_platform_user: { Args: { check_user_id: string }; Returns: boolean }
     }
     Enums: {

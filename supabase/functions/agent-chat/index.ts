@@ -191,6 +191,30 @@ serve(async (req) => {
       });
     }
 
+    // --- Credit balance check ---
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("user_id", user.id)
+      .single();
+
+    const isPlatformUser = ["platform_owner", "platform_admin"].includes(profileData?.role);
+
+    if (!isPlatformUser) {
+      const { data: wallet } = await supabase
+        .from("agency_wallets")
+        .select("balance")
+        .eq("user_id", user.id)
+        .single();
+
+      if (!wallet || wallet.balance < 1) {
+        return new Response(
+          JSON.stringify({ error: "Créditos insuficientes. Acesse /credits para recarregar." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
     const selectedProvider = provider || "openai";
     if (!useGateway && !modelBelongsToProvider(selectedProvider, model)) {
       return new Response(JSON.stringify({ error: `O modelo \"${model}\" não pertence ao provider \"${selectedProvider}\".` }), {
@@ -520,6 +544,95 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Erro no serviço de IA. Tente novamente em instantes." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // --- Credit deduction (background, non-blocking) ---
+    if (!isPlatformUser && response!.ok && response!.body) {
+      const [streamForClient, streamForUsage] = response!.body!.tee();
+
+      // Use service role client for background writes
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const adminClient = createClient(supabaseUrl, serviceKey);
+
+      (async () => {
+        try {
+          const reader = streamForUsage.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+          let inputTokens = 0;
+          let outputTokens = 0;
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+
+            for (const line of lines) {
+              if (!line.startsWith("data: ")) continue;
+              const data = line.slice(6).trim();
+              if (data === "[DONE]") continue;
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.usage) {
+                  inputTokens = parsed.usage.prompt_tokens || parsed.usage.input_tokens || inputTokens;
+                  outputTokens = parsed.usage.completion_tokens || parsed.usage.output_tokens || outputTokens;
+                }
+                if (parsed.type === "message_delta" && parsed.usage) {
+                  outputTokens = parsed.usage.output_tokens || outputTokens;
+                }
+                if (parsed.type === "message_start" && parsed.message?.usage) {
+                  inputTokens = parsed.message.usage.input_tokens || inputTokens;
+                }
+              } catch { /* ignore non-JSON lines */ }
+            }
+          }
+
+          const totalTokens = inputTokens + outputTokens;
+          if (totalTokens > 0) {
+            const creditsToDebit = Math.max(1, Math.ceil(totalTokens / 1000));
+
+            const { data: walletData } = await adminClient
+              .from("agency_wallets")
+              .select("balance")
+              .eq("user_id", user.id)
+              .single();
+
+            const currentBalance = walletData?.balance || 0;
+            const newBalance = Math.max(0, currentBalance - creditsToDebit);
+
+            await adminClient
+              .from("agency_wallets")
+              .update({ balance: newBalance })
+              .eq("user_id", user.id);
+
+            await adminClient.rpc("add_to_wallet_consumed", {
+              user_uuid: user.id,
+              consumed: creditsToDebit,
+            });
+
+            await adminClient.from("credit_transactions").insert({
+              user_id: user.id,
+              type: "consumption",
+              amount: -creditsToDebit,
+              balance_after: newBalance,
+              description: `Sessão de agente — ${totalTokens} tokens`,
+              provider: selectedProvider,
+              model: apiModel,
+              tokens_input: inputTokens,
+              tokens_output: outputTokens,
+            });
+          }
+        } catch (e) {
+          console.error("Error tracking token usage:", e);
+        }
+      })();
+
+      return new Response(streamForClient, {
+        headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
       });
     }
 
