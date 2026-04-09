@@ -1,17 +1,21 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAgentBuilder, type AgentStructuredConfig } from "@/contexts/AgentBuilderContext";
+import { useAgentBuilder, type AgentStructuredConfig, type AgentProvider } from "@/contexts/AgentBuilderContext";
 import { useUserAgents } from "@/hooks/use-user-agents";
+import { useApiKeys } from "@/hooks/use-api-keys";
 import { AGENT_PRESETS } from "@/types/agent-presets";
 import { DEFAULT_ADVANCED_CONFIG, MANDATORY_INTENTS } from "@/types/agent-builder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import {
   Sparkles, ArrowRight, ArrowLeft, Loader2, CheckCircle2,
   MessageSquare, Settings2, FlaskConical, Rocket, Bot,
+  Zap, Globe, AlertTriangle,
 } from "lucide-react";
 
 const STEP_META = [
