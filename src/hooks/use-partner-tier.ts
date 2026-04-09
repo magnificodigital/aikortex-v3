@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { type FeatureFlag, type PartnerTier } from "@/types/rbac";
 import { TIER_CONFIG } from "@/types/partner";
+import type { Tables } from "@/integrations/supabase/types";
 
 const TIERS: PartnerTier[] = ["bronze", "prata", "gold"];
 
@@ -24,11 +25,7 @@ const FEATURE_TO_MODULE_KEY: Record<string, string> = {
   "module.tasks": "gestao.tarefas",
 };
 
-interface TierModuleAccessRow {
-  tier: string;
-  module_key: string;
-  has_access: boolean;
-}
+type TierModuleAccessRow = Pick<Tables<"tier_module_access">, "tier" | "module_key" | "has_access">;
 
 export interface PartnerTierData {
   id: string;
@@ -59,24 +56,24 @@ export function usePartnerTier() {
     queryFn: async () => {
       // Try to fetch existing tier
       const { data: existing, error } = await supabase
-        .from("partner_tiers" as any)
+        .from("partner_tiers")
         .select("*")
         .eq("user_id", user!.id)
         .maybeSingle();
 
       if (error) throw error;
 
-      if (existing) return existing as unknown as PartnerTierData;
+      if (existing) return existing as PartnerTierData;
 
       // Auto-create bronze tier on first access
       const { data: created, error: insertError } = await supabase
-        .from("partner_tiers" as any)
+        .from("partner_tiers")
         .insert({ user_id: user!.id, tier: "bronze" })
         .select()
         .single();
 
       if (insertError) throw insertError;
-      return created as unknown as PartnerTierData;
+      return created as PartnerTierData;
     },
   });
 
@@ -91,10 +88,10 @@ export function usePartnerTier() {
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const { data: rows, error } = await supabase
-        .from("tier_module_access" as any)
+        .from("tier_module_access")
         .select("tier, module_key, has_access");
       if (error) throw error;
-      return (rows ?? []) as unknown as TierModuleAccessRow[];
+      return (rows ?? []) as TierModuleAccessRow[];
     },
   });
 
@@ -139,7 +136,7 @@ export function usePartnerTier() {
   const updateMetrics = useMutation({
     mutationFn: async (metrics: Partial<Pick<PartnerTierData, "clients_served" | "revenue" | "solutions_published" | "certifications_earned">>) => {
       const { error } = await supabase
-        .from("partner_tiers" as any)
+        .from("partner_tiers")
         .update(metrics)
         .eq("user_id", user!.id);
       if (error) throw error;
