@@ -316,48 +316,33 @@ const AppSidebar = ({ mobileOpen = false, onMobileClose }: AppSidebarProps) => {
               <div className="border-t border-sidebar-border my-2" />
             )}
             <div className="space-y-0.5">
-              {/* Usage / BYOK indicator */}
-              <button
-                onClick={() => { handleNavigate(); navigate(hasByok ? "/settings?tab=integrations" : "/ai-setup"); }}
-                className={`${linkClasses(false)} w-full group relative`}
-                title={collapsed && !isMobile ? (hasByok ? "Chave própria ativa" : `${messageCount}/${monthlyLimit} msgs`) : undefined}
-              >
-                {hasByok ? (
-                  <>
-                    <Key className="w-4 h-4 shrink-0 text-green-500" />
-                    {(!collapsed || isMobile) && (
-                      <span className="flex-1 flex items-center gap-2 truncate">
-                        <span className="text-xs font-medium text-green-600">Chave própria ativa</span>
-                      </span>
+              {/* Usage indicator (only when not using own key) */}
+              {!hasByok && (
+                <button
+                  onClick={() => { handleNavigate(); navigate("/ai-setup"); }}
+                  className={`${linkClasses(false)} w-full group relative`}
+                  title={collapsed && !isMobile ? `${messageCount}/${monthlyLimit} msgs` : undefined}
+                >
+                  <div className="relative">
+                    <Activity className="w-4 h-4 shrink-0 text-primary" />
+                    {isNearLimit && collapsed && !isMobile && (
+                      <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
                     )}
-                  </>
-                ) : (
-                  <>
-                    <div className="relative">
-                      <Activity className="w-4 h-4 shrink-0 text-primary" />
-                      {isNearLimit && collapsed && !isMobile && (
-                        <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                  </div>
+                  {(!collapsed || isMobile) && (
+                    <div className="flex-1 space-y-1 min-w-0">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-medium">{messageCount} / {isUnlimited ? "∞" : monthlyLimit}</span>
+                        <span className="text-muted-foreground">msgs</span>
+                      </div>
+                      {!isUnlimited && (
+                        <Progress value={usagePercent} className="h-1" />
                       )}
                     </div>
-                    {(!collapsed || isMobile) && (
-                      <div className="flex-1 space-y-1 min-w-0">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-medium">{messageCount} / {isUnlimited ? "∞" : monthlyLimit}</span>
-                          <span className="text-muted-foreground">msgs</span>
-                        </div>
-                        {!isUnlimited && (
-                          <Progress value={usagePercent} className="h-1" />
-                        )}
-                      </div>
-                    )}
-                  </>
-                )}
-              </button>
+                  )}
+                </button>
+              )}
 
-              <Link to="/pricing" onClick={handleNavigate} className={linkClasses(isItemActive("/pricing"))} title={collapsed && !isMobile ? "Planos" : undefined}>
-                <CreditCard className={`w-4 h-4 shrink-0 ${isItemActive("/pricing") ? "text-primary" : ""}`} />
-                {(!collapsed || isMobile) && <span className="truncate">Planos</span>}
-              </Link>
               <Link to="/settings" onClick={handleNavigate} className={linkClasses(isItemActive("/settings"))} title={collapsed && !isMobile ? "Configurações" : undefined}>
                 <Settings className={`w-4 h-4 shrink-0 ${isItemActive("/settings") ? "text-primary" : ""}`} />
                 {(!collapsed || isMobile) && <span className="truncate">Configurações</span>}
