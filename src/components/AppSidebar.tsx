@@ -154,8 +154,8 @@ const AppSidebar = ({ mobileOpen = false, onMobileClose }: AppSidebarProps) => {
   const { theme, toggle } = useTheme();
   const { signOut, isPlatform } = useAuth();
   const { canAccess } = useModuleAccess();
+  const { balance, isLowBalance, isLoading: creditsLoading } = useCredits();
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (isMobile) {
