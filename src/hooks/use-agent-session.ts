@@ -92,7 +92,7 @@ export function useAgentSession(options: UseAgentSessionOptions) {
         });
       } else {
         // Regular agent-chat for other providers
-        const apiMessages = nextMessages.map((m) => ({
+        const apiMessages: Array<{ role: string; content: string }> = nextMessages.map((m) => ({
           role: m.role === "agent" ? "assistant" : m.role,
           content: m.text,
         }));
