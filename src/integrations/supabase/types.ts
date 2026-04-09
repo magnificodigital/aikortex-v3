@@ -47,6 +47,53 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_sessions: {
+        Row: {
+          agent_id: string | null
+          anthropic_session_id: string | null
+          channel: string
+          contact_identifier: string | null
+          created_at: string | null
+          id: string
+          last_message_at: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          anthropic_session_id?: string | null
+          channel?: string
+          contact_identifier?: string | null
+          created_at?: string | null
+          id?: string
+          last_message_at?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          anthropic_session_id?: string | null
+          channel?: string
+          contact_identifier?: string | null
+          created_at?: string | null
+          id?: string
+          last_message_at?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_sessions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "user_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       credit_packages: {
         Row: {
           created_at: string | null
