@@ -2,11 +2,12 @@ import { useState, useEffect, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useModuleAccess } from "@/hooks/use-module-access";
+import { useCredits } from "@/hooks/use-credits";
 import aikortexLogoWhite from "@/assets/aikortex-logo-white.png";
 import aikortexLogoBlack from "@/assets/aikortex-logo-black.png";
 import aikortexIconWhite from "@/assets/aikortex-icon-white.png";
 import aikortexIconBlack from "@/assets/aikortex-icon-black.png";
-import { LogOut, Lock } from "lucide-react";
+import { LogOut, Lock, Coins } from "lucide-react";
 import {
   LayoutDashboard,
   Home,
