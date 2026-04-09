@@ -9,8 +9,9 @@ import AdminPaymentTab from "@/components/admin/AdminPaymentTab";
 import AdminPartnersTab from "@/components/admin/AdminPartnersTab";
 import TierAccessManager from "@/components/admin/TierAccessManager";
 import AdminCreditsTab from "@/components/admin/AdminCreditsTab";
+import AdminHelpTab from "@/components/admin/AdminHelpTab";
 import { useSearchParams } from "react-router-dom";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, BookOpen } from "lucide-react";
 
 const AdminPanel = () => {
   const [searchParams, setSearchParams] = useSearchParams();
