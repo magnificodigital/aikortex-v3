@@ -17,7 +17,6 @@ import { AGENT_PRESETS } from "@/types/agent-presets";
 import { DEFAULT_FREE_SETUP_MODEL, GATEWAY_MODELS, normalizeFreeSetupModel } from "@/lib/free-setup-models";
 import AgentMemoryTab from "@/components/aikortex/AgentMemoryTab";
 import { useAgentMemory } from "@/hooks/use-agent-memory";
-import { DEFAULT_FREE_SETUP_MODEL, GATEWAY_MODELS, normalizeFreeSetupModel } from "@/lib/free-setup-models";
 
 import avatar1 from "@/assets/avatars/avatar-1.png";
 import avatar2 from "@/assets/avatars/avatar-2.png";
