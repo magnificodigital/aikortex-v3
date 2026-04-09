@@ -191,7 +191,7 @@ serve(async (req) => {
       });
     }
 
-    // --- Credit balance check ---
+    // --- Access check: BYOK or monthly plan limit ---
     const { data: profileData } = await supabase
       .from("profiles")
       .select("role")
@@ -200,18 +200,59 @@ serve(async (req) => {
 
     const isPlatformUser = ["platform_owner", "platform_admin"].includes(profileData?.role);
 
-    if (!isPlatformUser) {
-      const { data: wallet } = await supabase
-        .from("agency_wallets")
-        .select("balance")
-        .eq("user_id", user.id)
-        .single();
+    // Check if user has BYOK for the requested provider
+    const targetProvider = provider && !useGateway ? provider : null;
+    let hasByok = false;
 
-      if (!wallet || wallet.balance < 1) {
-        return new Response(
-          JSON.stringify({ error: "Créditos insuficientes. Acesse /credits para recarregar." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+    if (!isPlatformUser && targetProvider && ["openai","anthropic","gemini","openrouter"].includes(targetProvider)) {
+      const { data: keyData } = await supabase
+        .from("user_api_keys")
+        .select("api_key")
+        .eq("user_id", user.id)
+        .eq("provider", targetProvider)
+        .maybeSingle();
+      hasByok = !!keyData?.api_key;
+    }
+
+    // If no BYOK and not platform: check monthly plan limit
+    if (!isPlatformUser && !hasByok) {
+      const yearMonth = new Date().toISOString().slice(0, 7);
+
+      const { data: sub } = await supabase
+        .from("subscriptions")
+        .select("plan_id, plans(slug)")
+        .eq("user_id", user.id)
+        .in("status", ["active", "trialing"])
+        .maybeSingle();
+
+      const planSlug = (sub?.plans as any)?.slug || "starter";
+
+      const { data: limitData } = await supabase
+        .from("plan_message_limits")
+        .select("monthly_limit")
+        .eq("plan_slug", planSlug)
+        .maybeSingle();
+
+      const monthlyLimit = limitData?.monthly_limit ?? 500;
+
+      if (monthlyLimit !== -1) {
+        const { data: usageData } = await supabase
+          .from("monthly_usage")
+          .select("message_count")
+          .eq("user_id", user.id)
+          .eq("year_month", yearMonth)
+          .maybeSingle();
+
+        const currentCount = usageData?.message_count || 0;
+
+        if (currentCount >= monthlyLimit) {
+          return new Response(JSON.stringify({
+            error: `Limite mensal de ${monthlyLimit} mensagens atingido no plano ${planSlug}. Configure uma chave de API própria em Configurações > Integrações para uso ilimitado, ou faça upgrade do plano.`
+          }), {
+            status: 402,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
       }
     }
 
