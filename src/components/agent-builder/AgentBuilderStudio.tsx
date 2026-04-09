@@ -460,6 +460,8 @@ const AgentBuilderStudio = () => {
 
             <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2 text-sm">
               <div className="flex justify-between"><span className="text-muted-foreground">Tipo</span><span className="font-medium">{structuredConfig.agentType}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Provedor</span><span className="font-medium capitalize">{structuredConfig.provider === "auto" ? "Automático" : structuredConfig.provider}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Modelo</span><span className="font-medium">{structuredConfig.model}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Tom</span><span className="font-medium">{structuredConfig.toneOfVoice}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Idioma</span><span className="font-medium">{structuredConfig.language}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Estágios</span><span className="font-medium">{structuredConfig.stages.length}</span></div>
