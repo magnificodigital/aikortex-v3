@@ -123,6 +123,15 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
   const [rightTab, setRightTab] = useState<RightTab>("toolbar");
   const [showRightPanel, setShowRightPanel] = useState(true);
   const [showLeftPanel, setShowLeftPanel] = useState(true);
+  const [showRunModal, setShowRunModal] = useState(false);
+  const [runTestMessage, setRunTestMessage] = useState("");
+  const [runContactId, setRunContactId] = useState("");
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [executions, setExecutions] = useState<FlowExecution[]>([]);
+  const [selectedExecution, setSelectedExecution] = useState<FlowExecution | null>(null);
+  const [nodeLogs, setNodeLogs] = useState<FlowNodeLog[]>([]);
+  const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set());
+  const [savedFlowId, setSavedFlowId] = useState<string | undefined>(flowId);
 
   const onConnect = useCallback(
     (connection: Connection) => {
