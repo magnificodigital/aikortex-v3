@@ -14,6 +14,120 @@ export type Database = {
   }
   public: {
     Tables: {
+      agency_wallets: {
+        Row: {
+          balance: number
+          created_at: string | null
+          id: string
+          low_balance_alert: number
+          total_consumed: number
+          total_purchased: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string | null
+          id?: string
+          low_balance_alert?: number
+          total_consumed?: number
+          total_purchased?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string | null
+          id?: string
+          low_balance_alert?: number
+          total_consumed?: number
+          total_purchased?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      credit_packages: {
+        Row: {
+          created_at: string | null
+          credits: number
+          id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          name: string
+          price_brl: number
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          credits: number
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          name: string
+          price_brl: number
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          credits?: number
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          name?: string
+          price_brl?: number
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
+      credit_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string | null
+          description: string | null
+          id: string
+          model: string | null
+          payment_id: string | null
+          provider: string | null
+          session_id: string | null
+          tokens_input: number | null
+          tokens_output: number | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          model?: string | null
+          payment_id?: string | null
+          provider?: string | null
+          session_id?: string | null
+          tokens_input?: number | null
+          tokens_output?: number | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          model?: string | null
+          payment_id?: string | null
+          provider?: string | null
+          session_id?: string | null
+          tokens_input?: number | null
+          tokens_output?: number | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           amount: number
