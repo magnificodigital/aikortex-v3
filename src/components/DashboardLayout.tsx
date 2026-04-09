@@ -1,19 +1,31 @@
 import { ReactNode, useEffect, useState } from "react";
-import { Menu } from "lucide-react";
+import { Menu, X, AlertTriangle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import AppSidebar from "./AppSidebar";
 import { RightPanelProvider } from "./RightPanel";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useCredits } from "@/hooks/use-credits";
 
 const DashboardLayout = ({ children }: { children: ReactNode }) => {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const { balance, isLowBalance } = useCredits();
+  const [bannerDismissed, setBannerDismissed] = useState(() =>
+    sessionStorage.getItem("low-balance-dismissed") === "true"
+  );
 
   useEffect(() => {
     if (!isMobile) {
       setMobileSidebarOpen(false);
     }
   }, [isMobile]);
+
+  const dismissBanner = () => {
+    setBannerDismissed(true);
+    sessionStorage.setItem("low-balance-dismissed", "true");
+  };
 
   return (
     <RightPanelProvider>
@@ -23,6 +35,20 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
           onMobileClose={() => setMobileSidebarOpen(false)}
         />
         <main className="relative flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-background">
+          {isLowBalance && !bannerDismissed && (
+            <div className="sticky top-0 z-40 flex items-center gap-3 bg-amber-500/15 border-b border-amber-500/30 px-4 py-2.5 text-sm">
+              <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
+              <span className="flex-1 text-foreground">
+                Seu saldo de créditos está baixo ({balance} créditos restantes). Recarregue para continuar usando os agentes de IA.
+              </span>
+              <Button size="sm" variant="default" className="shrink-0 text-xs" onClick={() => navigate("/credits")}>
+                Recarregar agora
+              </Button>
+              <button onClick={dismissBanner} className="shrink-0 text-muted-foreground hover:text-foreground">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
           {isMobile && (
             <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-background/85 px-4 py-3 backdrop-blur md:hidden">
               <Button
