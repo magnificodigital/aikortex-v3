@@ -1,7 +1,7 @@
 import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import ModuleGate from "@/components/shared/ModuleGate";
-import { Send, Plus, Users, CheckCircle2, Sparkles, AlertTriangle, Coins } from "lucide-react";
+import { Send, Plus, Users, CheckCircle2, Sparkles, AlertTriangle, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,12 +10,12 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { useCredits } from "@/hooks/use-credits";
+import { useMonthlyUsage } from "@/hooks/use-monthly-usage";
 import { useUserAgents } from "@/hooks/use-user-agents";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const CREDITS_PER_AI_MSG = 5;
+const MSGS_PER_AI_CONTACT = 2; // each AI personalization counts as extra messages
 
 const AikortexBroadcasts = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -26,7 +26,7 @@ const AikortexBroadcasts = () => {
   const [selectedAgent, setSelectedAgent] = useState("");
   const [lastResult, setLastResult] = useState<{ sent: number; failed: number; credits_used: number } | null>(null);
 
-  const { balance, isLoading: creditsLoading } = useCredits();
+  const { messageCount, monthlyLimit, isAtLimit, hasByok, isUnlimited, isLoading: usageLoading } = useMonthlyUsage();
   const { agents } = useUserAgents();
 
   const parsedContacts = contactsText
@@ -39,8 +39,9 @@ const AikortexBroadcasts = () => {
     });
 
   const contactCount = parsedContacts.length;
-  const estimatedCredits = useAI ? contactCount * CREDITS_PER_AI_MSG : 0;
-  const hasEnoughCredits = !useAI || balance >= estimatedCredits;
+  const estimatedMessages = useAI ? contactCount * MSGS_PER_AI_CONTACT : contactCount;
+  const remainingMessages = isUnlimited || hasByok ? Infinity : monthlyLimit - messageCount;
+  const hasEnoughCapacity = hasByok || isUnlimited || remainingMessages >= estimatedMessages;
 
   const handleSend = async () => {
     if (!contactCount || !template.trim()) return;
@@ -94,7 +95,7 @@ const AikortexBroadcasts = () => {
             {[
               { label: "Disparos enviados", value: lastResult ? String(lastResult.sent) : "0", icon: Send },
               { label: "Destinatários alcançados", value: lastResult ? String(lastResult.sent) : "0", icon: Users },
-              { label: "Créditos usados", value: lastResult ? String(lastResult.credits_used) : "0", icon: Coins },
+              { label: "Msgs estimadas", value: lastResult ? String(lastResult.sent) : "0", icon: Activity },
             ].map((m) => (
               <div key={m.label} className="rounded-xl border border-border bg-card p-5 space-y-2">
                 <div className="flex items-center gap-2 text-muted-foreground">
@@ -180,21 +181,23 @@ const AikortexBroadcasts = () => {
                   </div>
 
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Estimativa:</span>
-                    <Badge variant="secondary">{estimatedCredits} créditos para {contactCount} contatos</Badge>
+                    <span className="text-muted-foreground">Mensagens estimadas:</span>
+                    <Badge variant="secondary">{estimatedMessages} msgs para {contactCount} contatos</Badge>
                   </div>
 
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Saldo atual:</span>
-                    <span className={`font-medium ${hasEnoughCredits ? "text-foreground" : "text-destructive"}`}>
-                      {creditsLoading ? "..." : `${balance} créditos`}
-                    </span>
-                  </div>
+                  {!hasByok && !isUnlimited && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Restante no plano:</span>
+                      <span className={`font-medium ${hasEnoughCapacity ? "text-foreground" : "text-destructive"}`}>
+                        {usageLoading ? "..." : `${remainingMessages} msgs`}
+                      </span>
+                    </div>
+                  )}
 
-                  {!hasEnoughCredits && (
+                  {!hasEnoughCapacity && (
                     <div className="flex items-center gap-2 text-xs text-destructive">
                       <AlertTriangle className="w-3.5 h-3.5" />
-                      Saldo insuficiente. Recarregue seus créditos antes de continuar.
+                      Limite mensal insuficiente. Configure uma chave de API ou faça upgrade do plano.
                     </div>
                   )}
                 </div>
@@ -205,7 +208,7 @@ const AikortexBroadcasts = () => {
               <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
               <Button
                 onClick={handleSend}
-                disabled={sending || !contactCount || !template.trim() || (useAI && !selectedAgent) || !hasEnoughCredits}
+                disabled={sending || !contactCount || !template.trim() || (useAI && !selectedAgent) || !hasEnoughCapacity}
                 className="gap-2"
               >
                 {sending ? "Enviando..." : <><Send className="w-4 h-4" /> Enviar Disparo</>}
