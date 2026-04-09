@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { Loader2, ArrowLeft, Sparkles, Bot, Settings, Plug, Share2, SlidersHorizontal, Rocket, Phone } from "lucide-react";
+import { Loader2, ArrowLeft, Sparkles, Bot, Settings, Plug, Share2, SlidersHorizontal, Rocket, Phone, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ConversationProvider } from "@elevenlabs/react";
@@ -15,6 +15,8 @@ import type { AgentType } from "@/types/agent-builder";
 import { supabase } from "@/integrations/supabase/client";
 import { AGENT_PRESETS } from "@/types/agent-presets";
 import { DEFAULT_FREE_SETUP_MODEL, GATEWAY_MODELS, normalizeFreeSetupModel } from "@/lib/free-setup-models";
+import AgentMemoryTab from "@/components/aikortex/AgentMemoryTab";
+import { useAgentMemory } from "@/hooks/use-agent-memory";
 
 import avatar1 from "@/assets/avatars/avatar-1.png";
 import avatar2 from "@/assets/avatars/avatar-2.png";
@@ -189,6 +191,8 @@ const AgentDetail = () => {
   /* ── API keys ── */
 
   const { keys, loading: keysLoading, refetch: refetchKeys } = useApiKeys();
+  const resolvedAgentId = agentId && !TEMPLATE_MAP[agentId] && agentId !== "new" && !agentId.startsWith("new-") ? agentId : undefined;
+  const { isActive: hasMemoryActive } = useAgentMemory(resolvedAgentId);
   const currentProvider = useMemo(() => getProviderForModel(agentModel), [agentModel]);
   const availableModels = useMemo(() => LLM_MODELS.filter(m => keys[m.provider]?.configured), [keys]);
   const hasApiKey    = !!keys[currentProvider]?.configured;
@@ -743,6 +747,7 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
         initialPrompt={isNewCustomFromHome ? navState?.initialPrompt : undefined}
         initialWizardMessages={wizardMessages}
         onWizardMessagesChange={setWizardMessages}
+        hasMemoryActive={hasMemoryActive}
       />
 
       {/* ── RIGHT: Voice Agent ── */}
@@ -756,6 +761,7 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
           <div className="flex items-center gap-1">
             {[
               { label: "Agente",       icon: Bot,               tab: "agent" },
+              { label: "Memória",      icon: Brain,             tab: "memory" },
               { label: "Integrações",  icon: Plug,              tab: "connectors" },
               { label: "Canais",       icon: Share2,            tab: "channels" },
               { label: "Avançado",     icon: SlidersHorizontal, tab: "advanced" },
@@ -806,21 +812,25 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
           <SheetHeader className="sr-only">
             <SheetTitle>Configurações do Agente</SheetTitle>
           </SheetHeader>
-          <AgentRightPanel
-            agent={loadedAgent}
-            agentType={loadedAgent.agentType}
-            agentModel={agentModel}
-            onModelChange={setAgentModel}
-            activeTab={rightPanelTab}
-            onTabChange={setRightPanelTab}
-            onApiKeysChanged={refetchKeys}
-            onConfigChange={handleConfigChange}
-            onSaveAgent={handleSaveAgent}
-            isSaving={isSaving}
-            storagePrefix={storagePrefix}
-            presetData={presetData}
-            savedConfig={loadedAgent.savedConfig}
-          />
+          {rightPanelTab === "memory" ? (
+            <AgentMemoryTab agentId={agentId && !TEMPLATE_MAP[agentId] ? agentId : undefined} />
+          ) : (
+            <AgentRightPanel
+              agent={loadedAgent}
+              agentType={loadedAgent.agentType}
+              agentModel={agentModel}
+              onModelChange={setAgentModel}
+              activeTab={rightPanelTab}
+              onTabChange={setRightPanelTab}
+              onApiKeysChanged={refetchKeys}
+              onConfigChange={handleConfigChange}
+              onSaveAgent={handleSaveAgent}
+              isSaving={isSaving}
+              storagePrefix={storagePrefix}
+              presetData={presetData}
+              savedConfig={loadedAgent.savedConfig}
+            />
+          )}
         </SheetContent>
       </Sheet>
     </div>

@@ -229,10 +229,26 @@ serve(async (req) => {
 
       const env = await envResp.json();
 
+      // Check if agent has a memory store
+      const { data: memoryStore } = await adminClient
+        .from("agent_memory_stores")
+        .select("anthropic_memory_store_id")
+        .eq("agent_id", agent_db_id)
+        .maybeSingle();
+
+      const sessionBody: Record<string, unknown> = {
+        agent_id: anthropicAgentId,
+        environment_id: env.id,
+      };
+
+      if (memoryStore?.anthropic_memory_store_id) {
+        sessionBody.memory_store_ids = [memoryStore.anthropic_memory_store_id];
+      }
+
       const sessionResp = await fetch(`${ANTHROPIC_BASE}/sessions`, {
         method: "POST",
         headers: ANTHROPIC_HEADERS(anthropicApiKey),
-        body: JSON.stringify({ agent_id: anthropicAgentId, environment_id: env.id }),
+        body: JSON.stringify(sessionBody),
       });
 
       if (!sessionResp.ok) {
