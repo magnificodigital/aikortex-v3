@@ -1,6 +1,6 @@
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Users, CreditCard, BarChart3, Settings, Award, Shield, Coins } from "lucide-react";
+import { Users, CreditCard, BarChart3, Settings, Award, Shield, Coins, BookOpen, MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import AdminUsersTab from "@/components/admin/AdminUsersTab";
 import AdminPlansTab from "@/components/admin/AdminPlansTab";
@@ -9,9 +9,10 @@ import AdminPaymentTab from "@/components/admin/AdminPaymentTab";
 import AdminPartnersTab from "@/components/admin/AdminPartnersTab";
 import TierAccessManager from "@/components/admin/TierAccessManager";
 import AdminCreditsTab from "@/components/admin/AdminCreditsTab";
-import AdminHelpTab from "@/components/admin/AdminHelpTab";
+import AdminTutorialsTab from "@/components/admin/AdminTutorialsTab";
+import AdminSupportTab from "@/components/admin/AdminSupportTab";
 import { useSearchParams } from "react-router-dom";
-import { ShieldCheck, BookOpen } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 
 const AdminPanel = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -62,8 +63,11 @@ const AdminPanel = () => {
             <TabsTrigger value="credits" className="text-xs gap-1.5">
               <Coins className="w-3.5 h-3.5" /> Créditos
             </TabsTrigger>
-            <TabsTrigger value="help" className="text-xs gap-1.5">
-              <BookOpen className="w-3.5 h-3.5" /> Ajuda & Tutoriais
+            <TabsTrigger value="tutorials" className="text-xs gap-1.5">
+              <BookOpen className="w-3.5 h-3.5" /> Tutoriais
+            </TabsTrigger>
+            <TabsTrigger value="support" className="text-xs gap-1.5">
+              <MessageSquare className="w-3.5 h-3.5" /> Suporte
             </TabsTrigger>
           </TabsList>
 
@@ -74,7 +78,8 @@ const AdminPanel = () => {
           <TabsContent value="partners"><AdminPartnersTab /></TabsContent>
           <TabsContent value="permissions"><TierAccessManager /></TabsContent>
           <TabsContent value="credits"><AdminCreditsTab /></TabsContent>
-          <TabsContent value="help"><AdminHelpTab /></TabsContent>
+          <TabsContent value="tutorials"><AdminTutorialsTab /></TabsContent>
+          <TabsContent value="support"><AdminSupportTab /></TabsContent>
         </Tabs>
       </div>
     </AdminLayout>

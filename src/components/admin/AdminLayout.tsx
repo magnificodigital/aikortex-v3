@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/use-theme";
 import {
-  Users, CreditCard, BarChart3, Settings, Award, ArrowLeft, Sun, Moon, ShieldCheck, Coins,
+  Users, CreditCard, BarChart3, Settings, Award, ArrowLeft, Sun, Moon, ShieldCheck, Coins, BookOpen, MessageSquare,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import aikortexIconWhite from "@/assets/aikortex-icon-white.png";
@@ -16,6 +16,8 @@ const adminNavItems = [
   { label: "Parceiros", icon: Award, path: "/admin?tab=partners" },
   { label: "Pagamentos", icon: Settings, path: "/admin?tab=payment" },
   { label: "Créditos", icon: Coins, path: "/admin?tab=credits" },
+  { label: "Tutoriais", icon: BookOpen, path: "/admin?tab=tutorials" },
+  { label: "Suporte", icon: MessageSquare, path: "/admin?tab=support" },
 ];
 
 const AdminLayout = ({ children }: { children: ReactNode }) => {
