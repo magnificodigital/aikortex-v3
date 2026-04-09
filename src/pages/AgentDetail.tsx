@@ -809,21 +809,25 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
           <SheetHeader className="sr-only">
             <SheetTitle>Configurações do Agente</SheetTitle>
           </SheetHeader>
-          <AgentRightPanel
-            agent={loadedAgent}
-            agentType={loadedAgent.agentType}
-            agentModel={agentModel}
-            onModelChange={setAgentModel}
-            activeTab={rightPanelTab}
-            onTabChange={setRightPanelTab}
-            onApiKeysChanged={refetchKeys}
-            onConfigChange={handleConfigChange}
-            onSaveAgent={handleSaveAgent}
-            isSaving={isSaving}
-            storagePrefix={storagePrefix}
-            presetData={presetData}
-            savedConfig={loadedAgent.savedConfig}
-          />
+          {rightPanelTab === "memory" ? (
+            <AgentMemoryTab agentId={agentId && !TEMPLATE_MAP[agentId] ? agentId : undefined} />
+          ) : (
+            <AgentRightPanel
+              agent={loadedAgent}
+              agentType={loadedAgent.agentType}
+              agentModel={agentModel}
+              onModelChange={setAgentModel}
+              activeTab={rightPanelTab}
+              onTabChange={setRightPanelTab}
+              onApiKeysChanged={refetchKeys}
+              onConfigChange={handleConfigChange}
+              onSaveAgent={handleSaveAgent}
+              isSaving={isSaving}
+              storagePrefix={storagePrefix}
+              presetData={presetData}
+              savedConfig={loadedAgent.savedConfig}
+            />
+          )}
         </SheetContent>
       </Sheet>
     </div>
