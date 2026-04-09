@@ -6,6 +6,7 @@ import {
   Plus, Bot, Trash2, Pencil, Clock, MoreVertical,
   ArrowRight, Settings2, Sparkles, Target, Headphones,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { useUserAgents, type UserAgent } from "@/hooks/use-user-agents";
 import { AGENT_PRESETS } from "@/types/agent-presets";
 import { toast } from "sonner";
@@ -106,6 +107,14 @@ const Aikortex = () => {
     return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
   };
 
+  const PROVIDER_BADGE: Record<string, { label: string; className: string }> = {
+    anthropic: { label: "Claude", className: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20" },
+    openai:    { label: "GPT",    className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20" },
+    gemini:    { label: "Gemini", className: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20" },
+    openrouter:{ label: "Router", className: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20" },
+    auto:      { label: "Auto",   className: "bg-muted text-muted-foreground border-border" },
+  };
+
   const getAvatarSrc = (agent: UserAgent) => {
     if (agent.avatar_url) return agent.avatar_url;
     const key = agent.agent_type?.toLowerCase() === "sdr" ? "sdr-1"
@@ -150,9 +159,20 @@ const Aikortex = () => {
                       />
                       <div>
                         <p className="text-sm font-bold text-foreground">{agent.name}</p>
-                        <p className="text-[10px] text-muted-foreground capitalize">
-                          {agent.agent_type} • {agent.status === "online" ? "Online" : "Configurando"}
-                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-[10px] text-muted-foreground capitalize">
+                            {agent.agent_type} • {agent.status === "online" ? "Online" : "Configurando"}
+                          </p>
+                          {(() => {
+                            const prov = agent.provider || "auto";
+                            const badge = PROVIDER_BADGE[prov] || PROVIDER_BADGE.auto;
+                            return (
+                              <Badge variant="outline" className={`text-[9px] px-1.5 py-0 h-4 ${badge.className}`}>
+                                {badge.label}
+                              </Badge>
+                            );
+                          })()}
+                        </div>
                       </div>
                     </div>
                     <DropdownMenu>

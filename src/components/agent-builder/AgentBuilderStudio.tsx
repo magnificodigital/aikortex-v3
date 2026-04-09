@@ -1,17 +1,21 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAgentBuilder, type AgentStructuredConfig } from "@/contexts/AgentBuilderContext";
+import { useAgentBuilder, type AgentStructuredConfig, type AgentProvider } from "@/contexts/AgentBuilderContext";
 import { useUserAgents } from "@/hooks/use-user-agents";
+import { useApiKeys } from "@/hooks/use-api-keys";
 import { AGENT_PRESETS } from "@/types/agent-presets";
 import { DEFAULT_ADVANCED_CONFIG, MANDATORY_INTENTS } from "@/types/agent-builder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import {
   Sparkles, ArrowRight, ArrowLeft, Loader2, CheckCircle2,
   MessageSquare, Settings2, FlaskConical, Rocket, Bot,
+  Zap, Globe, AlertTriangle,
 } from "lucide-react";
 
 const STEP_META = [
@@ -43,6 +47,47 @@ const PROMPT_SUGGESTIONS: Record<string, string[]> = {
   ],
 };
 
+const PROVIDER_OPTIONS: { id: AgentProvider; label: string; description: string; icon: typeof Sparkles; badge?: string; models?: { value: string; label: string }[] }[] = [
+  {
+    id: "auto",
+    label: "Automático",
+    description: "Aikortex escolhe o melhor modelo disponível",
+    icon: Sparkles,
+    badge: "Recomendado",
+  },
+  {
+    id: "anthropic",
+    label: "Claude (Anthropic)",
+    description: "Sessões persistentes, memória de contexto longa. Requer chave BYOK ou plano Pro+.",
+    icon: Bot,
+    models: [
+      { value: "claude-sonnet-4-6", label: "Claude Sonnet 4.6" },
+      { value: "claude-haiku-4-5", label: "Claude Haiku 4.5" },
+      { value: "claude-opus-4-6", label: "Claude Opus 4.6" },
+    ],
+  },
+  {
+    id: "openai",
+    label: "GPT (OpenAI)",
+    description: "Alta qualidade, amplamente testado. Requer chave BYOK.",
+    icon: Zap,
+    models: [
+      { value: "gpt-4o", label: "GPT-4o" },
+      { value: "gpt-4o-mini", label: "GPT-4o Mini" },
+    ],
+  },
+  {
+    id: "gemini",
+    label: "Gemini (Google)",
+    description: "Mais econômico, contexto de 1M tokens. Requer chave BYOK.",
+    icon: Globe,
+    models: [
+      { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+      { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+    ],
+  },
+];
+
 const AgentBuilderStudio = () => {
   const navigate = useNavigate();
   const {
@@ -52,6 +97,7 @@ const AgentBuilderStudio = () => {
     isGenerating, setIsGenerating, setCreatedAgentId,
   } = useAgentBuilder();
   const { saveAgent } = useUserAgents();
+  const { keys } = useApiKeys();
   const [creating, setCreating] = useState(false);
 
   const currentIdx = STEP_META.findIndex(s => s.key === step);
@@ -76,6 +122,8 @@ const AgentBuilderStudio = () => {
           : agentType === "CS" ? ["Dúvida sobre produto", "Agendar check-in"]
           : [],
         instructions: preset.context.targetAudienceDescription || "",
+        provider: "auto",
+        model: "gemini-2.5-flash",
         stages: preset.stages.map(s => ({ id: s.id, name: s.name, description: s.description, example: s.example })),
       };
       // Small delay to feel "generated"
@@ -123,6 +171,8 @@ const AgentBuilderStudio = () => {
         name: structuredConfig.name,
         agent_type: agentType,
         description: structuredConfig.description,
+        provider: structuredConfig.provider || "auto",
+        model: structuredConfig.model || "gemini-2.5-flash",
         config: {
           objective: structuredConfig.objective,
           toneOfVoice: structuredConfig.toneOfVoice,
@@ -254,6 +304,76 @@ const AgentBuilderStudio = () => {
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">Objetivo</label>
                 <Textarea value={structuredConfig.objective} onChange={e => updateConfigField("objective", e.target.value)} className="min-h-[60px] resize-none" />
               </div>
+
+              {/* Provider selector */}
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-2 block">Modelo de IA</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {PROVIDER_OPTIONS.map(opt => {
+                    const Icon = opt.icon;
+                    const isSelected = structuredConfig.provider === opt.id;
+                    const needsByok = opt.id !== "auto" && !keys[opt.id]?.configured;
+                    return (
+                      <div
+                        key={opt.id}
+                        onClick={() => {
+                          updateConfigField("provider", opt.id);
+                          if (opt.models?.length) updateConfigField("model", opt.models[0].value);
+                          else updateConfigField("model", "gemini-2.5-flash");
+                        }}
+                        className={`relative rounded-lg border p-3 cursor-pointer transition-all ${
+                          isSelected
+                            ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                            : "border-border hover:border-primary/30"
+                        }`}
+                      >
+                        <div className="flex items-start gap-2">
+                          <Icon className={`h-4 w-4 mt-0.5 shrink-0 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-semibold">{opt.label}</span>
+                              {opt.badge && (
+                                <Badge variant="secondary" className="text-[9px] px-1.5 py-0">{opt.badge}</Badge>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{opt.description}</p>
+                          </div>
+                        </div>
+                        {isSelected && needsByok && (
+                          <Alert className="mt-2 py-1.5 px-2 border-amber-500/30 bg-amber-500/5">
+                            <AlertDescription className="text-[10px] text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                              <AlertTriangle className="h-3 w-3 shrink-0" />
+                              Configure sua chave em{" "}
+                              <a href="/settings?tab=integrations" className="underline font-medium">Integrações</a>
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Model selector (when provider has models) */}
+              {structuredConfig.provider !== "auto" && (() => {
+                const providerOpt = PROVIDER_OPTIONS.find(p => p.id === structuredConfig.provider);
+                if (!providerOpt?.models?.length) return null;
+                return (
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Modelo</label>
+                    <Select value={structuredConfig.model} onValueChange={v => updateConfigField("model", v)}>
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {providerOpt.models.map(m => (
+                          <SelectItem key={m.value} value={m.value} className="text-xs">{m.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                );
+              })()}
             </div>
 
             <div className="flex gap-2">
@@ -340,6 +460,8 @@ const AgentBuilderStudio = () => {
 
             <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2 text-sm">
               <div className="flex justify-between"><span className="text-muted-foreground">Tipo</span><span className="font-medium">{structuredConfig.agentType}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Provedor</span><span className="font-medium capitalize">{structuredConfig.provider === "auto" ? "Automático" : structuredConfig.provider}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Modelo</span><span className="font-medium">{structuredConfig.model}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Tom</span><span className="font-medium">{structuredConfig.toneOfVoice}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Idioma</span><span className="font-medium">{structuredConfig.language}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Estágios</span><span className="font-medium">{structuredConfig.stages.length}</span></div>
