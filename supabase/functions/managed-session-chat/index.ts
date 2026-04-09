@@ -489,41 +489,12 @@ async function finalizeSession(
     .update({ last_message_at: new Date().toISOString(), status: "idle" })
     .eq("anthropic_session_id", anthropicSessionId);
 
+  // Track monthly usage (non-blocking)
   if (!isPlatformUser) {
-    const totalTokens = inputTokens + outputTokens;
-    if (totalTokens > 0) {
-      const creditsToDebit = Math.max(1, Math.ceil(totalTokens / 1000));
-
-      const { data: walletData } = await adminClient
-        .from("agency_wallets")
-        .select("balance")
-        .eq("user_id", userId)
-        .single();
-
-      const currentBalance = walletData?.balance || 0;
-      const newBalance = Math.max(0, currentBalance - creditsToDebit);
-
-      await adminClient
-        .from("agency_wallets")
-        .update({ balance: newBalance })
-        .eq("user_id", userId);
-
-      await adminClient.rpc("add_to_wallet_consumed", {
-        user_uuid: userId,
-        consumed: creditsToDebit,
-      });
-
-      await adminClient.from("credit_transactions").insert({
-        user_id: userId,
-        type: "consumption",
-        amount: -creditsToDebit,
-        balance_after: newBalance,
-        description: `Sessão gerenciada — ${totalTokens} tokens`,
-        provider: "anthropic",
-        model: agent.model || "claude-sonnet-4-6",
-        tokens_input: inputTokens,
-        tokens_output: outputTokens,
-      });
-    }
+    const yearMonth = new Date().toISOString().slice(0, 7);
+    adminClient.rpc("increment_monthly_usage", {
+      p_user_id: userId,
+      p_year_month: yearMonth,
+    }).catch((e: unknown) => console.error("Error tracking usage:", e));
   }
 }
