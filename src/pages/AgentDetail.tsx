@@ -191,6 +191,8 @@ const AgentDetail = () => {
   /* ── API keys ── */
 
   const { keys, loading: keysLoading, refetch: refetchKeys } = useApiKeys();
+  const resolvedAgentId = agentId && !TEMPLATE_MAP[agentId] && agentId !== "new" && !agentId.startsWith("new-") ? agentId : undefined;
+  const { isActive: hasMemoryActive } = useAgentMemory(resolvedAgentId);
   const currentProvider = useMemo(() => getProviderForModel(agentModel), [agentModel]);
   const availableModels = useMemo(() => LLM_MODELS.filter(m => keys[m.provider]?.configured), [keys]);
   const hasApiKey    = !!keys[currentProvider]?.configured;
@@ -745,6 +747,7 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
         initialPrompt={isNewCustomFromHome ? navState?.initialPrompt : undefined}
         initialWizardMessages={wizardMessages}
         onWizardMessagesChange={setWizardMessages}
+        hasMemoryActive={hasMemoryActive}
       />
 
       {/* ── RIGHT: Voice Agent ── */}
