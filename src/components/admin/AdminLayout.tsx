@@ -16,6 +16,8 @@ const adminNavItems = [
   { label: "Parceiros", icon: Award, path: "/admin?tab=partners" },
   { label: "Pagamentos", icon: Settings, path: "/admin?tab=payment" },
   { label: "Créditos", icon: Coins, path: "/admin?tab=credits" },
+  { label: "Tutoriais", icon: ShieldCheck, path: "/admin?tab=tutorials" },
+  { label: "Suporte", icon: ShieldCheck, path: "/admin?tab=support" },
 ];
 
 const AdminLayout = ({ children }: { children: ReactNode }) => {
