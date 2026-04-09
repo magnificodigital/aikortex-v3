@@ -191,6 +191,30 @@ serve(async (req) => {
       });
     }
 
+    // --- Credit balance check ---
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("user_id", user.id)
+      .single();
+
+    const isPlatformUser = ["platform_owner", "platform_admin"].includes(profileData?.role);
+
+    if (!isPlatformUser) {
+      const { data: wallet } = await supabase
+        .from("agency_wallets")
+        .select("balance")
+        .eq("user_id", user.id)
+        .single();
+
+      if (!wallet || wallet.balance < 1) {
+        return new Response(
+          JSON.stringify({ error: "Créditos insuficientes. Acesse /credits para recarregar." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
     const selectedProvider = provider || "openai";
     if (!useGateway && !modelBelongsToProvider(selectedProvider, model)) {
       return new Response(JSON.stringify({ error: `O modelo \"${model}\" não pertence ao provider \"${selectedProvider}\".` }), {
