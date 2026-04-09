@@ -62,6 +62,9 @@ const AdminPanel = () => {
             <TabsTrigger value="credits" className="text-xs gap-1.5">
               <Coins className="w-3.5 h-3.5" /> Créditos
             </TabsTrigger>
+            <TabsTrigger value="help" className="text-xs gap-1.5">
+              <BookOpen className="w-3.5 h-3.5" /> Ajuda & Tutoriais
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="users"><AdminUsersTab /></TabsContent>
@@ -71,6 +74,7 @@ const AdminPanel = () => {
           <TabsContent value="partners"><AdminPartnersTab /></TabsContent>
           <TabsContent value="permissions"><TierAccessManager /></TabsContent>
           <TabsContent value="credits"><AdminCreditsTab /></TabsContent>
+          <TabsContent value="help"><AdminHelpTab /></TabsContent>
         </Tabs>
       </div>
     </AdminLayout>
