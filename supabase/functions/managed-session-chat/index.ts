@@ -96,22 +96,49 @@ serve(async (req) => {
       isPlatformUser = ["platform_owner", "platform_admin"].includes(profileData?.role);
     }
 
-    // Credit check
+    // Monthly usage check (skip for platform users and WhatsApp with insufficient usage)
     if (!isPlatformUser) {
-      const { data: wallet } = await adminClient
-        .from("agency_wallets").select("balance").eq("user_id", userId).single();
-      if (!wallet || wallet.balance < 1) {
-        if (isWhatsAppMode) {
-          // Don't send error to WhatsApp contact — just return silently
-          return new Response(JSON.stringify({ reply: null, reason: "insufficient_credits" }), {
-            status: 200,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
+      const yearMonth = new Date().toISOString().slice(0, 7);
+
+      const { data: sub } = await adminClient
+        .from("subscriptions")
+        .select("plan_id, plans(slug)")
+        .eq("user_id", userId)
+        .in("status", ["active", "trialing"])
+        .maybeSingle();
+
+      const planSlug = (sub?.plans as any)?.slug || "starter";
+
+      const { data: limitData } = await adminClient
+        .from("plan_message_limits")
+        .select("monthly_limit")
+        .eq("plan_slug", planSlug)
+        .maybeSingle();
+
+      const monthlyLimit = limitData?.monthly_limit ?? 500;
+
+      if (monthlyLimit !== -1) {
+        const { data: usageData } = await adminClient
+          .from("monthly_usage")
+          .select("message_count")
+          .eq("user_id", userId)
+          .eq("year_month", yearMonth)
+          .maybeSingle();
+
+        const currentCount = usageData?.message_count || 0;
+
+        if (currentCount >= monthlyLimit) {
+          if (isWhatsAppMode) {
+            return new Response(JSON.stringify({ reply: null, reason: "monthly_limit_reached" }), {
+              status: 200,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          return new Response(
+            JSON.stringify({ error: `Limite mensal de ${monthlyLimit} mensagens atingido. Configure uma chave de API própria ou faça upgrade.` }),
+            { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
         }
-        return new Response(
-          JSON.stringify({ error: "Créditos insuficientes. Acesse /credits para recarregar." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
       }
     }
 
