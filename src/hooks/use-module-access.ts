@@ -37,7 +37,7 @@ export function useModuleAccess() {
   const canAccess = (moduleKey: string): boolean => {
     if (isPlatform) return true;
     if (!accessRows) return true; // still loading, don't block
-    return accessMap[moduleKey] ?? true;
+    return accessMap[moduleKey] ?? false;
   };
 
   return {

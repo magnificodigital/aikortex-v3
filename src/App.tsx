@@ -101,7 +101,7 @@ const App = () => (
               <Route path="/credits" element={<Navigate to="/ai-setup" replace />} />
               <Route path="/settings" element={<P><SettingsPage /></P>} />
               <Route path="/meetings" element={<P><Meetings /></P>} />
-              <Route path="/meetings/:roomId" element={<MeetingRoom />} />
+              <Route path="/meetings/:roomId" element={<ProtectedRoute><MeetingRoom /></ProtectedRoute>} />
               <Route path="/tutorials" element={<Navigate to="/home" replace />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
