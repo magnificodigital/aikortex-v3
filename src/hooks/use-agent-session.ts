@@ -134,7 +134,7 @@ export function useAgentSession(options: UseAgentSessionOptions) {
         // Fallback: if managed session fails, try regular agent-chat
         if (useManagedSession && resp.status >= 500) {
           console.warn("Managed session failed, falling back to agent-chat");
-          const apiMessages = nextMessages.map((m) => ({
+          const apiMessages: Array<{ role: string; content: string }> = nextMessages.map((m) => ({
             role: m.role === "agent" ? "assistant" : m.role,
             content: m.text,
           }));
