@@ -159,9 +159,20 @@ const Aikortex = () => {
                       />
                       <div>
                         <p className="text-sm font-bold text-foreground">{agent.name}</p>
-                        <p className="text-[10px] text-muted-foreground capitalize">
-                          {agent.agent_type} • {agent.status === "online" ? "Online" : "Configurando"}
-                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-[10px] text-muted-foreground capitalize">
+                            {agent.agent_type} • {agent.status === "online" ? "Online" : "Configurando"}
+                          </p>
+                          {(() => {
+                            const prov = agent.provider || "auto";
+                            const badge = PROVIDER_BADGE[prov] || PROVIDER_BADGE.auto;
+                            return (
+                              <Badge variant="outline" className={`text-[9px] px-1.5 py-0 h-4 ${badge.className}`}>
+                                {badge.label}
+                              </Badge>
+                            );
+                          })()}
+                        </div>
                       </div>
                     </div>
                     <DropdownMenu>
