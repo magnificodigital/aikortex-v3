@@ -409,7 +409,14 @@ const AgentChatPanel = ({
       {wizardStep === "done" && (
         <div className="h-10 border-b border-border flex items-center px-3 gap-2 shrink-0">
           <img src={agentAvatar} className="w-6 h-6 rounded-full object-cover" alt="" />
-          <span className="text-xs font-medium truncate mr-auto">{agentName}</span>
+          <span className="text-xs font-medium truncate">{agentName}</span>
+          {hasMemoryActive && (
+            <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-primary/10 text-primary" title="Este agente lembra conversas anteriores">
+              <Brain className="w-3 h-3" />
+              <span className="text-[9px] font-medium hidden sm:inline">Memória</span>
+            </span>
+          )}
+          <span className="flex-1" />
           <div className="flex items-center bg-muted rounded-lg p-0.5">
             <button
               onClick={() => setChatMode("setup")}
