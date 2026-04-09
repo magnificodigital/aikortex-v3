@@ -47,6 +47,47 @@ const PROMPT_SUGGESTIONS: Record<string, string[]> = {
   ],
 };
 
+const PROVIDER_OPTIONS: { id: AgentProvider; label: string; description: string; icon: typeof Sparkles; badge?: string; models?: { value: string; label: string }[] }[] = [
+  {
+    id: "auto",
+    label: "Automático",
+    description: "Aikortex escolhe o melhor modelo disponível",
+    icon: Sparkles,
+    badge: "Recomendado",
+  },
+  {
+    id: "anthropic",
+    label: "Claude (Anthropic)",
+    description: "Sessões persistentes, memória de contexto longa. Requer chave BYOK ou plano Pro+.",
+    icon: Bot,
+    models: [
+      { value: "claude-sonnet-4-6", label: "Claude Sonnet 4.6" },
+      { value: "claude-haiku-4-5", label: "Claude Haiku 4.5" },
+      { value: "claude-opus-4-6", label: "Claude Opus 4.6" },
+    ],
+  },
+  {
+    id: "openai",
+    label: "GPT (OpenAI)",
+    description: "Alta qualidade, amplamente testado. Requer chave BYOK.",
+    icon: Zap,
+    models: [
+      { value: "gpt-4o", label: "GPT-4o" },
+      { value: "gpt-4o-mini", label: "GPT-4o Mini" },
+    ],
+  },
+  {
+    id: "gemini",
+    label: "Gemini (Google)",
+    description: "Mais econômico, contexto de 1M tokens. Requer chave BYOK.",
+    icon: Globe,
+    models: [
+      { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+      { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+    ],
+  },
+];
+
 const AgentBuilderStudio = () => {
   const navigate = useNavigate();
   const {
@@ -56,6 +97,7 @@ const AgentBuilderStudio = () => {
     isGenerating, setIsGenerating, setCreatedAgentId,
   } = useAgentBuilder();
   const { saveAgent } = useUserAgents();
+  const { keys } = useApiKeys();
   const [creating, setCreating] = useState(false);
 
   const currentIdx = STEP_META.findIndex(s => s.key === step);
@@ -80,6 +122,8 @@ const AgentBuilderStudio = () => {
           : agentType === "CS" ? ["Dúvida sobre produto", "Agendar check-in"]
           : [],
         instructions: preset.context.targetAudienceDescription || "",
+        provider: "auto",
+        model: "gemini-2.5-flash",
         stages: preset.stages.map(s => ({ id: s.id, name: s.name, description: s.description, example: s.example })),
       };
       // Small delay to feel "generated"
