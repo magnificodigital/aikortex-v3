@@ -156,6 +156,7 @@ const AppSidebar = ({ mobileOpen = false, onMobileClose }: AppSidebarProps) => {
   const { canAccess } = useModuleAccess();
   const { balance, isLowBalance, isLoading: creditsLoading } = useCredits();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (isMobile) {
