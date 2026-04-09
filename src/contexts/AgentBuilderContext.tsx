@@ -3,6 +3,8 @@ import type { AgentType } from "@/types/agent-builder";
 
 export type AgentBuilderStep = "describe" | "customize" | "calibrate" | "create" | "done";
 
+export type AgentProvider = "auto" | "anthropic" | "openai" | "gemini" | "openrouter";
+
 export interface AgentStructuredConfig {
   name: string;
   agentType: AgentType;
@@ -13,6 +15,8 @@ export interface AgentStructuredConfig {
   greetingMessage: string;
   quickReplies: string[];
   instructions: string;
+  provider: AgentProvider;
+  model: string;
   stages: Array<{
     id: string;
     name: string;

@@ -51,6 +51,7 @@ export function useUserAgents() {
       description: agent.description || "",
       avatar_url: agent.avatar_url || "",
       model: agent.model || "gemini-2.5-flash",
+      provider: (agent as any).provider || "auto",
       status: agent.status || "configuring",
       config: agent.config || {},
     };
