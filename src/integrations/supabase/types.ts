@@ -558,6 +558,8 @@ export type Database = {
       user_agents: {
         Row: {
           agent_type: string
+          anthropic_agent_id: string | null
+          anthropic_agent_version: number | null
           avatar_url: string | null
           config: Json
           created_at: string
@@ -565,12 +567,16 @@ export type Database = {
           id: string
           model: string | null
           name: string
+          provider: string
           status: string
           updated_at: string
+          use_managed_sessions: boolean
           user_id: string
         }
         Insert: {
           agent_type?: string
+          anthropic_agent_id?: string | null
+          anthropic_agent_version?: number | null
           avatar_url?: string | null
           config?: Json
           created_at?: string
@@ -578,12 +584,16 @@ export type Database = {
           id?: string
           model?: string | null
           name: string
+          provider?: string
           status?: string
           updated_at?: string
+          use_managed_sessions?: boolean
           user_id: string
         }
         Update: {
           agent_type?: string
+          anthropic_agent_id?: string | null
+          anthropic_agent_version?: number | null
           avatar_url?: string | null
           config?: Json
           created_at?: string
@@ -591,8 +601,10 @@ export type Database = {
           id?: string
           model?: string | null
           name?: string
+          provider?: string
           status?: string
           updated_at?: string
+          use_managed_sessions?: boolean
           user_id?: string
         }
         Relationships: []
