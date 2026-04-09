@@ -216,6 +216,107 @@ export type Database = {
         }
         Relationships: []
       }
+      flow_executions: {
+        Row: {
+          completed_at: string | null
+          context: Json | null
+          created_at: string | null
+          current_node_id: string | null
+          error_message: string | null
+          flow_id: string
+          flow_name: string | null
+          id: string
+          started_at: string | null
+          status: string
+          trigger_data: Json | null
+          trigger_type: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          context?: Json | null
+          created_at?: string | null
+          current_node_id?: string | null
+          error_message?: string | null
+          flow_id: string
+          flow_name?: string | null
+          id?: string
+          started_at?: string | null
+          status?: string
+          trigger_data?: Json | null
+          trigger_type?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          context?: Json | null
+          created_at?: string | null
+          current_node_id?: string | null
+          error_message?: string | null
+          flow_id?: string
+          flow_name?: string | null
+          id?: string
+          started_at?: string | null
+          status?: string
+          trigger_data?: Json | null
+          trigger_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      flow_node_logs: {
+        Row: {
+          agent_session_id: string | null
+          completed_at: string | null
+          error_message: string | null
+          execution_id: string
+          id: string
+          input: Json | null
+          node_id: string
+          node_label: string | null
+          node_type: string
+          output: Json | null
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          agent_session_id?: string | null
+          completed_at?: string | null
+          error_message?: string | null
+          execution_id: string
+          id?: string
+          input?: Json | null
+          node_id: string
+          node_label?: string | null
+          node_type: string
+          output?: Json | null
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          agent_session_id?: string | null
+          completed_at?: string | null
+          error_message?: string | null
+          execution_id?: string
+          id?: string
+          input?: Json | null
+          node_id?: string
+          node_label?: string | null
+          node_type?: string
+          output?: Json | null
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flow_node_logs_execution_id_fkey"
+            columns: ["execution_id"]
+            isOneToOne: false
+            referencedRelation: "flow_executions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           amount: number
@@ -804,6 +905,48 @@ export type Database = {
           status?: string
           tables_schema?: Json
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_flows: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          edges: Json
+          id: string
+          is_active: boolean | null
+          name: string
+          nodes: Json
+          trigger_config: Json | null
+          trigger_type: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          edges?: Json
+          id?: string
+          is_active?: boolean | null
+          name: string
+          nodes?: Json
+          trigger_config?: Json | null
+          trigger_type?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          edges?: Json
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          nodes?: Json
+          trigger_config?: Json | null
+          trigger_type?: string | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
