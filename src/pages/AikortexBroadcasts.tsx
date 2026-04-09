@@ -54,9 +54,12 @@ const AikortexBroadcasts = () => {
 
   // Track active broadcast progress
   const activeBroadcast = logs.find((l: any) => l.id === activeBroadcastId);
-  if (activeBroadcast && activeBroadcast.status !== "running") {
-    setActiveBroadcastId(null);
-  }
+  
+  useEffect(() => {
+    if (activeBroadcast && activeBroadcast.status !== "running") {
+      setActiveBroadcastId(null);
+    }
+  }, [activeBroadcast]);
 
   const parsedContacts = contactsText
     .split("\n")
