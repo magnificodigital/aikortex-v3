@@ -10,6 +10,7 @@ export interface UserAgent {
   description: string;
   avatar_url: string;
   model: string;
+  provider: string;
   status: string;
   config: Record<string, any>;
   created_at: string;
