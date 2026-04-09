@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import ModuleGate from "@/components/shared/ModuleGate";
 import { Send, Plus, Users, Sparkles, AlertTriangle, Activity, Clock, CheckCircle2, XCircle, Loader2, Eye } from "lucide-react";
