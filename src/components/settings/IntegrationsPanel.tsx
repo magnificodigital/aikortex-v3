@@ -256,6 +256,47 @@ export const ChannelsPanel = () => {
               </p>
             </div>
 
+            {/* WhatsApp Agent Selector */}
+            <div className="space-y-1.5 pt-2 border-t border-border">
+              <div className="flex items-center gap-2">
+                <Bot className="w-4 h-4 text-primary" />
+                <label className="text-sm font-medium text-foreground">Agente padrão para WhatsApp</label>
+              </div>
+              <Select
+                value={selectedWhatsAppAgent}
+                onValueChange={async (value) => {
+                  setSelectedWhatsAppAgent(value);
+                  const { supabase } = await import("@/integrations/supabase/client");
+                  const { data: { user } } = await supabase.auth.getUser();
+                  if (!user) return;
+                  if (value === "none") {
+                    await supabase.from("user_api_keys").delete().eq("user_id", user.id).eq("provider", "whatsapp_agent_id");
+                    setSelectedWhatsAppAgent("");
+                    toast.success("Agente WhatsApp removido.");
+                  } else {
+                    await supabase.from("user_api_keys").upsert(
+                      { user_id: user.id, provider: "whatsapp_agent_id", api_key: value },
+                      { onConflict: "user_id,provider" }
+                    );
+                    toast.success("Agente WhatsApp configurado!");
+                  }
+                }}
+              >
+                <SelectTrigger className="text-sm">
+                  <SelectValue placeholder="Nenhum agente selecionado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum (desativar respostas automáticas)</SelectItem>
+                  {userAgents.map((agent) => (
+                    <SelectItem key={agent.id} value={agent.id}>{agent.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground">
+                O agente selecionado responderá automaticamente às mensagens recebidas no WhatsApp.
+              </p>
+            </div>
+
             <div className="flex items-center justify-between pt-2">
               {wabaConnected ? (
                 <Button variant="destructive" size="sm" className="text-xs gap-1.5" onClick={handleDisconnectWaba} disabled={saving}>
