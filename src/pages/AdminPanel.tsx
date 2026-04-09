@@ -1,6 +1,6 @@
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Users, CreditCard, BarChart3, Settings, Award, Shield } from "lucide-react";
+import { Users, CreditCard, BarChart3, Settings, Award, Shield, Coins } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import AdminUsersTab from "@/components/admin/AdminUsersTab";
 import AdminPlansTab from "@/components/admin/AdminPlansTab";
@@ -8,6 +8,7 @@ import AdminSubscriptionsTab from "@/components/admin/AdminSubscriptionsTab";
 import AdminPaymentTab from "@/components/admin/AdminPaymentTab";
 import AdminPartnersTab from "@/components/admin/AdminPartnersTab";
 import TierAccessManager from "@/components/admin/TierAccessManager";
+import AdminCreditsTab from "@/components/admin/AdminCreditsTab";
 import { useSearchParams } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
 
@@ -57,6 +58,9 @@ const AdminPanel = () => {
             <TabsTrigger value="permissions" className="text-xs gap-1.5">
               <Shield className="w-3.5 h-3.5" /> Permissões & Features
             </TabsTrigger>
+            <TabsTrigger value="credits" className="text-xs gap-1.5">
+              <Coins className="w-3.5 h-3.5" /> Créditos
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="users"><AdminUsersTab /></TabsContent>
@@ -65,6 +69,7 @@ const AdminPanel = () => {
           <TabsContent value="payment"><AdminPaymentTab /></TabsContent>
           <TabsContent value="partners"><AdminPartnersTab /></TabsContent>
           <TabsContent value="permissions"><TierAccessManager /></TabsContent>
+          <TabsContent value="credits"><AdminCreditsTab /></TabsContent>
         </Tabs>
       </div>
     </AdminLayout>
