@@ -280,14 +280,14 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
       const payload = {
         user_id: user.id,
         name: flowName || "Novo Fluxo",
-        nodes: nodes as unknown as Record<string, unknown>[],
-        edges: edges as unknown as Record<string, unknown>[],
+        nodes: JSON.parse(JSON.stringify(nodes)),
+        edges: JSON.parse(JSON.stringify(edges)),
       };
 
       if (savedFlowId) {
-        await supabase.from("user_flows").update(payload).eq("id", savedFlowId);
+        await (supabase.from("user_flows").update(payload) as any).eq("id", savedFlowId);
       } else {
-        const { data } = await supabase.from("user_flows").insert(payload).select().single();
+        const { data } = await (supabase.from("user_flows").insert(payload) as any).select().single();
         if (data) setSavedFlowId((data as any).id);
       }
       toast.success("Fluxo salvo com sucesso!");
