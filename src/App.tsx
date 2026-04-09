@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import HelpBubble from "@/components/help/HelpBubble";
 
 // Lazy-loaded pages
 const LandingPage = lazy(() => import("./pages/LandingPage"));
@@ -101,9 +102,10 @@ const App = () => (
               <Route path="/settings" element={<P><SettingsPage /></P>} />
               <Route path="/meetings" element={<P><Meetings /></P>} />
               <Route path="/meetings/:roomId" element={<MeetingRoom />} />
-              <Route path="/tutorials" element={<P><Tutorials /></P>} />
+              <Route path="/tutorials" element={<Navigate to="/home" replace />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <HelpBubble />
           </Suspense>
         </BrowserRouter>
       </TooltipProvider>
