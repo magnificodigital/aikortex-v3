@@ -34,19 +34,11 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { agent_db_id, message, contact_identifier, channel } = await req.json();
+    const { agent_db_id, message, contact_identifier, channel, owner_user_id } = await req.json();
 
     if (!agent_db_id || !message) {
       return new Response(JSON.stringify({ error: "agent_db_id e message são obrigatórios." }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Não autorizado" }), {
-        status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -63,26 +55,59 @@ serve(async (req) => {
       });
     }
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
     const adminClient = createClient(supabaseUrl, serviceKey);
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: "Usuário não autenticado" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    // ── Determine effective user: either from JWT or from owner_user_id (webhook mode) ──
+    const isWhatsAppMode = channel === "whatsapp" && !!owner_user_id;
+    let userId: string;
+    let isPlatformUser = false;
+
+    if (isWhatsAppMode) {
+      // Called from webhook with service_role — trust owner_user_id
+      userId = owner_user_id;
+      const { data: profileData } = await adminClient
+        .from("profiles").select("role").eq("user_id", userId).single();
+      isPlatformUser = ["platform_owner", "platform_admin"].includes(profileData?.role);
+    } else {
+      // Standard authenticated call
+      const authHeader = req.headers.get("Authorization");
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: "Não autorizado" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } },
       });
+
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        return new Response(JSON.stringify({ error: "Usuário não autenticado" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      userId = user.id;
+
+      const { data: profileData } = await supabase
+        .from("profiles").select("role").eq("user_id", userId).single();
+      isPlatformUser = ["platform_owner", "platform_admin"].includes(profileData?.role);
     }
 
     // Credit check
-    const { data: profileData } = await supabase.from("profiles").select("role").eq("user_id", user.id).single();
-    const isPlatformUser = ["platform_owner", "platform_admin"].includes(profileData?.role);
-
     if (!isPlatformUser) {
-      const { data: wallet } = await supabase.from("agency_wallets").select("balance").eq("user_id", user.id).single();
+      const { data: wallet } = await adminClient
+        .from("agency_wallets").select("balance").eq("user_id", userId).single();
       if (!wallet || wallet.balance < 1) {
+        if (isWhatsAppMode) {
+          // Don't send error to WhatsApp contact — just return silently
+          return new Response(JSON.stringify({ reply: null, reason: "insufficient_credits" }), {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
         return new Response(
           JSON.stringify({ error: "Créditos insuficientes. Acesse /credits para recarregar." }),
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -90,12 +115,12 @@ serve(async (req) => {
       }
     }
 
-    // Fetch agent
-    const { data: agent, error: agentError } = await supabase
+    // Fetch agent (use adminClient so webhook mode works too)
+    const { data: agent, error: agentError } = await adminClient
       .from("user_agents")
       .select("*")
       .eq("id", agent_db_id)
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .single();
 
     if (agentError || !agent) {
@@ -105,7 +130,7 @@ serve(async (req) => {
       });
     }
 
-    // Ensure agent has anthropic_agent_id (sync if needed)
+    // Ensure agent has anthropic_agent_id
     let anthropicAgentId = agent.anthropic_agent_id;
     if (!anthropicAgentId) {
       console.log("Agent missing anthropic_agent_id, syncing definition...");
@@ -126,7 +151,7 @@ serve(async (req) => {
       if (!createResp.ok) {
         const errText = await createResp.text();
         console.error("Failed to create Anthropic agent:", createResp.status, errText);
-        return new Response(JSON.stringify({ error: "Erro ao registrar agente na Anthropic. Tente novamente." }), {
+        return new Response(JSON.stringify({ error: "Erro ao registrar agente na Anthropic." }), {
           status: 502,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -137,21 +162,18 @@ serve(async (req) => {
 
       await adminClient
         .from("user_agents")
-        .update({
-          anthropic_agent_id: anthropicAgentId,
-          anthropic_agent_version: agentDef.version || 1,
-        })
+        .update({ anthropic_agent_id: anthropicAgentId, anthropic_agent_version: agentDef.version || 1 })
         .eq("id", agent_db_id);
     }
 
     // Find or create session
-    const contactId = contact_identifier || user.id;
+    const contactId = contact_identifier || userId;
     const sessionChannel = channel || "chat";
 
-    const { data: existingSession } = await supabase
+    const { data: existingSession } = await adminClient
       .from("agent_sessions")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .eq("agent_id", agent_db_id)
       .eq("contact_identifier", contactId)
       .eq("channel", sessionChannel)
@@ -163,7 +185,6 @@ serve(async (req) => {
     let anthropicSessionId = existingSession?.anthropic_session_id;
 
     if (!anthropicSessionId) {
-      // Create environment
       const envResp = await fetch(`${ANTHROPIC_BASE}/environments`, {
         method: "POST",
         headers: ANTHROPIC_HEADERS(anthropicApiKey),
@@ -181,14 +202,10 @@ serve(async (req) => {
 
       const env = await envResp.json();
 
-      // Create session
       const sessionResp = await fetch(`${ANTHROPIC_BASE}/sessions`, {
         method: "POST",
         headers: ANTHROPIC_HEADERS(anthropicApiKey),
-        body: JSON.stringify({
-          agent_id: anthropicAgentId,
-          environment_id: env.id,
-        }),
+        body: JSON.stringify({ agent_id: anthropicAgentId, environment_id: env.id }),
       });
 
       if (!sessionResp.ok) {
@@ -203,7 +220,6 @@ serve(async (req) => {
       const session = await sessionResp.json();
       anthropicSessionId = session.id;
 
-      // Save session to DB
       if (existingSession) {
         await adminClient
           .from("agent_sessions")
@@ -211,7 +227,7 @@ serve(async (req) => {
           .eq("id", existingSession.id);
       } else {
         await adminClient.from("agent_sessions").insert({
-          user_id: user.id,
+          user_id: userId,
           agent_id: agent_db_id,
           anthropic_session_id: anthropicSessionId,
           contact_identifier: contactId,
@@ -226,12 +242,7 @@ serve(async (req) => {
       method: "POST",
       headers: ANTHROPIC_HEADERS(anthropicApiKey),
       body: JSON.stringify({
-        events: [
-          {
-            type: "user.message",
-            content: [{ type: "text", text: message }],
-          },
-        ],
+        events: [{ type: "user.message", content: [{ type: "text", text: message }] }],
       }),
     });
 
@@ -239,7 +250,6 @@ serve(async (req) => {
       const errText = await eventResp.text();
       console.error("Failed to send event:", eventResp.status, errText);
 
-      // If session expired, mark as terminated
       if (eventResp.status === 404 || eventResp.status === 410) {
         await adminClient
           .from("agent_sessions")
@@ -253,13 +263,10 @@ serve(async (req) => {
       });
     }
 
-    // Stream response from Anthropic
+    // Get response stream
     const streamResp = await fetch(`${ANTHROPIC_BASE}/sessions/${anthropicSessionId}/events/stream`, {
       method: "GET",
-      headers: {
-        ...ANTHROPIC_HEADERS(anthropicApiKey),
-        Accept: "text/event-stream",
-      },
+      headers: { ...ANTHROPIC_HEADERS(anthropicApiKey), Accept: "text/event-stream" },
     });
 
     if (!streamResp.ok || !streamResp.body) {
@@ -271,136 +278,17 @@ serve(async (req) => {
       });
     }
 
-    // Transform Anthropic SSE to OpenAI-compatible SSE for client compatibility
-    const { readable, writable } = new TransformStream();
-    const writer = writable.getWriter();
-    const encoder = new TextEncoder();
+    // ── WhatsApp mode: collect full response, return JSON ──
+    if (isWhatsAppMode) {
+      return await handleWhatsAppResponse(
+        streamResp, anthropicSessionId!, adminClient, userId, isPlatformUser, agent,
+      );
+    }
 
-    (async () => {
-      const reader = streamResp.body!.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let inputTokens = 0;
-      let outputTokens = 0;
-      let fullText = "";
-
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
-
-          for (const line of lines) {
-            if (!line.startsWith("data: ")) continue;
-            const data = line.slice(6).trim();
-            if (data === "[DONE]") {
-              await writer.write(encoder.encode("data: [DONE]\n\n"));
-              continue;
-            }
-
-            try {
-              const parsed = JSON.parse(data);
-
-              // Track usage
-              if (parsed.usage) {
-                inputTokens = parsed.usage.input_tokens || inputTokens;
-                outputTokens = parsed.usage.output_tokens || outputTokens;
-              }
-              if (parsed.type === "message_start" && parsed.message?.usage) {
-                inputTokens = parsed.message.usage.input_tokens || inputTokens;
-              }
-              if (parsed.type === "message_delta" && parsed.usage) {
-                outputTokens = parsed.usage.output_tokens || outputTokens;
-              }
-
-              // Extract text content and convert to OpenAI SSE format
-              if (parsed.type === "content_block_delta" && parsed.delta?.type === "text_delta") {
-                const text = parsed.delta.text || "";
-                fullText += text;
-                const oaiChunk = {
-                  choices: [{ delta: { content: text }, index: 0 }],
-                };
-                await writer.write(encoder.encode(`data: ${JSON.stringify(oaiChunk)}\n\n`));
-              }
-
-              // Handle assistant.message events (managed agents format)
-              if (parsed.type === "assistant.message" && Array.isArray(parsed.content)) {
-                for (const block of parsed.content) {
-                  if (block.type === "text") {
-                    const text = block.text || "";
-                    fullText += text;
-                    const oaiChunk = {
-                      choices: [{ delta: { content: text }, index: 0 }],
-                    };
-                    await writer.write(encoder.encode(`data: ${JSON.stringify(oaiChunk)}\n\n`));
-                  }
-                }
-              }
-            } catch {
-              // ignore non-JSON
-            }
-          }
-        }
-
-        await writer.write(encoder.encode("data: [DONE]\n\n"));
-      } catch (e) {
-        console.error("Stream processing error:", e);
-      } finally {
-        writer.close();
-
-        // Update session
-        await adminClient
-          .from("agent_sessions")
-          .update({ last_message_at: new Date().toISOString(), status: "idle" })
-          .eq("anthropic_session_id", anthropicSessionId);
-
-        // Debit credits
-        if (!isPlatformUser) {
-          const totalTokens = inputTokens + outputTokens;
-          if (totalTokens > 0) {
-            const creditsToDebit = Math.max(1, Math.ceil(totalTokens / 1000));
-
-            const { data: walletData } = await adminClient
-              .from("agency_wallets")
-              .select("balance")
-              .eq("user_id", user.id)
-              .single();
-
-            const currentBalance = walletData?.balance || 0;
-            const newBalance = Math.max(0, currentBalance - creditsToDebit);
-
-            await adminClient
-              .from("agency_wallets")
-              .update({ balance: newBalance })
-              .eq("user_id", user.id);
-
-            await adminClient.rpc("add_to_wallet_consumed", {
-              user_uuid: user.id,
-              consumed: creditsToDebit,
-            });
-
-            await adminClient.from("credit_transactions").insert({
-              user_id: user.id,
-              type: "consumption",
-              amount: -creditsToDebit,
-              balance_after: newBalance,
-              description: `Sessão gerenciada — ${totalTokens} tokens`,
-              provider: "anthropic",
-              model: agent.model || "claude-sonnet-4-6",
-              tokens_input: inputTokens,
-              tokens_output: outputTokens,
-            });
-          }
-        }
-      }
-    })();
-
-    return new Response(readable, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
-    });
+    // ── Chat mode: stream SSE to client ──
+    return handleStreamResponse(
+      streamResp, anthropicSessionId!, adminClient, userId, isPlatformUser, agent,
+    );
   } catch (e) {
     console.error("managed-session-chat error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erro desconhecido" }), {
@@ -409,3 +297,206 @@ serve(async (req) => {
     });
   }
 });
+
+/** Collect full text from stream and return { reply } for WhatsApp */
+async function handleWhatsAppResponse(
+  streamResp: Response,
+  anthropicSessionId: string,
+  adminClient: any,
+  userId: string,
+  isPlatformUser: boolean,
+  agent: any,
+): Promise<Response> {
+  const reader = streamResp.body!.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let inputTokens = 0;
+  let outputTokens = 0;
+  let fullText = "";
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        const data = line.slice(6).trim();
+        if (data === "[DONE]") continue;
+
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed.usage) {
+            inputTokens = parsed.usage.input_tokens || inputTokens;
+            outputTokens = parsed.usage.output_tokens || outputTokens;
+          }
+          if (parsed.type === "message_start" && parsed.message?.usage) {
+            inputTokens = parsed.message.usage.input_tokens || inputTokens;
+          }
+          if (parsed.type === "message_delta" && parsed.usage) {
+            outputTokens = parsed.usage.output_tokens || outputTokens;
+          }
+          if (parsed.type === "content_block_delta" && parsed.delta?.type === "text_delta") {
+            fullText += parsed.delta.text || "";
+          }
+          if (parsed.type === "assistant.message" && Array.isArray(parsed.content)) {
+            for (const block of parsed.content) {
+              if (block.type === "text") fullText += block.text || "";
+            }
+          }
+        } catch { /* ignore non-JSON */ }
+      }
+    }
+  } catch (e) {
+    console.error("WhatsApp stream read error:", e);
+  }
+
+  // Update session + debit credits
+  await finalizeSession(adminClient, anthropicSessionId, userId, isPlatformUser, agent, inputTokens, outputTokens);
+
+  return new Response(JSON.stringify({ reply: fullText || null }), {
+    status: 200,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+/** Stream SSE to chat client */
+function handleStreamResponse(
+  streamResp: Response,
+  anthropicSessionId: string,
+  adminClient: any,
+  userId: string,
+  isPlatformUser: boolean,
+  agent: any,
+): Response {
+  const { readable, writable } = new TransformStream();
+  const writer = writable.getWriter();
+  const encoder = new TextEncoder();
+
+  (async () => {
+    const reader = streamResp.body!.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let inputTokens = 0;
+    let outputTokens = 0;
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const data = line.slice(6).trim();
+          if (data === "[DONE]") {
+            await writer.write(encoder.encode("data: [DONE]\n\n"));
+            continue;
+          }
+
+          try {
+            const parsed = JSON.parse(data);
+
+            if (parsed.usage) {
+              inputTokens = parsed.usage.input_tokens || inputTokens;
+              outputTokens = parsed.usage.output_tokens || outputTokens;
+            }
+            if (parsed.type === "message_start" && parsed.message?.usage) {
+              inputTokens = parsed.message.usage.input_tokens || inputTokens;
+            }
+            if (parsed.type === "message_delta" && parsed.usage) {
+              outputTokens = parsed.usage.output_tokens || outputTokens;
+            }
+
+            if (parsed.type === "content_block_delta" && parsed.delta?.type === "text_delta") {
+              const text = parsed.delta.text || "";
+              const oaiChunk = { choices: [{ delta: { content: text }, index: 0 }] };
+              await writer.write(encoder.encode(`data: ${JSON.stringify(oaiChunk)}\n\n`));
+            }
+
+            if (parsed.type === "assistant.message" && Array.isArray(parsed.content)) {
+              for (const block of parsed.content) {
+                if (block.type === "text") {
+                  const oaiChunk = { choices: [{ delta: { content: block.text || "" }, index: 0 }] };
+                  await writer.write(encoder.encode(`data: ${JSON.stringify(oaiChunk)}\n\n`));
+                }
+              }
+            }
+          } catch { /* ignore */ }
+        }
+      }
+
+      await writer.write(encoder.encode("data: [DONE]\n\n"));
+    } catch (e) {
+      console.error("Stream processing error:", e);
+    } finally {
+      writer.close();
+      await finalizeSession(adminClient, anthropicSessionId, userId, isPlatformUser, agent, inputTokens, outputTokens);
+    }
+  })();
+
+  return new Response(readable, {
+    headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
+  });
+}
+
+/** Update session status and debit credits */
+async function finalizeSession(
+  adminClient: any,
+  anthropicSessionId: string,
+  userId: string,
+  isPlatformUser: boolean,
+  agent: any,
+  inputTokens: number,
+  outputTokens: number,
+) {
+  await adminClient
+    .from("agent_sessions")
+    .update({ last_message_at: new Date().toISOString(), status: "idle" })
+    .eq("anthropic_session_id", anthropicSessionId);
+
+  if (!isPlatformUser) {
+    const totalTokens = inputTokens + outputTokens;
+    if (totalTokens > 0) {
+      const creditsToDebit = Math.max(1, Math.ceil(totalTokens / 1000));
+
+      const { data: walletData } = await adminClient
+        .from("agency_wallets")
+        .select("balance")
+        .eq("user_id", userId)
+        .single();
+
+      const currentBalance = walletData?.balance || 0;
+      const newBalance = Math.max(0, currentBalance - creditsToDebit);
+
+      await adminClient
+        .from("agency_wallets")
+        .update({ balance: newBalance })
+        .eq("user_id", userId);
+
+      await adminClient.rpc("add_to_wallet_consumed", {
+        user_uuid: userId,
+        consumed: creditsToDebit,
+      });
+
+      await adminClient.from("credit_transactions").insert({
+        user_id: userId,
+        type: "consumption",
+        amount: -creditsToDebit,
+        balance_after: newBalance,
+        description: `Sessão gerenciada — ${totalTokens} tokens`,
+        provider: "anthropic",
+        model: agent.model || "claude-sonnet-4-6",
+        tokens_input: inputTokens,
+        tokens_output: outputTokens,
+      });
+    }
+  }
+}

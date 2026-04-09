@@ -26,7 +26,6 @@ serve(async (req) => {
       return new Response("Forbidden", { status: 403 });
     }
 
-    // Look up verify token from any user's stored WABA credentials
     const { data: verifyRows } = await supabase
       .from("user_api_keys")
       .select("api_key")
@@ -108,6 +107,11 @@ serve(async (req) => {
         const { error } = await supabase.from("whatsapp_messages").insert(incomingData);
         if (error) console.error("Error storing message:", error);
         console.log(`Received ${message.type} from ${message.from}: ${incomingData.content}`);
+
+        // ── Auto-reply via Managed Session Agent ──
+        if (ownerUserId && incomingData.content && message.type === "text") {
+          handleAgentReply(supabase, ownerUserId, message.from, phoneNumberId, incomingData.content);
+        }
       }
 
       return new Response(JSON.stringify({ status: "ok", count: messages.length }), {
@@ -123,6 +127,110 @@ serve(async (req) => {
 
   return new Response("Method not allowed", { status: 405 });
 });
+
+/** Fire-and-forget: find agent config and invoke managed-session-chat */
+function handleAgentReply(
+  supabase: any,
+  ownerUserId: string,
+  contactNumber: string,
+  phoneNumberId: string | undefined,
+  messageContent: string,
+) {
+  (async () => {
+    try {
+      // Check if user has a WhatsApp agent configured
+      const { data: agentConfig } = await supabase
+        .from("user_api_keys")
+        .select("api_key")
+        .eq("provider", "whatsapp_agent_id")
+        .eq("user_id", ownerUserId)
+        .maybeSingle();
+
+      if (!agentConfig?.api_key) return;
+
+      // Fetch owner's WABA access token for sending replies
+      const { data: wabaKeys } = await supabase
+        .from("user_api_keys")
+        .select("provider, api_key")
+        .eq("user_id", ownerUserId)
+        .in("provider", ["whatsapp_access_token", "whatsapp_phone_number_id"]);
+
+      const keyMap: Record<string, string> = {};
+      (wabaKeys || []).forEach((k: any) => { keyMap[k.provider] = k.api_key; });
+
+      if (!keyMap.whatsapp_access_token) return;
+
+      const usedPhoneId = phoneNumberId || keyMap.whatsapp_phone_number_id;
+
+      // Call managed-session-chat in WhatsApp mode (no auth header, uses owner_user_id)
+      const sessionResp = await fetch(
+        `${Deno.env.get("SUPABASE_URL")}/functions/v1/managed-session-chat`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          },
+          body: JSON.stringify({
+            agent_db_id: agentConfig.api_key,
+            message: messageContent,
+            contact_identifier: contactNumber,
+            channel: "whatsapp",
+            owner_user_id: ownerUserId,
+          }),
+        },
+      );
+
+      if (!sessionResp.ok) {
+        const errText = await sessionResp.text();
+        console.error("managed-session-chat error:", sessionResp.status, errText);
+        return;
+      }
+
+      const result = await sessionResp.json();
+      const replyText = result?.reply;
+
+      if (replyText && usedPhoneId) {
+        // Send reply via WhatsApp Graph API directly (no auth needed, we have token)
+        const graphResp = await fetch(
+          `https://graph.facebook.com/v21.0/${usedPhoneId}/messages`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${keyMap.whatsapp_access_token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              messaging_product: "whatsapp",
+              to: contactNumber,
+              type: "text",
+              text: { body: replyText },
+            }),
+          },
+        );
+
+        if (!graphResp.ok) {
+          console.error("WhatsApp send error:", graphResp.status, await graphResp.text());
+        } else {
+          // Save outgoing message
+          await supabase.from("whatsapp_messages").insert({
+            from_number: usedPhoneId,
+            to_number: contactNumber,
+            content: replyText,
+            message_type: "text",
+            direction: "outgoing",
+            status: "sent",
+            phone_number_id: usedPhoneId,
+            user_id: ownerUserId,
+          });
+          console.log(`Agent replied to ${contactNumber}: ${replyText.substring(0, 80)}...`);
+        }
+      }
+    } catch (err) {
+      console.error("handleAgentReply error:", err);
+    }
+  })();
+}
 
 function extractContent(message: any): string {
   switch (message.type) {

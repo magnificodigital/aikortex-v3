@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Check, Eye, EyeOff, ExternalLink, Blocks, Plus, Trash2, Webhook, Globe } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Check, Eye, EyeOff, ExternalLink, Blocks, Plus, Trash2, Webhook, Globe, Bot } from "lucide-react";
 import { toast } from "sonner";
 import { IntegrationsGrid, ALL_PROVIDERS } from "@/components/shared/IntegrationsGrid";
 
@@ -62,12 +63,16 @@ export const ChannelsPanel = () => {
   const [wabaConnected, setWabaConnected] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showFields, setShowFields] = useState<Record<string, boolean>>({});
+  const [userAgents, setUserAgents] = useState<{ id: string; name: string }[]>([]);
+  const [selectedWhatsAppAgent, setSelectedWhatsAppAgent] = useState<string>("");
 
   useEffect(() => {
-    const loadWaba = async () => {
+    const loadData = async () => {
       const { supabase } = await import("@/integrations/supabase/client");
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+
+      // Load WABA credentials
       const { data } = await supabase.from("user_api_keys").select("provider, api_key").eq("user_id", user.id);
       if (data) {
         const fields: Record<string, string> = {};
@@ -77,13 +82,24 @@ export const ChannelsPanel = () => {
             fields[row.provider] = row.api_key;
             if (row.provider === "whatsapp_access_token") hasToken = true;
           }
+          if (row.provider === "whatsapp_agent_id") {
+            setSelectedWhatsAppAgent(row.api_key);
+          }
         });
         setWabaFields(fields);
         setWabaConnected(hasToken);
         if (hasToken) setConnectedChannels(prev => prev.includes("whatsapp") ? prev : [...prev, "whatsapp"]);
       }
+
+      // Load user agents
+      const { data: agents } = await supabase
+        .from("user_agents")
+        .select("id, name")
+        .eq("user_id", user.id)
+        .order("name");
+      if (agents) setUserAgents(agents);
     };
-    loadWaba();
+    loadData();
   }, []);
 
   const handleSaveWaba = async () => {
@@ -237,6 +253,47 @@ export const ChannelsPanel = () => {
                   className="text-primary hover:underline inline-flex items-center gap-0.5">
                   Meta for Developers <ExternalLink className="w-3 h-3" />
                 </a>
+              </p>
+            </div>
+
+            {/* WhatsApp Agent Selector */}
+            <div className="space-y-1.5 pt-2 border-t border-border">
+              <div className="flex items-center gap-2">
+                <Bot className="w-4 h-4 text-primary" />
+                <label className="text-sm font-medium text-foreground">Agente padrão para WhatsApp</label>
+              </div>
+              <Select
+                value={selectedWhatsAppAgent}
+                onValueChange={async (value) => {
+                  setSelectedWhatsAppAgent(value);
+                  const { supabase } = await import("@/integrations/supabase/client");
+                  const { data: { user } } = await supabase.auth.getUser();
+                  if (!user) return;
+                  if (value === "none") {
+                    await supabase.from("user_api_keys").delete().eq("user_id", user.id).eq("provider", "whatsapp_agent_id");
+                    setSelectedWhatsAppAgent("");
+                    toast.success("Agente WhatsApp removido.");
+                  } else {
+                    await supabase.from("user_api_keys").upsert(
+                      { user_id: user.id, provider: "whatsapp_agent_id", api_key: value },
+                      { onConflict: "user_id,provider" }
+                    );
+                    toast.success("Agente WhatsApp configurado!");
+                  }
+                }}
+              >
+                <SelectTrigger className="text-sm">
+                  <SelectValue placeholder="Nenhum agente selecionado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum (desativar respostas automáticas)</SelectItem>
+                  {userAgents.map((agent) => (
+                    <SelectItem key={agent.id} value={agent.id}>{agent.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground">
+                O agente selecionado responderá automaticamente às mensagens recebidas no WhatsApp.
               </p>
             </div>
 
