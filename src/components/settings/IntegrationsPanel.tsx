@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Check, Eye, EyeOff, ExternalLink, Blocks, Plus, Trash2, Webhook, Globe } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Check, Eye, EyeOff, ExternalLink, Blocks, Plus, Trash2, Webhook, Globe, Bot } from "lucide-react";
 import { toast } from "sonner";
 import { IntegrationsGrid, ALL_PROVIDERS } from "@/components/shared/IntegrationsGrid";
 
@@ -62,6 +63,8 @@ export const ChannelsPanel = () => {
   const [wabaConnected, setWabaConnected] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showFields, setShowFields] = useState<Record<string, boolean>>({});
+  const [userAgents, setUserAgents] = useState<{ id: string; name: string }[]>([]);
+  const [selectedWhatsAppAgent, setSelectedWhatsAppAgent] = useState<string>("");
 
   useEffect(() => {
     const loadWaba = async () => {
