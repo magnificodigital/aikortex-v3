@@ -494,13 +494,22 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
               variant="outline"
               size="sm"
               className="h-7 gap-1.5 text-[11px]"
-              onClick={handleRun}
+              onClick={handleSave}
             >
-              <Play className="w-3 h-3 fill-current" /> Run
+              <Save className="w-3 h-3" /> Salvar
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 gap-1.5 text-[11px]"
+              onClick={handleRun}
+              disabled={isExecuting}
+            >
+              {isExecuting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3 fill-current" />} Run
             </Button>
             <Button
               size="sm"
-              className="h-7 gap-1.5 text-[11px] bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="h-7 gap-1.5 text-[11px] bg-primary hover:bg-primary/90"
               onClick={handleDeploy}
             >
               <Rocket className="w-3 h-3" /> Deploy
