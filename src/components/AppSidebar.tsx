@@ -305,6 +305,75 @@ const AppSidebar = ({ mobileOpen = false, onMobileClose }: AppSidebarProps) => {
           {renderGroup("Aikortex", aikortexItems, aikortexOpen, setAikortexOpen)}
           {renderGroup("Gestão", gestaoItems, gestaoOpen, setGestaoOpen)}
           {renderGroup("Partners", partnersItems, partnersOpen, setPartnersOpen)}
+
+          {/* Seção Conta & Suporte */}
+          <div>
+            {!collapsed || isMobile ? (
+              <div className="px-3 py-2 mt-4 text-[10px] uppercase tracking-widest text-muted-foreground">
+                Conta
+              </div>
+            ) : (
+              <div className="border-t border-sidebar-border my-2" />
+            )}
+            <div className="space-y-0.5">
+              {/* Usage / BYOK indicator */}
+              <button
+                onClick={() => { handleNavigate(); navigate(hasByok ? "/settings?tab=integrations" : "/ai-setup"); }}
+                className={`${linkClasses(false)} w-full group relative`}
+                title={collapsed && !isMobile ? (hasByok ? "Chave própria ativa" : `${messageCount}/${monthlyLimit} msgs`) : undefined}
+              >
+                {hasByok ? (
+                  <>
+                    <Key className="w-4 h-4 shrink-0 text-green-500" />
+                    {(!collapsed || isMobile) && (
+                      <span className="flex-1 flex items-center gap-2 truncate">
+                        <span className="text-xs font-medium text-green-600">Chave própria ativa</span>
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div className="relative">
+                      <Activity className="w-4 h-4 shrink-0 text-primary" />
+                      {isNearLimit && collapsed && !isMobile && (
+                        <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                      )}
+                    </div>
+                    {(!collapsed || isMobile) && (
+                      <div className="flex-1 space-y-1 min-w-0">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-medium">{messageCount} / {isUnlimited ? "∞" : monthlyLimit}</span>
+                          <span className="text-muted-foreground">msgs</span>
+                        </div>
+                        {!isUnlimited && (
+                          <Progress value={usagePercent} className="h-1" />
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+              </button>
+
+              <Link to="/pricing" onClick={handleNavigate} className={linkClasses(isItemActive("/pricing"))} title={collapsed && !isMobile ? "Planos" : undefined}>
+                <CreditCard className={`w-4 h-4 shrink-0 ${isItemActive("/pricing") ? "text-primary" : ""}`} />
+                {(!collapsed || isMobile) && <span className="truncate">Planos</span>}
+              </Link>
+              <Link to="/settings" onClick={handleNavigate} className={linkClasses(isItemActive("/settings"))} title={collapsed && !isMobile ? "Configurações" : undefined}>
+                <Settings className={`w-4 h-4 shrink-0 ${isItemActive("/settings") ? "text-primary" : ""}`} />
+                {(!collapsed || isMobile) && <span className="truncate">Configurações</span>}
+              </Link>
+              <Link to="/tutorials" onClick={handleNavigate} className={linkClasses(isItemActive("/tutorials"))} title={collapsed && !isMobile ? "Tutoriais" : undefined}>
+                <BookOpen className={`w-4 h-4 shrink-0 ${isItemActive("/tutorials") ? "text-primary" : ""}`} />
+                {(!collapsed || isMobile) && <span className="truncate">Tutoriais</span>}
+              </Link>
+              {isPlatform && (
+                <Link to="/admin" onClick={handleNavigate} className={linkClasses(isItemActive("/admin"))} title={collapsed && !isMobile ? "Painel Admin" : undefined}>
+                  <ShieldCheck className={`w-4 h-4 shrink-0 ${isItemActive("/admin") ? "text-primary" : ""}`} />
+                  {(!collapsed || isMobile) && <span className="truncate">Painel Admin</span>}
+                </Link>
+              )}
+            </div>
+          </div>
         </nav>
 
         <div className="space-y-0.5 border-t border-sidebar-border px-2 py-2">
