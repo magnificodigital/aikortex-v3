@@ -384,6 +384,33 @@ export type Database = {
         }
         Relationships: []
       }
+      monthly_usage: {
+        Row: {
+          created_at: string | null
+          id: string
+          message_count: number
+          updated_at: string | null
+          user_id: string
+          year_month: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message_count?: number
+          updated_at?: string | null
+          user_id: string
+          year_month: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message_count?: number
+          updated_at?: string | null
+          user_id?: string
+          year_month?: string
+        }
+        Relationships: []
+      }
       partner_tiers: {
         Row: {
           certifications_earned: number | null
@@ -426,6 +453,21 @@ export type Database = {
           tier_upgraded_by?: string | null
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      plan_message_limits: {
+        Row: {
+          monthly_limit: number
+          plan_slug: string
+        }
+        Insert: {
+          monthly_limit?: number
+          plan_slug: string
+        }
+        Update: {
+          monthly_limit?: number
+          plan_slug?: string
         }
         Relationships: []
       }
@@ -830,6 +872,10 @@ export type Database = {
     Functions: {
       add_to_wallet_consumed: {
         Args: { consumed: number; user_uuid: string }
+        Returns: undefined
+      }
+      increment_monthly_usage: {
+        Args: { p_user_id: string; p_year_month: string }
         Returns: undefined
       }
       is_platform_user: { Args: { check_user_id: string }; Returns: boolean }
