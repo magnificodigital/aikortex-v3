@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -18,7 +18,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
-import { NODE_TEMPLATES, type FlowNodeData } from "@/types/flow-builder";
+import { NODE_TEMPLATES, type FlowNodeData, type FlowExecution, type FlowNodeLog } from "@/types/flow-builder";
 import FlowNode from "./FlowNode";
 import FlowEdge from "./FlowEdge";
 import FlowNodeConfig from "./FlowNodeConfig";
@@ -26,6 +26,17 @@ import FlowCopilotPanel from "./FlowCopilotPanel";
 import FlowNodePalette from "./FlowNodePalette";
 import FlowBottomToolbar from "./FlowBottomToolbar";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Play,
   Rocket,
@@ -40,9 +51,17 @@ import {
   Database,
   ListChecks,
   ScrollText,
+  Loader2,
+  CheckCircle,
+  XCircle,
+  Clock,
+  ChevronDown,
+  ChevronRight,
+  Save,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 import type { SavedFlow } from "@/types/flow-builder";
 
 const nodeTypes: NodeTypes = {
@@ -104,6 +123,15 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
   const [rightTab, setRightTab] = useState<RightTab>("toolbar");
   const [showRightPanel, setShowRightPanel] = useState(true);
   const [showLeftPanel, setShowLeftPanel] = useState(true);
+  const [showRunModal, setShowRunModal] = useState(false);
+  const [runTestMessage, setRunTestMessage] = useState("");
+  const [runContactId, setRunContactId] = useState("");
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [executions, setExecutions] = useState<FlowExecution[]>([]);
+  const [selectedExecution, setSelectedExecution] = useState<FlowExecution | null>(null);
+  const [nodeLogs, setNodeLogs] = useState<FlowNodeLog[]>([]);
+  const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set());
+  const [savedFlowId, setSavedFlowId] = useState<string | undefined>(flowId);
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -244,21 +272,114 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
     [setNodes, setEdges]
   );
 
-  const handleSave = () => {
-    if (onSave) {
-      onSave(flowName || "Novo Fluxo", nodes, edges, flowId);
-    } else {
-      toast.success("Fluxo salvo com sucesso!");
-    }
-  };
+  const handleSave = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error("Faça login para salvar."); return; }
 
-  const handleRun = () => {
+      const payload = {
+        user_id: user.id,
+        name: flowName || "Novo Fluxo",
+        nodes: JSON.parse(JSON.stringify(nodes)),
+        edges: JSON.parse(JSON.stringify(edges)),
+      };
+
+      if (savedFlowId) {
+        await (supabase.from("user_flows").update(payload) as any).eq("id", savedFlowId);
+      } else {
+        const { data } = await (supabase.from("user_flows").insert(payload) as any).select().single();
+        if (data) setSavedFlowId((data as any).id);
+      }
+      toast.success("Fluxo salvo com sucesso!");
+      if (onSave) onSave(flowName || "Novo Fluxo", nodes, edges, savedFlowId);
+    } catch (e) {
+      console.error("Save error:", e);
+      toast.error("Erro ao salvar fluxo.");
+    }
+  }, [nodes, edges, flowName, savedFlowId, onSave]);
+
+  const handleRun = useCallback(() => {
     if (nodes.length < 2) {
       toast.error("Adicione pelo menos 2 blocos ao fluxo");
       return;
     }
-    toast.info("Executando fluxo...");
-  };
+    if (!savedFlowId) {
+      toast.info("Salve o fluxo antes de executar.");
+      handleSave();
+      return;
+    }
+    setShowRunModal(true);
+  }, [nodes, savedFlowId, handleSave]);
+
+  const executeFlow = useCallback(async () => {
+    if (!savedFlowId) return;
+    setIsExecuting(true);
+    setShowRunModal(false);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) { toast.error("Faça login."); return; }
+
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/execute-flow`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            flow_id: savedFlowId,
+            trigger_type: "manual",
+            test_message: runTestMessage,
+            contact_identifier: runContactId || undefined,
+          }),
+        }
+      );
+
+      const result = await resp.json();
+      if (!resp.ok) {
+        toast.error(result.error || "Erro ao executar fluxo.");
+      } else {
+        toast.success("Fluxo executado com sucesso!");
+        // Load execution logs
+        setRightTab("logs");
+        setShowRightPanel(true);
+        loadExecutions();
+      }
+    } catch (e) {
+      console.error("Execute error:", e);
+      toast.error("Erro ao executar fluxo.");
+    } finally {
+      setIsExecuting(false);
+      setRunTestMessage("");
+      setRunContactId("");
+    }
+  }, [savedFlowId, runTestMessage, runContactId]);
+
+  const loadExecutions = useCallback(async () => {
+    if (!savedFlowId) return;
+    const { data } = await supabase
+      .from("flow_executions")
+      .select("*")
+      .eq("flow_id", savedFlowId)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    if (data) setExecutions(data as unknown as FlowExecution[]);
+  }, [savedFlowId]);
+
+  const loadNodeLogs = useCallback(async (executionId: string) => {
+    const { data } = await supabase
+      .from("flow_node_logs")
+      .select("*")
+      .eq("execution_id", executionId)
+      .order("started_at", { ascending: true });
+    if (data) setNodeLogs(data as unknown as FlowNodeLog[]);
+  }, []);
+
+  useEffect(() => {
+    if (rightTab === "logs") loadExecutions();
+  }, [rightTab, loadExecutions]);
 
   const handleDeploy = () => {
     if (nodes.length < 2) {
@@ -373,13 +494,22 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
               variant="outline"
               size="sm"
               className="h-7 gap-1.5 text-[11px]"
-              onClick={handleRun}
+              onClick={handleSave}
             >
-              <Play className="w-3 h-3 fill-current" /> Run
+              <Save className="w-3 h-3" /> Salvar
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 gap-1.5 text-[11px]"
+              onClick={handleRun}
+              disabled={isExecuting}
+            >
+              {isExecuting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3 fill-current" />} Run
             </Button>
             <Button
               size="sm"
-              className="h-7 gap-1.5 text-[11px] bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="h-7 gap-1.5 text-[11px] bg-primary hover:bg-primary/90"
               onClick={handleDeploy}
             >
               <Rocket className="w-3 h-3" /> Deploy
@@ -520,17 +650,118 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
               </div>
             )}
             {rightTab === "logs" && (
-              <div className="flex flex-col items-center justify-center h-full text-center px-6">
-                <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center mb-3">
-                  <ScrollText className="w-5 h-5 text-muted-foreground" />
+              <div className="h-full flex flex-col">
+                <div className="p-3 border-b border-border">
+                  <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">Logs de Execução</h3>
                 </div>
-                <p className="text-sm font-medium text-foreground mb-1">Logs de Execução</p>
-                <p className="text-xs text-muted-foreground">Histórico de execuções e erros do fluxo.</p>
+                <div className="flex-1 overflow-y-auto">
+                  {executions.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center px-6">
+                      <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center mb-3">
+                        <ScrollText className="w-5 h-5 text-muted-foreground" />
+                      </div>
+                      <p className="text-sm font-medium text-foreground mb-1">Nenhuma execução</p>
+                      <p className="text-xs text-muted-foreground">Execute o fluxo para ver os logs aqui.</p>
+                    </div>
+                  ) : !selectedExecution ? (
+                    <div className="p-2 space-y-1">
+                      {executions.map((exec) => (
+                        <button
+                          key={exec.id}
+                          onClick={() => { setSelectedExecution(exec); loadNodeLogs(exec.id); }}
+                          className="w-full text-left p-2.5 rounded-lg border border-border hover:bg-accent/30 transition-colors"
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[11px] font-medium text-foreground">{exec.flow_name || "Execução"}</span>
+                            <Badge variant={exec.status === "completed" ? "default" : exec.status === "failed" ? "destructive" : "secondary"} className="text-[9px] px-1.5">
+                              {exec.status === "completed" ? "✓" : exec.status === "failed" ? "✗" : "⏳"} {exec.status}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                            <span>{exec.trigger_type}</span>
+                            <span>•</span>
+                            <span>{new Date(exec.started_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-2">
+                      <button onClick={() => { setSelectedExecution(null); setNodeLogs([]); }} className="text-[10px] text-primary hover:underline mb-2 block">
+                        ← Voltar
+                      </button>
+                      <div className="space-y-1.5">
+                        {nodeLogs.map((log) => (
+                          <div key={log.id} className="border border-border rounded-lg overflow-hidden">
+                            <button
+                              onClick={() => setExpandedLogs(prev => {
+                                const next = new Set(prev);
+                                next.has(log.id) ? next.delete(log.id) : next.add(log.id);
+                                return next;
+                              })}
+                              className="w-full flex items-center gap-2 p-2 hover:bg-accent/20 transition-colors"
+                            >
+                              {log.status === "completed" ? <CheckCircle className="w-3.5 h-3.5 text-primary shrink-0" /> :
+                               log.status === "failed" ? <XCircle className="w-3.5 h-3.5 text-destructive shrink-0" /> :
+                               log.status === "running" ? <Loader2 className="w-3.5 h-3.5 text-primary animate-spin shrink-0" /> :
+                               <Clock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
+                              <span className="text-[11px] font-medium text-foreground truncate flex-1 text-left">{log.node_label || log.node_type}</span>
+                              {expandedLogs.has(log.id) ? <ChevronDown className="w-3 h-3 text-muted-foreground" /> : <ChevronRight className="w-3 h-3 text-muted-foreground" />}
+                            </button>
+                            {expandedLogs.has(log.id) && (
+                              <div className="px-2 pb-2 space-y-1 border-t border-border/50">
+                                <div className="text-[9px] text-muted-foreground mt-1">
+                                  <span>Tipo: {log.node_type}</span>
+                                  {log.completed_at && log.started_at && (
+                                    <span className="ml-2">Duração: {Math.round((new Date(log.completed_at).getTime() - new Date(log.started_at).getTime()) / 1000)}s</span>
+                                  )}
+                                </div>
+                                {log.error_message && (
+                                  <p className="text-[10px] text-destructive bg-destructive/10 rounded p-1.5">{log.error_message}</p>
+                                )}
+                                {Object.keys(log.output || {}).length > 0 && (
+                                  <pre className="text-[9px] bg-muted/50 rounded p-1.5 overflow-x-auto max-h-24">{JSON.stringify(log.output, null, 2)}</pre>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
         </div>
       )}
+
+      {/* Run Modal */}
+      <Dialog open={showRunModal} onOpenChange={setShowRunModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Executar Fluxo</DialogTitle>
+            <DialogDescription>Configure os parâmetros de teste para executar o fluxo.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label className="text-xs">Mensagem de teste</Label>
+              <Input value={runTestMessage} onChange={e => setRunTestMessage(e.target.value)} placeholder="Olá, gostaria de saber mais..." className="text-sm" />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Contato de teste (opcional)</Label>
+              <Input value={runContactId} onChange={e => setRunContactId(e.target.value)} placeholder="5511999999999" className="text-sm" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRunModal(false)}>Cancelar</Button>
+            <Button onClick={executeFlow} disabled={isExecuting} className="gap-1.5">
+              {isExecuting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
+              Executar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
