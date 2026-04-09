@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
@@ -96,7 +96,8 @@ const App = () => (
               <Route path="/iagora" element={<P><IAgora /></P>} />
               <Route path="/sintonia" element={<P><SintonIA /></P>} />
               <Route path="/admin" element={<ProtectedRoute roles={['platform_owner','platform_admin']}><AdminPanel /></ProtectedRoute>} />
-              <Route path="/credits" element={<P><Credits /></P>} />
+              <Route path="/ai-setup" element={<P><Credits /></P>} />
+              <Route path="/credits" element={<Navigate to="/ai-setup" replace />} />
               <Route path="/settings" element={<P><SettingsPage /></P>} />
               <Route path="/meetings" element={<P><Meetings /></P>} />
               <Route path="/meetings/:roomId" element={<MeetingRoom />} />

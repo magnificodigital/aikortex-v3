@@ -1,17 +1,18 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import DashboardLayout from "@/components/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCredits } from "@/hooks/use-credits";
+import { useMonthlyUsage } from "@/hooks/use-monthly-usage";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Coins, ShoppingCart, History, Sparkles, Zap, Mic, Info } from "lucide-react";
-import { toast } from "sonner";
+import { Progress } from "@/components/ui/progress";
+import { Key, Activity, History, Settings, CheckCircle2, ExternalLink, TrendingUp } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -31,26 +32,36 @@ const typeBadgeClass: Record<string, string> = {
   manual: "bg-muted text-muted-foreground border-0",
 };
 
+const providers = [
+  { key: "openai", label: "OpenAI", desc: "GPT-4o, GPT-4 Turbo e mais" },
+  { key: "anthropic", label: "Anthropic", desc: "Claude 4 Sonnet, Opus, Haiku" },
+  { key: "gemini", label: "Google Gemini", desc: "Gemini 2.5 Pro/Flash" },
+  { key: "openrouter", label: "OpenRouter", desc: "Acesse centenas de modelos" },
+];
+
 const Credits = () => {
   const { user } = useAuth();
-  const { balance, totalPurchased, totalConsumed, isLoading: walletLoading } = useCredits();
+  const navigate = useNavigate();
+  const { messageCount, monthlyLimit, hasByok, isUnlimited, planSlug, isLoading: usageLoading } = useMonthlyUsage();
   const [typeFilter, setTypeFilter] = useState("all");
 
-  const { data: packages = [] } = useQuery({
-    queryKey: ["credit-packages"],
+  // Check which providers have BYOK configured
+  const { data: configuredKeys = [] } = useQuery({
+    queryKey: ["user-byok-keys", user?.id],
+    enabled: !!user?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("credit_packages")
-        .select("*")
-        .eq("is_active", true)
-        .order("sort_order");
-      if (error) throw error;
-      return data;
+      const { data } = await supabase
+        .from("user_api_keys")
+        .select("provider")
+        .eq("user_id", user!.id)
+        .in("provider", ["openai", "anthropic", "gemini", "openrouter"]);
+      return (data || []).map((k) => k.provider);
     },
   });
 
+  // Reuse credit_transactions as usage history
   const { data: transactions = [] } = useQuery({
-    queryKey: ["credit-transactions", user?.id, typeFilter],
+    queryKey: ["usage-history", user?.id, typeFilter],
     enabled: !!user?.id,
     queryFn: async () => {
       let q = supabase
@@ -66,138 +77,124 @@ const Credits = () => {
     },
   });
 
+  const usagePercent = isUnlimited || monthlyLimit <= 0 ? 0 : Math.min(100, (messageCount / monthlyLimit) * 100);
+
   return (
     <DashboardLayout>
       <div className="p-4 md:p-6 space-y-6 max-w-5xl mx-auto">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <Coins className="h-5 w-5 text-primary" />
+            <Settings className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Créditos de IA</h1>
-            <p className="text-sm text-muted-foreground">Gerencie seus créditos para uso nos agentes e automações.</p>
+            <h1 className="text-2xl font-bold text-foreground">Configuração de IA</h1>
+            <p className="text-sm text-muted-foreground">Gerencie como seus agentes e automações utilizam inteligência artificial.</p>
           </div>
         </div>
 
-        <Tabs defaultValue="buy" className="space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Card 1 — BYOK */}
+          <Card className="border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Key className="w-5 h-5 text-primary" /> Use sua própria chave de API
+              </CardTitle>
+              <CardDescription>
+                Conecte sua conta da OpenAI, Anthropic ou Google e use sem limites mensais.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {hasByok && (
+                <Badge className="bg-green-500/10 text-green-600 border-0 gap-1">
+                  <CheckCircle2 className="w-3 h-3" /> BYOK ativo
+                </Badge>
+              )}
+              <div className="space-y-2">
+                {providers.map((p) => {
+                  const isConfigured = configuredKeys.includes(p.key);
+                  return (
+                    <div key={p.key} className="flex items-center justify-between rounded-lg border border-border p-3">
+                      <div>
+                        <p className="text-sm font-medium">{p.label}</p>
+                        <p className="text-xs text-muted-foreground">{p.desc}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {isConfigured && (
+                          <Badge variant="secondary" className="text-[10px] gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-green-500" /> Conectado
+                          </Badge>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs gap-1"
+                          onClick={() => navigate("/settings?tab=integrations")}
+                        >
+                          <ExternalLink className="w-3 h-3" /> {isConfigured ? "Gerenciar" : "Configurar"}
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Card 2 — Uso da plataforma */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Activity className="w-5 h-5 text-primary" /> Uso da plataforma
+              </CardTitle>
+              <CardDescription>
+                Modelos do Aikortex — plano <span className="font-medium capitalize">{planSlug}</span>
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-muted-foreground">Mensagens este mês</span>
+                  <span className="text-sm font-semibold">
+                    {usageLoading ? "..." : messageCount} / {isUnlimited ? "∞" : monthlyLimit}
+                  </span>
+                </div>
+                {!isUnlimited && <Progress value={usagePercent} className="h-2" />}
+                {isUnlimited && (
+                  <p className="text-xs text-green-600 font-medium">Uso ilimitado no seu plano</p>
+                )}
+              </div>
+
+              {!hasByok && planSlug === "starter" && (
+                <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
+                  <p className="text-sm text-foreground">
+                    Quer mais mensagens? Configure uma chave de API própria ou faça upgrade.
+                  </p>
+                  <Button size="sm" variant="outline" className="text-xs gap-1.5" onClick={() => navigate("/pricing")}>
+                    <TrendingUp className="w-3 h-3" /> Ver planos
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* History */}
+        <Tabs defaultValue="history" className="space-y-4">
           <TabsList className="bg-muted/50 p-1">
-            <TabsTrigger value="buy" className="text-xs gap-1.5">
-              <ShoppingCart className="w-3.5 h-3.5" /> Comprar Créditos
-            </TabsTrigger>
             <TabsTrigger value="history" className="text-xs gap-1.5">
-              <History className="w-3.5 h-3.5" /> Histórico
+              <History className="w-3.5 h-3.5" /> Histórico de uso
             </TabsTrigger>
           </TabsList>
-
-          <TabsContent value="buy" className="space-y-6">
-            {/* Balance Card */}
-            <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-              <CardContent className="p-6">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Saldo atual</p>
-                    <p className="text-4xl font-bold text-foreground mt-1">
-                      {walletLoading ? "..." : balance.toLocaleString("pt-BR")}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">créditos disponíveis</p>
-                  </div>
-                  <div className="flex gap-6 text-sm">
-                    <div>
-                      <p className="text-muted-foreground">Total comprado</p>
-                      <p className="font-semibold text-foreground">{totalPurchased.toLocaleString("pt-BR")}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Total consumido</p>
-                      <p className="font-semibold text-foreground">{totalConsumed.toLocaleString("pt-BR")}</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Packages Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {packages.map((pkg) => (
-                <Card key={pkg.id} className={`relative ${pkg.is_featured ? "border-primary ring-1 ring-primary/20" : ""}`}>
-                  {pkg.is_featured && (
-                    <Badge className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px]">
-                      Mais popular
-                    </Badge>
-                  )}
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">{pkg.name}</CardTitle>
-                    <CardDescription>{pkg.credits.toLocaleString("pt-BR")} créditos</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <p className="text-2xl font-bold text-foreground">
-                      R$ {Number(pkg.price_brl).toFixed(2).replace(".", ",")}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground">
-                      R$ {(Number(pkg.price_brl) / pkg.credits * 1000).toFixed(2).replace(".", ",")} / 1k créditos
-                    </p>
-                    <Button
-                      className="w-full"
-                      variant={pkg.is_featured ? "default" : "outline"}
-                      onClick={() => toast.info("Em breve — integração com pagamento será ativada em instantes.")}
-                    >
-                      Comprar
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {/* Info Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Info className="w-4 h-4 text-primary" /> O que são créditos?
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  1 crédito = 1.000 tokens processados (entrada + saída). Veja estimativas de uso:
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                    <Sparkles className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">~50 conversas simples</p>
-                      <p className="text-xs text-muted-foreground">por 1.000 créditos</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                    <Zap className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">~10 fluxos complexos</p>
-                      <p className="text-xs text-muted-foreground">por 1.000 créditos</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                    <Mic className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">~5 sessões de voz</p>
-                      <p className="text-xs text-muted-foreground">por 1.000 créditos</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           <TabsContent value="history" className="space-y-4">
             <div className="flex items-center gap-3">
               <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-44">
-                  <SelectValue placeholder="Filtrar por tipo" />
-                </SelectTrigger>
+                <SelectTrigger className="w-44"><SelectValue placeholder="Filtrar por tipo" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="purchase">Compras</SelectItem>
                   <SelectItem value="consumption">Consumo</SelectItem>
                   <SelectItem value="bonus">Bônus</SelectItem>
                   <SelectItem value="manual">Manual</SelectItem>
-                  <SelectItem value="refund">Reembolso</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -211,14 +208,13 @@ const Credits = () => {
                     <TableHead>Descrição</TableHead>
                     <TableHead>Provedor / Modelo</TableHead>
                     <TableHead className="text-right">Tokens</TableHead>
-                    <TableHead className="text-right">Créditos</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {transactions.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                        Nenhuma transação encontrada.
+                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                        Nenhum registro de uso encontrado.
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -228,9 +224,7 @@ const Credits = () => {
                           {format(new Date(tx.created_at!), "dd/MM/yy HH:mm", { locale: ptBR })}
                         </TableCell>
                         <TableCell>
-                          <Badge className={typeBadgeClass[tx.type] ?? ""}>
-                            {typeLabels[tx.type] ?? tx.type}
-                          </Badge>
+                          <Badge className={typeBadgeClass[tx.type] ?? ""}>{typeLabels[tx.type] ?? tx.type}</Badge>
                         </TableCell>
                         <TableCell className="text-sm max-w-[200px] truncate">{tx.description ?? "—"}</TableCell>
                         <TableCell className="text-xs text-muted-foreground">
@@ -240,9 +234,6 @@ const Credits = () => {
                           {(tx.tokens_input || 0) + (tx.tokens_output || 0) > 0
                             ? `${((tx.tokens_input || 0) + (tx.tokens_output || 0)).toLocaleString("pt-BR")}`
                             : "—"}
-                        </TableCell>
-                        <TableCell className={`text-right font-medium ${tx.amount > 0 ? "text-green-600" : "text-red-500"}`}>
-                          {tx.amount > 0 ? "+" : ""}{tx.amount.toLocaleString("pt-BR")}
                         </TableCell>
                       </TableRow>
                     ))

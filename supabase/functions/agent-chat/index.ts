@@ -191,7 +191,7 @@ serve(async (req) => {
       });
     }
 
-    // --- Credit balance check ---
+    // --- Access check: BYOK or monthly plan limit ---
     const { data: profileData } = await supabase
       .from("profiles")
       .select("role")
@@ -200,18 +200,59 @@ serve(async (req) => {
 
     const isPlatformUser = ["platform_owner", "platform_admin"].includes(profileData?.role);
 
-    if (!isPlatformUser) {
-      const { data: wallet } = await supabase
-        .from("agency_wallets")
-        .select("balance")
-        .eq("user_id", user.id)
-        .single();
+    // Check if user has BYOK for the requested provider
+    const targetProvider = provider && !useGateway ? provider : null;
+    let hasByok = false;
 
-      if (!wallet || wallet.balance < 1) {
-        return new Response(
-          JSON.stringify({ error: "Créditos insuficientes. Acesse /credits para recarregar." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+    if (!isPlatformUser && targetProvider && ["openai","anthropic","gemini","openrouter"].includes(targetProvider)) {
+      const { data: keyData } = await supabase
+        .from("user_api_keys")
+        .select("api_key")
+        .eq("user_id", user.id)
+        .eq("provider", targetProvider)
+        .maybeSingle();
+      hasByok = !!keyData?.api_key;
+    }
+
+    // If no BYOK and not platform: check monthly plan limit
+    if (!isPlatformUser && !hasByok) {
+      const yearMonth = new Date().toISOString().slice(0, 7);
+
+      const { data: sub } = await supabase
+        .from("subscriptions")
+        .select("plan_id, plans(slug)")
+        .eq("user_id", user.id)
+        .in("status", ["active", "trialing"])
+        .maybeSingle();
+
+      const planSlug = (sub?.plans as any)?.slug || "starter";
+
+      const { data: limitData } = await supabase
+        .from("plan_message_limits")
+        .select("monthly_limit")
+        .eq("plan_slug", planSlug)
+        .maybeSingle();
+
+      const monthlyLimit = limitData?.monthly_limit ?? 500;
+
+      if (monthlyLimit !== -1) {
+        const { data: usageData } = await supabase
+          .from("monthly_usage")
+          .select("message_count")
+          .eq("user_id", user.id)
+          .eq("year_month", yearMonth)
+          .maybeSingle();
+
+        const currentCount = usageData?.message_count || 0;
+
+        if (currentCount >= monthlyLimit) {
+          return new Response(JSON.stringify({
+            error: `Limite mensal de ${monthlyLimit} mensagens atingido no plano ${planSlug}. Configure uma chave de API própria em Configurações > Integrações para uso ilimitado, ou faça upgrade do plano.`
+          }), {
+            status: 402,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
       }
     }
 
@@ -547,93 +588,16 @@ serve(async (req) => {
       });
     }
 
-    // --- Credit deduction (background, non-blocking) ---
-    if (!isPlatformUser && response!.ok && response!.body) {
-      const [streamForClient, streamForUsage] = response!.body!.tee();
-
-      // Use service role client for background writes
+    // --- Monthly usage tracking (background, non-blocking) ---
+    if (!isPlatformUser && !hasByok && response!.ok) {
+      const yearMonth = new Date().toISOString().slice(0, 7);
       const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
       const adminClient = createClient(supabaseUrl, serviceKey);
 
-      (async () => {
-        try {
-          const reader = streamForUsage.getReader();
-          const decoder = new TextDecoder();
-          let buffer = "";
-          let inputTokens = 0;
-          let outputTokens = 0;
-
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            buffer += decoder.decode(value, { stream: true });
-
-            const lines = buffer.split("\n");
-            buffer = lines.pop() || "";
-
-            for (const line of lines) {
-              if (!line.startsWith("data: ")) continue;
-              const data = line.slice(6).trim();
-              if (data === "[DONE]") continue;
-              try {
-                const parsed = JSON.parse(data);
-                if (parsed.usage) {
-                  inputTokens = parsed.usage.prompt_tokens || parsed.usage.input_tokens || inputTokens;
-                  outputTokens = parsed.usage.completion_tokens || parsed.usage.output_tokens || outputTokens;
-                }
-                if (parsed.type === "message_delta" && parsed.usage) {
-                  outputTokens = parsed.usage.output_tokens || outputTokens;
-                }
-                if (parsed.type === "message_start" && parsed.message?.usage) {
-                  inputTokens = parsed.message.usage.input_tokens || inputTokens;
-                }
-              } catch { /* ignore non-JSON lines */ }
-            }
-          }
-
-          const totalTokens = inputTokens + outputTokens;
-          if (totalTokens > 0) {
-            const creditsToDebit = Math.max(1, Math.ceil(totalTokens / 1000));
-
-            const { data: walletData } = await adminClient
-              .from("agency_wallets")
-              .select("balance")
-              .eq("user_id", user.id)
-              .single();
-
-            const currentBalance = walletData?.balance || 0;
-            const newBalance = Math.max(0, currentBalance - creditsToDebit);
-
-            await adminClient
-              .from("agency_wallets")
-              .update({ balance: newBalance })
-              .eq("user_id", user.id);
-
-            await adminClient.rpc("add_to_wallet_consumed", {
-              user_uuid: user.id,
-              consumed: creditsToDebit,
-            });
-
-            await adminClient.from("credit_transactions").insert({
-              user_id: user.id,
-              type: "consumption",
-              amount: -creditsToDebit,
-              balance_after: newBalance,
-              description: `Sessão de agente — ${totalTokens} tokens`,
-              provider: selectedProvider,
-              model: apiModel,
-              tokens_input: inputTokens,
-              tokens_output: outputTokens,
-            });
-          }
-        } catch (e) {
-          console.error("Error tracking token usage:", e);
-        }
-      })();
-
-      return new Response(streamForClient, {
-        headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-      });
+      adminClient.rpc("increment_monthly_usage", {
+        p_user_id: user.id,
+        p_year_month: yearMonth,
+      }).catch((e: unknown) => console.error("Error tracking usage:", e));
     }
 
     return new Response(response!.body, {

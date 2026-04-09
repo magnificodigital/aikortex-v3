@@ -1,31 +1,31 @@
 import { ReactNode, useEffect, useState } from "react";
-import { Menu, X, AlertTriangle } from "lucide-react";
+import { Menu, X, AlertTriangle, Key, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AppSidebar from "./AppSidebar";
 import { RightPanelProvider } from "./RightPanel";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useCredits } from "@/hooks/use-credits";
+import { useMonthlyUsage } from "@/hooks/use-monthly-usage";
 
 const DashboardLayout = ({ children }: { children: ReactNode }) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const { balance, isLowBalance } = useCredits();
+  const { messageCount, monthlyLimit, isNearLimit, hasByok, planSlug } = useMonthlyUsage();
   const [bannerDismissed, setBannerDismissed] = useState(() =>
-    sessionStorage.getItem("low-balance-dismissed") === "true"
+    sessionStorage.getItem("usage-banner-dismissed") === "true"
   );
 
   useEffect(() => {
-    if (!isMobile) {
-      setMobileSidebarOpen(false);
-    }
+    if (!isMobile) setMobileSidebarOpen(false);
   }, [isMobile]);
 
   const dismissBanner = () => {
     setBannerDismissed(true);
-    sessionStorage.setItem("low-balance-dismissed", "true");
+    sessionStorage.setItem("usage-banner-dismissed", "true");
   };
+
+  const showBanner = isNearLimit && !hasByok && !bannerDismissed;
 
   return (
     <RightPanelProvider>
@@ -35,14 +35,17 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
           onMobileClose={() => setMobileSidebarOpen(false)}
         />
         <main className="relative flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-background">
-          {isLowBalance && !bannerDismissed && (
+          {showBanner && (
             <div className="sticky top-0 z-40 flex items-center gap-3 bg-amber-500/15 border-b border-amber-500/30 px-4 py-2.5 text-sm">
               <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
               <span className="flex-1 text-foreground">
-                Seu saldo de créditos está baixo ({balance} créditos restantes). Recarregue para continuar usando os agentes de IA.
+                Você usou {Math.round((messageCount / monthlyLimit) * 100)}% das mensagens do seu plano este mês ({messageCount}/{monthlyLimit}). Configure uma chave de API para uso ilimitado.
               </span>
-              <Button size="sm" variant="default" className="shrink-0 text-xs" onClick={() => navigate("/credits")}>
-                Recarregar agora
+              <Button size="sm" variant="default" className="shrink-0 text-xs gap-1.5" onClick={() => navigate("/settings?tab=integrations")}>
+                <Key className="w-3 h-3" /> Configurar chave
+              </Button>
+              <Button size="sm" variant="outline" className="shrink-0 text-xs gap-1.5" onClick={() => navigate("/pricing")}>
+                <TrendingUp className="w-3 h-3" /> Fazer upgrade
               </Button>
               <button onClick={dismissBanner} className="shrink-0 text-muted-foreground hover:text-foreground">
                 <X className="h-4 w-4" />
@@ -51,14 +54,8 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
           )}
           {isMobile && (
             <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-background/85 px-4 py-3 backdrop-blur md:hidden">
-              <Button
-                variant="outline"
-                size="icon"
-                className="shrink-0"
-                onClick={() => setMobileSidebarOpen(true)}
-              >
-                <Menu className="h-4 w-4" />
-                <span className="sr-only">Abrir menu</span>
+              <Button variant="outline" size="icon" className="shrink-0" onClick={() => setMobileSidebarOpen(true)}>
+                <Menu className="h-4 w-4" /><span className="sr-only">Abrir menu</span>
               </Button>
               <span className="text-sm font-medium text-foreground">Menu</span>
             </div>

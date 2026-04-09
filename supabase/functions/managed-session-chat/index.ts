@@ -96,22 +96,49 @@ serve(async (req) => {
       isPlatformUser = ["platform_owner", "platform_admin"].includes(profileData?.role);
     }
 
-    // Credit check
+    // Monthly usage check (skip for platform users and WhatsApp with insufficient usage)
     if (!isPlatformUser) {
-      const { data: wallet } = await adminClient
-        .from("agency_wallets").select("balance").eq("user_id", userId).single();
-      if (!wallet || wallet.balance < 1) {
-        if (isWhatsAppMode) {
-          // Don't send error to WhatsApp contact — just return silently
-          return new Response(JSON.stringify({ reply: null, reason: "insufficient_credits" }), {
-            status: 200,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
+      const yearMonth = new Date().toISOString().slice(0, 7);
+
+      const { data: sub } = await adminClient
+        .from("subscriptions")
+        .select("plan_id, plans(slug)")
+        .eq("user_id", userId)
+        .in("status", ["active", "trialing"])
+        .maybeSingle();
+
+      const planSlug = (sub?.plans as any)?.slug || "starter";
+
+      const { data: limitData } = await adminClient
+        .from("plan_message_limits")
+        .select("monthly_limit")
+        .eq("plan_slug", planSlug)
+        .maybeSingle();
+
+      const monthlyLimit = limitData?.monthly_limit ?? 500;
+
+      if (monthlyLimit !== -1) {
+        const { data: usageData } = await adminClient
+          .from("monthly_usage")
+          .select("message_count")
+          .eq("user_id", userId)
+          .eq("year_month", yearMonth)
+          .maybeSingle();
+
+        const currentCount = usageData?.message_count || 0;
+
+        if (currentCount >= monthlyLimit) {
+          if (isWhatsAppMode) {
+            return new Response(JSON.stringify({ reply: null, reason: "monthly_limit_reached" }), {
+              status: 200,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          return new Response(
+            JSON.stringify({ error: `Limite mensal de ${monthlyLimit} mensagens atingido. Configure uma chave de API própria ou faça upgrade.` }),
+            { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
         }
-        return new Response(
-          JSON.stringify({ error: "Créditos insuficientes. Acesse /credits para recarregar." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
       }
     }
 
@@ -462,41 +489,12 @@ async function finalizeSession(
     .update({ last_message_at: new Date().toISOString(), status: "idle" })
     .eq("anthropic_session_id", anthropicSessionId);
 
+  // Track monthly usage (non-blocking)
   if (!isPlatformUser) {
-    const totalTokens = inputTokens + outputTokens;
-    if (totalTokens > 0) {
-      const creditsToDebit = Math.max(1, Math.ceil(totalTokens / 1000));
-
-      const { data: walletData } = await adminClient
-        .from("agency_wallets")
-        .select("balance")
-        .eq("user_id", userId)
-        .single();
-
-      const currentBalance = walletData?.balance || 0;
-      const newBalance = Math.max(0, currentBalance - creditsToDebit);
-
-      await adminClient
-        .from("agency_wallets")
-        .update({ balance: newBalance })
-        .eq("user_id", userId);
-
-      await adminClient.rpc("add_to_wallet_consumed", {
-        user_uuid: userId,
-        consumed: creditsToDebit,
-      });
-
-      await adminClient.from("credit_transactions").insert({
-        user_id: userId,
-        type: "consumption",
-        amount: -creditsToDebit,
-        balance_after: newBalance,
-        description: `Sessão gerenciada — ${totalTokens} tokens`,
-        provider: "anthropic",
-        model: agent.model || "claude-sonnet-4-6",
-        tokens_input: inputTokens,
-        tokens_output: outputTokens,
-      });
-    }
+    const yearMonth = new Date().toISOString().slice(0, 7);
+    adminClient.rpc("increment_monthly_usage", {
+      p_user_id: userId,
+      p_year_month: yearMonth,
+    }).catch((e: unknown) => console.error("Error tracking usage:", e));
   }
 }

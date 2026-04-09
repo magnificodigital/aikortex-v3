@@ -2,12 +2,12 @@ import { useState, useEffect, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useModuleAccess } from "@/hooks/use-module-access";
-import { useCredits } from "@/hooks/use-credits";
+import { useMonthlyUsage } from "@/hooks/use-monthly-usage";
 import aikortexLogoWhite from "@/assets/aikortex-logo-white.png";
 import aikortexLogoBlack from "@/assets/aikortex-logo-black.png";
 import aikortexIconWhite from "@/assets/aikortex-icon-white.png";
 import aikortexIconBlack from "@/assets/aikortex-icon-black.png";
-import { LogOut, Lock, Coins } from "lucide-react";
+import { LogOut, Lock, Key, Activity } from "lucide-react";
 import {
   LayoutDashboard,
   Home,
@@ -43,13 +43,8 @@ import {
 } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
 
 type NavItem = {
   label: string;
@@ -64,21 +59,8 @@ type AppSidebarProps = {
 };
 
 const gestaoItems: NavItem[] = [
-  {
-    label: "Clientes",
-    icon: Users,
-    path: "/clients",
-    children: [{ label: "Contratos", icon: FileText, path: "/contracts" }],
-  },
-  {
-    label: "Vendas",
-    icon: ShoppingCart,
-    path: "/sales",
-    children: [
-      { label: "CRM", icon: Contact, path: "/aikortex/crm" },
-      { label: "Reuniões", icon: Video, path: "/meetings" },
-    ],
-  },
+  { label: "Clientes", icon: Users, path: "/clients", children: [{ label: "Contratos", icon: FileText, path: "/contracts" }] },
+  { label: "Vendas", icon: ShoppingCart, path: "/sales", children: [{ label: "CRM", icon: Contact, path: "/aikortex/crm" }, { label: "Reuniões", icon: Video, path: "/meetings" }] },
   { label: "Financeiro", icon: DollarSign, path: "/financial" },
   { label: "Equipe", icon: UserCheck, path: "/team" },
   { label: "Tarefas", icon: CheckSquare, path: "/tasks" },
@@ -154,14 +136,12 @@ const AppSidebar = ({ mobileOpen = false, onMobileClose }: AppSidebarProps) => {
   const { theme, toggle } = useTheme();
   const { signOut, isPlatform } = useAuth();
   const { canAccess } = useModuleAccess();
-  const { balance, isLowBalance, isLoading: creditsLoading } = useCredits();
+  const { messageCount, monthlyLimit, hasByok, isNearLimit, isUnlimited } = useMonthlyUsage();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    if (isMobile) {
-      onMobileClose?.();
-    }
+    if (isMobile) onMobileClose?.();
   }, [location.pathname, location.search, isMobile, onMobileClose]);
 
   const isItemActive = (path: string) => {
@@ -177,9 +157,7 @@ const AppSidebar = ({ mobileOpen = false, onMobileClose }: AppSidebarProps) => {
   };
 
   const handleNavigate = useCallback(() => {
-    if (isMobile) {
-      onMobileClose?.();
-    }
+    if (isMobile) onMobileClose?.();
   }, [isMobile, onMobileClose]);
 
   const linkClasses = (active: boolean) =>
@@ -227,9 +205,7 @@ const AppSidebar = ({ mobileOpen = false, onMobileClose }: AppSidebarProps) => {
               onClick={() => toggleExpand(item.path)}
               className="p-1 mr-1 text-muted-foreground hover:text-foreground rounded transition-colors"
             >
-              <ChevronDown
-                className={`w-3.5 h-3.5 transition-transform ${isExpanded ? "" : "-rotate-90"}`}
-              />
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? "" : "-rotate-90"}`} />
             </button>
           )}
         </div>
@@ -242,12 +218,7 @@ const AppSidebar = ({ mobileOpen = false, onMobileClose }: AppSidebarProps) => {
     );
   };
 
-  const renderGroup = (
-    label: string,
-    items: NavItem[],
-    open: boolean,
-    setOpen: (v: boolean) => void
-  ) => (
+  const renderGroup = (label: string, items: NavItem[], open: boolean, setOpen: (v: boolean) => void) => (
     <div>
       {!collapsed || isMobile ? (
         <button
@@ -267,6 +238,8 @@ const AppSidebar = ({ mobileOpen = false, onMobileClose }: AppSidebarProps) => {
       )}
     </div>
   );
+
+  const usagePercent = isUnlimited || monthlyLimit <= 0 ? 0 : Math.min(100, (messageCount / monthlyLimit) * 100);
 
   return (
     <>
@@ -297,15 +270,9 @@ const AppSidebar = ({ mobileOpen = false, onMobileClose }: AppSidebarProps) => {
             alt="Aikortex"
             className={collapsed && !isMobile ? "h-7 w-7 object-contain" : "h-7 w-auto object-contain"}
           />
-
           {isMobile && (
-            <button
-              type="button"
-              onClick={onMobileClose}
-              className="rounded-md p-2 text-sidebar-foreground transition-colors hover:bg-sidebar-accent/60 hover:text-foreground"
-            >
-              <X className="h-4 w-4" />
-              <span className="sr-only">Fechar menu</span>
+            <button type="button" onClick={onMobileClose} className="rounded-md p-2 text-sidebar-foreground transition-colors hover:bg-sidebar-accent/60 hover:text-foreground">
+              <X className="h-4 w-4" /><span className="sr-only">Fechar menu</span>
             </button>
           )}
         </div>
@@ -313,9 +280,7 @@ const AppSidebar = ({ mobileOpen = false, onMobileClose }: AppSidebarProps) => {
         {(!collapsed || isMobile) && (
           <div className="px-2 pt-3">
             <Select defaultValue="workspace-1">
-              <SelectTrigger className="w-full h-8 text-xs border-sidebar-border">
-                <SelectValue placeholder="Workspace" />
-              </SelectTrigger>
+              <SelectTrigger className="w-full h-8 text-xs border-sidebar-border"><SelectValue placeholder="Workspace" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="workspace-1">Meu Workspace</SelectItem>
                 <SelectItem value="workspace-2">Agência Alpha</SelectItem>
@@ -343,112 +308,80 @@ const AppSidebar = ({ mobileOpen = false, onMobileClose }: AppSidebarProps) => {
         </nav>
 
         <div className="space-y-0.5 border-t border-sidebar-border px-2 py-2">
-          {/* Credits widget */}
+          {/* Usage / BYOK indicator */}
           <button
-            onClick={() => { handleNavigate(); navigate("/credits"); }}
+            onClick={() => { handleNavigate(); navigate(hasByok ? "/settings?tab=integrations" : "/ai-setup"); }}
             className={`${linkClasses(false)} w-full group relative`}
-            title={collapsed && !isMobile ? `${balance} créditos` : undefined}
+            title={collapsed && !isMobile ? (hasByok ? "Chave própria ativa" : `${messageCount}/${monthlyLimit} msgs`) : undefined}
           >
-            <div className="relative">
-              <Coins className="w-4 h-4 shrink-0 text-primary" />
-              {isLowBalance && collapsed && !isMobile && (
-                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-destructive animate-pulse" />
-              )}
-            </div>
-            {(!collapsed || isMobile) && (
-              <span className="flex-1 flex items-center gap-2 truncate">
-                <span className="font-medium">{balance} créditos</span>
-                {isLowBalance && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-destructive text-destructive-foreground animate-pulse">
-                    Saldo baixo
+            {hasByok ? (
+              <>
+                <Key className="w-4 h-4 shrink-0 text-green-500" />
+                {(!collapsed || isMobile) && (
+                  <span className="flex-1 flex items-center gap-2 truncate">
+                    <span className="text-xs font-medium text-green-600">Chave própria ativa</span>
                   </span>
                 )}
-              </span>
+              </>
+            ) : (
+              <>
+                <div className="relative">
+                  <Activity className="w-4 h-4 shrink-0 text-primary" />
+                  {isNearLimit && collapsed && !isMobile && (
+                    <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                  )}
+                </div>
+                {(!collapsed || isMobile) && (
+                  <div className="flex-1 space-y-1 min-w-0">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-medium">{messageCount} / {isUnlimited ? "∞" : monthlyLimit}</span>
+                      <span className="text-muted-foreground">msgs</span>
+                    </div>
+                    {!isUnlimited && (
+                      <Progress value={usagePercent} className="h-1" />
+                    )}
+                  </div>
+                )}
+              </>
             )}
           </button>
 
           {isPlatform && (
-            <Link
-              to="/admin"
-              onClick={handleNavigate}
-              className={linkClasses(isItemActive("/admin"))}
-              title={collapsed && !isMobile ? "Painel Admin" : undefined}
-            >
+            <Link to="/admin" onClick={handleNavigate} className={linkClasses(isItemActive("/admin"))} title={collapsed && !isMobile ? "Painel Admin" : undefined}>
               <ShieldCheck className={`w-4 h-4 shrink-0 ${isItemActive("/admin") ? "text-primary" : ""}`} />
               {(!collapsed || isMobile) && <span className="truncate">Painel Admin</span>}
             </Link>
           )}
-          <Link
-            to="/pricing"
-            onClick={handleNavigate}
-            className={linkClasses(isItemActive("/pricing"))}
-            title={collapsed && !isMobile ? "Planos" : undefined}
-          >
+          <Link to="/pricing" onClick={handleNavigate} className={linkClasses(isItemActive("/pricing"))} title={collapsed && !isMobile ? "Planos" : undefined}>
             <CreditCard className={`w-4 h-4 shrink-0 ${isItemActive("/pricing") ? "text-primary" : ""}`} />
             {(!collapsed || isMobile) && <span className="truncate">Planos</span>}
           </Link>
-          <Link
-            to="/settings"
-            onClick={handleNavigate}
-            className={linkClasses(isItemActive("/settings"))}
-            title={collapsed && !isMobile ? "Configurações" : undefined}
-          >
+          <Link to="/settings" onClick={handleNavigate} className={linkClasses(isItemActive("/settings"))} title={collapsed && !isMobile ? "Configurações" : undefined}>
             <Settings className={`w-4 h-4 shrink-0 ${isItemActive("/settings") ? "text-primary" : ""}`} />
             {(!collapsed || isMobile) && <span className="truncate">Configurações</span>}
           </Link>
-          <Link
-            to="/tutorials"
-            onClick={handleNavigate}
-            className={linkClasses(isItemActive("/tutorials"))}
-            title={collapsed && !isMobile ? "Tutoriais" : undefined}
-          >
+          <Link to="/tutorials" onClick={handleNavigate} className={linkClasses(isItemActive("/tutorials"))} title={collapsed && !isMobile ? "Tutoriais" : undefined}>
             <BookOpen className={`w-4 h-4 shrink-0 ${isItemActive("/tutorials") ? "text-primary" : ""}`} />
             {(!collapsed || isMobile) && <span className="truncate">Tutoriais</span>}
           </Link>
 
-          <button
-            onClick={toggle}
-            className={`${linkClasses(false)} w-full`}
-            title={theme === "dark" ? "Modo claro" : "Modo escuro"}
-          >
+          <button onClick={toggle} className={`${linkClasses(false)} w-full`} title={theme === "dark" ? "Modo claro" : "Modo escuro"}>
             {theme === "dark" ? <Sun className="w-4 h-4 shrink-0" /> : <Moon className="w-4 h-4 shrink-0" />}
             {(!collapsed || isMobile) && <span className="truncate">{theme === "dark" ? "Modo claro" : "Modo escuro"}</span>}
           </button>
 
-          <button
-            onClick={async () => {
-              await signOut();
-              navigate("/");
-            }}
-            className={`${linkClasses(false)} w-full`}
-            title={collapsed && !isMobile ? "Sair" : undefined}
-          >
+          <button onClick={async () => { await signOut(); navigate("/"); }} className={`${linkClasses(false)} w-full`} title={collapsed && !isMobile ? "Sair" : undefined}>
             <LogOut className="w-4 h-4 shrink-0 text-destructive" />
             {(!collapsed || isMobile) && <span className="truncate text-destructive">Sair</span>}
           </button>
 
           {isMobile ? (
-            <button
-              type="button"
-              onClick={onMobileClose}
-              className={`${linkClasses(false)} w-full`}
-            >
-              <X className="w-4 h-4 shrink-0" />
-              <span>Fechar menu</span>
+            <button type="button" onClick={onMobileClose} className={`${linkClasses(false)} w-full`}>
+              <X className="w-4 h-4 shrink-0" /><span>Fechar menu</span>
             </button>
           ) : (
-            <button
-              onClick={() => setCollapsed(!collapsed)}
-              className={`${linkClasses(false)} w-full`}
-            >
-              {collapsed ? (
-                <ChevronRight className="w-4 h-4 shrink-0" />
-              ) : (
-                <>
-                  <ChevronLeft className="w-4 h-4 shrink-0" />
-                  <span>Recolher</span>
-                </>
-              )}
+            <button onClick={() => setCollapsed(!collapsed)} className={`${linkClasses(false)} w-full`}>
+              {collapsed ? <ChevronRight className="w-4 h-4 shrink-0" /> : <><ChevronLeft className="w-4 h-4 shrink-0" /><span>Recolher</span></>}
             </button>
           )}
         </div>
