@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   ArrowLeft, ArrowUp, Send, AlertTriangle,
-  Sparkles, Bot, Mic, MicOff, Check, Loader2, Pencil, RotateCw,
+  Sparkles, Bot, Mic, MicOff, Check, Loader2, Pencil, RotateCw, Brain,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,6 +62,7 @@ interface AgentChatPanelProps {
   initialPrompt?: string;
   initialWizardMessages?: Array<{ role: "user" | "assistant"; content: string }>;
   onWizardMessagesChange?: (messages: Array<{ role: "user" | "assistant"; content: string }>) => void;
+  hasMemoryActive?: boolean;
 }
 
 const AGENT_SUGGESTIONS: Record<string, string[]> = {
@@ -151,6 +152,7 @@ const AgentChatPanel = ({
   initialPrompt,
   initialWizardMessages,
   onWizardMessagesChange,
+  hasMemoryActive,
 }: AgentChatPanelProps) => {
   const [input, setInput] = useState("");
   const [editingConfig, setEditingConfig] = useState(false);
