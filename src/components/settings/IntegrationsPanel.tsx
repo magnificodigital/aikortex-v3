@@ -67,10 +67,12 @@ export const ChannelsPanel = () => {
   const [selectedWhatsAppAgent, setSelectedWhatsAppAgent] = useState<string>("");
 
   useEffect(() => {
-    const loadWaba = async () => {
+    const loadData = async () => {
       const { supabase } = await import("@/integrations/supabase/client");
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+
+      // Load WABA credentials
       const { data } = await supabase.from("user_api_keys").select("provider, api_key").eq("user_id", user.id);
       if (data) {
         const fields: Record<string, string> = {};
@@ -80,13 +82,24 @@ export const ChannelsPanel = () => {
             fields[row.provider] = row.api_key;
             if (row.provider === "whatsapp_access_token") hasToken = true;
           }
+          if (row.provider === "whatsapp_agent_id") {
+            setSelectedWhatsAppAgent(row.api_key);
+          }
         });
         setWabaFields(fields);
         setWabaConnected(hasToken);
         if (hasToken) setConnectedChannels(prev => prev.includes("whatsapp") ? prev : [...prev, "whatsapp"]);
       }
+
+      // Load user agents
+      const { data: agents } = await supabase
+        .from("user_agents")
+        .select("id, name")
+        .eq("user_id", user.id)
+        .order("name");
+      if (agents) setUserAgents(agents);
     };
-    loadWaba();
+    loadData();
   }, []);
 
   const handleSaveWaba = async () => {
