@@ -650,12 +650,86 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
               </div>
             )}
             {rightTab === "logs" && (
-              <div className="flex flex-col items-center justify-center h-full text-center px-6">
-                <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center mb-3">
-                  <ScrollText className="w-5 h-5 text-muted-foreground" />
+              <div className="h-full flex flex-col">
+                <div className="p-3 border-b border-border">
+                  <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">Logs de Execução</h3>
                 </div>
-                <p className="text-sm font-medium text-foreground mb-1">Logs de Execução</p>
-                <p className="text-xs text-muted-foreground">Histórico de execuções e erros do fluxo.</p>
+                <div className="flex-1 overflow-y-auto">
+                  {executions.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center px-6">
+                      <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center mb-3">
+                        <ScrollText className="w-5 h-5 text-muted-foreground" />
+                      </div>
+                      <p className="text-sm font-medium text-foreground mb-1">Nenhuma execução</p>
+                      <p className="text-xs text-muted-foreground">Execute o fluxo para ver os logs aqui.</p>
+                    </div>
+                  ) : !selectedExecution ? (
+                    <div className="p-2 space-y-1">
+                      {executions.map((exec) => (
+                        <button
+                          key={exec.id}
+                          onClick={() => { setSelectedExecution(exec); loadNodeLogs(exec.id); }}
+                          className="w-full text-left p-2.5 rounded-lg border border-border hover:bg-accent/30 transition-colors"
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[11px] font-medium text-foreground">{exec.flow_name || "Execução"}</span>
+                            <Badge variant={exec.status === "completed" ? "default" : exec.status === "failed" ? "destructive" : "secondary"} className="text-[9px] px-1.5">
+                              {exec.status === "completed" ? "✓" : exec.status === "failed" ? "✗" : "⏳"} {exec.status}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                            <span>{exec.trigger_type}</span>
+                            <span>•</span>
+                            <span>{new Date(exec.started_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-2">
+                      <button onClick={() => { setSelectedExecution(null); setNodeLogs([]); }} className="text-[10px] text-primary hover:underline mb-2 block">
+                        ← Voltar
+                      </button>
+                      <div className="space-y-1.5">
+                        {nodeLogs.map((log) => (
+                          <div key={log.id} className="border border-border rounded-lg overflow-hidden">
+                            <button
+                              onClick={() => setExpandedLogs(prev => {
+                                const next = new Set(prev);
+                                next.has(log.id) ? next.delete(log.id) : next.add(log.id);
+                                return next;
+                              })}
+                              className="w-full flex items-center gap-2 p-2 hover:bg-accent/20 transition-colors"
+                            >
+                              {log.status === "completed" ? <CheckCircle className="w-3.5 h-3.5 text-primary shrink-0" /> :
+                               log.status === "failed" ? <XCircle className="w-3.5 h-3.5 text-destructive shrink-0" /> :
+                               log.status === "running" ? <Loader2 className="w-3.5 h-3.5 text-primary animate-spin shrink-0" /> :
+                               <Clock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
+                              <span className="text-[11px] font-medium text-foreground truncate flex-1 text-left">{log.node_label || log.node_type}</span>
+                              {expandedLogs.has(log.id) ? <ChevronDown className="w-3 h-3 text-muted-foreground" /> : <ChevronRight className="w-3 h-3 text-muted-foreground" />}
+                            </button>
+                            {expandedLogs.has(log.id) && (
+                              <div className="px-2 pb-2 space-y-1 border-t border-border/50">
+                                <div className="text-[9px] text-muted-foreground mt-1">
+                                  <span>Tipo: {log.node_type}</span>
+                                  {log.completed_at && log.started_at && (
+                                    <span className="ml-2">Duração: {Math.round((new Date(log.completed_at).getTime() - new Date(log.started_at).getTime()) / 1000)}s</span>
+                                  )}
+                                </div>
+                                {log.error_message && (
+                                  <p className="text-[10px] text-destructive bg-destructive/10 rounded p-1.5">{log.error_message}</p>
+                                )}
+                                {Object.keys(log.output || {}).length > 0 && (
+                                  <pre className="text-[9px] bg-muted/50 rounded p-1.5 overflow-x-auto max-h-24">{JSON.stringify(log.output, null, 2)}</pre>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
