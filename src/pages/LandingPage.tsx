@@ -147,7 +147,6 @@ const LandingPage = () => {
               {t.agents}
               <span className="text-[10px] font-bold uppercase bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">{t.newBadge}</span>
             </button>
-            <button onClick={() => openAuthModal("signup")} className={`${textHover} transition-colors`}>{t.templates}</button>
             <button onClick={() => openAuthModal("signup")} className={`${textHover} transition-colors`}>{t.pricing}</button>
           </nav>
         </div>
