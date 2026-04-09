@@ -171,6 +171,70 @@ export const NODE_TEMPLATES: NodeTemplate[] = [
   { type: "workflow_block", label: "Workflow", category: "integration", icon: "🔁", description: "Call a child workflow", color: "#8b5cf6", defaultConfig: { workflowId: "" } },
 ];
 
+// ── Execution Types ──
+
+export type FlowExecutionNodeType =
+  | 'trigger.chat'
+  | 'trigger.webhook'
+  | 'trigger.schedule'
+  | 'agent.message'
+  | 'agent.extract'
+  | 'agent.decide'
+  | 'flow.condition'
+  | 'flow.delay'
+  | 'flow.split'
+  | 'action.send_message'
+  | 'action.update_crm'
+  | 'action.webhook'
+  | 'action.notify'
+  | 'end.success'
+  | 'end.failure';
+
+export interface FlowNodeConfig {
+  agent_id?: string;
+  prompt_template?: string;
+  output_variable?: string;
+  extract_schema?: object;
+  condition_variable?: string;
+  condition_operator?: 'equals' | 'contains' | 'greater_than' | 'is_empty';
+  condition_value?: string;
+  delay_minutes?: number;
+  channel?: string;
+  message_template?: string;
+  webhook_url?: string;
+  webhook_method?: 'GET' | 'POST';
+  webhook_body?: string;
+}
+
+export interface FlowExecution {
+  id: string;
+  flow_id: string;
+  flow_name: string | null;
+  status: 'running' | 'completed' | 'failed' | 'paused';
+  trigger_type: string;
+  context: Record<string, unknown>;
+  current_node_id: string | null;
+  started_at: string;
+  completed_at: string | null;
+  error_message: string | null;
+  created_at: string;
+}
+
+export interface FlowNodeLog {
+  id: string;
+  execution_id: string;
+  node_id: string;
+  node_type: string;
+  node_label: string | null;
+  status: 'running' | 'completed' | 'failed' | 'skipped';
+  input: Record<string, unknown>;
+  output: Record<string, unknown>;
+  agent_session_id: string | null;
+  started_at: string;
+  completed_at: string | null;
+  error_message: string | null;
+}
+
 // ── Saved Flow ──
 
 export interface SavedFlow {
