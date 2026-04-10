@@ -315,14 +315,46 @@ export function IntegrationsGrid({
         if (error) { toast.error("Erro ao salvar chave."); console.error(error); return; }
         setConnectorKeys(prev => ({ ...prev, [dialogProvider.provider]: { configured: true } }));
       }
+      // Save public key for Telnyx
+      if (dialogProvider.provider === "telnyx" && publicKeyInput.trim()) {
+        const { error } = await supabase.from("user_api_keys").upsert(
+          { user_id: user.id, provider: "telnyx_public", api_key: publicKeyInput.trim() },
+          { onConflict: "user_id,provider" }
+        );
+        if (error) { toast.error("Erro ao salvar chave pública."); console.error(error); return; }
+      }
       const newConfigs = { ...providerConfigs, [dialogProvider.provider]: dialogConfig };
       setProviderConfigs(newConfigs);
       try { localStorage.setItem(storageKey, JSON.stringify(newConfigs)); } catch {}
       setDialogProvider(null);
       setKeyInput("");
+      setPublicKeyInput("");
       toast.success(`${dialogProvider.label} ${keyInput.trim() ? "conectado e configurado" : "configurações salvas"} com sucesso!`);
       await load();
     } finally { setSaving(false); }
+  };
+
+  const handleTestConnection = async () => {
+    if (!dialogProvider) return;
+    setTestingConnection(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error("Faça login primeiro."); return; }
+      const { data } = await supabase.from("user_api_keys").select("api_key").eq("user_id", user.id).eq("provider", dialogProvider.provider).maybeSingle();
+      if (!data?.api_key) { toast.error("Salve sua API Key primeiro."); return; }
+      if (dialogProvider.provider === "elevenlabs") {
+        const res = await fetch("https://api.elevenlabs.io/v1/voices", {
+          headers: { "xi-api-key": data.api_key },
+        });
+        if (!res.ok) { toast.error("Chave inválida ou sem permissão."); return; }
+        const json = await res.json();
+        const count = json.voices?.length || 0;
+        toast.success(`Conexão OK! ${count} voz(es) encontrada(s).`);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao testar conexão.");
+    } finally { setTestingConnection(false); }
   };
 
   const handleDisconnect = async () => {
