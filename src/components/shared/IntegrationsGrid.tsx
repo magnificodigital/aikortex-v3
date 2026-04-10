@@ -621,7 +621,7 @@ export function IntegrationsGrid({
                 </Button>
               ) : <div />}
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="h-8" onClick={() => { setDialogProvider(null); setKeyInput(""); setDialogConfig({}); }}>Cancelar</Button>
+                <Button variant="outline" size="sm" className="h-8" onClick={() => { setDialogProvider(null); setKeyInput(""); setPublicKeyInput(""); setDialogConfig({}); }}>Cancelar</Button>
                 <Button size="sm" className="h-8" onClick={() => handleSave()} disabled={(!keyInput.trim() && !dialogIsConnected) || saving}>
                   {dialogIsConnected ? "Salvar" : "Conectar"}
                 </Button>
