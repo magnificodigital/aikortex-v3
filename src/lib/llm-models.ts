@@ -14,13 +14,11 @@ export const LLM_MODELS: LLMModel[] = [
   { id: "gpt-4o",                      name: "GPT-4o",            provider: "openai",    byok: true },
   { id: "gpt-4o-mini",                 name: "GPT-4o Mini",       provider: "openai",    byok: true },
   { id: "gpt-4-turbo",                 name: "GPT-4 Turbo",       provider: "openai",    byok: true },
-  // Google (free via platform)
-  { id: "google/gemini-2.0-flash",     name: "Gemini 2.0 Flash",  provider: "google",    byok: false },
-  { id: "google/gemini-1.5-pro",       name: "Gemini 1.5 Pro",    provider: "google",    byok: false },
-  { id: "google/gemini-1.5-flash",     name: "Gemini 1.5 Flash",  provider: "google",    byok: false },
-  // Meta (free via platform)
-  { id: "meta-llama/llama-3.1-70b-instruct", name: "Llama 3.1 70B", provider: "meta", byok: false },
-  { id: "meta-llama/llama-3.1-8b-instruct",  name: "Llama 3.1 8B",  provider: "meta", byok: false },
+  // Google (free via platform — uses Lovable AI Gateway)
+  { id: "google/gemini-2.5-flash",     name: "Gemini 2.5 Flash",  provider: "google",    byok: false },
+  { id: "google/gemini-2.5-pro",       name: "Gemini 2.5 Pro",    provider: "google",    byok: false },
+  { id: "google/gemini-3-flash-preview", name: "Gemini 3 Flash",  provider: "google",    byok: false },
+  { id: "google/gemini-3.1-pro-preview", name: "Gemini 3.1 Pro",  provider: "google",    byok: false },
   // DeepSeek (BYOK)
   { id: "deepseek/deepseek-chat",      name: "DeepSeek Chat",     provider: "deepseek",  byok: true },
   // Mistral (BYOK)
@@ -50,7 +48,7 @@ export function getGroupedModels() {
   return groups;
 }
 
-export const DEFAULT_FREE_MODEL = "google/gemini-2.0-flash";
+export const DEFAULT_FREE_MODEL = "google/gemini-2.5-flash";
 
 export function getProviderForModel(modelId: string): string {
   return LLM_MODELS.find(m => m.id === modelId)?.provider || "google";
