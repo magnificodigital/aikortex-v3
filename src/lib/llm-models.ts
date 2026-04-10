@@ -29,7 +29,6 @@ export const PROVIDER_LABELS: Record<string, string> = {
   anthropic: "Anthropic",
   openai: "OpenAI",
   google: "Google",
-  meta: "Meta",
   deepseek: "DeepSeek",
   mistral: "Mistral",
 };
