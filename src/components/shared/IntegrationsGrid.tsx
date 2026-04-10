@@ -284,6 +284,7 @@ export function IntegrationsGrid({
 
   const openDialog = (provider: IntegrationProvider) => {
     setKeyInput("");
+    setPublicKeyInput("");
     setShowKey(false);
     setDialogConfig(providerConfigs[provider.provider] || {
       defaultModel: DEFAULT_MODELS[provider.provider],
