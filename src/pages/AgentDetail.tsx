@@ -820,19 +820,17 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
         hasTelnyxKey={!!keys["telnyx"]?.configured}
       />
 
-      {/* Browser Call Widget */}
-      <ConversationProvider>
-        <BrowserCallWidget
-          open={showBrowserCall}
-          onClose={() => setShowBrowserCall(false)}
-          agentId={agentId || ""}
-          agentName={loadedAgent.name}
-          agentAvatar={loadedAgent.avatar}
-          agentPrompt={agentConfig?.instructions || agentConfig?.objective || ""}
-          agentGreeting={agentConfig?.greetingMessage || ""}
-          voiceId={agentConfig?.voiceConfig?.voiceId}
-        />
-      </ConversationProvider>
+      {/* Browser Call Widget (LiveKit-based) */}
+      <BrowserCallWidget
+        open={showBrowserCall}
+        onClose={() => setShowBrowserCall(false)}
+        agentId={agentId || ""}
+        agentName={loadedAgent.name}
+        agentAvatar={loadedAgent.avatar}
+        agentPrompt={agentConfig?.instructions || agentConfig?.objective || ""}
+        agentGreeting={agentConfig?.greetingMessage || ""}
+        voiceId={agentConfig?.voiceConfig?.voiceId}
+      />
 
       {/* ── Config Panel (Sheet overlay like AppBuilder) ── */}
       <Sheet open={showConfig} onOpenChange={setShowConfig}>
