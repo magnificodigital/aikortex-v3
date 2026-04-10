@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useCallback, useEffect, useState } from "react";
 import { Menu, X, AlertTriangle, Key, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AppSidebar from "./AppSidebar";
@@ -11,6 +11,7 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const handleMobileClose = useCallback(() => setMobileSidebarOpen(false), []);
   const { messageCount, monthlyLimit, isNearLimit, hasByok, planSlug } = useMonthlyUsage();
   const [bannerDismissed, setBannerDismissed] = useState(() =>
     sessionStorage.getItem("usage-banner-dismissed") === "true"
@@ -32,7 +33,7 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
       <div className="flex min-h-screen w-full overflow-hidden">
         <AppSidebar
           mobileOpen={mobileSidebarOpen}
-          onMobileClose={() => setMobileSidebarOpen(false)}
+          onMobileClose={handleMobileClose}
         />
         <main className="relative flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-background">
           {showBanner && (
@@ -53,11 +54,14 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
             </div>
           )}
           {isMobile && (
-            <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-border bg-background/85 px-4 py-3 backdrop-blur md:hidden">
-              <Button variant="outline" size="icon" className="shrink-0" onClick={() => setMobileSidebarOpen(true)}>
-                <Menu className="h-4 w-4" /><span className="sr-only">Abrir menu</span>
-              </Button>
-              <span className="text-sm font-medium text-foreground">Menu</span>
+            <div className="sticky top-0 z-30 flex items-center border-b border-border bg-background/80 backdrop-blur-lg px-3 py-2 md:hidden">
+              <button
+                onClick={() => setMobileSidebarOpen(true)}
+                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+                aria-label="Abrir menu"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
             </div>
           )}
 
