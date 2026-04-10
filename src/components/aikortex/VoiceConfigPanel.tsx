@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,7 +10,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Plus, Trash2, PhoneIncoming, PhoneOutgoing,
   Phone, MessageSquare, Webhook, Calendar, Clock,
+  Play, Square, AlertTriangle, Loader2,
 } from "lucide-react";
+import { useElevenLabsVoices } from "@/hooks/use-elevenlabs-voices";
 
 export interface VoiceConfig {
   agentName: string;
