@@ -544,7 +544,7 @@ serve(async (req) => {
         : messages
       : [{ role: "system", content: agentSystemPrompt || defaultSystemPrompt }, ...messages];
 
-    const requestMessages = (useGateway || forceFreeTier)
+    const requestMessages = (useGateway || forceFreeTier || isOpenRouterModel)
       ? flattenSystemMessagesForGateway(finalMessages)
       : finalMessages;
 
