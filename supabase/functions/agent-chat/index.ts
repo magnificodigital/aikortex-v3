@@ -297,7 +297,11 @@ serve(async (req) => {
         .maybeSingle();
 
       const userOpenRouterKey = orKeyData?.api_key ?? "";
-      const projectOpenRouterKey = Deno.env.get("OPENROUTER_API_KEY") || "";
+      let projectOpenRouterKey = Deno.env.get("OPENROUTER_API_KEY") || "";
+      // Fallback: platform_config table
+      if (!projectOpenRouterKey) {
+        projectOpenRouterKey = await getPlatformConfig(supabaseUrl, serviceKey, "OPENROUTER_API_KEY") || "";
+      }
 
       if (userOpenRouterKey) {
         const validation = validateOpenRouterApiKey(userOpenRouterKey);
