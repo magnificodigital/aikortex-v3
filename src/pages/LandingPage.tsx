@@ -141,10 +141,10 @@ const LandingPage = () => {
     <div className={`min-h-screen ${bg} flex flex-col landing-bg`}>
       <div className="landing-bg-orb" />
       {/* Top Navbar */}
-      <header className={`relative z-10 flex items-center justify-between px-6 lg:px-10 h-16 border-b ${borderColor}`}>
-        <div className="flex items-center gap-8">
-          <img src={isDark ? aikortexLogoWhite : aikortexLogoBlack} alt="Aikortex" className="h-7 w-auto object-contain" />
-          <nav className={`hidden md:flex items-center gap-6 text-sm ${textMuted}`}>
+      <header className={`relative z-20 flex items-center justify-between px-4 sm:px-6 lg:px-10 h-14 border-b ${borderColor}`}>
+        <div className="flex items-center gap-6">
+          <img src={isDark ? aikortexLogoWhite : aikortexLogoBlack} alt="Aikortex" className="h-6 w-auto object-contain" />
+          <nav className={`hidden md:flex items-center gap-5 text-sm ${textMuted}`}>
             <button onClick={() => setActiveCreationTab("agentes")} className={`flex items-center gap-1.5 ${textHover} transition-colors`}>
               {t.agents}
               <span className="text-[10px] font-bold uppercase bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">{t.newBadge}</span>
@@ -152,8 +152,10 @@ const LandingPage = () => {
             <button onClick={() => openAuthModal("signup")} className={`${textHover} transition-colors`}>{t.pricing}</button>
           </nav>
         </div>
-        <div className={`flex items-center gap-4 text-sm ${textMuted}`}>
-          <button onClick={toggleTheme} className={`${textHover} transition-colors`}>
+
+        {/* Desktop actions */}
+        <div className={`hidden md:flex items-center gap-3 text-sm ${textMuted}`}>
+          <button onClick={toggleTheme} className={`p-2 rounded-lg ${textHover} transition-colors`}>
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
           <Select value={lang} onValueChange={handleLangChange}>
@@ -176,7 +178,79 @@ const LandingPage = () => {
             {t.startFree}
           </button>
         </div>
+
+        {/* Mobile actions */}
+        <div className="flex md:hidden items-center gap-2">
+          <button onClick={toggleTheme} className={`p-2 rounded-lg ${textHover} transition-colors`}>
+            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className={`p-2 rounded-lg ${textHover} transition-colors`}
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </header>
+
+      {/* Mobile dropdown menu */}
+      {mobileMenuOpen && (
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 z-10 bg-black/40 backdrop-blur-sm md:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+            aria-label="Fechar menu"
+          />
+          <div className={`absolute top-14 left-0 right-0 z-20 md:hidden border-b ${borderColor} ${isDark ? "bg-[#0a0a0f]/95 backdrop-blur-xl" : "bg-white/95 backdrop-blur-xl"} animate-in slide-in-from-top-2 duration-200`}>
+            <div className="flex flex-col px-5 py-4 gap-1">
+              <button
+                onClick={() => { setActiveCreationTab("agentes"); setMobileMenuOpen(false); }}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm ${textMuted} ${textHover} transition-colors text-left`}
+              >
+                <Sparkles className="w-4 h-4" />
+                {t.agents}
+                <span className="text-[10px] font-bold uppercase bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full">{t.newBadge}</span>
+              </button>
+              <button
+                onClick={() => openAuthModal("signup")}
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm ${textMuted} ${textHover} transition-colors text-left`}
+              >
+                {t.pricing}
+              </button>
+
+              <div className={`my-2 border-t ${borderColor}`} />
+
+              <Select value={lang} onValueChange={(v) => { handleLangChange(v); setMobileMenuOpen(false); }}>
+                <SelectTrigger className={`h-9 w-full gap-2 border ${isDark ? "border-white/10 bg-white/5" : "border-border bg-muted"} px-3 text-sm ${textMuted} focus:ring-0 rounded-lg`}>
+                  <Globe className="w-4 h-4" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pt">Português</SelectItem>
+                  <SelectItem value="en">English</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <div className="flex flex-col gap-2 mt-3">
+                <button
+                  onClick={() => openAuthModal("signin")}
+                  className={`w-full py-2.5 rounded-lg text-sm font-medium border ${isDark ? "border-white/10 text-white/80 hover:bg-white/5" : "border-border text-foreground hover:bg-accent"} transition-colors`}
+                >
+                  {t.signIn}
+                </button>
+                <button
+                  onClick={() => openAuthModal("signup")}
+                  className="w-full py-2.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium transition-colors"
+                >
+                  {t.startFree}
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Content */}
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4">
