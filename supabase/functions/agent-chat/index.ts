@@ -39,6 +39,28 @@ const DEFAULT_FREE_GATEWAY_MODEL = FREE_GATEWAY_MODELS[0];
 // Default free model for non-BYOK users (Rule 4)
 const DEFAULT_FREE_MODEL = "google/gemini-2.5-flash";
 
+// Valid models accepted by Lovable AI Gateway
+const VALID_GATEWAY_MODELS = new Set([
+  "openai/gpt-5-mini", "openai/gpt-5", "openai/gpt-5-nano", "openai/gpt-5.2",
+  "google/gemini-2.5-pro", "google/gemini-2.5-flash", "google/gemini-2.5-flash-lite",
+  "google/gemini-2.5-flash-image", "google/gemini-3-flash-preview",
+  "google/gemini-3-pro-image-preview", "google/gemini-3.1-pro-preview",
+  "google/gemini-3.1-flash-image-preview",
+]);
+
+const DEFAULT_GATEWAY_MODEL = "google/gemini-3-flash-preview";
+
+/** Ensure a model ID is valid for the Lovable AI Gateway, remap if not */
+function ensureValidGatewayModel(model?: string | null): string {
+  if (!model) return DEFAULT_GATEWAY_MODEL;
+  if (VALID_GATEWAY_MODELS.has(model)) return model;
+  // Try common remaps for deprecated models
+  if (model.includes("gemini-2.0") || model.includes("gemini-1.5")) return "google/gemini-2.5-flash";
+  if (model.includes("llama")) return DEFAULT_GATEWAY_MODEL;
+  if (model.includes("gemini")) return "google/gemini-2.5-flash";
+  return DEFAULT_GATEWAY_MODEL;
+}
+
 type ChatCompletionMessage = { role: string; content: string };
 
 const PROVIDER_PREFIX_RULES: Record<string, string[]> = {
