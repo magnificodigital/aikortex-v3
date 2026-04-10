@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -7,10 +7,11 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import {
   Plus, Trash2, PhoneIncoming, PhoneOutgoing,
   Phone, MessageSquare, Webhook, Calendar, Clock,
-  Play, Square, AlertTriangle, Loader2,
+  Play, Square, AlertTriangle, Loader2, Search, Info,
 } from "lucide-react";
 import { useElevenLabsVoices } from "@/hooks/use-elevenlabs-voices";
 
@@ -64,18 +65,12 @@ export const DEFAULT_VOICE_CONFIG: VoiceConfig = {
   actions: [],
 };
 
-const FALLBACK_VOICES = [
-  { voice_id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah" },
-  { voice_id: "FGY2WhTYpPnrIDTdsKH5", name: "Laura" },
-  { voice_id: "IKne3meq5aSn9XLyUdCD", name: "Charlie" },
-  { voice_id: "JBFqnCBsd6RMkjVDRZzb", name: "George" },
-  { voice_id: "CwhRBWXzGAHq8TQ4Fs17", name: "Roger" },
-  { voice_id: "TX3LPaxmHKxFdv7VOQHJ", name: "Liam" },
-  { voice_id: "Xb7hH8MSUJpSbSDYk0k2", name: "Alice" },
-  { voice_id: "XrExE9yKIg1WjnnlVkGX", name: "Matilda" },
-  { voice_id: "pFZP5JQG7iQjIQuC4Bku", name: "Lily" },
-  { voice_id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel" },
-];
+const CATEGORY_LABELS: Record<string, string> = {
+  premade: "Padrão",
+  cloned: "Clonada",
+  generated: "Gerada",
+  professional: "Profissional",
+};
 
 const LANGUAGES = [
   { value: "pt-BR", label: "Português (Brasil)" },
@@ -122,17 +117,14 @@ const SliderField = ({
 );
 
 const VoiceConfigPanel = ({ config, onChange }: Props) => {
-  const { voices, loading: voicesLoading, hasKey, error: voicesError } = useElevenLabsVoices();
+  const { voices, loading: voicesLoading, hasUserKey, error: voicesError } = useElevenLabsVoices();
   const [playingVoice, setPlayingVoice] = useState<string | null>(null);
+  const [voiceSearch, setVoiceSearch] = useState("");
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const update = useCallback(<K extends keyof VoiceConfig>(key: K, value: VoiceConfig[K]) => {
     onChange({ ...config, [key]: value });
   }, [config, onChange]);
-
-  const voiceList = hasKey && voices.length > 0
-    ? voices.map(v => ({ voice_id: v.voice_id, name: v.name, preview_url: v.preview_url }))
-    : FALLBACK_VOICES.map(v => ({ ...v, preview_url: null as string | null }));
 
   const playPreview = (voiceId: string, previewUrl: string | null) => {
     if (playingVoice === voiceId) {
@@ -148,6 +140,10 @@ const VoiceConfigPanel = ({ config, onChange }: Props) => {
     audio.play();
     audio.onended = () => setPlayingVoice(null);
   };
+
+  const filteredVoices = voices.filter(v =>
+    v.name.toLowerCase().includes(voiceSearch.toLowerCase())
+  );
 
   const addPronunciation = () => {
     update("pronunciations", [...config.pronunciations, { word: "", pronunciation: "" }]);
@@ -170,8 +166,6 @@ const VoiceConfigPanel = ({ config, onChange }: Props) => {
     update("actions", next);
   };
 
-  const selectedVoice = voiceList.find(v => v.voice_id === config.voiceId);
-
   return (
     <ScrollArea className="flex-1">
       <div className="p-4 space-y-6">
@@ -180,52 +174,9 @@ const VoiceConfigPanel = ({ config, onChange }: Props) => {
         <section className="space-y-3">
           <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Identidade de Voz</h3>
 
-          {!hasKey && !voicesLoading && (
-            <div className="flex items-start gap-2 p-2.5 rounded-lg border border-yellow-500/30 bg-yellow-500/5 text-xs text-yellow-600 dark:text-yellow-400">
-              <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-              <span>Configure sua chave ElevenLabs em <strong>Integrações</strong> para carregar suas vozes.</span>
-            </div>
-          )}
-
-          {hasKey && voicesError && (
-            <div className="flex items-start gap-2 p-2.5 rounded-lg border border-yellow-500/30 bg-yellow-500/5 text-xs text-yellow-600 dark:text-yellow-400">
-              <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-              <span>{voicesError}</span>
-            </div>
-          )}
-
           <div className="space-y-1.5">
             <Label className="text-xs">Nome do Agente</Label>
             <Input value={config.agentName} onChange={e => update("agentName", e.target.value)} placeholder="Ex: Maia" className="h-8 text-xs" />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-xs">Selecionar Voz</Label>
-            {voicesLoading ? (
-              <div className="flex items-center gap-2 h-8 text-xs text-muted-foreground">
-                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Carregando vozes...
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Select value={config.voiceId} onValueChange={v => update("voiceId", v)}>
-                  <SelectTrigger className="h-8 text-xs flex-1"><SelectValue placeholder="Escolha uma voz" /></SelectTrigger>
-                  <SelectContent>
-                    {voiceList.map(v => <SelectItem key={v.voice_id} value={v.voice_id}>{v.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                {selectedVoice?.preview_url && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 px-2.5 text-xs gap-1.5 shrink-0"
-                    onClick={() => playPreview(config.voiceId, selectedVoice.preview_url)}
-                  >
-                    {playingVoice === config.voiceId ? <Square className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-                    {playingVoice === config.voiceId ? "Parar" : "Testar"}
-                  </Button>
-                )}
-              </div>
-            )}
           </div>
 
           <div className="space-y-1.5">
@@ -247,6 +198,80 @@ const VoiceConfigPanel = ({ config, onChange }: Props) => {
             <Label className="text-xs">Informações da Empresa</Label>
             <Textarea value={config.companyInfo} onChange={e => update("companyInfo", e.target.value)} placeholder="Descreva sua empresa..." className="min-h-[60px] text-xs" />
           </div>
+        </section>
+
+        {/* ── Selecionar Voz ── */}
+        <section className="space-y-3">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Selecionar Voz</h3>
+
+          {!hasUserKey && !voicesLoading && voices.length > 0 && (
+            <div className="flex items-start gap-2 p-2.5 rounded-lg border border-border bg-muted/30 text-xs text-muted-foreground">
+              <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+              <span>Usando vozes padrão da plataforma. Conecte sua conta ElevenLabs em <strong className="text-foreground">Integrações</strong> para acessar suas vozes personalizadas.</span>
+            </div>
+          )}
+
+          {voicesError && (
+            <div className="flex items-start gap-2 p-2.5 rounded-lg border border-destructive/30 bg-destructive/5 text-xs text-destructive">
+              <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+              <span>{voicesError}</span>
+            </div>
+          )}
+
+          {voicesLoading ? (
+            <div className="flex items-center justify-center gap-2 py-6 text-xs text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin" /> Carregando vozes...
+            </div>
+          ) : voices.length > 0 ? (
+            <>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                <Input
+                  value={voiceSearch}
+                  onChange={e => setVoiceSearch(e.target.value)}
+                  placeholder="Buscar voz..."
+                  className="h-8 text-xs pl-8"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {filteredVoices.map(voice => {
+                  const isSelected = config.voiceId === voice.voice_id;
+                  const catLabel = CATEGORY_LABELS[voice.category] || voice.category;
+                  return (
+                    <button
+                      key={voice.voice_id}
+                      onClick={() => update("voiceId", voice.voice_id)}
+                      className={`relative flex flex-col gap-1.5 p-2.5 rounded-lg border text-left transition-all ${
+                        isSelected
+                          ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                          : "border-border bg-card/50 hover:border-primary/30"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-foreground truncate">{voice.name}</span>
+                        {voice.preview_url && (
+                          <button
+                            onClick={e => { e.stopPropagation(); playPreview(voice.voice_id, voice.preview_url); }}
+                            className="w-5 h-5 rounded-full flex items-center justify-center bg-primary/10 hover:bg-primary/20 transition-colors shrink-0"
+                          >
+                            {playingVoice === voice.voice_id
+                              ? <Square className="w-2.5 h-2.5 text-primary" />
+                              : <Play className="w-2.5 h-2.5 text-primary ml-0.5" />}
+                          </button>
+                        )}
+                      </div>
+                      <Badge variant="secondary" className="text-[9px] px-1.5 py-0 w-fit">
+                        {catLabel}
+                      </Badge>
+                    </button>
+                  );
+                })}
+              </div>
+              {filteredVoices.length === 0 && (
+                <p className="text-xs text-muted-foreground text-center py-3">Nenhuma voz encontrada para "{voiceSearch}"</p>
+              )}
+            </>
+          ) : null}
         </section>
 
         {/* ── Configurações de Voz ── */}
