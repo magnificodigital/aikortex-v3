@@ -273,16 +273,26 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
     [setNodes, setEdges]
   );
 
+  const queryClient = useQueryClient();
+
   const handleSave = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { toast.error("Faça login para salvar."); return; }
+
+      const triggerNode = nodes.find(
+        (n: any) => n.data?.category === "trigger" || n.data?.nodeType?.startsWith("trigger_")
+      );
 
       const payload = {
         user_id: user.id,
         name: flowName || "Novo Fluxo",
         nodes: JSON.parse(JSON.stringify(nodes)),
         edges: JSON.parse(JSON.stringify(edges)),
+        is_active: false,
+        trigger_type: (triggerNode?.data as any)?.nodeType ?? "manual",
+        trigger_config: {},
+        updated_at: new Date().toISOString(),
       };
 
       if (savedFlowId) {
@@ -292,12 +302,13 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
         if (data) setSavedFlowId((data as any).id);
       }
       toast.success("Fluxo salvo com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ["user_flows"] });
       if (onSave) onSave(flowName || "Novo Fluxo", nodes, edges, savedFlowId);
     } catch (e) {
       console.error("Save error:", e);
       toast.error("Erro ao salvar fluxo.");
     }
-  }, [nodes, edges, flowName, savedFlowId, onSave]);
+  }, [nodes, edges, flowName, savedFlowId, onSave, queryClient]);
 
   const handleRun = useCallback(() => {
     if (nodes.length < 2) {
