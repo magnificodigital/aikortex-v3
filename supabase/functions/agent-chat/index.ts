@@ -329,7 +329,9 @@ serve(async (req) => {
 
     let apiUrl: string;
     let apiKey: string | null = "";
-    let apiModel = modelMapping?.gateway || model || "google/gemini-3-flash-preview";
+    let apiModel = modelMapping?.gateway || model || "google/gemini-2.5-flash-preview-04-17";
+    // Detect if the selected model is an OpenRouter-routed model (has slash in ID, no BYOK needed)
+    const isOpenRouterModel = typeof model === "string" && model.includes("/") && !modelMapping;
     let headers: Record<string, string>;
     let openRouterKeyCandidates: Array<string | null> = [];
     let gatewayModelCandidates: string[] = [];
