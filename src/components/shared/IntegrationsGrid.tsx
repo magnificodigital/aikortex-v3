@@ -72,6 +72,14 @@ export const LLM_PROVIDERS: IntegrationProvider[] = [
 ];
 
 export const SERVICE_PROVIDERS: IntegrationProvider[] = [
+  {
+    label: "Telnyx",
+    provider: "telnyx",
+    description: "Ligações inbound e outbound via telefone real. Cada agência precisa de sua própria conta.",
+    logo: "https://cdn.brandfetch.io/idpKX4_j8-/w/400/h/400/theme/dark/icon.jpeg",
+    apiKeyUrl: "https://portal.telnyx.com/#/app/api-keys",
+    apiKeyUrlLabel: "portal.telnyx.com",
+  },
   { label: "Gmail", provider: "gmail", description: "Ler, enviar e compor e-mails.", logo: "https://cdn.simpleicons.org/gmail" },
   { label: "Google Calendar", provider: "google_calendar", description: "Ler e gerenciar eventos.", logo: "https://cdn.simpleicons.org/googlecalendar" },
   { label: "Outlook Calendar", provider: "outlook_calendar", description: "Gerenciar calendário Microsoft.", logo: "https://cdn.simpleicons.org/microsoftoutlook" },
@@ -213,8 +221,10 @@ export function IntegrationsGrid({
   const [loading, setLoading] = useState(true);
   const [dialogProvider, setDialogProvider] = useState<IntegrationProvider | null>(null);
   const [keyInput, setKeyInput] = useState("");
+  const [publicKeyInput, setPublicKeyInput] = useState("");
   const [showKey, setShowKey] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [testingConnection, setTestingConnection] = useState(false);
   const [providerConfigs, setProviderConfigs] = useState<Record<string, ProviderConfig>>(() => {
     if (initialProviderConfigs) return initialProviderConfigs;
     try {
@@ -274,6 +284,7 @@ export function IntegrationsGrid({
 
   const openDialog = (provider: IntegrationProvider) => {
     setKeyInput("");
+    setPublicKeyInput("");
     setShowKey(false);
     setDialogConfig(providerConfigs[provider.provider] || {
       defaultModel: DEFAULT_MODELS[provider.provider],
@@ -304,14 +315,46 @@ export function IntegrationsGrid({
         if (error) { toast.error("Erro ao salvar chave."); console.error(error); return; }
         setConnectorKeys(prev => ({ ...prev, [dialogProvider.provider]: { configured: true } }));
       }
+      // Save public key for Telnyx
+      if (dialogProvider.provider === "telnyx" && publicKeyInput.trim()) {
+        const { error } = await supabase.from("user_api_keys").upsert(
+          { user_id: user.id, provider: "telnyx_public", api_key: publicKeyInput.trim() },
+          { onConflict: "user_id,provider" }
+        );
+        if (error) { toast.error("Erro ao salvar chave pública."); console.error(error); return; }
+      }
       const newConfigs = { ...providerConfigs, [dialogProvider.provider]: dialogConfig };
       setProviderConfigs(newConfigs);
       try { localStorage.setItem(storageKey, JSON.stringify(newConfigs)); } catch {}
       setDialogProvider(null);
       setKeyInput("");
+      setPublicKeyInput("");
       toast.success(`${dialogProvider.label} ${keyInput.trim() ? "conectado e configurado" : "configurações salvas"} com sucesso!`);
       await load();
     } finally { setSaving(false); }
+  };
+
+  const handleTestConnection = async () => {
+    if (!dialogProvider) return;
+    setTestingConnection(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error("Faça login primeiro."); return; }
+      const { data } = await supabase.from("user_api_keys").select("api_key").eq("user_id", user.id).eq("provider", dialogProvider.provider).maybeSingle();
+      if (!data?.api_key) { toast.error("Salve sua API Key primeiro."); return; }
+      if (dialogProvider.provider === "elevenlabs") {
+        const res = await fetch("https://api.elevenlabs.io/v1/voices", {
+          headers: { "xi-api-key": data.api_key },
+        });
+        if (!res.ok) { toast.error("Chave inválida ou sem permissão."); return; }
+        const json = await res.json();
+        const count = json.voices?.length || 0;
+        toast.success(`Conexão OK! ${count} voz(es) encontrada(s).`);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao testar conexão.");
+    } finally { setTestingConnection(false); }
   };
 
   const handleDisconnect = async () => {
@@ -406,7 +449,7 @@ export function IntegrationsGrid({
       </div>
 
       {/* API Key Dialog */}
-      <Dialog open={!!dialogProvider} onOpenChange={(open) => { if (!open) { setDialogProvider(null); setKeyInput(""); setDialogConfig({}); } }}>
+      <Dialog open={!!dialogProvider} onOpenChange={(open) => { if (!open) { setDialogProvider(null); setKeyInput(""); setPublicKeyInput(""); setDialogConfig({}); } }}>
         <DialogContent className="sm:max-w-lg max-h-[85vh]">
           <DialogHeader>
             <div className="flex items-center gap-3">
@@ -453,6 +496,30 @@ export function IntegrationsGrid({
                 <p className="text-[11px] text-muted-foreground">Cole a chave de API fornecida pelo serviço.</p>
               )}
             </div>
+
+            {/* Telnyx Public Key */}
+            {dialogProvider?.provider === "telnyx" && (
+              <div className="space-y-2.5">
+                <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <KeyRound className="w-3.5 h-3.5 text-primary" /> Public Key
+                </label>
+                <Input
+                  type="password"
+                  value={publicKeyInput}
+                  onChange={(e) => setPublicKeyInput(e.target.value)}
+                  placeholder="Cole sua Telnyx Public Key aqui"
+                  className="text-sm font-mono"
+                />
+                <p className="text-[10px] text-muted-foreground">Usada para validação de assinatura dos webhooks.</p>
+              </div>
+            )}
+
+            {/* ElevenLabs Test Connection */}
+            {dialogProvider?.provider === "elevenlabs" && dialogIsConnected && (
+              <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={handleTestConnection} disabled={testingConnection}>
+                {testingConnection ? "Testando..." : "Testar conexão"}
+              </Button>
+            )}
 
             {/* LLM Configuration Section */}
             {dialogIsLLM && dialogModels.length > 0 && (
@@ -554,7 +621,7 @@ export function IntegrationsGrid({
                 </Button>
               ) : <div />}
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="h-8" onClick={() => { setDialogProvider(null); setKeyInput(""); setDialogConfig({}); }}>Cancelar</Button>
+                <Button variant="outline" size="sm" className="h-8" onClick={() => { setDialogProvider(null); setKeyInput(""); setPublicKeyInput(""); setDialogConfig({}); }}>Cancelar</Button>
                 <Button size="sm" className="h-8" onClick={() => handleSave()} disabled={(!keyInput.trim() && !dialogIsConnected) || saving}>
                   {dialogIsConnected ? "Salvar" : "Conectar"}
                 </Button>

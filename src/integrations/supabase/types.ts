@@ -183,6 +183,68 @@ export type Database = {
         }
         Relationships: []
       }
+      call_logs: {
+        Row: {
+          agent_id: string | null
+          channel: string
+          created_at: string | null
+          direction: string
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string
+          phone_from: string | null
+          phone_to: string | null
+          recording_url: string | null
+          started_at: string | null
+          status: string | null
+          telnyx_call_id: string | null
+          transcript: Json | null
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          channel?: string
+          created_at?: string | null
+          direction?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          phone_from?: string | null
+          phone_to?: string | null
+          recording_url?: string | null
+          started_at?: string | null
+          status?: string | null
+          telnyx_call_id?: string | null
+          transcript?: Json | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          channel?: string
+          created_at?: string | null
+          direction?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          phone_from?: string | null
+          phone_to?: string | null
+          recording_url?: string | null
+          started_at?: string | null
+          status?: string | null
+          telnyx_call_id?: string | null
+          transcript?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_logs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "user_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       credit_packages: {
         Row: {
           created_at: string | null
@@ -969,51 +1031,75 @@ export type Database = {
           anthropic_agent_id: string | null
           anthropic_agent_version: number | null
           avatar_url: string | null
+          call_webhook_url: string | null
           config: Json
           created_at: string
           description: string | null
           id: string
+          max_call_duration_seconds: number | null
           model: string | null
           name: string
           provider: string
           status: string
+          telnyx_phone_number: string | null
           updated_at: string
           use_managed_sessions: boolean
           user_id: string
+          voice_id: string | null
+          voice_language: string | null
+          voice_provider: string | null
+          voice_similarity: number | null
+          voice_stability: number | null
         }
         Insert: {
           agent_type?: string
           anthropic_agent_id?: string | null
           anthropic_agent_version?: number | null
           avatar_url?: string | null
+          call_webhook_url?: string | null
           config?: Json
           created_at?: string
           description?: string | null
           id?: string
+          max_call_duration_seconds?: number | null
           model?: string | null
           name: string
           provider?: string
           status?: string
+          telnyx_phone_number?: string | null
           updated_at?: string
           use_managed_sessions?: boolean
           user_id: string
+          voice_id?: string | null
+          voice_language?: string | null
+          voice_provider?: string | null
+          voice_similarity?: number | null
+          voice_stability?: number | null
         }
         Update: {
           agent_type?: string
           anthropic_agent_id?: string | null
           anthropic_agent_version?: number | null
           avatar_url?: string | null
+          call_webhook_url?: string | null
           config?: Json
           created_at?: string
           description?: string | null
           id?: string
+          max_call_duration_seconds?: number | null
           model?: string | null
           name?: string
           provider?: string
           status?: string
+          telnyx_phone_number?: string | null
           updated_at?: string
           use_managed_sessions?: boolean
           user_id?: string
+          voice_id?: string | null
+          voice_language?: string | null
+          voice_provider?: string | null
+          voice_similarity?: number | null
+          voice_stability?: number | null
         }
         Relationships: []
       }
