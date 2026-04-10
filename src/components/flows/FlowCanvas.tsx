@@ -547,7 +547,7 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
 
         {/* Canvas */}
         <div className="flex-1 relative" ref={reactFlowWrapper} onDrop={handleDrop} onDragOver={handleDragOver}>
-          <FlowBottomToolbar onAddNode={handleAddNode} />
+          <FlowBottomToolbar onAddNode={handleAddNode} flowId={savedFlowId} />
 
           <ReactFlow
             nodes={nodes}
