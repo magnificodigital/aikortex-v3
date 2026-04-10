@@ -64,7 +64,7 @@ export const LLM_PROVIDERS: IntegrationProvider[] = [
   {
     label: "DeepSeek",
     provider: "deepseek",
-    description: "Modelos de IA open-source de alto desempenho",
+    description: "DeepSeek R1, V3 e modelos open-source de alto desempenho",
     logo: "https://registry.npmmirror.com/@lobehub/icons-static-png/1.24.0/files/dark/deepseek-color.png",
     apiKeyUrl: "https://platform.deepseek.com/api_keys",
     apiKeyUrlLabel: "platform.deepseek.com",
