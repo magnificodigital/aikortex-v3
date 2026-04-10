@@ -118,23 +118,18 @@ const BrowserCallWidget = ({
   const playTTS = async (text: string) => {
     try {
       setIsSpeaking(true);
-      // Use the elevenlabs-voice-session or a direct TTS edge function
       const vid = voiceId || "EXAVITQu4vr4xnSDxMaL";
-      
-      // Call ElevenLabs TTS directly via edge function
+      const session = (await supabase.auth.getSession()).data.session;
+
       const resp = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-voice-session`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/browser-tts`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({
-            mode: "tts",
-            text,
-            voiceId: vid,
-          }),
+          body: JSON.stringify({ text, voiceId: vid }),
         },
       );
 
