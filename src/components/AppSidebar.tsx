@@ -7,7 +7,7 @@ import aikortexLogoWhite from "@/assets/aikortex-logo-white.png";
 import aikortexLogoBlack from "@/assets/aikortex-logo-black.png";
 import aikortexIconWhite from "@/assets/aikortex-icon-white.png";
 import aikortexIconBlack from "@/assets/aikortex-icon-black.png";
-import { LogOut, Lock, Key, Activity } from "lucide-react";
+import { LogOut, Lock, Key, Activity, Phone as PhoneIcon } from "lucide-react";
 import {
   LayoutDashboard,
   Home,
@@ -77,6 +77,7 @@ const partnersItems: NavItem[] = [
 
 const aikortexItems: NavItem[] = [
   { label: "Agentes", icon: Bot, path: "/aikortex/agents" },
+  { label: "Ligações", icon: PhoneIcon, path: "/calls" },
   { label: "Flows", icon: Workflow, path: "/aikortex/automations" },
   { label: "Apps", icon: AppWindow, path: "/apps" },
   { label: "Templates", icon: LayoutTemplate, path: "/templates" },
@@ -86,6 +87,7 @@ const aikortexItems: NavItem[] = [
 
 const MODULE_KEY_MAP: Record<string, string> = {
   "/aikortex/agents": "aikortex.agentes",
+  "/calls": "aikortex.agentes",
   "/aikortex/automations": "aikortex.flows",
   "/apps": "aikortex.apps",
   "/app-builder": "aikortex.apps",

@@ -44,6 +44,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const Meetings = lazy(() => import("./pages/Meetings"));
 const MeetingRoom = lazy(() => import("./pages/MeetingRoom"));
 const Tutorials = lazy(() => import("./pages/Tutorials"));
+const CallLogs = lazy(() => import("./pages/CallLogs"));
 
 const queryClient = new QueryClient();
 
@@ -88,6 +89,7 @@ const App = () => (
               <Route path="/aikortex/crm" element={<P><AikortexCRM /></P>} />
               <Route path="/aikortex/agents" element={<P><Aikortex /></P>} />
               <Route path="/aikortex/agents/:agentId" element={<P><AgentDetail /></P>} />
+              <Route path="/calls" element={<P><CallLogs /></P>} />
               
               <Route path="/aikortex/automations" element={<P><AikortexAutomations /></P>} />
               <Route path="/aikortex/messages" element={<P><AikortexMessages /></P>} />

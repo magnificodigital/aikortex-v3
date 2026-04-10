@@ -1,12 +1,14 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { Loader2, ArrowLeft, Sparkles, Bot, Settings, Plug, Share2, Rocket, Phone, Brain } from "lucide-react";
+import { Loader2, ArrowLeft, Sparkles, Bot, Settings, Plug, Share2, Rocket, Phone, Brain, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ConversationProvider } from "@elevenlabs/react";
 import AgentRightPanel, { type AgentConfig } from "@/components/aikortex/AgentRightPanel";
 import AgentChatPanel, { type StructuredAgentConfig } from "@/components/aikortex/AgentChatPanel";
 import VoiceCallPanel from "@/components/aikortex/VoiceCallPanel";
+import OutboundCallDialog from "@/components/aikortex/OutboundCallDialog";
+import BrowserCallWidget from "@/components/aikortex/BrowserCallWidget";
 import { useAgentChat } from "@/hooks/use-agent-chat";
 import { useApiKeys } from "@/hooks/use-api-keys";
 import { useUserAgents } from "@/hooks/use-user-agents";
@@ -205,6 +207,8 @@ const AgentDetail = () => {
   const { saveAgent } = useUserAgents();
   const [isSaving, setIsSaving] = useState(false);
   const [rightPanelTab, setRightPanelTab] = useState("agent");
+  const [showOutboundCall, setShowOutboundCall] = useState(false);
+  const [showBrowserCall, setShowBrowserCall] = useState(false);
 
   const handleSaveAgent = useCallback(async (config: AgentConfig & { model: string; agentType: string }) => {
     setIsSaving(true);
@@ -738,6 +742,28 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
             <span className="text-sm font-semibold">Agente de Ligação</span>
           </div>
           <div className="flex items-center gap-1">
+            {/* Outbound call button */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1 px-2"
+              onClick={() => setShowOutboundCall(true)}
+            >
+              <Phone className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Iniciar Ligação</span>
+            </Button>
+            {/* Browser call button */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1 px-2"
+              onClick={() => setShowBrowserCall(true)}
+              disabled={!keys["elevenlabs"]?.configured}
+            >
+              <Monitor className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Testar no navegador</span>
+            </Button>
+            <div className="w-px h-5 bg-border mx-1" />
             {[
               { label: "Agente",       icon: Bot,               tab: "agent" },
               ...(keys["anthropic"]?.configured ? [{ label: "Memória", icon: Brain, tab: "memory" }] : []),
@@ -784,6 +810,29 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
           />
         </ConversationProvider>
       </div>
+
+      {/* Outbound Call Dialog */}
+      <OutboundCallDialog
+        open={showOutboundCall}
+        onOpenChange={setShowOutboundCall}
+        agentId={agentId || ""}
+        agentName={loadedAgent.name}
+        hasTelnyxKey={!!keys["telnyx"]?.configured}
+      />
+
+      {/* Browser Call Widget */}
+      <ConversationProvider>
+        <BrowserCallWidget
+          open={showBrowserCall}
+          onClose={() => setShowBrowserCall(false)}
+          agentId={agentId || ""}
+          agentName={loadedAgent.name}
+          agentAvatar={loadedAgent.avatar}
+          agentPrompt={agentConfig?.instructions || agentConfig?.objective || ""}
+          agentGreeting={agentConfig?.greetingMessage || ""}
+          voiceId={agentConfig?.voiceConfig?.voiceId}
+        />
+      </ConversationProvider>
 
       {/* ── Config Panel (Sheet overlay like AppBuilder) ── */}
       <Sheet open={showConfig} onOpenChange={setShowConfig}>

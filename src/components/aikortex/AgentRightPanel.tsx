@@ -787,6 +787,33 @@ const AgentRightPanel = ({
                       <h2 className="text-lg font-bold text-foreground">Configurações de Voz</h2>
                       <p className="text-sm text-muted-foreground mt-1">Personalize a voz e o comportamento do agente em chamadas.</p>
                     </div>
+
+                    {/* Warning: ElevenLabs not configured */}
+                    {!connectorKeys["ElevenLabs"]?.configured && (
+                      <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-3 flex items-start gap-2">
+                        <AlertTriangle className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-xs font-medium text-foreground">Configure sua chave da ElevenLabs em Integrações para ativar ligações com voz.</p>
+                          <Button variant="link" size="sm" className="h-auto p-0 text-xs text-primary" onClick={() => handleTabChange("connectors")}>
+                            Ir para Integrações
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Warning: Telnyx not configured */}
+                    {!connectorKeys["Telnyx"]?.configured && (
+                      <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-3 flex items-start gap-2">
+                        <AlertTriangle className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-xs font-medium text-foreground">Configure sua chave da Telnyx em Integrações para ativar ligações por telefone.</p>
+                          <Button variant="link" size="sm" className="h-auto p-0 text-xs text-primary" onClick={() => handleTabChange("connectors")}>
+                            Ir para Integrações
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
                     <VoiceConfigPanel config={voiceConfig} onChange={setVoiceConfig} />
                   </div>
                 )}
