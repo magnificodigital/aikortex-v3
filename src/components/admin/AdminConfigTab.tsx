@@ -24,10 +24,28 @@ const FIELDS: ConfigField[] = [
     description: "Usada por todos os usuários Starter/Pro para modelos gratuitos (Gemini, Llama, etc.)",
   },
   {
+    key: "anthropic_api_key",
+    label: "Anthropic API Key",
+    placeholder: "sk-ant-...",
+    description: "Chave padrão para modelos Claude (Haiku, Sonnet, Opus)",
+  },
+  {
+    key: "openai_api_key",
+    label: "OpenAI API Key",
+    placeholder: "sk-...",
+    description: "Chave padrão para modelos GPT e Whisper (transcrição de voz)",
+  },
+  {
+    key: "gemini_api_key",
+    label: "Google Gemini API Key",
+    placeholder: "AIza...",
+    description: "Chave padrão para modelos Gemini (Flash, Pro)",
+  },
+  {
     key: "elevenlabs_api_key",
     label: "ElevenLabs API Key",
     placeholder: "xi-...",
-    description: "Voz padrão da plataforma para agentes de voz",
+    description: "Voz padrão da plataforma para agentes de voz (TTS)",
   },
   {
     key: "telnyx_api_key",
@@ -40,6 +58,36 @@ const FIELDS: ConfigField[] = [
     label: "Telnyx Connection ID",
     placeholder: "Ex: 1234567890",
     description: "ID da conexão SIP no painel Telnyx",
+  },
+  {
+    key: "whatsapp_token",
+    label: "WhatsApp Cloud API Token",
+    placeholder: "EAAx...",
+    description: "Token de acesso para a API do WhatsApp Business (Meta)",
+  },
+  {
+    key: "whatsapp_phone_number_id",
+    label: "WhatsApp Phone Number ID",
+    placeholder: "Ex: 123456789012345",
+    description: "ID do número de telefone no WhatsApp Business",
+  },
+  {
+    key: "livekit_url",
+    label: "LiveKit URL",
+    placeholder: "wss://your-project.livekit.cloud",
+    description: "URL do servidor LiveKit para chamadas no navegador",
+  },
+  {
+    key: "livekit_api_key",
+    label: "LiveKit API Key",
+    placeholder: "API...",
+    description: "Chave de API do LiveKit para geração de tokens",
+  },
+  {
+    key: "livekit_api_secret",
+    label: "LiveKit API Secret",
+    placeholder: "secret...",
+    description: "Segredo do LiveKit para assinatura de tokens JWT",
   },
 ];
 
