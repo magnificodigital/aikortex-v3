@@ -1,12 +1,14 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { Loader2, ArrowLeft, Sparkles, Bot, Settings, Plug, Share2, Rocket, Phone, Brain } from "lucide-react";
+import { Loader2, ArrowLeft, Sparkles, Bot, Settings, Plug, Share2, Rocket, Phone, Brain, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ConversationProvider } from "@elevenlabs/react";
 import AgentRightPanel, { type AgentConfig } from "@/components/aikortex/AgentRightPanel";
 import AgentChatPanel, { type StructuredAgentConfig } from "@/components/aikortex/AgentChatPanel";
 import VoiceCallPanel from "@/components/aikortex/VoiceCallPanel";
+import OutboundCallDialog from "@/components/aikortex/OutboundCallDialog";
+import BrowserCallWidget from "@/components/aikortex/BrowserCallWidget";
 import { useAgentChat } from "@/hooks/use-agent-chat";
 import { useApiKeys } from "@/hooks/use-api-keys";
 import { useUserAgents } from "@/hooks/use-user-agents";
