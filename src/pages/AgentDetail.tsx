@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { Loader2, ArrowLeft, Sparkles, Bot, Settings, Plug, Share2, SlidersHorizontal, Rocket, Phone, Brain } from "lucide-react";
+import { Loader2, ArrowLeft, Sparkles, Bot, Settings, Plug, Share2, Rocket, Phone, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ConversationProvider } from "@elevenlabs/react";
@@ -743,7 +743,7 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
               ...(keys["anthropic"]?.configured ? [{ label: "Memória", icon: Brain, tab: "memory" }] : []),
               { label: "Integrações",  icon: Plug,              tab: "connectors" },
               { label: "Canais",       icon: Share2,            tab: "channels" },
-              { label: "Avançado",     icon: SlidersHorizontal, tab: "advanced" },
+              
             ].map((btn) => (
               <Button
                 key={btn.tab}
