@@ -395,6 +395,23 @@ serve(async (req) => {
       if (apiKey) {
         headers["Authorization"] = `Bearer ${apiKey}`;
       }
+    } else if (isOpenRouterModel) {
+      // Model with slash in ID (e.g. google/gemini-2.5-pro) → route via OpenRouter platform key
+      apiUrl = "https://openrouter.ai/api/v1/chat/completions";
+      apiModel = model;
+      const openRouterKey = await getOpenRouterKey(supabaseUrl, serviceKey);
+      headers = {
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://aikortex.lovable.app",
+        "X-OpenRouter-Title": "Aikortex",
+      };
+      if (openRouterKey) {
+        headers["Authorization"] = `Bearer ${openRouterKey}`;
+      }
+      apiKey = openRouterKey || null;
+      openRouterKeyCandidates = openRouterKey ? [openRouterKey] : [null];
+      gatewayModelCandidates = [apiModel, DEFAULT_FREE_MODEL];
+      console.log(`OpenRouter model: ${apiModel}`);
     } else {
       // Try user's own API key first
       const { data: keyData } = await supabase
