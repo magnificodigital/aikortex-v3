@@ -45,6 +45,18 @@ export function useUserAgents() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { toast.error("Faça login para salvar agentes."); return null; }
 
+    // Extract voice columns from config.voiceConfig if present
+    const vc = (agent.config as any)?.voiceConfig;
+    const voiceColumns: Record<string, unknown> = {};
+    if (vc) {
+      if (vc.voiceId)        voiceColumns.voice_id = vc.voiceId;
+      if (vc.language)       voiceColumns.voice_language = vc.language;
+      if (typeof vc.tone === "number")  voiceColumns.voice_stability = vc.tone;
+      if (typeof vc.speed === "number") voiceColumns.voice_similarity = vc.speed;
+      if (vc.phoneNumber)    voiceColumns.telnyx_phone_number = vc.phoneNumber;
+      if (typeof vc.maxCallDuration === "number") voiceColumns.max_call_duration_seconds = vc.maxCallDuration * 60;
+    }
+
     const payload = {
       user_id: user.id,
       name: agent.name,
@@ -55,6 +67,7 @@ export function useUserAgents() {
       provider: (agent as any).provider || "auto",
       status: agent.status || "configuring",
       config: agent.config || {},
+      ...voiceColumns,
     };
 
     if (agent.id) {
