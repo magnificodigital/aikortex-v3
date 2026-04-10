@@ -119,7 +119,7 @@ function AgentAIConfig({ config, updateConfig }: { config: Record<string, unknow
   );
 }
 
-
+interface Props {
   node: Node;
   onClose: () => void;
   onUpdate: (nodeId: string, data: Partial<FlowNodeData>) => void;
