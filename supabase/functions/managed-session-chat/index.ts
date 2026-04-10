@@ -46,7 +46,24 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const anthropicApiKey = Deno.env.get("ANTHROPIC_API_KEY");
+
+    // Helper: read a key from platform_config table (service_role)
+    async function getPlatformConfig(adminClient: any, key: string): Promise<string | null> {
+      const { data } = await adminClient
+        .from("platform_config")
+        .select("value")
+        .eq("key", key)
+        .maybeSingle();
+      return data?.value || null;
+    }
+
+    const adminClientForConfig = createClient(supabaseUrl, serviceKey);
+
+    // Priority: Env secret → platform_config
+    let anthropicApiKey = Deno.env.get("ANTHROPIC_API_KEY") || null;
+    if (!anthropicApiKey) {
+      anthropicApiKey = await getPlatformConfig(adminClientForConfig, "ANTHROPIC_API_KEY");
+    }
 
     if (!anthropicApiKey) {
       return new Response(JSON.stringify({ error: "ANTHROPIC_API_KEY não configurada no servidor." }), {

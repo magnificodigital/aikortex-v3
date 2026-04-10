@@ -11,6 +11,7 @@ import TierAccessManager from "@/components/admin/TierAccessManager";
 import AdminCreditsTab from "@/components/admin/AdminCreditsTab";
 import AdminTutorialsTab from "@/components/admin/AdminTutorialsTab";
 import AdminSupportTab from "@/components/admin/AdminSupportTab";
+import AdminConfigTab from "@/components/admin/AdminConfigTab";
 import { useSearchParams } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
 
@@ -69,6 +70,9 @@ const AdminPanel = () => {
             <TabsTrigger value="support" className="text-xs gap-1.5">
               <MessageSquare className="w-3.5 h-3.5" /> Suporte
             </TabsTrigger>
+            <TabsTrigger value="config" className="text-xs gap-1.5">
+              <Settings className="w-3.5 h-3.5" /> Configurações
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="users"><AdminUsersTab /></TabsContent>
@@ -80,6 +84,7 @@ const AdminPanel = () => {
           <TabsContent value="credits"><AdminCreditsTab /></TabsContent>
           <TabsContent value="tutorials"><AdminTutorialsTab /></TabsContent>
           <TabsContent value="support"><AdminSupportTab /></TabsContent>
+          <TabsContent value="config"><AdminConfigTab /></TabsContent>
         </Tabs>
       </div>
     </AdminLayout>

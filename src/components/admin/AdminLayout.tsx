@@ -18,6 +18,7 @@ const adminNavItems = [
   { label: "Créditos", icon: Coins, path: "/admin?tab=credits" },
   { label: "Tutoriais", icon: BookOpen, path: "/admin?tab=tutorials" },
   { label: "Suporte", icon: MessageSquare, path: "/admin?tab=support" },
+  { label: "Configurações", icon: Settings, path: "/admin?tab=config" },
 ];
 
 const AdminLayout = ({ children }: { children: ReactNode }) => {

@@ -769,6 +769,36 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_config: {
+        Row: {
+          description: string | null
+          id: string
+          is_secret: boolean | null
+          key: string
+          updated_at: string | null
+          updated_by: string | null
+          value: string
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          is_secret?: boolean | null
+          key: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value: string
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          is_secret?: boolean | null
+          key?: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
