@@ -752,13 +752,12 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
               <Phone className="w-3.5 h-3.5" />
               <span className="hidden lg:inline">Iniciar Ligação</span>
             </Button>
-            {/* Browser call button */}
+            {/* Browser call button (LiveKit-based) */}
             <Button
               variant="outline"
               size="sm"
               className="h-7 text-xs gap-1 px-2"
               onClick={() => setShowBrowserCall(true)}
-              disabled={!keys["elevenlabs"]?.configured}
             >
               <Monitor className="w-3.5 h-3.5" />
               <span className="hidden lg:inline">Testar no navegador</span>
@@ -820,19 +819,17 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
         hasTelnyxKey={!!keys["telnyx"]?.configured}
       />
 
-      {/* Browser Call Widget */}
-      <ConversationProvider>
-        <BrowserCallWidget
-          open={showBrowserCall}
-          onClose={() => setShowBrowserCall(false)}
-          agentId={agentId || ""}
-          agentName={loadedAgent.name}
-          agentAvatar={loadedAgent.avatar}
-          agentPrompt={agentConfig?.instructions || agentConfig?.objective || ""}
-          agentGreeting={agentConfig?.greetingMessage || ""}
-          voiceId={agentConfig?.voiceConfig?.voiceId}
-        />
-      </ConversationProvider>
+      {/* Browser Call Widget (LiveKit-based) */}
+      <BrowserCallWidget
+        open={showBrowserCall}
+        onClose={() => setShowBrowserCall(false)}
+        agentId={agentId || ""}
+        agentName={loadedAgent.name}
+        agentAvatar={loadedAgent.avatar}
+        agentPrompt={agentConfig?.instructions || agentConfig?.objective || ""}
+        agentGreeting={agentConfig?.greetingMessage || ""}
+        voiceId={agentConfig?.voiceConfig?.voiceId}
+      />
 
       {/* ── Config Panel (Sheet overlay like AppBuilder) ── */}
       <Sheet open={showConfig} onOpenChange={setShowConfig}>
