@@ -32,7 +32,7 @@ export const LLM_PROVIDERS: IntegrationProvider[] = [
   {
     label: "OpenAI",
     provider: "openai",
-    description: "GPT-4o, GPT-5 e modelos de linguagem avançados",
+    description: "GPT-4o, GPT-4.5, o3 e modelos de linguagem avançados",
     logo: "https://cdn.simpleicons.org/openai",
     apiKeyUrl: "https://platform.openai.com/api-keys",
     apiKeyUrlLabel: "platform.openai.com",
@@ -40,7 +40,7 @@ export const LLM_PROVIDERS: IntegrationProvider[] = [
   {
     label: "Anthropic",
     provider: "anthropic",
-    description: "Claude 3.5, Claude 4 e modelos seguros de IA",
+    description: "Claude Opus 4, Sonnet 4.5, Haiku e modelos seguros de IA",
     logo: "https://cdn.simpleicons.org/anthropic",
     apiKeyUrl: "https://console.anthropic.com/settings/keys",
     apiKeyUrlLabel: "console.anthropic.com",
@@ -48,7 +48,7 @@ export const LLM_PROVIDERS: IntegrationProvider[] = [
   {
     label: "Google Gemini",
     provider: "gemini",
-    description: "Gemini Pro, Flash e IA multimodal do Google",
+    description: "Gemini 2.5 Pro, Flash e IA multimodal do Google",
     logo: "https://cdn.simpleicons.org/googlegemini",
     apiKeyUrl: "https://aistudio.google.com/apikey",
     apiKeyUrlLabel: "aistudio.google.com",
@@ -64,7 +64,7 @@ export const LLM_PROVIDERS: IntegrationProvider[] = [
   {
     label: "DeepSeek",
     provider: "deepseek",
-    description: "Modelos de IA open-source de alto desempenho",
+    description: "DeepSeek R1, V3 e modelos open-source de alto desempenho",
     logo: "https://registry.npmmirror.com/@lobehub/icons-static-png/1.24.0/files/dark/deepseek-color.png",
     apiKeyUrl: "https://platform.deepseek.com/api_keys",
     apiKeyUrlLabel: "platform.deepseek.com",
@@ -89,26 +89,39 @@ export const ALL_PROVIDERS = [...LLM_PROVIDERS, ...SERVICE_PROVIDERS];
 
 const PROVIDER_MODELS: Record<string, { value: string; label: string }[]> = {
   openai: [
+    { value: "o3", label: "o3" },
+    { value: "o3-mini", label: "o3 Mini" },
+    { value: "o1", label: "o1" },
+    { value: "o1-mini", label: "o1 Mini" },
+    { value: "gpt-4.5-preview", label: "GPT-4.5 Preview" },
     { value: "gpt-4o", label: "GPT-4o" },
     { value: "gpt-4o-mini", label: "GPT-4o Mini" },
     { value: "gpt-4-turbo", label: "GPT-4 Turbo" },
+    { value: "gpt-4", label: "GPT-4" },
     { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo" },
   ],
   anthropic: [
-    { value: "claude-4-sonnet", label: "Claude 4 Sonnet" },
-    { value: "claude-3.5-sonnet", label: "Claude 3.5 Sonnet" },
-    { value: "claude-3-opus", label: "Claude 3 Opus" },
-    { value: "claude-3-haiku", label: "Claude 3 Haiku" },
+    { value: "claude-opus-4-6", label: "Claude Opus 4" },
+    { value: "claude-sonnet-4-6", label: "Claude Sonnet 4.5" },
+    { value: "claude-haiku-4-5-20251001", label: "Claude Haiku 4.5" },
+    { value: "claude-3-5-sonnet-20241022", label: "Claude 3.5 Sonnet" },
+    { value: "claude-3-5-haiku-20241022", label: "Claude 3.5 Haiku" },
+    { value: "claude-3-opus-20240229", label: "Claude 3 Opus" },
+    { value: "claude-3-sonnet-20240229", label: "Claude 3 Sonnet" },
+    { value: "claude-3-haiku-20240307", label: "Claude 3 Haiku" },
   ],
   gemini: [
     { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
     { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
-    { value: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite" },
+    { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash" },
+    { value: "gemini-2.0-flash-lite", label: "Gemini 2.0 Flash Lite" },
+    { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro" },
+    { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash" },
   ],
   deepseek: [
-    { value: "deepseek-chat", label: "DeepSeek Chat" },
-    { value: "deepseek-coder", label: "DeepSeek Coder" },
-    { value: "deepseek-reasoner", label: "DeepSeek Reasoner" },
+    { value: "deepseek-r1", label: "DeepSeek R1" },
+    { value: "deepseek-chat-v3", label: "DeepSeek V3" },
+    { value: "deepseek-r1-distill-70b", label: "DeepSeek R1 Distill 70B" },
   ],
   elevenlabs: [
     { value: "eleven_multilingual_v2", label: "Multilingual v2" },
@@ -118,10 +131,10 @@ const PROVIDER_MODELS: Record<string, { value: string; label: string }[]> = {
 };
 
 const DEFAULT_MODELS: Record<string, string> = {
-  openai: "gpt-4o-mini",
-  anthropic: "claude-3.5-sonnet",
+  openai: "gpt-4o",
+  anthropic: "claude-sonnet-4-6",
   gemini: "gemini-2.5-flash",
-  deepseek: "deepseek-chat",
+  deepseek: "deepseek-r1",
   elevenlabs: "eleven_multilingual_v2",
 };
 
