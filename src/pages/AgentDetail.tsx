@@ -35,16 +35,16 @@ const AVATAR_BY_TYPE: Record<string, string> = {
 };
 
 const LLM_MODELS = [
-  { value: "gemini-2.5-pro",         label: "Gemini 2.5 Pro",        provider: "gemini" },
-  { value: "gemini-2.5-flash",       label: "Gemini 2.5 Flash",      provider: "gemini" },
-  { value: "gemini-2.5-flash-lite",  label: "Gemini 2.5 Flash Lite", provider: "gemini" },
-  { value: "gpt-4o",                 label: "GPT-4o",                provider: "openai" },
-  { value: "gpt-4o-mini",            label: "GPT-4o Mini",           provider: "openai" },
-  { value: "gpt-4-turbo",            label: "GPT-4 Turbo",           provider: "openai" },
-  { value: "gpt-3.5-turbo",          label: "GPT-3.5 Turbo",         provider: "openai" },
-  { value: "claude-4-sonnet",        label: "Claude 4 Sonnet",       provider: "anthropic" },
-  { value: "claude-3.5-sonnet",      label: "Claude 3.5 Sonnet",     provider: "anthropic" },
-  { value: "claude-3-haiku",         label: "Claude 3 Haiku",        provider: "anthropic" },
+  { value: "gemini-2.5-flash",       label: "Gemini 2.5 Flash",      provider: "gemini",    badge: "free" as const },
+  { value: "gemini-2.5-flash-lite",  label: "Gemini 2.5 Flash Lite", provider: "gemini",    badge: "free" as const },
+  { value: "gemini-2.5-pro",         label: "Gemini 2.5 Pro",        provider: "gemini",    badge: "byok" as const },
+  { value: "gpt-4o",                 label: "GPT-4o",                provider: "openai",    badge: "byok" as const },
+  { value: "gpt-4o-mini",            label: "GPT-4o Mini",           provider: "openai",    badge: "byok" as const },
+  { value: "gpt-4-turbo",            label: "GPT-4 Turbo",           provider: "openai",    badge: "byok" as const },
+  { value: "gpt-3.5-turbo",          label: "GPT-3.5 Turbo",         provider: "openai",    badge: "byok" as const },
+  { value: "claude-4-sonnet",        label: "Claude 4 Sonnet",       provider: "anthropic", badge: "byok-anthropic" as const },
+  { value: "claude-3.5-sonnet",      label: "Claude 3.5 Sonnet",     provider: "anthropic", badge: "byok-anthropic" as const },
+  { value: "claude-3-haiku",         label: "Claude 3 Haiku",        provider: "anthropic", badge: "byok-anthropic" as const },
 ] as const;
 
 const getProviderForModel = (model: string): string => {
