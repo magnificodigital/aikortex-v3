@@ -11,6 +11,7 @@ import TierAccessManager from "@/components/admin/TierAccessManager";
 import AdminCreditsTab from "@/components/admin/AdminCreditsTab";
 import AdminTutorialsTab from "@/components/admin/AdminTutorialsTab";
 import AdminSupportTab from "@/components/admin/AdminSupportTab";
+import AdminConfigTab from "@/components/admin/AdminConfigTab";
 import { useSearchParams } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
 
