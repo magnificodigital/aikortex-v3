@@ -32,7 +32,7 @@ export const LLM_PROVIDERS: IntegrationProvider[] = [
   {
     label: "OpenAI",
     provider: "openai",
-    description: "GPT-4o, GPT-5 e modelos de linguagem avançados",
+    description: "GPT-4o, GPT-4.5, o3 e modelos de linguagem avançados",
     logo: "https://cdn.simpleicons.org/openai",
     apiKeyUrl: "https://platform.openai.com/api-keys",
     apiKeyUrlLabel: "platform.openai.com",
@@ -40,7 +40,7 @@ export const LLM_PROVIDERS: IntegrationProvider[] = [
   {
     label: "Anthropic",
     provider: "anthropic",
-    description: "Claude 3.5, Claude 4 e modelos seguros de IA",
+    description: "Claude Opus 4, Sonnet 4.5, Haiku e modelos seguros de IA",
     logo: "https://cdn.simpleicons.org/anthropic",
     apiKeyUrl: "https://console.anthropic.com/settings/keys",
     apiKeyUrlLabel: "console.anthropic.com",
