@@ -69,6 +69,14 @@ export const LLM_PROVIDERS: IntegrationProvider[] = [
     apiKeyUrl: "https://platform.deepseek.com/api_keys",
     apiKeyUrlLabel: "platform.deepseek.com",
   },
+  {
+    label: "Telnyx",
+    provider: "telnyx",
+    description: "Ligações inbound e outbound via telefone real. Cada agência precisa de sua própria conta.",
+    logo: "https://cdn.brandfetch.io/idpKX4_j8-/w/400/h/400/theme/dark/icon.jpeg",
+    apiKeyUrl: "https://portal.telnyx.com/#/app/api-keys",
+    apiKeyUrlLabel: "portal.telnyx.com",
+  },
 ];
 
 export const SERVICE_PROVIDERS: IntegrationProvider[] = [
