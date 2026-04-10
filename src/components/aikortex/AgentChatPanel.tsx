@@ -700,11 +700,13 @@ const AgentChatPanel = ({
 
       {/* Input area */}
       <div className="p-3 border-t border-border shrink-0">
-        {chatMode === "test" && !keysLoading && wizardStep === "done" && !hasAnyLLMKey && (
-          <div className="mb-2 text-xs text-destructive flex items-center gap-1">
-            <AlertTriangle className="w-3 h-3" />
-            API key de LLM não configurada.{" "}
-            <button className="underline" onClick={onGoToIntegrations}>Configurar</button>
+        {chatMode === "test" && !keysLoading && wizardStep === "done" && isSelectedModelLocked && (
+          <div className="mb-2 text-xs text-destructive flex items-center gap-1.5 bg-destructive/5 border border-destructive/20 rounded-lg px-3 py-2">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+            <span>
+              O modelo <strong>{selectedModelInfo?.label}</strong> requer chave de API própria.{" "}
+              <button className="underline font-medium" onClick={onGoToIntegrations}>Configurar em Integrações</button>
+            </span>
           </div>
         )}
         {chatMode === "test" && !keysLoading && wizardStep === "done" && hasAnyLLMKey && availableModels.length > 0 && (() => {
