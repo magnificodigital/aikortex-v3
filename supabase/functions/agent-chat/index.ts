@@ -7,24 +7,26 @@ const corsHeaders = {
 };
 
 const MODEL_MAP: Record<string, { gateway: string; openai?: string; anthropic?: string }> = {
-  "gemini-3.1-pro-preview": { gateway: "google/gemini-3.1-pro-preview" },
-  "gemini-3-flash-preview": { gateway: "google/gemini-3-flash-preview" },
-  "gemini-2.5-pro": { gateway: "google/gemini-2.5-pro" },
-  "gemini-2.5-flash": { gateway: "google/gemini-2.5-flash" },
-  "gemini-2.5-flash-lite": { gateway: "google/gemini-2.5-flash-lite" },
-  "gpt-5.2": { gateway: "openai/gpt-5.2", openai: "gpt-4o" },
-  "gpt-5": { gateway: "openai/gpt-5", openai: "gpt-4o" },
-  "gpt-5-mini": { gateway: "openai/gpt-5-mini", openai: "gpt-4o-mini" },
-  "gpt-5-nano": { gateway: "openai/gpt-5-nano", openai: "gpt-4o-mini" },
+  // OpenAI BYOK models → map to actual OpenAI API model IDs
+  "o3": { gateway: "openai/gpt-5", openai: "o3" },
+  "o3-mini": { gateway: "openai/gpt-5-mini", openai: "o3-mini" },
+  "o1": { gateway: "openai/gpt-5", openai: "o1" },
+  "o1-mini": { gateway: "openai/gpt-5-mini", openai: "o1-mini" },
+  "gpt-4.5-preview": { gateway: "openai/gpt-5", openai: "gpt-4.5-preview" },
   "gpt-4o": { gateway: "openai/gpt-5", openai: "gpt-4o" },
   "gpt-4o-mini": { gateway: "openai/gpt-5-mini", openai: "gpt-4o-mini" },
   "gpt-4-turbo": { gateway: "openai/gpt-5", openai: "gpt-4-turbo" },
   "gpt-4": { gateway: "openai/gpt-5", openai: "gpt-4" },
   "gpt-3.5-turbo": { gateway: "openai/gpt-5-mini", openai: "gpt-3.5-turbo" },
-  "claude-4-sonnet": { gateway: "openai/gpt-5", anthropic: "claude-sonnet-4-20250514" },
-  "claude-3.5-sonnet": { gateway: "openai/gpt-5", anthropic: "claude-3-5-sonnet-20241022" },
-  "claude-3-opus": { gateway: "openai/gpt-5", anthropic: "claude-3-opus-20240229" },
-  "claude-3-haiku": { gateway: "openai/gpt-5-mini", anthropic: "claude-3-haiku-20240307" },
+  // Anthropic BYOK models → map to actual Anthropic API model IDs
+  "claude-opus-4-6": { gateway: "openai/gpt-5", anthropic: "claude-opus-4-6" },
+  "claude-sonnet-4-6": { gateway: "openai/gpt-5", anthropic: "claude-sonnet-4-6" },
+  "claude-haiku-4-5-20251001": { gateway: "openai/gpt-5-mini", anthropic: "claude-haiku-4-5-20251001" },
+  "claude-3-5-sonnet-20241022": { gateway: "openai/gpt-5", anthropic: "claude-3-5-sonnet-20241022" },
+  "claude-3-5-haiku-20241022": { gateway: "openai/gpt-5-mini", anthropic: "claude-3-5-haiku-20241022" },
+  "claude-3-opus-20240229": { gateway: "openai/gpt-5", anthropic: "claude-3-opus-20240229" },
+  "claude-3-sonnet-20240229": { gateway: "openai/gpt-5", anthropic: "claude-3-sonnet-20240229" },
+  "claude-3-haiku-20240307": { gateway: "openai/gpt-5-mini", anthropic: "claude-3-haiku-20240307" },
 };
 
 const FREE_GATEWAY_MODELS = [
@@ -37,7 +39,7 @@ const FREE_GATEWAY_MODELS = [
 const DEFAULT_FREE_GATEWAY_MODEL = FREE_GATEWAY_MODELS[0];
 
 // Default free model for non-BYOK users (Rule 4)
-const DEFAULT_FREE_MODEL = "google/gemini-2.5-flash";
+const DEFAULT_FREE_MODEL = "google/gemini-2.5-flash-preview-04-17";
 
 // Valid models accepted by Lovable AI Gateway
 const VALID_GATEWAY_MODELS = new Set([
@@ -64,14 +66,16 @@ function ensureValidGatewayModel(model?: string | null): string {
 type ChatCompletionMessage = { role: string; content: string };
 
 const PROVIDER_PREFIX_RULES: Record<string, string[]> = {
-  openai: ["gpt-", "openai/"],
-  anthropic: ["claude-", "anthropic/"],
+  openai: ["gpt-", "o1", "o3"],
+  anthropic: ["claude-"],
   gemini: ["gemini-", "google/"],
   openrouter: ["/"],
 };
 
 function modelBelongsToProvider(provider: string, model?: string | null) {
   if (!model) return true;
+  // Models with a slash are OpenRouter-routed — skip provider ownership validation
+  if (model.includes("/")) return true;
   const prefixes = PROVIDER_PREFIX_RULES[provider];
   if (!prefixes) return true;
   if (provider === "openrouter") return model.includes("/");
@@ -325,7 +329,9 @@ serve(async (req) => {
 
     let apiUrl: string;
     let apiKey: string | null = "";
-    let apiModel = modelMapping?.gateway || model || "google/gemini-3-flash-preview";
+    let apiModel = modelMapping?.gateway || model || "google/gemini-2.5-flash-preview-04-17";
+    // Detect if the selected model is an OpenRouter-routed model (has slash in ID, no BYOK needed)
+    const isOpenRouterModel = typeof model === "string" && model.includes("/") && !modelMapping;
     let headers: Record<string, string>;
     let openRouterKeyCandidates: Array<string | null> = [];
     let gatewayModelCandidates: string[] = [];
@@ -389,6 +395,23 @@ serve(async (req) => {
       if (apiKey) {
         headers["Authorization"] = `Bearer ${apiKey}`;
       }
+    } else if (isOpenRouterModel) {
+      // Model with slash in ID (e.g. google/gemini-2.5-pro) → route via OpenRouter platform key
+      apiUrl = "https://openrouter.ai/api/v1/chat/completions";
+      apiModel = model;
+      const openRouterKey = await getOpenRouterKey(supabaseUrl, serviceKey);
+      headers = {
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://aikortex.lovable.app",
+        "X-OpenRouter-Title": "Aikortex",
+      };
+      if (openRouterKey) {
+        headers["Authorization"] = `Bearer ${openRouterKey}`;
+      }
+      apiKey = openRouterKey || null;
+      openRouterKeyCandidates = openRouterKey ? [openRouterKey] : [null];
+      gatewayModelCandidates = [apiModel, DEFAULT_FREE_MODEL];
+      console.log(`OpenRouter model: ${apiModel}`);
     } else {
       // Try user's own API key first
       const { data: keyData } = await supabase
@@ -521,7 +544,7 @@ serve(async (req) => {
         : messages
       : [{ role: "system", content: agentSystemPrompt || defaultSystemPrompt }, ...messages];
 
-    const requestMessages = (useGateway || forceFreeTier)
+    const requestMessages = (useGateway || forceFreeTier || isOpenRouterModel)
       ? flattenSystemMessagesForGateway(finalMessages)
       : finalMessages;
 
@@ -546,7 +569,7 @@ serve(async (req) => {
     const maxRetries = 3;
     const gatewayMaxRetries = 1;
 
-    if (useGateway || forceFreeTier) {
+    if (useGateway || forceFreeTier || isOpenRouterModel) {
       gatewayAttempt:
       for (const candidateModel of gatewayModelCandidates) {
         for (let keyIndex = 0; keyIndex < openRouterKeyCandidates.length; keyIndex += 1) {
