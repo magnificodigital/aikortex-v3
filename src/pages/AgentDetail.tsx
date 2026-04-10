@@ -182,28 +182,13 @@ const AgentDetail = () => {
   const resolvedAgentId = agentId && !TEMPLATE_MAP[agentId] && agentId !== "new" && !agentId.startsWith("new-") ? agentId : undefined;
   const { isActive: hasMemoryActive } = useAgentMemory(resolvedAgentId);
   const currentProvider = useMemo(() => getProviderForModel(agentModel), [agentModel]);
-  // Show all models: configured ones are selectable, others show badge info
+  // Show all models with locked state based on BYOK + key availability
   const availableModels = useMemo(() => LLM_MODELS.map(m => ({
     ...m,
-    badge: m.badge === "free" ? "free" as const
-      : keys[m.provider]?.configured ? undefined
-      : m.badge,
+    locked: m.badge !== "free" && !keys[m.provider]?.configured,
   })), [keys]);
   const hasApiKey    = !!keys[currentProvider]?.configured;
-  const hasAnyLLMKey = useMemo(() => ["openai", "anthropic", "gemini"].some(p => keys[p]?.configured) || true, [keys]);
-
-  // Auto-select first available model when keys load and current model's provider isn't configured
-  useEffect(() => {
-    if (keysLoading) return;
-    const provider = getProviderForModel(agentModel);
-    const hasCurrentKey = keys[provider]?.configured;
-    if (!hasCurrentKey) {
-      const firstAvailable = LLM_MODELS.find(m => keys[m.provider]?.configured);
-      if (firstAvailable) {
-        setAgentModel(firstAvailable.value);
-      }
-    }
-  }, [keysLoading, keys]);
+  const hasAnyLLMKey = useMemo(() => ["openai", "anthropic", "gemini", "google", "meta"].some(p => keys[p]?.configured) || true, [keys]);
 
   /* ── Agent config (from right panel) ── */
 
