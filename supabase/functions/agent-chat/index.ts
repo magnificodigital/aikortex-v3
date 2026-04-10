@@ -200,18 +200,17 @@ serve(async (req) => {
 
     const isPlatformUser = ["platform_owner", "platform_admin"].includes(profileData?.role);
 
-    // Check if user has BYOK for the requested provider
-    const targetProvider = provider && !useGateway ? provider : null;
+    // Check if user has ANY BYOK key configured (any provider = unlimited)
     let hasByok = false;
 
-    if (!isPlatformUser && targetProvider && ["openai","anthropic","gemini","openrouter"].includes(targetProvider)) {
-      const { data: keyData } = await supabase
+    if (!isPlatformUser) {
+      const { data: byokKeys } = await supabase
         .from("user_api_keys")
-        .select("api_key")
+        .select("provider")
         .eq("user_id", user.id)
-        .eq("provider", targetProvider)
-        .maybeSingle();
-      hasByok = !!keyData?.api_key;
+        .in("provider", ["openai", "anthropic", "gemini", "openrouter"])
+        .limit(1);
+      hasByok = (byokKeys?.length ?? 0) > 0;
     }
 
     // If no BYOK and not platform: check monthly plan limit
