@@ -254,7 +254,10 @@ const AgentChatPanel = ({
     }
   }, [messages, wizardMessages, isStructuring, isBuilding]);
 
-  const canSendTest = chatMode === "test" ? (hasAnyLLMKey || hasApiKey) : true;
+  const selectedModelInfo = availableModels.find(m => m.value === agentModel);
+  const isSelectedModelFree = selectedModelInfo?.badge === "free";
+  const isSelectedModelLocked = selectedModelInfo?.locked === true;
+  const canSendTest = chatMode === "test" ? (isSelectedModelFree || !isSelectedModelLocked) : true;
   const isDiscoverEmpty = wizardStep === "discover" && wizardMessages.length === 0;
   const suggestions = AGENT_SUGGESTIONS[agentType] || AGENT_SUGGESTIONS.Custom;
 
