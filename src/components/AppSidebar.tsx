@@ -316,8 +316,20 @@ const AppSidebar = ({ mobileOpen = false, onMobileClose }: AppSidebarProps) => {
               <div className="border-t border-sidebar-border my-2" />
             )}
             <div className="space-y-0.5">
-              {/* Usage indicator (only when not using own key) */}
-              {!hasByok && (
+              {/* Usage indicator — hidden for platform users */}
+              {!isPlatform && hasByok && (
+                <button
+                  onClick={() => { handleNavigate(); navigate("/ai-setup"); }}
+                  className={`${linkClasses(false)} w-full`}
+                  title={collapsed && !isMobile ? "Chave própria ativa" : undefined}
+                >
+                  <Key className="w-4 h-4 shrink-0 text-green-500" />
+                  {(!collapsed || isMobile) && (
+                    <span className="text-xs text-green-600 font-medium truncate">Chave própria ativa</span>
+                  )}
+                </button>
+              )}
+              {!isPlatform && !hasByok && (
                 <button
                   onClick={() => { handleNavigate(); navigate("/ai-setup"); }}
                   className={`${linkClasses(false)} w-full group relative`}

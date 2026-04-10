@@ -96,48 +96,59 @@ serve(async (req) => {
       isPlatformUser = ["platform_owner", "platform_admin"].includes(profileData?.role);
     }
 
-    // Monthly usage check (skip for platform users and WhatsApp with insufficient usage)
+    // Usage check: (1) platform → pass, (2) BYOK → pass, (3) check monthly limit
     if (!isPlatformUser) {
-      const yearMonth = new Date().toISOString().slice(0, 7);
-
-      const { data: sub } = await adminClient
-        .from("subscriptions")
-        .select("plan_id, plans(slug)")
+      // Check if user has ANY BYOK key configured
+      const { data: byokKeys } = await adminClient
+        .from("user_api_keys")
+        .select("provider")
         .eq("user_id", userId)
-        .in("status", ["active", "trialing"])
-        .maybeSingle();
+        .in("provider", ["openai", "anthropic", "gemini", "openrouter"])
+        .limit(1);
+      const hasByok = (byokKeys?.length ?? 0) > 0;
 
-      const planSlug = (sub?.plans as any)?.slug || "starter";
+      if (!hasByok) {
+        const yearMonth = new Date().toISOString().slice(0, 7);
 
-      const { data: limitData } = await adminClient
-        .from("plan_message_limits")
-        .select("monthly_limit")
-        .eq("plan_slug", planSlug)
-        .maybeSingle();
-
-      const monthlyLimit = limitData?.monthly_limit ?? 500;
-
-      if (monthlyLimit !== -1) {
-        const { data: usageData } = await adminClient
-          .from("monthly_usage")
-          .select("message_count")
+        const { data: sub } = await adminClient
+          .from("subscriptions")
+          .select("plan_id, plans(slug)")
           .eq("user_id", userId)
-          .eq("year_month", yearMonth)
+          .in("status", ["active", "trialing"])
           .maybeSingle();
 
-        const currentCount = usageData?.message_count || 0;
+        const planSlug = (sub?.plans as any)?.slug || "starter";
 
-        if (currentCount >= monthlyLimit) {
-          if (isWhatsAppMode) {
-            return new Response(JSON.stringify({ reply: null, reason: "monthly_limit_reached" }), {
-              status: 200,
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
+        const { data: limitData } = await adminClient
+          .from("plan_message_limits")
+          .select("monthly_limit")
+          .eq("plan_slug", planSlug)
+          .maybeSingle();
+
+        const monthlyLimit = limitData?.monthly_limit ?? 500;
+
+        if (monthlyLimit !== -1) {
+          const { data: usageData } = await adminClient
+            .from("monthly_usage")
+            .select("message_count")
+            .eq("user_id", userId)
+            .eq("year_month", yearMonth)
+            .maybeSingle();
+
+          const currentCount = usageData?.message_count || 0;
+
+          if (currentCount >= monthlyLimit) {
+            if (isWhatsAppMode) {
+              return new Response(JSON.stringify({ reply: null, reason: "monthly_limit_reached" }), {
+                status: 200,
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+              });
+            }
+            return new Response(
+              JSON.stringify({ error: `Limite mensal de ${monthlyLimit} mensagens atingido. Configure uma chave de API própria ou faça upgrade.` }),
+              { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
           }
-          return new Response(
-            JSON.stringify({ error: `Limite mensal de ${monthlyLimit} mensagens atingido. Configure uma chave de API própria ou faça upgrade.` }),
-            { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
         }
       }
     }
