@@ -306,7 +306,7 @@ const VoiceCallPanel = ({
           </div>
           <h3 className="text-sm font-semibold">Configure seu agente de Ligação</h3>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Para usar o modo de voz, configure sua chave de API nas Integrações.
+            Para usar o modo de voz, você precisa configurar sua chave de API da ElevenLabs nas Integrações.
           </p>
           <Button size="sm" onClick={onGoToIntegrations} className="gap-1.5">
             <ExternalLink className="w-3.5 h-3.5" /> Ir para Integrações
