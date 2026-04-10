@@ -569,7 +569,7 @@ serve(async (req) => {
     const maxRetries = 3;
     const gatewayMaxRetries = 1;
 
-    if (useGateway || forceFreeTier) {
+    if (useGateway || forceFreeTier || isOpenRouterModel) {
       gatewayAttempt:
       for (const candidateModel of gatewayModelCandidates) {
         for (let keyIndex = 0; keyIndex < openRouterKeyCandidates.length; keyIndex += 1) {
