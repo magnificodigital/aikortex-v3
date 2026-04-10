@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useCallback, useEffect, useState } from "react";
 import { Menu, X, AlertTriangle, Key, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AppSidebar from "./AppSidebar";
@@ -11,6 +11,7 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const handleMobileClose = useCallback(() => setMobileSidebarOpen(false), []);
   const { messageCount, monthlyLimit, isNearLimit, hasByok, planSlug } = useMonthlyUsage();
   const [bannerDismissed, setBannerDismissed] = useState(() =>
     sessionStorage.getItem("usage-banner-dismissed") === "true"
