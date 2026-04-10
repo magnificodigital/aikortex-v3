@@ -163,6 +163,13 @@ function buildAgentSystemPrompt(agentContext?: Record<string, unknown>) {
   return sections.join("\n\n");
 }
 
+// Helper: read a config value from platform_config (service_role)
+async function getPlatformConfig(supabaseUrl: string, serviceKey: string, key: string): Promise<string | null> {
+  const admin = createClient(supabaseUrl, serviceKey);
+  const { data } = await admin.from("platform_config").select("value").eq("key", key).maybeSingle();
+  return data?.value || null;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -179,6 +186,7 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
