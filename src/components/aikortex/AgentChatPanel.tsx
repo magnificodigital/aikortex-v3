@@ -43,7 +43,7 @@ interface AgentChatPanelProps {
   keysLoading: boolean;
   currentProvider: string;
   agentModel: string;
-  availableModels: Array<{ value: string; label: string; provider: string; badge?: "free" | "byok" | "byok-anthropic" }>;
+  availableModels: Array<{ value: string; label: string; provider: string; badge?: "free" | "byok" | "byok-anthropic"; locked?: boolean }>;
   setupModel: string;
   setSetupModel: (model: string) => void;
   setAgentModel: (model: string) => void;
