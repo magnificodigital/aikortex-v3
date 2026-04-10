@@ -39,7 +39,7 @@ const FREE_GATEWAY_MODELS = [
 const DEFAULT_FREE_GATEWAY_MODEL = FREE_GATEWAY_MODELS[0];
 
 // Default free model for non-BYOK users (Rule 4)
-const DEFAULT_FREE_MODEL = "google/gemini-2.5-flash";
+const DEFAULT_FREE_MODEL = "google/gemini-2.5-flash-preview-04-17";
 
 // Valid models accepted by Lovable AI Gateway
 const VALID_GATEWAY_MODELS = new Set([
@@ -66,14 +66,16 @@ function ensureValidGatewayModel(model?: string | null): string {
 type ChatCompletionMessage = { role: string; content: string };
 
 const PROVIDER_PREFIX_RULES: Record<string, string[]> = {
-  openai: ["gpt-", "openai/"],
-  anthropic: ["claude-", "anthropic/"],
+  openai: ["gpt-", "o1", "o3"],
+  anthropic: ["claude-"],
   gemini: ["gemini-", "google/"],
   openrouter: ["/"],
 };
 
 function modelBelongsToProvider(provider: string, model?: string | null) {
   if (!model) return true;
+  // Models with a slash are OpenRouter-routed — skip provider ownership validation
+  if (model.includes("/")) return true;
   const prefixes = PROVIDER_PREFIX_RULES[provider];
   if (!prefixes) return true;
   if (provider === "openrouter") return model.includes("/");
