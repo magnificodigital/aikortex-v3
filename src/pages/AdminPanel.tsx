@@ -1,6 +1,6 @@
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Users, CreditCard, BarChart3, Settings, Award, Shield, Coins, BookOpen, MessageSquare } from "lucide-react";
+import { Users, CreditCard, BarChart3, Settings, Award, Shield, Coins, BookOpen, MessageSquare, Key } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import AdminUsersTab from "@/components/admin/AdminUsersTab";
 import AdminPlansTab from "@/components/admin/AdminPlansTab";
