@@ -712,24 +712,39 @@ const AgentChatPanel = ({
             if (!grouped.has(key)) grouped.set(key, []);
             grouped.get(key)!.push(m);
           }
+          const selectedModel = availableModels.find(m => m.value === agentModel);
           return (
             <div className="mb-2 flex items-center gap-2">
               <span className="text-xs text-muted-foreground shrink-0">Modelo:</span>
-              <select
-                value={agentModel}
-                onChange={e => setAgentModel(e.target.value)}
-                className="text-xs h-7 rounded-md border border-input bg-background px-2 py-0.5 text-foreground outline-none focus:ring-1 focus:ring-ring flex-1 max-w-[220px]"
-              >
-                {Array.from(grouped.entries()).map(([provider, models]) => (
-                  <optgroup key={provider} label={providerLabels[provider] || provider}>
-                    {models.map(m => (
-                      <option key={m.value} value={m.value}>
-                        {m.label}{m.badge === "free" ? " ✦ Gratuito" : ""}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
+              <div className="relative flex-1 max-w-[240px]">
+                <select
+                  value={agentModel}
+                  onChange={e => {
+                    const model = availableModels.find(m => m.value === e.target.value);
+                    if (model?.locked) {
+                      toast.info("Adicione sua chave de API em Integrações para usar este modelo", {
+                        action: { label: "Configurar", onClick: onGoToIntegrations },
+                      });
+                    }
+                    setAgentModel(e.target.value);
+                  }}
+                  className="text-xs h-7 w-full rounded-md border border-input bg-background px-2 py-0.5 text-foreground outline-none focus:ring-1 focus:ring-ring appearance-none pr-6"
+                >
+                  {Array.from(grouped.entries()).map(([provider, models]) => (
+                    <optgroup key={provider} label={providerLabels[provider] || provider}>
+                      {models.map(m => (
+                        <option key={m.value} value={m.value}>
+                          {m.locked ? "🔒 " : ""}{m.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" />
+              </div>
+              {selectedModel?.locked && (
+                <Lock className="h-3 w-3 text-muted-foreground opacity-60 shrink-0" />
+              )}
             </div>
           );
         })()}
