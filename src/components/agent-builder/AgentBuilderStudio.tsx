@@ -58,12 +58,12 @@ const PROVIDER_OPTIONS: { id: AgentProvider; label: string; description: string;
   {
     id: "anthropic",
     label: "Claude (Anthropic)",
-    description: "Sessões persistentes, memória de contexto longa. Requer chave BYOK ou plano Pro+.",
+    description: "Sessões persistentes, memória de contexto longa. Requer chave BYOK.",
     icon: Bot,
     models: [
-      { value: "claude-sonnet-4-6", label: "Claude Sonnet 4.6" },
-      { value: "claude-haiku-4-5", label: "Claude Haiku 4.5" },
-      { value: "claude-opus-4-6", label: "Claude Opus 4.6" },
+      { value: "claude-sonnet-4-6", label: "Claude Sonnet 4.5" },
+      { value: "claude-opus-4-6", label: "Claude Opus 4" },
+      { value: "claude-haiku-4-5-20251001", label: "Claude Haiku 4.5" },
     ],
   },
   {
@@ -74,16 +74,18 @@ const PROVIDER_OPTIONS: { id: AgentProvider; label: string; description: string;
     models: [
       { value: "gpt-4o", label: "GPT-4o" },
       { value: "gpt-4o-mini", label: "GPT-4o Mini" },
+      { value: "gpt-4-turbo", label: "GPT-4 Turbo" },
     ],
   },
   {
     id: "gemini",
     label: "Gemini (Google)",
-    description: "Mais econômico, contexto de 1M tokens. Requer chave BYOK.",
+    description: "Gratuito via plataforma. Contexto de 1M tokens.",
     icon: Globe,
     models: [
-      { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
-      { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+      { value: "google/gemini-2.0-flash", label: "Gemini 2.0 Flash" },
+      { value: "google/gemini-1.5-pro", label: "Gemini 1.5 Pro" },
+      { value: "google/gemini-1.5-flash", label: "Gemini 1.5 Flash" },
     ],
   },
 ];
@@ -123,7 +125,7 @@ const AgentBuilderStudio = () => {
           : [],
         instructions: preset.context.targetAudienceDescription || "",
         provider: "auto",
-        model: "gemini-2.5-flash",
+        model: "google/gemini-2.0-flash",
         stages: preset.stages.map(s => ({ id: s.id, name: s.name, description: s.description, example: s.example })),
       };
       // Small delay to feel "generated"
@@ -319,7 +321,7 @@ const AgentBuilderStudio = () => {
                         onClick={() => {
                           updateConfigField("provider", opt.id);
                           if (opt.models?.length) updateConfigField("model", opt.models[0].value);
-                          else updateConfigField("model", "gemini-2.5-flash");
+                          else updateConfigField("model", "google/gemini-2.0-flash");
                         }}
                         className={`relative rounded-lg border p-3 cursor-pointer transition-all ${
                           isSelected
