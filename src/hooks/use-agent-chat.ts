@@ -58,10 +58,11 @@ interface UseAgentChatOptions {
 
 function deriveProvider(model?: string): string | undefined {
   if (!model) return undefined;
-  if (model.startsWith("google/") || model.startsWith("gemini")) return "gemini";
-  if (model.startsWith("openai/") || model.startsWith("gpt")) return "openai";
-  if (model.startsWith("anthropic/") || model.startsWith("claude")) return "anthropic";
-  if (model.includes("/")) return "openrouter";
+  // Models with a slash are OpenRouter-routed (platform-provided) — no single "provider" to validate against
+  if (model.includes("/")) return undefined;
+  if (model.startsWith("gemini")) return "gemini";
+  if (model.startsWith("gpt")) return "openai";
+  if (model.startsWith("claude")) return "anthropic";
   return undefined;
 }
 
