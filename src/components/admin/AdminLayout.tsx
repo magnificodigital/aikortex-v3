@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import aikortexIconWhite from "@/assets/aikortex-icon-white.png";
 import aikortexIconBlack from "@/assets/aikortex-icon-black.png";
 
-const adminNavItems = [
+const adminNavItems: { label: string; icon: any; path: string; ownerOnly?: boolean }[] = [
   { label: "Usuários", icon: Users, path: "/admin?tab=users" },
   { label: "Planos", icon: CreditCard, path: "/admin?tab=plans" },
   { label: "Assinaturas", icon: BarChart3, path: "/admin?tab=subscriptions" },
@@ -66,16 +66,18 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5">
-          {adminNavItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={linkClasses(isActive(item.path))}
-            >
-              <item.icon className={`w-4 h-4 shrink-0 ${isActive(item.path) ? "text-primary" : ""}`} />
-              <span className="truncate">{item.label}</span>
-            </Link>
-          ))}
+          {adminNavItems
+            .filter((item) => !item.ownerOnly || profile?.role === "platform_owner")
+            .map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={linkClasses(isActive(item.path))}
+              >
+                <item.icon className={`w-4 h-4 shrink-0 ${isActive(item.path) ? "text-primary" : ""}`} />
+                <span className="truncate">{item.label}</span>
+              </Link>
+            ))}
         </nav>
 
         {/* Footer */}
