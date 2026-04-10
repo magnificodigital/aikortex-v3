@@ -390,13 +390,49 @@ serve(async (req) => {
           };
         }
       } else {
+        // No user BYOK — try platform_config fallback for the requested provider
         if (provider && ["openai", "anthropic", "gemini", "openrouter"].includes(provider)) {
-          return new Response(JSON.stringify({ error: `Nenhuma chave de API foi configurada para o provider \"${provider}\".` }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
+          const envKeyMap: Record<string, string> = {
+            openai: "OPENAI_API_KEY", anthropic: "ANTHROPIC_API_KEY",
+            gemini: "GEMINI_API_KEY", openrouter: "OPENROUTER_API_KEY",
+          };
+          const configKeyName = envKeyMap[provider];
+          let platformKey = Deno.env.get(configKeyName) || "";
+          if (!platformKey) {
+            platformKey = await getPlatformConfig(supabaseUrl, serviceKey, configKeyName) || "";
+          }
 
+          if (platformKey) {
+            // Use platform key for the requested provider
+            if (provider === "openai") {
+              apiUrl = "https://api.openai.com/v1/chat/completions";
+              apiKey = platformKey;
+              apiModel = modelMapping?.openai || model || "gpt-4o-mini";
+              headers = { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" };
+            } else if (provider === "anthropic") {
+              apiUrl = "https://api.anthropic.com/v1/messages";
+              apiKey = platformKey;
+              apiModel = modelMapping?.anthropic || model || "claude-3-haiku-20240307";
+              headers = { "x-api-key": apiKey, "Content-Type": "application/json", "anthropic-version": "2023-06-01" };
+            } else if (provider === "gemini") {
+              const geminiModel = model?.replace("gemini-", "gemini-") || "gemini-2.5-flash";
+              apiUrl = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+              apiKey = platformKey;
+              apiModel = geminiModel;
+              headers = { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` };
+            } else {
+              apiUrl = "https://openrouter.ai/api/v1/chat/completions";
+              apiKey = platformKey;
+              apiModel = model || gatewayModel || "openai/gpt-5-mini";
+              headers = { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json", "HTTP-Referer": "https://aikortex.lovable.app", "X-OpenRouter-Title": "Aikortex" };
+            }
+          } else {
+            return new Response(JSON.stringify({ error: `Nenhuma chave de API foi configurada para o provider \"${provider}\".` }), {
+              status: 400,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+        } else {
         const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
         if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
         apiUrl = "https://ai.gateway.lovable.dev/v1/chat/completions";
