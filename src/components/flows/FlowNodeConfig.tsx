@@ -11,7 +11,115 @@ import { X, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { UserAgent } from "@/hooks/use-user-agents";
 
-interface Props {
+const LLM_MODELS = [
+  { value: "gemini-3.1-pro-preview", label: "Gemini 3.1 Pro" },
+  { value: "gemini-3-flash-preview", label: "Gemini 3 Flash" },
+  { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+  { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+  { value: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite" },
+  { value: "gpt-5.2", label: "GPT-5.2" },
+  { value: "gpt-5", label: "GPT-5" },
+  { value: "gpt-5-mini", label: "GPT-5 Mini" },
+  { value: "gpt-5-nano", label: "GPT-5 Nano" },
+  { value: "gpt-4o", label: "GPT-4o" },
+  { value: "gpt-4o-mini", label: "GPT-4o Mini" },
+  { value: "claude-4-sonnet", label: "Claude 4 Sonnet" },
+  { value: "claude-3.5-sonnet", label: "Claude 3.5 Sonnet" },
+];
+
+function AgentAIConfig({ config, updateConfig }: { config: Record<string, unknown>; updateConfig: (key: string, value: unknown) => void }) {
+  const [userAgents, setUserAgents] = useState<UserAgent[]>([]);
+  const [loadingAgents, setLoadingAgents] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setLoadingAgents(false); return; }
+      const { data } = await supabase
+        .from("user_agents")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false });
+      setUserAgents((data as any[]) || []);
+      setLoadingAgents(false);
+    })();
+  }, []);
+
+  return (
+    <>
+      <div className="space-y-2">
+        <Label className="text-xs">Agente Configurado</Label>
+        {loadingAgents ? (
+          <p className="text-[10px] text-muted-foreground">Carregando agentes...</p>
+        ) : userAgents.length > 0 ? (
+          <Select value={(config.agentId as string) || ""} onValueChange={(v) => {
+            updateConfig("agentId", v);
+            const agent = userAgents.find(a => a.id === v);
+            if (agent) {
+              updateConfig("agentType", agent.agent_type);
+              if (agent.model) updateConfig("model", agent.model);
+            }
+          }}>
+            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione um agente" /></SelectTrigger>
+            <SelectContent>
+              {userAgents.map((agent) => (
+                <SelectItem key={agent.id} value={agent.id}>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{agent.name}</span>
+                    <span className="text-muted-foreground text-[10px]">({agent.agent_type})</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-[10px] text-muted-foreground">Nenhum agente configurado. Usando template:</p>
+            <Select value={(config.agentType as string) || ""} onValueChange={(v) => {
+              updateConfig("agentType", v);
+              const agent = AGENT_TEMPLATES.find((a) => a.type === v);
+              if (agent) updateConfig("agentId", agent.id);
+            }}>
+              <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione um template" /></SelectTrigger>
+              <SelectContent>
+                {AGENT_TEMPLATES.map((agent) => (
+                  <SelectItem key={agent.id} value={agent.type}>
+                    <span className="font-medium">{agent.name}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      </div>
+      <div className="space-y-2">
+        <Label className="text-xs">System Prompt</Label>
+        <Textarea value={(config.systemPrompt as string) || ""} onChange={(e) => updateConfig("systemPrompt", e.target.value)} className="text-xs min-h-[80px]" placeholder="Instruções do agente..." />
+      </div>
+      <div className="space-y-2">
+        <Label className="text-xs">Variável de saída</Label>
+        <Input value={(config.output_variable as string) || "agent_response"} onChange={(e) => updateConfig("output_variable", e.target.value)} className="h-8 text-xs" placeholder="agent_response" />
+      </div>
+      <div className="space-y-2">
+        <Label className="text-xs">Modelo LLM</Label>
+        <Select value={(config.model as string) || "gemini-2.5-flash"} onValueChange={(v) => updateConfig("model", v)}>
+          <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {LLM_MODELS.map((m) => (
+              <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-2">
+        <Label className="text-xs">Temperature</Label>
+        <Input type="number" step="0.1" min="0" max="2" value={(config.temperature as number) ?? 0.7} onChange={(e) => updateConfig("temperature", parseFloat(e.target.value))} className="h-8 text-xs" />
+      </div>
+    </>
+  );
+}
+
+
   node: Node;
   onClose: () => void;
   onUpdate: (nodeId: string, data: Partial<FlowNodeData>) => void;
