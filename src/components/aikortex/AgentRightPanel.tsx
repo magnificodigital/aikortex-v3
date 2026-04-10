@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import VoiceConfigPanel, { type VoiceConfig, DEFAULT_VOICE_CONFIG } from "./VoiceConfigPanel";
 
-import { LLM_MODELS, PROVIDER_LABELS, getGroupedModels } from "@/lib/llm-models";
+// LLM model data is defined inline in LLM_PROVIDER_MODELS above
 
 const LLM_PROVIDER_MODELS: Record<string, { models: { value: string; label: string; desc: string }[]; capabilities: string[] }> = {
   OpenAI: {
