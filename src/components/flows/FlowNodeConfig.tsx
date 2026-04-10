@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { type Node } from "@xyflow/react";
 import type { FlowNodeData } from "@/types/flow-builder";
 import { AGENT_TEMPLATES } from "@/types/agent-builder";
@@ -7,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X, Trash2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import type { UserAgent } from "@/hooks/use-user-agents";
 
 interface Props {
   node: Node;
@@ -128,77 +131,7 @@ function renderConfigFields(
 
   // ── Agent IA (user's configured agents) ──
   if (nodeType === "agent_ai") {
-    const LLM_MODELS = [
-      { value: "gemini-3.1-pro-preview", label: "Gemini 3.1 Pro" },
-      { value: "gemini-3-flash-preview", label: "Gemini 3 Flash" },
-      { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
-      { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
-      { value: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite" },
-      { value: "gpt-5.2", label: "GPT-5.2" },
-      { value: "gpt-5", label: "GPT-5" },
-      { value: "gpt-5-mini", label: "GPT-5 Mini" },
-      { value: "gpt-5-nano", label: "GPT-5 Nano" },
-      { value: "gpt-4o", label: "GPT-4o" },
-      { value: "gpt-4o-mini", label: "GPT-4o Mini" },
-      { value: "gpt-4-turbo", label: "GPT-4 Turbo" },
-      { value: "gpt-4", label: "GPT-4" },
-      { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo" },
-      { value: "claude-4-sonnet", label: "Claude 4 Sonnet" },
-      { value: "claude-3.5-sonnet", label: "Claude 3.5 Sonnet" },
-      { value: "claude-3-opus", label: "Claude 3 Opus" },
-      { value: "claude-3-haiku", label: "Claude 3 Haiku" },
-    ];
-    return (
-      <>
-        <div className="space-y-2">
-          <Label className="text-xs">Tipo de Agente</Label>
-          <Select value={(config.agentType as string) || ""} onValueChange={(v) => {
-            updateConfig("agentType", v);
-            const agent = AGENT_TEMPLATES.find((a) => a.type === v);
-            if (agent) {
-              updateConfig("agentId", agent.id);
-            }
-          }}>
-            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione um agente" /></SelectTrigger>
-            <SelectContent>
-              {AGENT_TEMPLATES.map((agent) => (
-                <SelectItem key={agent.id} value={agent.type}>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{agent.name}</span>
-                    <span className="text-muted-foreground text-[10px]">({agent.type})</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        {(config.agentType as string) && (
-          <div className="rounded-lg border border-border/60 bg-muted/20 p-2.5 space-y-1">
-            <p className="text-[10px] font-semibold text-foreground">
-              {AGENT_TEMPLATES.find((a) => a.type === config.agentType)?.name}
-            </p>
-            <p className="text-[9px] text-muted-foreground">
-              {AGENT_TEMPLATES.find((a) => a.type === config.agentType)?.objective}
-            </p>
-          </div>
-        )}
-        <div className="space-y-2">
-          <Label className="text-xs">Modelo LLM</Label>
-          <Select value={(config.model as string) || "gemini-2.5-flash"} onValueChange={(v) => updateConfig("model", v)}>
-            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {LLM_MODELS.map((m) => (
-                <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label className="text-xs">Temperature</Label>
-          <Input type="number" step="0.1" min="0" max="2" value={(config.temperature as number) ?? 0.7} onChange={(e) => updateConfig("temperature", parseFloat(e.target.value))} className="h-8 text-xs" />
-        </div>
-      </>
-    );
+    return <AgentAIConfig config={config} updateConfig={updateConfig} />;
   }
 
   // ── Function ──
