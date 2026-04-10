@@ -48,7 +48,7 @@ export const LLM_PROVIDERS: IntegrationProvider[] = [
   {
     label: "Google Gemini",
     provider: "gemini",
-    description: "Gemini Pro, Flash e IA multimodal do Google",
+    description: "Gemini 2.5 Pro, Flash e IA multimodal do Google",
     logo: "https://cdn.simpleicons.org/googlegemini",
     apiKeyUrl: "https://aistudio.google.com/apikey",
     apiKeyUrlLabel: "aistudio.google.com",
