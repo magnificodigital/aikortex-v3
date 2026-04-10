@@ -740,7 +740,7 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
           <div className="flex items-center gap-1">
             {[
               { label: "Agente",       icon: Bot,               tab: "agent" },
-              { label: "Memória",      icon: Brain,             tab: "memory" },
+              ...(keys["anthropic"]?.configured ? [{ label: "Memória", icon: Brain, tab: "memory" }] : []),
               { label: "Integrações",  icon: Plug,              tab: "connectors" },
               { label: "Canais",       icon: Share2,            tab: "channels" },
               { label: "Avançado",     icon: SlidersHorizontal, tab: "advanced" },
@@ -791,7 +791,7 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
           <SheetHeader className="sr-only">
             <SheetTitle>Configurações do Agente</SheetTitle>
           </SheetHeader>
-          {rightPanelTab === "memory" ? (
+          {rightPanelTab === "memory" && keys["anthropic"]?.configured ? (
             <AgentMemoryTab agentId={agentId && !TEMPLATE_MAP[agentId] ? agentId : undefined} />
           ) : (
             <AgentRightPanel
