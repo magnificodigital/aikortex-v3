@@ -99,9 +99,6 @@ const SETTINGS_NAV = [
     { key: "files_nav",    icon: FileText,  label: "Conhecimento" },
     { key: "voice_nav",    icon: Mic,       label: "Voz" },
   ]},
-  { section: "CONFIGURAÇÕES", items: [
-    { key: "api_config",   icon: Settings,  label: "Parâmetros do LLM" },
-  ]},
 ];
 
 export interface ApiConfig {
@@ -794,108 +791,6 @@ const AgentRightPanel = ({
                   </div>
                 )}
 
-                {/* Parâmetros do LLM */}
-                {settingsNav === "api_config" && (
-                  <div className="space-y-6">
-                    <div>
-                      <h2 className="text-lg font-bold text-foreground">Parâmetros do LLM</h2>
-                      <p className="text-sm text-muted-foreground mt-1">Ajuste como o modelo de IA gera as respostas.</p>
-                    </div>
-
-                    <div className="space-y-3 rounded-xl border border-border p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <label className="text-sm font-semibold text-foreground">Criatividade</label>
-                          <p className="text-[11px] text-muted-foreground">Valores altos = respostas mais criativas. Valores baixos = mais previsíveis.</p>
-                        </div>
-                        <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">{apiConfig.temperature}</span>
-                      </div>
-                      <input type="range" min={0} max={2} step={0.1} value={apiConfig.temperature}
-                        onChange={(e) => setApiConfig(prev => ({ ...prev, temperature: parseFloat(e.target.value) }))}
-                        className="w-full accent-primary" />
-                      <div className="flex justify-between text-[10px] text-muted-foreground">
-                        <span>Preciso</span><span>Equilibrado</span><span>Criativo</span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3 rounded-xl border border-border p-4">
-                      <div>
-                        <label className="text-sm font-semibold text-foreground">Tamanho máximo da resposta</label>
-                        <p className="text-[11px] text-muted-foreground">Quantidade máxima de tokens por resposta.</p>
-                      </div>
-                      <Input type="number" min={1} max={128000} value={apiConfig.maxTokens}
-                        onChange={(e) => setApiConfig(prev => ({ ...prev, maxTokens: parseInt(e.target.value) || 2048 }))}
-                        className="text-sm font-mono" />
-                    </div>
-
-                    <div className="space-y-3 rounded-xl border border-border p-4">
-                      <div>
-                        <label className="text-sm font-semibold text-foreground">Formato de resposta</label>
-                        <p className="text-[11px] text-muted-foreground">Texto livre ou JSON estruturado.</p>
-                      </div>
-                      <Select value={apiConfig.responseFormat} onValueChange={(v) => setApiConfig(prev => ({ ...prev, responseFormat: v as "text" | "json" }))}>
-                        <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="text">Texto</SelectItem>
-                          <SelectItem value="json">JSON</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <details className="rounded-xl border border-border">
-                      <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-foreground hover:bg-muted/50 transition-colors">
-                        Parâmetros avançados
-                      </summary>
-                      <div className="px-4 pb-4 space-y-4 border-t border-border pt-4">
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <label className="text-sm font-medium">Top P</label>
-                              <p className="text-[10px] text-muted-foreground">Controla a diversidade das palavras escolhidas.</p>
-                            </div>
-                            <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">{apiConfig.topP}</span>
-                          </div>
-                          <input type="range" min={0} max={1} step={0.05} value={apiConfig.topP}
-                            onChange={(e) => setApiConfig(prev => ({ ...prev, topP: parseFloat(e.target.value) }))}
-                            className="w-full accent-primary" />
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <label className="text-sm font-medium">Penalidade de frequência</label>
-                              <p className="text-[10px] text-muted-foreground">Reduz repetição de palavras já usadas.</p>
-                            </div>
-                            <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">{apiConfig.frequencyPenalty}</span>
-                          </div>
-                          <input type="range" min={-2} max={2} step={0.1} value={apiConfig.frequencyPenalty}
-                            onChange={(e) => setApiConfig(prev => ({ ...prev, frequencyPenalty: parseFloat(e.target.value) }))}
-                            className="w-full accent-primary" />
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <label className="text-sm font-medium">Penalidade de presença</label>
-                              <p className="text-[10px] text-muted-foreground">Incentiva o modelo a abordar novos tópicos.</p>
-                            </div>
-                            <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">{apiConfig.presencePenalty}</span>
-                          </div>
-                          <input type="range" min={-2} max={2} step={0.1} value={apiConfig.presencePenalty}
-                            onChange={(e) => setApiConfig(prev => ({ ...prev, presencePenalty: parseFloat(e.target.value) }))}
-                            className="w-full accent-primary" />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium">Stop Sequences</label>
-                          <p className="text-[10px] text-muted-foreground">Sequências que fazem o modelo parar de gerar.</p>
-                          <Input value={apiConfig.stopSequences.join(", ")}
-                            onChange={(e) => setApiConfig(prev => ({ ...prev, stopSequences: e.target.value ? e.target.value.split(",").map(s => s.trim()).filter(Boolean) : [] }))}
-                            placeholder='Ex: "###", "FIM"' className="text-sm font-mono" />
-                        </div>
-                      </div>
-                    </details>
-
-                    <Button variant="outline" size="sm" className="text-xs" onClick={() => setApiConfig(DEFAULT_API_CONFIG)}>Restaurar padrões</Button>
-                  </div>
-                )}
               </div>
             </ScrollArea>
           </div>
