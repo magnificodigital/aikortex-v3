@@ -37,7 +37,6 @@ export interface VoiceConfig {
   pronunciations: Array<{ word: string; pronunciation: string }>;
   recordCalls: boolean;
   actions: string[];
-  elevenLabsAgentId?: string;
 }
 
 export const DEFAULT_VOICE_CONFIG: VoiceConfig = {
@@ -63,20 +62,19 @@ export const DEFAULT_VOICE_CONFIG: VoiceConfig = {
   pronunciations: [],
   recordCalls: false,
   actions: [],
-  elevenLabsAgentId: "",
 };
 
-const VOICES = [
-  { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah" },
-  { id: "FGY2WhTYpPnrIDTdsKH5", name: "Laura" },
-  { id: "IKne3meq5aSn9XLyUdCD", name: "Charlie" },
-  { id: "JBFqnCBsd6RMkjVDRZzb", name: "George" },
-  { id: "CwhRBWXzGAHq8TQ4Fs17", name: "Roger" },
-  { id: "TX3LPaxmHKxFdv7VOQHJ", name: "Liam" },
-  { id: "Xb7hH8MSUJpSbSDYk0k2", name: "Alice" },
-  { id: "XrExE9yKIg1WjnnlVkGX", name: "Matilda" },
-  { id: "pFZP5JQG7iQjIQuC4Bku", name: "Lily" },
-  { id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel" },
+const FALLBACK_VOICES = [
+  { voice_id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah" },
+  { voice_id: "FGY2WhTYpPnrIDTdsKH5", name: "Laura" },
+  { voice_id: "IKne3meq5aSn9XLyUdCD", name: "Charlie" },
+  { voice_id: "JBFqnCBsd6RMkjVDRZzb", name: "George" },
+  { voice_id: "CwhRBWXzGAHq8TQ4Fs17", name: "Roger" },
+  { voice_id: "TX3LPaxmHKxFdv7VOQHJ", name: "Liam" },
+  { voice_id: "Xb7hH8MSUJpSbSDYk0k2", name: "Alice" },
+  { voice_id: "XrExE9yKIg1WjnnlVkGX", name: "Matilda" },
+  { voice_id: "pFZP5JQG7iQjIQuC4Bku", name: "Lily" },
+  { voice_id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel" },
 ];
 
 const LANGUAGES = [
