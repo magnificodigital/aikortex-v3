@@ -125,7 +125,7 @@ const AgentBuilderStudio = () => {
           : [],
         instructions: preset.context.targetAudienceDescription || "",
         provider: "auto",
-        model: "gemini-2.5-flash",
+        model: "google/gemini-2.0-flash",
         stages: preset.stages.map(s => ({ id: s.id, name: s.name, description: s.description, example: s.example })),
       };
       // Small delay to feel "generated"
@@ -321,7 +321,7 @@ const AgentBuilderStudio = () => {
                         onClick={() => {
                           updateConfigField("provider", opt.id);
                           if (opt.models?.length) updateConfigField("model", opt.models[0].value);
-                          else updateConfigField("model", "gemini-2.5-flash");
+                          else updateConfigField("model", "google/gemini-2.0-flash");
                         }}
                         className={`relative rounded-lg border p-3 cursor-pointer transition-all ${
                           isSelected
