@@ -72,9 +72,11 @@ const AdminPanel = () => {
             <TabsTrigger value="support" className="text-xs gap-1.5">
               <MessageSquare className="w-3.5 h-3.5" /> Suporte
             </TabsTrigger>
-            <TabsTrigger value="config" className="text-xs gap-1.5">
-              <Settings className="w-3.5 h-3.5" /> Configurações
-            </TabsTrigger>
+            {isPlatformOwner && (
+              <TabsTrigger value="api-keys" className="text-xs gap-1.5">
+                <Key className="w-3.5 h-3.5" /> Chaves de API
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="users"><AdminUsersTab /></TabsContent>
@@ -86,7 +88,9 @@ const AdminPanel = () => {
           <TabsContent value="credits"><AdminCreditsTab /></TabsContent>
           <TabsContent value="tutorials"><AdminTutorialsTab /></TabsContent>
           <TabsContent value="support"><AdminSupportTab /></TabsContent>
-          <TabsContent value="config"><AdminConfigTab /></TabsContent>
+          {isPlatformOwner && (
+            <TabsContent value="api-keys"><AdminConfigTab /></TabsContent>
+          )}
         </Tabs>
       </div>
     </AdminLayout>
