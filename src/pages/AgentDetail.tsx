@@ -740,6 +740,28 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
             <span className="text-sm font-semibold">Agente de Ligação</span>
           </div>
           <div className="flex items-center gap-1">
+            {/* Outbound call button */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1 px-2"
+              onClick={() => setShowOutboundCall(true)}
+            >
+              <Phone className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Iniciar Ligação</span>
+            </Button>
+            {/* Browser call button */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1 px-2"
+              onClick={() => setShowBrowserCall(true)}
+              disabled={!keys["elevenlabs"]?.configured}
+            >
+              <Monitor className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Testar no navegador</span>
+            </Button>
+            <div className="w-px h-5 bg-border mx-1" />
             {[
               { label: "Agente",       icon: Bot,               tab: "agent" },
               ...(keys["anthropic"]?.configured ? [{ label: "Memória", icon: Brain, tab: "memory" }] : []),
@@ -786,6 +808,29 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
           />
         </ConversationProvider>
       </div>
+
+      {/* Outbound Call Dialog */}
+      <OutboundCallDialog
+        open={showOutboundCall}
+        onOpenChange={setShowOutboundCall}
+        agentId={agentId || ""}
+        agentName={loadedAgent.name}
+        hasTelnyxKey={!!keys["telnyx"]?.configured}
+      />
+
+      {/* Browser Call Widget */}
+      <ConversationProvider>
+        <BrowserCallWidget
+          open={showBrowserCall}
+          onClose={() => setShowBrowserCall(false)}
+          agentId={agentId || ""}
+          agentName={loadedAgent.name}
+          agentAvatar={loadedAgent.avatar}
+          agentPrompt={agentConfig?.instructions || agentConfig?.objective || ""}
+          agentGreeting={agentConfig?.greetingMessage || ""}
+          voiceId={agentConfig?.voiceConfig?.voiceId}
+        />
+      </ConversationProvider>
 
       {/* ── Config Panel (Sheet overlay like AppBuilder) ── */}
       <Sheet open={showConfig} onOpenChange={setShowConfig}>
