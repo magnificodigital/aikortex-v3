@@ -1,10 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -12,56 +7,117 @@ const supabase = createClient(
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+      },
+    });
   }
 
   try {
     const body = await req.json();
     const event = body.data?.event_type;
     const payload = body.data?.payload;
-
+    const callControlId = payload?.call_control_id;
     const clientState = payload?.client_state
       ? JSON.parse(atob(payload.client_state))
       : null;
 
-    const callControlId = payload?.call_control_id;
-
     switch (event) {
       case "call.initiated": {
-        await telnyxCommand(callControlId, "answer", {});
+        if (clientState?.agent_id) {
+          // Outbound call — just answer
+          await telnyxAction(callControlId, "answer", {}, clientState.user_id);
+        } else {
+          // Inbound call — find agent by phone number
+          const toNumber = payload?.to;
+          const { data: agent } = await supabase
+            .from("user_agents")
+            .select("*")
+            .eq("telnyx_phone_number", toNumber)
+            .single();
+
+          if (!agent) {
+            await telnyxAction(callControlId, "hangup", {}, null);
+            break;
+          }
+
+          await telnyxAction(callControlId, "answer", {}, agent.user_id);
+
+          await supabase.from("call_logs").insert({
+            user_id: agent.user_id,
+            agent_id: agent.id,
+            direction: "inbound",
+            channel: "phone",
+            phone_from: payload?.from,
+            phone_to: toNumber,
+            status: "in_progress",
+            telnyx_call_id: callControlId,
+          });
+
+          await (supabase.from("call_sessions") as any).upsert({
+            call_control_id: callControlId,
+            agent_id: agent.id,
+            user_id: agent.user_id,
+            messages: [],
+            created_at: new Date().toISOString(),
+          });
+        }
         break;
       }
 
       case "call.answered": {
-        if (!clientState?.agent_id) break;
+        const agentId = clientState?.agent_id;
+        const userId = clientState?.user_id;
+        if (!agentId) break;
 
         const { data: agent } = await supabase
           .from("user_agents")
           .select("*")
-          .eq("id", clientState.agent_id)
+          .eq("id", agentId)
           .single();
 
         if (!agent) break;
 
-        const greeting =
-          (agent.config as Record<string, unknown>)?.greeting as string ??
-          `Olá! Sou ${agent.name}. Como posso te ajudar hoje?`;
-
-        const audioUrl = await generateElevenLabsTTS(
-          greeting,
-          clientState.user_id,
-          agent.voice_id
-        );
-
-        if (audioUrl) {
-          await telnyxCommand(callControlId, "playback_start", { audio_url: audioUrl });
-        }
-
-        await telnyxCommand(callControlId, "transcription_start", {
-          language: agent.voice_language ?? "pt-BR",
-          transcription_engine: "A",
+        await (supabase.from("call_sessions") as any).upsert({
+          call_control_id: callControlId,
+          agent_id: agent.id,
+          user_id: userId,
+          messages: [],
+          created_at: new Date().toISOString(),
         });
 
+        // Speak opening message if agent speaks first
+        const config = (agent.config ?? {}) as Record<string, any>;
+        if (config.who_speaks_first === "agent" && config.opening_message) {
+          const audioUrl = await generateTTS(
+            config.opening_message,
+            userId,
+            agent.voice_id,
+            agent.voice_stability,
+            config.voice_speed
+          );
+          if (audioUrl) {
+            await telnyxAction(callControlId, "playback_start", {
+              audio_url: audioUrl,
+              loop: false,
+            }, userId);
+          }
+        }
+
+        // Start transcription
+        const keywordBoost = config.keyword_boost
+          ? config.keyword_boost.split(",").map((k: string) => k.trim())
+          : [];
+
+        await telnyxAction(callControlId, "transcription_start", {
+          language: agent.voice_language ?? "pt-BR",
+          transcription_engine: "A",
+          ...(keywordBoost.length > 0 ? { keywords: keywordBoost } : {}),
+        }, userId);
+
+        // Update log
         await supabase
           .from("call_logs")
           .update({ status: "in_progress" })
@@ -72,52 +128,83 @@ Deno.serve(async (req) => {
 
       case "call.transcription": {
         const transcript = payload?.transcription_data?.transcript;
-        if (!transcript || !clientState?.agent_id) break;
+        if (!transcript) break;
+
+        const { data: session } = await (supabase.from("call_sessions") as any)
+          .select("*")
+          .eq("call_control_id", callControlId)
+          .single();
+
+        if (!session) break;
 
         const { data: agent } = await supabase
           .from("user_agents")
           .select("*")
-          .eq("id", clientState.agent_id)
+          .eq("id", session.agent_id)
           .single();
 
         if (!agent) break;
 
-        const aiResponse = await getAgentResponse(transcript, agent, clientState.user_id);
+        const config = (agent.config ?? {}) as Record<string, any>;
 
-        if (aiResponse) {
-          const audioUrl = await generateElevenLabsTTS(
-            aiResponse,
-            clientState.user_id,
-            agent.voice_id
-          );
-          if (audioUrl) {
-            await telnyxCommand(callControlId, "playback_start", { audio_url: audioUrl });
-          }
+        // Check hangup keywords
+        const hangupKeywords = config.action_hangup_keywords
+          ? config.action_hangup_keywords.split(",").map((k: string) => k.trim().toLowerCase())
+          : [];
+        if (hangupKeywords.some((kw: string) => transcript.toLowerCase().includes(kw))) {
+          await telnyxAction(callControlId, "hangup", {}, session.user_id);
+          break;
         }
 
-        // Append transcript entry
-        const { data: callLog } = await supabase
-          .from("call_logs")
-          .select("transcript")
-          .eq("telnyx_call_id", callControlId)
-          .single();
+        // Check transfer
+        if (config.action_transfer_number && transcript.toLowerCase().includes("falar com humano")) {
+          await telnyxAction(callControlId, "transfer", {
+            to: config.action_transfer_number,
+          }, session.user_id);
+          break;
+        }
 
-        if (callLog) {
-          const existing = Array.isArray(callLog.transcript) ? callLog.transcript : [];
-          existing.push({ role: "user", content: transcript, ts: new Date().toISOString() });
-          if (aiResponse) {
-            existing.push({ role: "assistant", content: aiResponse, ts: new Date().toISOString() });
-          }
-          await supabase
-            .from("call_logs")
-            .update({ transcript: existing })
-            .eq("telnyx_call_id", callControlId);
+        // Add user message to session
+        const messages = [...(session.messages ?? []), { role: "user", content: transcript }];
+        await (supabase.from("call_sessions") as any)
+          .update({ messages })
+          .eq("call_control_id", callControlId);
+
+        // Get AI response
+        const aiResponse = await getAgentLLMResponse(agent, messages, session.user_id);
+        if (!aiResponse) break;
+
+        // Update session with assistant response
+        const updatedMessages = [...messages, { role: "assistant", content: aiResponse }];
+        await (supabase.from("call_sessions") as any)
+          .update({ messages: updatedMessages })
+          .eq("call_control_id", callControlId);
+
+        // Generate TTS and play
+        const audioUrl = await generateTTS(
+          aiResponse,
+          session.user_id,
+          agent.voice_id,
+          agent.voice_stability,
+          config.voice_speed
+        );
+
+        if (audioUrl) {
+          await telnyxAction(callControlId, "playback_start", {
+            audio_url: audioUrl,
+            loop: false,
+          }, session.user_id);
         }
 
         break;
       }
 
       case "call.hangup": {
+        const { data: session } = await (supabase.from("call_sessions") as any)
+          .select("*")
+          .eq("call_control_id", callControlId)
+          .single();
+
         const duration =
           payload?.end_time && payload?.start_time
             ? Math.floor(
@@ -127,35 +214,123 @@ Deno.serve(async (req) => {
               )
             : 0;
 
+        // Update call log
         await supabase
           .from("call_logs")
           .update({
             status: "completed",
             duration_seconds: duration,
             ended_at: new Date().toISOString(),
+            transcript: session?.messages ?? [],
           })
           .eq("telnyx_call_id", callControlId);
+
+        // Post-call actions
+        if (session?.agent_id) {
+          const { data: agent } = await supabase
+            .from("user_agents")
+            .select("config, telnyx_phone_number")
+            .eq("id", session.agent_id)
+            .single();
+
+          const agentConfig = (agent?.config ?? {}) as Record<string, any>;
+
+          // Send post-call SMS
+          if (agentConfig.action_post_sms && payload?.from && agent?.telnyx_phone_number) {
+            await sendSMS(
+              agent.telnyx_phone_number,
+              payload.from,
+              agentConfig.action_post_sms,
+              session.user_id
+            );
+          }
+
+          // Call post-call webhook
+          if (agentConfig.action_webhook_url) {
+            try {
+              await fetch(agentConfig.action_webhook_url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  call_control_id: callControlId,
+                  duration,
+                  transcript: session?.messages ?? [],
+                  agent_id: session.agent_id,
+                }),
+              });
+            } catch (e) {
+              console.error("Post-call webhook error:", e);
+            }
+          }
+        }
+
+        // Cleanup session
+        await (supabase.from("call_sessions") as any)
+          .delete()
+          .eq("call_control_id", callControlId);
 
         break;
       }
     }
 
     return new Response(JSON.stringify({ received: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
     });
   } catch (err) {
     console.error("telnyx-webhook error:", err);
     return new Response(JSON.stringify({ error: String(err) }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
     });
   }
 });
 
-async function telnyxCommand(callControlId: string, command: string, params: object) {
-  const apiKey = Deno.env.get("TELNYX_API_KEY") ?? "";
+// ─── Helper Functions ───
+
+async function getTelnyxKey(userId: string | null): Promise<string> {
+  if (userId) {
+    const { data } = await supabase
+      .from("user_api_keys")
+      .select("api_key")
+      .eq("user_id", userId)
+      .eq("provider", "telnyx")
+      .single();
+    if (data?.api_key) return data.api_key;
+  }
+  const { data } = await supabase
+    .from("platform_config")
+    .select("value")
+    .eq("key", "telnyx_api_key")
+    .single();
+  return (data as any)?.value ?? Deno.env.get("TELNYX_API_KEY") ?? "";
+}
+
+async function getElevenLabsKey(userId: string): Promise<string> {
+  const { data } = await supabase
+    .from("user_api_keys")
+    .select("api_key")
+    .eq("user_id", userId)
+    .eq("provider", "elevenlabs")
+    .single();
+  if (data?.api_key) return data.api_key;
+
+  const { data: platform } = await supabase
+    .from("platform_config")
+    .select("value")
+    .eq("key", "elevenlabs_api_key")
+    .single();
+  return (platform as any)?.value ?? Deno.env.get("ELEVENLABS_API_KEY") ?? "";
+}
+
+async function telnyxAction(
+  callControlId: string,
+  action: string,
+  params: object,
+  userId: string | null
+) {
+  const apiKey = await getTelnyxKey(userId);
   const res = await fetch(
-    `https://api.telnyx.com/v2/calls/${callControlId}/actions/${command}`,
+    `https://api.telnyx.com/v2/calls/${callControlId}/actions/${action}`,
     {
       method: "POST",
       headers: {
@@ -165,23 +340,18 @@ async function telnyxCommand(callControlId: string, command: string, params: obj
       body: JSON.stringify(params),
     }
   );
-  await res.text(); // consume
+  await res.text();
   return res;
 }
 
-async function generateElevenLabsTTS(
+async function generateTTS(
   text: string,
   userId: string,
-  voiceId?: string | null
+  voiceId?: string | null,
+  stability?: number | null,
+  speed?: number | null
 ): Promise<string | null> {
-  const { data: keyData } = await supabase
-    .from("user_api_keys")
-    .select("api_key")
-    .eq("user_id", userId)
-    .eq("provider", "elevenlabs")
-    .single();
-
-  const apiKey = keyData?.api_key ?? Deno.env.get("ELEVENLABS_API_KEY");
+  const apiKey = await getElevenLabsKey(userId);
   if (!apiKey) return null;
 
   const voice = voiceId ?? "EXAVITQu4vr4xnSDxMaL";
@@ -190,7 +360,15 @@ async function generateElevenLabsTTS(
     {
       method: "POST",
       headers: { "xi-api-key": apiKey, "Content-Type": "application/json" },
-      body: JSON.stringify({ text, model_id: "eleven_multilingual_v2" }),
+      body: JSON.stringify({
+        text,
+        model_id: "eleven_multilingual_v2",
+        voice_settings: {
+          stability: stability ?? 0.5,
+          similarity_boost: 0.75,
+          speed: speed ?? 1.0,
+        },
+      }),
     }
   );
 
@@ -200,10 +378,10 @@ async function generateElevenLabsTTS(
   }
 
   const audioBuffer = await res.arrayBuffer();
-  const fileName = `tts/${Date.now()}.mp3`;
+  const fileName = `tts/${crypto.randomUUID()}.mp3`;
   const { data } = await supabase.storage
     .from("call-audio")
-    .upload(fileName, audioBuffer, { contentType: "audio/mpeg", upsert: true });
+    .upload(fileName, audioBuffer, { contentType: "audio/mpeg", upsert: false });
 
   if (!data) return null;
 
@@ -211,9 +389,9 @@ async function generateElevenLabsTTS(
   return urlData.publicUrl;
 }
 
-async function getAgentResponse(
-  userMessage: string,
+async function getAgentLLMResponse(
   agent: Record<string, unknown>,
+  messages: Array<{ role: string; content: string }>,
   userId: string
 ): Promise<string | null> {
   try {
@@ -227,7 +405,7 @@ async function getAgentResponse(
         },
         body: JSON.stringify({
           agent_id: agent.id,
-          message: userMessage,
+          messages,
           user_id: userId,
           channel: "voice",
         }),
@@ -238,4 +416,16 @@ async function getAgentResponse(
   } catch {
     return null;
   }
+}
+
+async function sendSMS(from: string, to: string, message: string, userId: string) {
+  const apiKey = await getTelnyxKey(userId);
+  return fetch("https://api.telnyx.com/v2/messages", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ from, to, text: message }),
+  });
 }

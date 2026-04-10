@@ -44,15 +44,27 @@ Deno.serve(async (req) => {
     }
     const userId = claimsData.claims.sub as string;
 
-    // Get Telnyx API key
-    const { data: keyData } = await supabase
+    // Get Telnyx API key (user key → platform key → env)
+    let telnyxApiKey = "";
+    const { data: userKey } = await supabase
       .from("user_api_keys")
       .select("api_key")
       .eq("user_id", userId)
       .eq("provider", "telnyx")
       .single();
 
-    if (!keyData) {
+    if (userKey?.api_key) {
+      telnyxApiKey = userKey.api_key;
+    } else {
+      const { data: platformKey } = await supabase
+        .from("platform_config")
+        .select("value")
+        .eq("key", "telnyx_api_key")
+        .single();
+      telnyxApiKey = (platformKey as any)?.value ?? Deno.env.get("TELNYX_API_KEY") ?? "";
+    }
+
+    if (!telnyxApiKey) {
       return new Response(
         JSON.stringify({ error: "Telnyx API key not configured", action: "configure_key" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -81,19 +93,31 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Get connection ID (platform config → env)
+    let connectionId = "";
+    const { data: connConfig } = await supabase
+      .from("platform_config")
+      .select("value")
+      .eq("key", "telnyx_connection_id")
+      .single();
+    connectionId = (connConfig as any)?.value ?? Deno.env.get("TELNYX_CONNECTION_ID") ?? "";
+
+    // Encode agent context in client_state
+    const clientState = btoa(JSON.stringify({ agent_id, user_id: userId }));
+
     // Initiate call via Telnyx
     const telnyxRes = await fetch("https://api.telnyx.com/v2/calls", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${keyData.api_key}`,
+        Authorization: `Bearer ${telnyxApiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        connection_id: Deno.env.get("TELNYX_CONNECTION_ID") ?? "",
+        connection_id: connectionId,
         to: phone_to,
         from: agent.telnyx_phone_number,
         webhook_url: `${Deno.env.get("SUPABASE_URL")}/functions/v1/telnyx-webhook`,
-        client_state: btoa(JSON.stringify({ agent_id, user_id: userId })),
+        client_state: clientState,
       }),
     });
 
