@@ -14,6 +14,7 @@ import {
   Play, Square, AlertTriangle, Loader2, Search, Info,
 } from "lucide-react";
 import { useElevenLabsVoices } from "@/hooks/use-elevenlabs-voices";
+import PhoneNumberSection from "./PhoneNumberSection";
 
 export interface VoiceConfig {
   agentName: string;
@@ -331,6 +332,12 @@ const VoiceConfigPanel = ({ config, onChange }: Props) => {
           </div>
         </section>
 
+        {/* ── Número de Telefone ── */}
+        <PhoneNumberSection
+          selectedNumber={config.phoneNumber}
+          onSelect={v => update("phoneNumber", v)}
+        />
+
         {/* ── Tipo de Ligação ── */}
         <section className="space-y-3">
           <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Tipo de Ligação</h3>
@@ -351,12 +358,6 @@ const VoiceConfigPanel = ({ config, onChange }: Props) => {
             >
               <PhoneOutgoing className="w-3.5 h-3.5" /> Outbound
             </Button>
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs">
-              {config.callType === "inbound" ? "Número para receber chamadas" : "Número de destino"}
-            </Label>
-            <Input value={config.phoneNumber} onChange={e => update("phoneNumber", e.target.value)} placeholder="+55 11 99999-9999" className="h-8 text-xs" />
           </div>
         </section>
 
