@@ -743,7 +743,7 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
               ...(keys["anthropic"]?.configured ? [{ label: "Memória", icon: Brain, tab: "memory" }] : []),
               { label: "Integrações",  icon: Plug,              tab: "connectors" },
               { label: "Canais",       icon: Share2,            tab: "channels" },
-              { label: "Avançado",     icon: SlidersHorizontal, tab: "advanced" },
+              
             ].map((btn) => (
               <Button
                 key={btn.tab}

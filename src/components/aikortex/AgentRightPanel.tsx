@@ -99,6 +99,9 @@ const SETTINGS_NAV = [
     { key: "files_nav",    icon: FileText,  label: "Conhecimento" },
     { key: "voice_nav",    icon: Mic,       label: "Voz" },
   ]},
+  { section: "CONFIGURAÇÕES", items: [
+    { key: "api_config",   icon: Settings,  label: "Parâmetros do LLM" },
+  ]},
 ];
 
 export interface ApiConfig {
