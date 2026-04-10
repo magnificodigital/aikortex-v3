@@ -11,21 +11,9 @@ import { X, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { UserAgent } from "@/hooks/use-user-agents";
 
-const LLM_MODELS = [
-  { value: "gemini-3.1-pro-preview", label: "Gemini 3.1 Pro" },
-  { value: "gemini-3-flash-preview", label: "Gemini 3 Flash" },
-  { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
-  { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
-  { value: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite" },
-  { value: "gpt-5.2", label: "GPT-5.2" },
-  { value: "gpt-5", label: "GPT-5" },
-  { value: "gpt-5-mini", label: "GPT-5 Mini" },
-  { value: "gpt-5-nano", label: "GPT-5 Nano" },
-  { value: "gpt-4o", label: "GPT-4o" },
-  { value: "gpt-4o-mini", label: "GPT-4o Mini" },
-  { value: "claude-4-sonnet", label: "Claude 4 Sonnet" },
-  { value: "claude-3.5-sonnet", label: "Claude 3.5 Sonnet" },
-];
+import { LLM_MODELS as ALL_MODELS } from "@/lib/llm-models";
+
+const LLM_MODELS = ALL_MODELS.map(m => ({ value: m.id, label: m.name }));
 
 function AgentAIConfig({ config, updateConfig }: { config: Record<string, unknown>; updateConfig: (key: string, value: unknown) => void }) {
   const [userAgents, setUserAgents] = useState<UserAgent[]>([]);
@@ -192,26 +180,7 @@ function renderConfigFields(
 ) {
   // ── Agent ──
   if (nodeType === "agent") {
-    const LLM_MODELS = [
-      { value: "gemini-3.1-pro-preview", label: "Gemini 3.1 Pro" },
-      { value: "gemini-3-flash-preview", label: "Gemini 3 Flash" },
-      { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
-      { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
-      { value: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite" },
-      { value: "gpt-5.2", label: "GPT-5.2" },
-      { value: "gpt-5", label: "GPT-5" },
-      { value: "gpt-5-mini", label: "GPT-5 Mini" },
-      { value: "gpt-5-nano", label: "GPT-5 Nano" },
-      { value: "gpt-4o", label: "GPT-4o" },
-      { value: "gpt-4o-mini", label: "GPT-4o Mini" },
-      { value: "gpt-4-turbo", label: "GPT-4 Turbo" },
-      { value: "gpt-4", label: "GPT-4" },
-      { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo" },
-      { value: "claude-4-sonnet", label: "Claude 4 Sonnet" },
-      { value: "claude-3.5-sonnet", label: "Claude 3.5 Sonnet" },
-      { value: "claude-3-opus", label: "Claude 3 Opus" },
-      { value: "claude-3-haiku", label: "Claude 3 Haiku" },
-    ];
+    const AGENT_LLM_MODELS = LLM_MODELS;
     return (
       <>
         <div className="space-y-2">

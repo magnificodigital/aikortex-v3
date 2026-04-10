@@ -15,6 +15,7 @@ import type { AgentType } from "@/types/agent-builder";
 import { supabase } from "@/integrations/supabase/client";
 import { AGENT_PRESETS } from "@/types/agent-presets";
 import { DEFAULT_FREE_SETUP_MODEL, GATEWAY_MODELS, normalizeFreeSetupModel } from "@/lib/free-setup-models";
+import { LLM_MODELS as ALL_LLM_MODELS, getGroupedModels, getProviderForModel, DEFAULT_FREE_MODEL } from "@/lib/llm-models";
 import AgentMemoryTab from "@/components/aikortex/AgentMemoryTab";
 import { useAgentMemory } from "@/hooks/use-agent-memory";
 
@@ -34,25 +35,12 @@ const AVATAR_BY_TYPE: Record<string, string> = {
   SDR: avatar1, SAC: avatar3, Custom: avatar1,
 };
 
-const LLM_MODELS = [
-  { value: "gemini-2.5-flash",       label: "Gemini 2.5 Flash",      provider: "gemini",    badge: "free" as const },
-  { value: "gemini-2.5-flash-lite",  label: "Gemini 2.5 Flash Lite", provider: "gemini",    badge: "free" as const },
-  { value: "gemini-2.5-pro",         label: "Gemini 2.5 Pro",        provider: "gemini",    badge: "byok" as const },
-  { value: "gpt-4o",                 label: "GPT-4o",                provider: "openai",    badge: "byok" as const },
-  { value: "gpt-4o-mini",            label: "GPT-4o Mini",           provider: "openai",    badge: "byok" as const },
-  { value: "gpt-4-turbo",            label: "GPT-4 Turbo",           provider: "openai",    badge: "byok" as const },
-  { value: "gpt-3.5-turbo",          label: "GPT-3.5 Turbo",         provider: "openai",    badge: "byok" as const },
-  { value: "claude-4-sonnet",        label: "Claude 4 Sonnet",       provider: "anthropic", badge: "byok-anthropic" as const },
-  { value: "claude-3.5-sonnet",      label: "Claude 3.5 Sonnet",     provider: "anthropic", badge: "byok-anthropic" as const },
-  { value: "claude-3-haiku",         label: "Claude 3 Haiku",        provider: "anthropic", badge: "byok-anthropic" as const },
-] as const;
-
-const getProviderForModel = (model: string): string => {
-  if (model.startsWith("gemini")) return "gemini";
-  if (model.startsWith("gpt"))    return "openai";
-  if (model.startsWith("claude")) return "anthropic";
-  return "openai";
-};
+const LLM_MODELS = ALL_LLM_MODELS.map(m => ({
+  value: m.id,
+  label: m.name,
+  provider: m.provider,
+  badge: (m.byok ? (m.provider === "anthropic" ? "byok-anthropic" : "byok") : "free") as "free" | "byok" | "byok-anthropic",
+}));
 
 const STRUCTURE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-structure`;
 

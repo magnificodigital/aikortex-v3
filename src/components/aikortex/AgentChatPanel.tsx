@@ -704,22 +704,35 @@ const AgentChatPanel = ({
             <button className="underline" onClick={onGoToIntegrations}>Configurar</button>
           </div>
         )}
-        {chatMode === "test" && !keysLoading && wizardStep === "done" && hasAnyLLMKey && availableModels.length > 0 && (
-          <div className="mb-2 flex items-center gap-2">
-            <span className="text-xs text-muted-foreground shrink-0">Modelo:</span>
-            <select
-              value={agentModel}
-              onChange={e => setAgentModel(e.target.value)}
-              className="text-xs h-7 rounded-md border border-input bg-background px-2 py-0.5 text-foreground outline-none focus:ring-1 focus:ring-ring flex-1 max-w-[220px]"
-            >
-              {availableModels.map(m => (
-                <option key={m.value} value={m.value}>
-                  {m.label}{m.badge === "free" ? " ✦ Gratuito" : m.badge === "byok-anthropic" ? " 🔑 Requer Anthropic BYOK" : m.badge === "byok" ? " 🔑 Requer chave própria" : ""}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+        {chatMode === "test" && !keysLoading && wizardStep === "done" && hasAnyLLMKey && availableModels.length > 0 && (() => {
+          const grouped = new Map<string, typeof availableModels>();
+          const providerLabels: Record<string, string> = { anthropic: "Anthropic", openai: "OpenAI", google: "Google", meta: "Meta", deepseek: "DeepSeek", mistral: "Mistral", gemini: "Google" };
+          for (const m of availableModels) {
+            const key = m.provider;
+            if (!grouped.has(key)) grouped.set(key, []);
+            grouped.get(key)!.push(m);
+          }
+          return (
+            <div className="mb-2 flex items-center gap-2">
+              <span className="text-xs text-muted-foreground shrink-0">Modelo:</span>
+              <select
+                value={agentModel}
+                onChange={e => setAgentModel(e.target.value)}
+                className="text-xs h-7 rounded-md border border-input bg-background px-2 py-0.5 text-foreground outline-none focus:ring-1 focus:ring-ring flex-1 max-w-[220px]"
+              >
+                {Array.from(grouped.entries()).map(([provider, models]) => (
+                  <optgroup key={provider} label={providerLabels[provider] || provider}>
+                    {models.map(m => (
+                      <option key={m.value} value={m.value}>
+                        {m.label}{m.badge === "free" ? " ✦ Gratuito" : ""}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            </div>
+          );
+        })()}
         <div className={`rounded-xl border border-border bg-card/50 p-1 transition-colors ${
           (wizardStep === "done" || wizardStep === "discover") ? "focus-within:border-primary/30" : "opacity-60"
         }`}>
