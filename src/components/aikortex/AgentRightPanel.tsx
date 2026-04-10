@@ -22,33 +22,30 @@ import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import VoiceConfigPanel, { type VoiceConfig, DEFAULT_VOICE_CONFIG } from "./VoiceConfigPanel";
 
+import { LLM_MODELS, PROVIDER_LABELS, getGroupedModels } from "@/lib/llm-models";
+
 const LLM_PROVIDER_MODELS: Record<string, { models: { value: string; label: string; desc: string }[]; capabilities: string[] }> = {
   OpenAI: {
     models: [
-      { value: "gpt-5.2",       label: "GPT-5.2",        desc: "Mais recente. Raciocínio aprimorado." },
-      { value: "gpt-5",         label: "GPT-5",           desc: "Poderoso. Raciocínio complexo e multimodal." },
-      { value: "gpt-5-mini",    label: "GPT-5 Mini",      desc: "Equilíbrio entre custo e desempenho." },
-      { value: "gpt-4o",        label: "GPT-4o",          desc: "Multimodal com visão e áudio." },
-      { value: "gpt-4o-mini",   label: "GPT-4o Mini",     desc: "Versão leve do GPT-4o." },
-      { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo",   desc: "Rápido e econômico." },
+      { value: "gpt-4o",        label: "GPT-4o",        desc: "Multimodal com visão e áudio." },
+      { value: "gpt-4o-mini",   label: "GPT-4o Mini",   desc: "Versão leve do GPT-4o." },
+      { value: "gpt-4-turbo",   label: "GPT-4 Turbo",   desc: "Alto desempenho com JSON mode." },
     ],
     capabilities: ["Chat e completions", "Visão (imagens)", "Function calling", "JSON mode"],
   },
   Anthropic: {
     models: [
-      { value: "claude-4-sonnet",   label: "Claude 4 Sonnet",   desc: "Mais inteligente e versátil." },
-      { value: "claude-3.5-sonnet", label: "Claude 3.5 Sonnet", desc: "Excelente raciocínio e código." },
-      { value: "claude-3-opus",     label: "Claude 3 Opus",     desc: "Mais poderoso da família Claude 3." },
-      { value: "claude-3-haiku",    label: "Claude 3 Haiku",    desc: "Rápido e econômico." },
+      { value: "claude-sonnet-4-6",          label: "Claude Sonnet 4.5", desc: "Mais inteligente e versátil." },
+      { value: "claude-opus-4-6",            label: "Claude Opus 4",     desc: "Mais poderoso da família Claude." },
+      { value: "claude-haiku-4-5-20251001",  label: "Claude Haiku 4.5",  desc: "Rápido e econômico." },
     ],
     capabilities: ["Chat e completions", "Visão (imagens)", "Function calling", "Contexto de 200K tokens"],
   },
   Gemini: {
     models: [
-      { value: "gemini-3.1-pro-preview", label: "Gemini 3.1 Pro",       desc: "Raciocínio de próxima geração." },
-      { value: "gemini-2.5-pro",         label: "Gemini 2.5 Pro",        desc: "Top-tier com raciocínio avançado." },
-      { value: "gemini-2.5-flash",       label: "Gemini 2.5 Flash",      desc: "Rápido e equilibrado." },
-      { value: "gemini-2.5-flash-lite",  label: "Gemini 2.5 Flash Lite", desc: "Mais econômico." },
+      { value: "google/gemini-2.0-flash", label: "Gemini 2.0 Flash", desc: "Rápido e gratuito via plataforma." },
+      { value: "google/gemini-1.5-pro",   label: "Gemini 1.5 Pro",   desc: "Top-tier com contexto de 1M." },
+      { value: "google/gemini-1.5-flash", label: "Gemini 1.5 Flash", desc: "Equilibrado e econômico." },
     ],
     capabilities: ["Chat e completions", "Visão (imagens e vídeo)", "Function calling", "Contexto de 1M tokens"],
   },
