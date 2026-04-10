@@ -33,7 +33,7 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
       <div className="flex min-h-screen w-full overflow-hidden">
         <AppSidebar
           mobileOpen={mobileSidebarOpen}
-          onMobileClose={() => setMobileSidebarOpen(false)}
+          onMobileClose={handleMobileClose}
         />
         <main className="relative flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-background">
           {showBanner && (
