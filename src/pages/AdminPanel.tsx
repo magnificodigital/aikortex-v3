@@ -14,9 +14,11 @@ import AdminSupportTab from "@/components/admin/AdminSupportTab";
 import AdminConfigTab from "@/components/admin/AdminConfigTab";
 import { useSearchParams } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const AdminPanel = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { isPlatformOwner } = useAuth();
   const activeTab = searchParams.get("tab") || "users";
 
   const handleTabChange = (value: string) => {
