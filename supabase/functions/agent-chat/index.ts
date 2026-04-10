@@ -433,15 +433,16 @@ serve(async (req) => {
             });
           }
         } else {
-        const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-        if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
-        apiUrl = "https://ai.gateway.lovable.dev/v1/chat/completions";
-        apiKey = LOVABLE_API_KEY;
-        apiModel = modelMapping?.gateway || model || "google/gemini-3-flash-preview";
-        headers = {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        };
+          const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+          if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+          apiUrl = "https://ai.gateway.lovable.dev/v1/chat/completions";
+          apiKey = LOVABLE_API_KEY;
+          apiModel = modelMapping?.gateway || model || "google/gemini-3-flash-preview";
+          headers = {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+          };
+        }
       }
     }
 
