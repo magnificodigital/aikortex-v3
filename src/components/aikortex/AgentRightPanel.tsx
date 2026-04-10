@@ -783,6 +783,18 @@ const AgentRightPanel = ({
                   </div>
                 )}
 
+                {/* Voz */}
+                {settingsNav === "voice_nav" && (
+                  <div className="space-y-6">
+                    <div>
+                      <h2 className="text-lg font-bold text-foreground">Configurações de Voz</h2>
+                      <p className="text-sm text-muted-foreground mt-1">Personalize a voz e o comportamento do agente em chamadas.</p>
+                    </div>
+                    <VoiceConfigPanel config={voiceConfig} onChange={setVoiceConfig} />
+                  </div>
+                )}
+
+                {/* Parâmetros do LLM */}
                 {settingsNav === "api_config" && (
                   <div className="space-y-6">
                     <div>
@@ -790,12 +802,11 @@ const AgentRightPanel = ({
                       <p className="text-sm text-muted-foreground mt-1">Ajuste como o modelo de IA gera as respostas.</p>
                     </div>
 
-                    {/* Criatividade (Temperature) */}
                     <div className="space-y-3 rounded-xl border border-border p-4">
                       <div className="flex items-center justify-between">
                         <div>
                           <label className="text-sm font-semibold text-foreground">Criatividade</label>
-                          <p className="text-[11px] text-muted-foreground">Valores altos = respostas mais criativas e variadas. Valores baixos = respostas mais previsíveis e focadas.</p>
+                          <p className="text-[11px] text-muted-foreground">Valores altos = respostas mais criativas. Valores baixos = mais previsíveis.</p>
                         </div>
                         <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">{apiConfig.temperature}</span>
                       </div>
@@ -807,22 +818,20 @@ const AgentRightPanel = ({
                       </div>
                     </div>
 
-                    {/* Tamanho da Resposta (Max Tokens) */}
                     <div className="space-y-3 rounded-xl border border-border p-4">
                       <div>
                         <label className="text-sm font-semibold text-foreground">Tamanho máximo da resposta</label>
-                        <p className="text-[11px] text-muted-foreground">Quantidade máxima de tokens que o modelo pode gerar por resposta.</p>
+                        <p className="text-[11px] text-muted-foreground">Quantidade máxima de tokens por resposta.</p>
                       </div>
                       <Input type="number" min={1} max={128000} value={apiConfig.maxTokens}
                         onChange={(e) => setApiConfig(prev => ({ ...prev, maxTokens: parseInt(e.target.value) || 2048 }))}
                         className="text-sm font-mono" />
                     </div>
 
-                    {/* Formato de Resposta */}
                     <div className="space-y-3 rounded-xl border border-border p-4">
                       <div>
                         <label className="text-sm font-semibold text-foreground">Formato de resposta</label>
-                        <p className="text-[11px] text-muted-foreground">Escolha se o agente responde em texto livre ou JSON estruturado.</p>
+                        <p className="text-[11px] text-muted-foreground">Texto livre ou JSON estruturado.</p>
                       </div>
                       <Select value={apiConfig.responseFormat} onValueChange={(v) => setApiConfig(prev => ({ ...prev, responseFormat: v as "text" | "json" }))}>
                         <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
@@ -833,7 +842,6 @@ const AgentRightPanel = ({
                       </Select>
                     </div>
 
-                    {/* Parâmetros Avançados (colapsável) */}
                     <details className="rounded-xl border border-border">
                       <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-foreground hover:bg-muted/50 transition-colors">
                         Parâmetros avançados
@@ -851,7 +859,6 @@ const AgentRightPanel = ({
                             onChange={(e) => setApiConfig(prev => ({ ...prev, topP: parseFloat(e.target.value) }))}
                             className="w-full accent-primary" />
                         </div>
-
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
                             <div>
@@ -864,7 +871,6 @@ const AgentRightPanel = ({
                             onChange={(e) => setApiConfig(prev => ({ ...prev, frequencyPenalty: parseFloat(e.target.value) }))}
                             className="w-full accent-primary" />
                         </div>
-
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
                             <div>
@@ -877,10 +883,9 @@ const AgentRightPanel = ({
                             onChange={(e) => setApiConfig(prev => ({ ...prev, presencePenalty: parseFloat(e.target.value) }))}
                             className="w-full accent-primary" />
                         </div>
-
                         <div className="space-y-2">
                           <label className="text-sm font-medium">Stop Sequences</label>
-                          <p className="text-[10px] text-muted-foreground">Sequências que fazem o modelo parar de gerar texto.</p>
+                          <p className="text-[10px] text-muted-foreground">Sequências que fazem o modelo parar de gerar.</p>
                           <Input value={apiConfig.stopSequences.join(", ")}
                             onChange={(e) => setApiConfig(prev => ({ ...prev, stopSequences: e.target.value ? e.target.value.split(",").map(s => s.trim()).filter(Boolean) : [] }))}
                             placeholder='Ex: "###", "FIM"' className="text-sm font-mono" />
@@ -889,15 +894,6 @@ const AgentRightPanel = ({
                     </details>
 
                     <Button variant="outline" size="sm" className="text-xs" onClick={() => setApiConfig(DEFAULT_API_CONFIG)}>Restaurar padrões</Button>
-                  </div>
-                {/* Voz */}
-                {settingsNav === "voice_nav" && (
-                  <div className="space-y-6">
-                    <div>
-                      <h2 className="text-lg font-bold text-foreground">Configurações de Voz</h2>
-                      <p className="text-sm text-muted-foreground mt-1">Personalize a voz e o comportamento do agente em chamadas.</p>
-                    </div>
-                    <VoiceConfigPanel config={voiceConfig} onChange={setVoiceConfig} />
                   </div>
                 )}
               </div>
