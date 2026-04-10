@@ -752,13 +752,12 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
               <Phone className="w-3.5 h-3.5" />
               <span className="hidden lg:inline">Iniciar Ligação</span>
             </Button>
-            {/* Browser call button */}
+            {/* Browser call button (LiveKit-based) */}
             <Button
               variant="outline"
               size="sm"
               className="h-7 text-xs gap-1 px-2"
               onClick={() => setShowBrowserCall(true)}
-              disabled={!keys["elevenlabs"]?.configured}
             >
               <Monitor className="w-3.5 h-3.5" />
               <span className="hidden lg:inline">Testar no navegador</span>
