@@ -1,6 +1,6 @@
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Users, CreditCard, BarChart3, Settings, Award, Shield, Coins, BookOpen, MessageSquare } from "lucide-react";
+import { Users, CreditCard, BarChart3, Settings, Award, Shield, Coins, BookOpen, MessageSquare, Key } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import AdminUsersTab from "@/components/admin/AdminUsersTab";
 import AdminPlansTab from "@/components/admin/AdminPlansTab";
@@ -14,9 +14,11 @@ import AdminSupportTab from "@/components/admin/AdminSupportTab";
 import AdminConfigTab from "@/components/admin/AdminConfigTab";
 import { useSearchParams } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const AdminPanel = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { isPlatformOwner } = useAuth();
   const activeTab = searchParams.get("tab") || "users";
 
   const handleTabChange = (value: string) => {
@@ -70,9 +72,11 @@ const AdminPanel = () => {
             <TabsTrigger value="support" className="text-xs gap-1.5">
               <MessageSquare className="w-3.5 h-3.5" /> Suporte
             </TabsTrigger>
-            <TabsTrigger value="config" className="text-xs gap-1.5">
-              <Settings className="w-3.5 h-3.5" /> Configurações
-            </TabsTrigger>
+            {isPlatformOwner && (
+              <TabsTrigger value="api-keys" className="text-xs gap-1.5">
+                <Key className="w-3.5 h-3.5" /> Chaves de API
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="users"><AdminUsersTab /></TabsContent>
@@ -84,7 +88,9 @@ const AdminPanel = () => {
           <TabsContent value="credits"><AdminCreditsTab /></TabsContent>
           <TabsContent value="tutorials"><AdminTutorialsTab /></TabsContent>
           <TabsContent value="support"><AdminSupportTab /></TabsContent>
-          <TabsContent value="config"><AdminConfigTab /></TabsContent>
+          {isPlatformOwner && (
+            <TabsContent value="api-keys"><AdminConfigTab /></TabsContent>
+          )}
         </Tabs>
       </div>
     </AdminLayout>
