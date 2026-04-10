@@ -221,8 +221,10 @@ export function IntegrationsGrid({
   const [loading, setLoading] = useState(true);
   const [dialogProvider, setDialogProvider] = useState<IntegrationProvider | null>(null);
   const [keyInput, setKeyInput] = useState("");
+  const [publicKeyInput, setPublicKeyInput] = useState("");
   const [showKey, setShowKey] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [testingConnection, setTestingConnection] = useState(false);
   const [providerConfigs, setProviderConfigs] = useState<Record<string, ProviderConfig>>(() => {
     if (initialProviderConfigs) return initialProviderConfigs;
     try {
