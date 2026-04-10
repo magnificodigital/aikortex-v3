@@ -69,6 +69,9 @@ export const LLM_PROVIDERS: IntegrationProvider[] = [
     apiKeyUrl: "https://platform.deepseek.com/api_keys",
     apiKeyUrlLabel: "platform.deepseek.com",
   },
+];
+
+export const SERVICE_PROVIDERS: IntegrationProvider[] = [
   {
     label: "Telnyx",
     provider: "telnyx",
@@ -77,9 +80,6 @@ export const LLM_PROVIDERS: IntegrationProvider[] = [
     apiKeyUrl: "https://portal.telnyx.com/#/app/api-keys",
     apiKeyUrlLabel: "portal.telnyx.com",
   },
-];
-
-export const SERVICE_PROVIDERS: IntegrationProvider[] = [
   { label: "Gmail", provider: "gmail", description: "Ler, enviar e compor e-mails.", logo: "https://cdn.simpleicons.org/gmail" },
   { label: "Google Calendar", provider: "google_calendar", description: "Ler e gerenciar eventos.", logo: "https://cdn.simpleicons.org/googlecalendar" },
   { label: "Outlook Calendar", provider: "outlook_calendar", description: "Gerenciar calendário Microsoft.", logo: "https://cdn.simpleicons.org/microsoftoutlook" },
