@@ -713,9 +713,27 @@ serve(async (req) => {
         });
       }
 
+      // Surface provider-specific errors (Anthropic/OpenAI BYOK) instead of generic message
       console.error("AI API error:", response?.status, errorText);
-      return new Response(JSON.stringify({ error: "Erro no serviço de IA. Tente novamente em instantes." }), {
-        status: 500,
+      let userFacingError = "Erro no serviço de IA. Tente novamente em instantes.";
+      try {
+        const parsed = JSON.parse(errorText);
+        const providerMsg = parsed?.error?.message || parsed?.error?.msg || parsed?.message || "";
+        if (providerMsg) {
+          if (providerMsg.includes("credit balance") || providerMsg.includes("billing") || providerMsg.includes("purchase credits")) {
+            userFacingError = `Sem créditos na sua conta ${selectedProvider === "anthropic" ? "Anthropic" : selectedProvider === "openai" ? "OpenAI" : selectedProvider}. Recarregue seus créditos no painel do provedor.`;
+          } else if (providerMsg.includes("invalid_api_key") || providerMsg.includes("Incorrect API key")) {
+            userFacingError = `Chave de API ${selectedProvider} inválida. Verifique em Integrações.`;
+          } else if (providerMsg.includes("overloaded") || providerMsg.includes("capacity")) {
+            userFacingError = `O serviço ${selectedProvider} está sobrecarregado. Tente novamente em instantes.`;
+          } else {
+            userFacingError = `Erro do provedor ${selectedProvider}: ${providerMsg.slice(0, 200)}`;
+          }
+        }
+      } catch { /* keep generic */ }
+
+      return new Response(JSON.stringify({ error: userFacingError }), {
+        status: response?.status || 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
