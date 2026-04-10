@@ -245,6 +245,41 @@ export type Database = {
           },
         ]
       }
+      call_sessions: {
+        Row: {
+          agent_id: string | null
+          call_control_id: string
+          created_at: string | null
+          id: string
+          messages: Json | null
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          call_control_id: string
+          created_at?: string | null
+          id?: string
+          messages?: Json | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          call_control_id?: string
+          created_at?: string | null
+          id?: string
+          messages?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_sessions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "user_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       credit_packages: {
         Row: {
           created_at: string | null
