@@ -83,6 +83,7 @@ const LandingPage = () => {
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signup");
   const [suggestionIndex, setSuggestionIndex] = useState(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [lang, setLang] = useState<Lang>(() => {
     return (localStorage.getItem("app-lang") as Lang) || "pt";
   });
@@ -113,6 +114,7 @@ const LandingPage = () => {
   const openAuthModal = (mode: "signin" | "signup") => {
     setAuthMode(mode);
     setShowAuth(true);
+    setMobileMenuOpen(false);
   };
 
   useEffect(() => {
