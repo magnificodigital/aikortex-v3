@@ -1,16 +1,10 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
-const NODE_TIMEOUT = 25_000; // 25s per node
+const NODE_TIMEOUT = 25_000;
 
 interface FlowNode {
   id: string;
@@ -42,8 +36,8 @@ function interpolate(template: string, ctx: Record<string, unknown>): string {
   });
 }
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
     const { flow_id, trigger_type, trigger_data, contact_identifier, channel, test_message } = await req.json();
@@ -54,7 +48,6 @@ serve(async (req) => {
       });
     }
 
-    // Auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), {
@@ -74,7 +67,6 @@ serve(async (req) => {
       });
     }
 
-    // Fetch flow definition
     const { data: flow, error: flowError } = await userClient
       .from("user_flows")
       .select("*")
@@ -96,7 +88,6 @@ serve(async (req) => {
       });
     }
 
-    // Create execution record
     const initialContext: Record<string, unknown> = {
       contact: { identifier: contact_identifier || user.id },
       message: test_message || "",
@@ -125,7 +116,6 @@ serve(async (req) => {
       });
     }
 
-    // Find start node (trigger node)
     const triggerNode = nodes.find(n => n.data?.nodeType?.startsWith("trigger_") || n.data?.category === "trigger");
     if (!triggerNode) {
       await adminClient.from("flow_executions").update({ status: "failed", error_message: "Sem nó trigger" }).eq("id", execution.id);
@@ -134,7 +124,6 @@ serve(async (req) => {
       });
     }
 
-    // Build adjacency map
     const adjacency = new Map<string, string[]>();
     const conditionalEdges = new Map<string, Map<string, string>>();
     for (const edge of edges) {
@@ -147,7 +136,6 @@ serve(async (req) => {
       }
     }
 
-    // Execute nodes sequentially
     let currentNodeId: string | null = triggerNode.id;
     const context = { ...initialContext };
     const visited = new Set<string>();
@@ -162,7 +150,6 @@ serve(async (req) => {
 
       await adminClient.from("flow_executions").update({ current_node_id: currentNodeId }).eq("id", execution.id);
 
-      // Create log entry
       const { data: logEntry } = await adminClient.from("flow_node_logs").insert({
         execution_id: execution.id,
         node_id: node.id,
@@ -177,20 +164,16 @@ serve(async (req) => {
       let nodeError: string | null = null;
 
       try {
-        // ── Execute node based on type ──
         if (nodeType.startsWith("trigger_")) {
-          // Trigger nodes just pass through
           nodeOutput = { triggered: true, type: nodeType };
         }
         else if (nodeType === "agent_ai" || nodeType === "agent") {
-          // Call agent via managed-session-chat or agent-chat
           const agentId = config.agentId as string;
           const promptTemplate = (config.systemPrompt as string) || (config.prompt_template as string) || "";
           const message = interpolate(promptTemplate || "{{message}}", context) || String(context.message || "Olá");
           const outputVar = (config.output_variable as string) || "agent_response";
 
           if (agentId) {
-            // Use managed-session-chat
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), NODE_TIMEOUT);
             try {
@@ -210,7 +193,6 @@ serve(async (req) => {
               clearTimeout(timeout);
 
               if (resp.ok && resp.body) {
-                // Collect streaming response
                 const reader = resp.body.getReader();
                 const decoder = new TextDecoder();
                 let fullText = "";
@@ -252,13 +234,10 @@ serve(async (req) => {
           }
         }
         else if (nodeType === "condition") {
-          // Evaluate condition
           const expression = interpolate((config.expression as string) || "", context);
-          // Simple evaluation: check if expression is truthy
           const result = !!expression && expression !== "false" && expression !== "0" && expression !== "";
           nodeOutput = { result, expression };
 
-          // Use conditional edges
           const condEdges = conditionalEdges.get(currentNodeId);
           if (condEdges) {
             nextNodeId = condEdges.get(result ? "yes" : "no") || condEdges.get(result ? "true" : "false") || null;
@@ -268,7 +247,6 @@ serve(async (req) => {
           const duration = (config.duration as number) || 5;
           const unit = (config.unit as string) || "seconds";
           const ms = unit === "minutes" ? duration * 60000 : unit === "hours" ? duration * 3600000 : duration * 1000;
-          // Cap wait to 10s in execution context
           await new Promise(r => setTimeout(r, Math.min(ms, 10000)));
           nodeOutput = { waited: true, duration, unit };
         }
@@ -276,7 +254,6 @@ serve(async (req) => {
           const messageTemplate = (config.message as string) || (config.template as string) || "";
           const finalMessage = interpolate(messageTemplate, context);
           nodeOutput = { message_sent: finalMessage.slice(0, 200) };
-          // In a real implementation, this would call whatsapp-send
         }
         else if (nodeType === "response") {
           const template = (config.template as string) || "";
@@ -286,7 +263,6 @@ serve(async (req) => {
         }
         else if (nodeType.startsWith("capture_")) {
           const variable = (config.variable as string) || "captured";
-          // In real execution, this would wait for user input
           context[variable] = context.message || "";
           nodeOutput = { [variable]: context[variable] };
         }
@@ -301,7 +277,6 @@ serve(async (req) => {
         }
         else if (nodeType === "stop") {
           nodeOutput = { stopped: true, reason: config.reason || "" };
-          // Don't set nextNodeId — stop execution
           if (logEntry) {
             await adminClient.from("flow_node_logs").update({
               status: "completed", output: nodeOutput, completed_at: new Date().toISOString(),
@@ -310,11 +285,9 @@ serve(async (req) => {
           break;
         }
         else {
-          // Unknown node type — pass through
           nodeOutput = { passed: true, type: nodeType };
         }
 
-        // Update log
         if (logEntry) {
           await adminClient.from("flow_node_logs").update({
             status: "completed",
@@ -332,10 +305,8 @@ serve(async (req) => {
             completed_at: new Date().toISOString(),
           }).eq("id", logEntry.id);
         }
-        // Continue to next node (resilient mode)
       }
 
-      // Determine next node
       if (!nextNodeId) {
         const nextNodes = adjacency.get(currentNodeId);
         nextNodeId = nextNodes?.[0] || null;
@@ -344,7 +315,6 @@ serve(async (req) => {
       currentNodeId = nextNodeId;
     }
 
-    // Complete execution
     await adminClient.from("flow_executions").update({
       status: "completed",
       completed_at: new Date().toISOString(),
