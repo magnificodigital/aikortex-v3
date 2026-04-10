@@ -449,7 +449,7 @@ export function IntegrationsGrid({
       </div>
 
       {/* API Key Dialog */}
-      <Dialog open={!!dialogProvider} onOpenChange={(open) => { if (!open) { setDialogProvider(null); setKeyInput(""); setDialogConfig({}); } }}>
+      <Dialog open={!!dialogProvider} onOpenChange={(open) => { if (!open) { setDialogProvider(null); setKeyInput(""); setPublicKeyInput(""); setDialogConfig({}); } }}>
         <DialogContent className="sm:max-w-lg max-h-[85vh]">
           <DialogHeader>
             <div className="flex items-center gap-3">
@@ -496,6 +496,30 @@ export function IntegrationsGrid({
                 <p className="text-[11px] text-muted-foreground">Cole a chave de API fornecida pelo serviço.</p>
               )}
             </div>
+
+            {/* Telnyx Public Key */}
+            {dialogProvider?.provider === "telnyx" && (
+              <div className="space-y-2.5">
+                <label className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <KeyRound className="w-3.5 h-3.5 text-primary" /> Public Key
+                </label>
+                <Input
+                  type="password"
+                  value={publicKeyInput}
+                  onChange={(e) => setPublicKeyInput(e.target.value)}
+                  placeholder="Cole sua Telnyx Public Key aqui"
+                  className="text-sm font-mono"
+                />
+                <p className="text-[10px] text-muted-foreground">Usada para validação de assinatura dos webhooks.</p>
+              </div>
+            )}
+
+            {/* ElevenLabs Test Connection */}
+            {dialogProvider?.provider === "elevenlabs" && dialogIsConnected && (
+              <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={handleTestConnection} disabled={testingConnection}>
+                {testingConnection ? "Testando..." : "Testar conexão"}
+              </Button>
+            )}
 
             {/* LLM Configuration Section */}
             {dialogIsLLM && dialogModels.length > 0 && (
