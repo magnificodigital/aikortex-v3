@@ -188,7 +188,7 @@ const AgentDetail = () => {
     locked: m.badge !== "free" && !keys[m.provider]?.configured,
   })), [keys]);
   const hasApiKey    = !!keys[currentProvider]?.configured;
-  const hasAnyLLMKey = useMemo(() => ["openai", "anthropic", "gemini", "google", "meta"].some(p => keys[p]?.configured) || true, [keys]);
+  const hasAnyLLMKey = useMemo(() => ["openai", "anthropic", "gemini", "google", "deepseek", "mistral"].some(p => keys[p]?.configured), [keys]);
 
   /* ── Agent config (from right panel) ── */
 
