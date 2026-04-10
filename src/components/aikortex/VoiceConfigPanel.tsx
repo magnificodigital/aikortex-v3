@@ -122,9 +122,32 @@ const SliderField = ({
 );
 
 const VoiceConfigPanel = ({ config, onChange }: Props) => {
+  const { voices, loading: voicesLoading, hasKey, error: voicesError } = useElevenLabsVoices();
+  const [playingVoice, setPlayingVoice] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
   const update = useCallback(<K extends keyof VoiceConfig>(key: K, value: VoiceConfig[K]) => {
     onChange({ ...config, [key]: value });
   }, [config, onChange]);
+
+  const voiceList = hasKey && voices.length > 0
+    ? voices.map(v => ({ voice_id: v.voice_id, name: v.name, preview_url: v.preview_url }))
+    : FALLBACK_VOICES.map(v => ({ ...v, preview_url: null as string | null }));
+
+  const playPreview = (voiceId: string, previewUrl: string | null) => {
+    if (playingVoice === voiceId) {
+      audioRef.current?.pause();
+      setPlayingVoice(null);
+      return;
+    }
+    if (!previewUrl) return;
+    if (audioRef.current) audioRef.current.pause();
+    const audio = new Audio(previewUrl);
+    audioRef.current = audio;
+    setPlayingVoice(voiceId);
+    audio.play();
+    audio.onended = () => setPlayingVoice(null);
+  };
 
   const addPronunciation = () => {
     update("pronunciations", [...config.pronunciations, { word: "", pronunciation: "" }]);
@@ -147,6 +170,8 @@ const VoiceConfigPanel = ({ config, onChange }: Props) => {
     update("actions", next);
   };
 
+  const selectedVoice = voiceList.find(v => v.voice_id === config.voiceId);
+
   return (
     <ScrollArea className="flex-1">
       <div className="p-4 space-y-6">
@@ -155,6 +180,20 @@ const VoiceConfigPanel = ({ config, onChange }: Props) => {
         <section className="space-y-3">
           <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Identidade de Voz</h3>
 
+          {!hasKey && !voicesLoading && (
+            <div className="flex items-start gap-2 p-2.5 rounded-lg border border-yellow-500/30 bg-yellow-500/5 text-xs text-yellow-600 dark:text-yellow-400">
+              <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+              <span>Configure sua chave ElevenLabs em <strong>Integrações</strong> para carregar suas vozes.</span>
+            </div>
+          )}
+
+          {hasKey && voicesError && (
+            <div className="flex items-start gap-2 p-2.5 rounded-lg border border-yellow-500/30 bg-yellow-500/5 text-xs text-yellow-600 dark:text-yellow-400">
+              <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+              <span>{voicesError}</span>
+            </div>
+          )}
+
           <div className="space-y-1.5">
             <Label className="text-xs">Nome do Agente</Label>
             <Input value={config.agentName} onChange={e => update("agentName", e.target.value)} placeholder="Ex: Maia" className="h-8 text-xs" />
@@ -162,12 +201,31 @@ const VoiceConfigPanel = ({ config, onChange }: Props) => {
 
           <div className="space-y-1.5">
             <Label className="text-xs">Selecionar Voz</Label>
-            <Select value={config.voiceId} onValueChange={v => update("voiceId", v)}>
-              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {VOICES.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            {voicesLoading ? (
+              <div className="flex items-center gap-2 h-8 text-xs text-muted-foreground">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Carregando vozes...
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Select value={config.voiceId} onValueChange={v => update("voiceId", v)}>
+                  <SelectTrigger className="h-8 text-xs flex-1"><SelectValue placeholder="Escolha uma voz" /></SelectTrigger>
+                  <SelectContent>
+                    {voiceList.map(v => <SelectItem key={v.voice_id} value={v.voice_id}>{v.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {selectedVoice?.preview_url && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-2.5 text-xs gap-1.5 shrink-0"
+                    onClick={() => playPreview(config.voiceId, selectedVoice.preview_url)}
+                  >
+                    {playingVoice === config.voiceId ? <Square className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+                    {playingVoice === config.voiceId ? "Parar" : "Testar"}
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="space-y-1.5">
@@ -188,11 +246,6 @@ const VoiceConfigPanel = ({ config, onChange }: Props) => {
           <div className="space-y-1.5">
             <Label className="text-xs">Informações da Empresa</Label>
             <Textarea value={config.companyInfo} onChange={e => update("companyInfo", e.target.value)} placeholder="Descreva sua empresa..." className="min-h-[60px] text-xs" />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-xs">ElevenLabs Agent ID</Label>
-            <Input value={config.elevenLabsAgentId || ""} onChange={e => update("elevenLabsAgentId", e.target.value)} placeholder="agent_..." className="h-8 text-xs font-mono" />
           </div>
         </section>
 
