@@ -447,7 +447,7 @@ serve(async (req) => {
           if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
           apiUrl = "https://ai.gateway.lovable.dev/v1/chat/completions";
           apiKey = LOVABLE_API_KEY;
-          apiModel = modelMapping?.gateway || model || "google/gemini-3-flash-preview";
+          apiModel = ensureValidGatewayModel(modelMapping?.gateway || model);
           headers = {
             Authorization: `Bearer ${apiKey}`,
             "Content-Type": "application/json",
@@ -500,7 +500,7 @@ serve(async (req) => {
           if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
           apiUrl = "https://ai.gateway.lovable.dev/v1/chat/completions";
           apiKey = LOVABLE_API_KEY;
-          apiModel = modelMapping?.gateway || model || "google/gemini-3-flash-preview";
+          apiModel = ensureValidGatewayModel(modelMapping?.gateway || model);
           headers = {
             Authorization: `Bearer ${apiKey}`,
             "Content-Type": "application/json",
