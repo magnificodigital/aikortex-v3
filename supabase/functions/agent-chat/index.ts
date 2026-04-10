@@ -6,16 +6,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Map short UI model names to full gateway/API model names
-// OpenAI native model IDs: https://developers.openai.com/api/docs/models
 const MODEL_MAP: Record<string, { gateway: string; openai?: string; anthropic?: string }> = {
-  // Gemini models
   "gemini-3.1-pro-preview": { gateway: "google/gemini-3.1-pro-preview" },
   "gemini-3-flash-preview": { gateway: "google/gemini-3-flash-preview" },
   "gemini-2.5-pro": { gateway: "google/gemini-2.5-pro" },
   "gemini-2.5-flash": { gateway: "google/gemini-2.5-flash" },
   "gemini-2.5-flash-lite": { gateway: "google/gemini-2.5-flash-lite" },
-  // OpenAI models — gateway names map to real OpenAI API model IDs
   "gpt-5.2": { gateway: "openai/gpt-5.2", openai: "gpt-4o" },
   "gpt-5": { gateway: "openai/gpt-5", openai: "gpt-4o" },
   "gpt-5-mini": { gateway: "openai/gpt-5-mini", openai: "gpt-4o-mini" },
@@ -25,7 +21,6 @@ const MODEL_MAP: Record<string, { gateway: string; openai?: string; anthropic?: 
   "gpt-4-turbo": { gateway: "openai/gpt-5", openai: "gpt-4-turbo" },
   "gpt-4": { gateway: "openai/gpt-5", openai: "gpt-4" },
   "gpt-3.5-turbo": { gateway: "openai/gpt-5-mini", openai: "gpt-3.5-turbo" },
-  // Anthropic models
   "claude-4-sonnet": { gateway: "openai/gpt-5", anthropic: "claude-sonnet-4-20250514" },
   "claude-3.5-sonnet": { gateway: "openai/gpt-5", anthropic: "claude-3-5-sonnet-20241022" },
   "claude-3-opus": { gateway: "openai/gpt-5", anthropic: "claude-3-opus-20240229" },
@@ -40,6 +35,9 @@ const FREE_GATEWAY_MODELS = [
 ] as const;
 
 const DEFAULT_FREE_GATEWAY_MODEL = FREE_GATEWAY_MODELS[0];
+
+// Default free model for non-BYOK users (Rule 4)
+const DEFAULT_FREE_MODEL = "google/gemini-2.5-flash";
 
 type ChatCompletionMessage = { role: string; content: string };
 
@@ -170,6 +168,15 @@ async function getPlatformConfig(supabaseUrl: string, serviceKey: string, key: s
   return data?.value || null;
 }
 
+// Helper: get OpenRouter API key from env or platform_config
+async function getOpenRouterKey(supabaseUrl: string, serviceKey: string): Promise<string> {
+  let key = Deno.env.get("OPENROUTER_API_KEY") || "";
+  if (!key) {
+    key = await getPlatformConfig(supabaseUrl, serviceKey, "OPENROUTER_API_KEY") || "";
+  }
+  return key;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -210,29 +217,46 @@ serve(async (req) => {
 
     // Check if user has ANY BYOK key configured (any provider = unlimited)
     let hasByok = false;
+    let userByokProviders: string[] = [];
 
     if (!isPlatformUser) {
       const { data: byokKeys } = await supabase
         .from("user_api_keys")
         .select("provider")
         .eq("user_id", user.id)
-        .in("provider", ["openai", "anthropic", "gemini", "openrouter"])
-        .limit(1);
+        .in("provider", ["openai", "anthropic", "gemini", "openrouter"]);
       hasByok = (byokKeys?.length ?? 0) > 0;
+      userByokProviders = byokKeys?.map((k: any) => k.provider) || [];
     }
 
-    // If no BYOK and not platform: check monthly plan limit
-    if (!isPlatformUser && !hasByok) {
-      const yearMonth = new Date().toISOString().slice(0, 7);
-
+    // Get user plan slug
+    let planSlug = "starter";
+    if (!isPlatformUser) {
       const { data: sub } = await supabase
         .from("subscriptions")
         .select("plan_id, plans(slug)")
         .eq("user_id", user.id)
         .in("status", ["active", "trialing"])
         .maybeSingle();
+      planSlug = (sub?.plans as any)?.slug || "starter";
+    }
 
-      const planSlug = (sub?.plans as any)?.slug || "starter";
+    // ══════════════════════════════════════════════════════════
+    // RULE 2 — Elite plan requires BYOK
+    // ══════════════════════════════════════════════════════════
+    if (!isPlatformUser && planSlug === "elite" && !hasByok) {
+      return new Response(JSON.stringify({
+        error: "Plano Elite requer chave de API própria (BYOK). Configure em Configurações → Integrações.",
+        code: "BYOK_REQUIRED",
+      }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // If no BYOK and not platform: check monthly plan limit
+    if (!isPlatformUser && !hasByok) {
+      const yearMonth = new Date().toISOString().slice(0, 7);
 
       const { data: limitData } = await supabase
         .from("plan_message_limits")
@@ -263,8 +287,13 @@ serve(async (req) => {
       }
     }
 
+    // ══════════════════════════════════════════════════════════
+    // RULE 1 — Starter/Pro without BYOK → force Gemini Flash via OpenRouter
+    // ══════════════════════════════════════════════════════════
+    const forceFreeTier = !isPlatformUser && !hasByok && ["starter", "pro"].includes(planSlug);
+
     const selectedProvider = provider || "openai";
-    if (!useGateway && !modelBelongsToProvider(selectedProvider, model)) {
+    if (!useGateway && !forceFreeTier && !modelBelongsToProvider(selectedProvider, model)) {
       return new Response(JSON.stringify({ error: `O modelo \"${model}\" não pertence ao provider \"${selectedProvider}\".` }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -279,8 +308,26 @@ serve(async (req) => {
     let openRouterKeyCandidates: Array<string | null> = [];
     let gatewayModelCandidates: string[] = [];
 
-    // If useGateway is true, use OpenRouter with stable free assistant defaults
-    if (useGateway) {
+    // ── Force free tier for starter/pro without BYOK (Rule 1 + Rule 4) ──
+    if (forceFreeTier) {
+      apiUrl = "https://openrouter.ai/api/v1/chat/completions";
+      apiModel = DEFAULT_FREE_MODEL;
+      const openRouterKey = await getOpenRouterKey(supabaseUrl, serviceKey);
+      headers = {
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://aikortex.lovable.app",
+        "X-OpenRouter-Title": "Aikortex",
+      };
+      if (openRouterKey) {
+        headers["Authorization"] = `Bearer ${openRouterKey}`;
+      }
+      apiKey = openRouterKey || null;
+      // Simple path: single model, single key, no fallback cascade needed
+      openRouterKeyCandidates = openRouterKey ? [openRouterKey] : [null];
+      gatewayModelCandidates = [DEFAULT_FREE_MODEL];
+      console.log(`Force free tier: plan=${planSlug}, model=${apiModel}`);
+    } else if (useGateway) {
+      // If useGateway is true, use OpenRouter with stable free assistant defaults
       apiUrl = "https://openrouter.ai/api/v1/chat/completions";
       apiModel = normalizeGatewayModel(gatewayModel);
       headers = {
@@ -297,11 +344,7 @@ serve(async (req) => {
         .maybeSingle();
 
       const userOpenRouterKey = orKeyData?.api_key ?? "";
-      let projectOpenRouterKey = Deno.env.get("OPENROUTER_API_KEY") || "";
-      // Fallback: platform_config table
-      if (!projectOpenRouterKey) {
-        projectOpenRouterKey = await getPlatformConfig(supabaseUrl, serviceKey, "OPENROUTER_API_KEY") || "";
-      }
+      const projectOpenRouterKey = await getOpenRouterKey(supabaseUrl, serviceKey);
 
       if (userOpenRouterKey) {
         const validation = validateOpenRouterApiKey(userOpenRouterKey);
@@ -352,7 +395,6 @@ serve(async (req) => {
             "anthropic-version": "2023-06-01",
           };
         } else if (selectedProvider === "gemini") {
-          // Google Gemini uses generativelanguage API with API key
           const geminiModel = model?.replace("gemini-", "gemini-") || "gemini-2.5-flash";
           apiUrl = `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`;
           apiKey = keyData.api_key;
@@ -403,7 +445,6 @@ serve(async (req) => {
           }
 
           if (platformKey) {
-            // Use platform key for the requested provider
             if (provider === "openai") {
               apiUrl = "https://api.openai.com/v1/chat/completions";
               apiKey = platformKey;
@@ -449,7 +490,6 @@ serve(async (req) => {
     const defaultSystemPrompt = `Você é um agente de IA inteligente e prestativo. Responda sempre em português brasileiro. Seja direto, profissional e use markdown quando apropriado.`;
     const agentSystemPrompt = buildAgentSystemPrompt(agentContext);
 
-    // If messages already contain a system prompt, use it; otherwise prepend default
     const hasSystemPrompt = messages.some((m: { role: string }) => m.role === "system");
     const finalMessages: ChatCompletionMessage[] = hasSystemPrompt
       ? agentSystemPrompt
@@ -459,7 +499,7 @@ serve(async (req) => {
         : messages
       : [{ role: "system", content: agentSystemPrompt || defaultSystemPrompt }, ...messages];
 
-    const requestMessages = useGateway
+    const requestMessages = (useGateway || forceFreeTier)
       ? flattenSystemMessagesForGateway(finalMessages)
       : finalMessages;
 
@@ -468,7 +508,6 @@ serve(async (req) => {
       messages: requestMessages,
       stream: true,
     };
-    // Add optional API config params
     if (temperature !== undefined) body.temperature = temperature;
     if (max_tokens !== undefined) body.max_tokens = max_tokens;
     if (top_p !== undefined) body.top_p = top_p;
@@ -477,7 +516,7 @@ serve(async (req) => {
     if (response_format) body.response_format = response_format;
     if (stop) body.stop = stop;
 
-    console.log(`Using provider=${selectedProvider}, model=${apiModel}, useGateway=${useGateway}`);
+    console.log(`Using provider=${selectedProvider}, model=${apiModel}, useGateway=${useGateway}, forceFreeTier=${forceFreeTier}, plan=${planSlug}`);
 
     let response: Response | null = null;
     let lastErrorStatus = 0;
@@ -485,7 +524,7 @@ serve(async (req) => {
     const maxRetries = 3;
     const gatewayMaxRetries = 1;
 
-    if (useGateway) {
+    if (useGateway || forceFreeTier) {
       gatewayAttempt:
       for (const candidateModel of gatewayModelCandidates) {
         for (let keyIndex = 0; keyIndex < openRouterKeyCandidates.length; keyIndex += 1) {
@@ -639,7 +678,6 @@ serve(async (req) => {
     // --- Monthly usage tracking (background, non-blocking) ---
     if (!isPlatformUser && !hasByok && response!.ok) {
       const yearMonth = new Date().toISOString().slice(0, 7);
-      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
       const adminClient = createClient(supabaseUrl, serviceKey);
 
       adminClient.rpc("increment_monthly_usage", {

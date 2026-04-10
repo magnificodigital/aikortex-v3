@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import type { ChatMessage } from "@/hooks/use-agent-chat";
 
 const MANAGED_SESSION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/managed-session-chat`;
@@ -8,7 +9,7 @@ const FLUSH_INTERVAL_MS = 60;
 
 export interface UseAgentSessionOptions {
   agentDbId: string;
-  provider: string; // 'anthropic' | 'auto' | 'openai' | 'gemini' | 'openrouter'
+  provider: string;
   channel?: string;
   contactIdentifier?: string;
   model?: string;
@@ -76,7 +77,6 @@ export function useAgentSession(options: UseAgentSessionOptions) {
       let resp: Response;
 
       if (useManagedSession) {
-        // Anthropic Managed Sessions
         resp = await fetch(MANAGED_SESSION_URL, {
           method: "POST",
           headers: {
@@ -91,7 +91,6 @@ export function useAgentSession(options: UseAgentSessionOptions) {
           }),
         });
       } else {
-        // Regular agent-chat for other providers
         const apiMessages: Array<{ role: string; content: string }> = nextMessages.map((m) => ({
           role: m.role === "agent" ? "assistant" : m.role,
           content: m.text,
@@ -130,6 +129,27 @@ export function useAgentSession(options: UseAgentSessionOptions) {
 
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({ error: "Erro desconhecido" }));
+
+        // ── Rule 5: Handle BYOK_REQUIRED error with clear feedback ──
+        if (err?.code === "BYOK_REQUIRED") {
+          toast.error(err.error || "Chave de API própria é necessária.", {
+            description: "Acesse Configurações → Integrações para adicionar sua chave.",
+            duration: 8000,
+            action: {
+              label: "Ir para Integrações",
+              onClick: () => {
+                window.location.href = "/integrations";
+              },
+            },
+          });
+          if (mountedRef.current) {
+            setMessages((prev) => [
+              ...prev,
+              { role: "agent", text: `🔑 ${err.error}` },
+            ]);
+          }
+          return;
+        }
 
         // Fallback: if managed session fails, try regular agent-chat
         if (useManagedSession && resp.status >= 500) {

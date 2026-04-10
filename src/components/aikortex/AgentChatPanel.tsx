@@ -43,7 +43,7 @@ interface AgentChatPanelProps {
   keysLoading: boolean;
   currentProvider: string;
   agentModel: string;
-  availableModels: Array<{ value: string; label: string; provider: string }>;
+  availableModels: Array<{ value: string; label: string; provider: string; badge?: "free" | "byok" | "byok-anthropic" }>;
   setupModel: string;
   setSetupModel: (model: string) => void;
   setAgentModel: (model: string) => void;
@@ -713,7 +713,9 @@ const AgentChatPanel = ({
               className="text-xs h-7 rounded-md border border-input bg-background px-2 py-0.5 text-foreground outline-none focus:ring-1 focus:ring-ring flex-1 max-w-[220px]"
             >
               {availableModels.map(m => (
-                <option key={m.value} value={m.value}>{m.label}</option>
+                <option key={m.value} value={m.value}>
+                  {m.label}{m.badge === "free" ? " ✦ Gratuito" : m.badge === "byok-anthropic" ? " 🔑 Requer Anthropic BYOK" : m.badge === "byok" ? " 🔑 Requer chave própria" : ""}
+                </option>
               ))}
             </select>
           </div>
