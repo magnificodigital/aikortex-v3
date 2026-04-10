@@ -180,12 +180,12 @@ function renderConfigFields(
 ) {
   // ── Agent ──
   if (nodeType === "agent") {
-    const AGENT_LLM_MODELS = LLM_MODELS;
     return (
       <>
         <div className="space-y-2">
           <Label className="text-xs">Model</Label>
-          <Select value={(config.model as string) || "gemini-3-flash-preview"} onValueChange={(v) => updateConfig("model", v)}>
+          <Select value={(config.model as string) || "google/gemini-2.0-flash"} onValueChange={(v) => updateConfig("model", v)}>
+
             <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
               {LLM_MODELS.map((m) => (
