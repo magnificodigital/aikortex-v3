@@ -47,31 +47,6 @@ serve(async (req) => {
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Helper: read a key from platform_config table (service_role)
-    async function getPlatformConfig(adminClient: any, key: string): Promise<string | null> {
-      const { data } = await adminClient
-        .from("platform_config")
-        .select("value")
-        .eq("key", key)
-        .maybeSingle();
-      return data?.value || null;
-    }
-
-    const adminClientForConfig = createClient(supabaseUrl, serviceKey);
-
-    // Priority: Env secret → platform_config
-    let anthropicApiKey = Deno.env.get("ANTHROPIC_API_KEY") || null;
-    if (!anthropicApiKey) {
-      anthropicApiKey = await getPlatformConfig(adminClientForConfig, "ANTHROPIC_API_KEY");
-    }
-
-    if (!anthropicApiKey) {
-      return new Response(JSON.stringify({ error: "ANTHROPIC_API_KEY não configurada no servidor." }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const adminClient = createClient(supabaseUrl, serviceKey);
 
     // ── Determine effective user: either from JWT or from owner_user_id (webhook mode) ──
@@ -80,13 +55,11 @@ serve(async (req) => {
     let isPlatformUser = false;
 
     if (isWhatsAppMode) {
-      // Called from webhook with service_role — trust owner_user_id
       userId = owner_user_id;
       const { data: profileData } = await adminClient
         .from("profiles").select("role").eq("user_id", userId).single();
       isPlatformUser = ["platform_owner", "platform_admin"].includes(profileData?.role);
     } else {
-      // Standard authenticated call
       const authHeader = req.headers.get("Authorization");
       if (!authHeader) {
         return new Response(JSON.stringify({ error: "Não autorizado" }), {
@@ -113,9 +86,31 @@ serve(async (req) => {
       isPlatformUser = ["platform_owner", "platform_admin"].includes(profileData?.role);
     }
 
-    // Usage check: (1) platform → pass, (2) BYOK → pass, (3) check monthly limit
+    // ══════════════════════════════════════════════════════════
+    // RULE 3 — Managed Agents ONLY with user's own Anthropic BYOK key
+    // Never use platform ANTHROPIC_API_KEY for managed sessions
+    // ══════════════════════════════════════════════════════════
+    const { data: userAnthropicKey } = await adminClient
+      .from("user_api_keys")
+      .select("api_key")
+      .eq("user_id", userId)
+      .eq("provider", "anthropic")
+      .maybeSingle();
+
+    const anthropicApiKey = userAnthropicKey?.api_key || null;
+
+    if (!anthropicApiKey) {
+      return new Response(JSON.stringify({
+        error: "Agentes Gerenciados requerem sua própria chave Anthropic (BYOK). Configure em Configurações → Integrações.",
+        code: "BYOK_REQUIRED",
+      }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Usage check: (1) platform → pass, (2) BYOK → pass (they have anthropic key), (3) check monthly limit
     if (!isPlatformUser) {
-      // Check if user has ANY BYOK key configured
       const { data: byokKeys } = await adminClient
         .from("user_api_keys")
         .select("provider")
@@ -257,7 +252,6 @@ serve(async (req) => {
 
       const env = await envResp.json();
 
-      // Check if agent has a memory store
       const { data: memoryStore } = await adminClient
         .from("agent_memory_stores")
         .select("anthropic_memory_store_id")
@@ -426,7 +420,6 @@ async function handleWhatsAppResponse(
     console.error("WhatsApp stream read error:", e);
   }
 
-  // Update session + debit credits
   await finalizeSession(adminClient, anthropicSessionId, userId, isPlatformUser, agent, inputTokens, outputTokens);
 
   return new Response(JSON.stringify({ reply: fullText || null }), {
@@ -533,7 +526,6 @@ async function finalizeSession(
     .update({ last_message_at: new Date().toISOString(), status: "idle" })
     .eq("anthropic_session_id", anthropicSessionId);
 
-  // Track monthly usage (non-blocking)
   if (!isPlatformUser) {
     const yearMonth = new Date().toISOString().slice(0, 7);
     adminClient.rpc("increment_monthly_usage", {
