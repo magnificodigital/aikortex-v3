@@ -87,6 +87,7 @@ const aikortexItems: NavItem[] = [
 
 const MODULE_KEY_MAP: Record<string, string> = {
   "/aikortex/agents": "aikortex.agentes",
+  "/calls": "aikortex.agentes",
   "/aikortex/automations": "aikortex.flows",
   "/apps": "aikortex.apps",
   "/app-builder": "aikortex.apps",
