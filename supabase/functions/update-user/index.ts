@@ -75,11 +75,16 @@ Deno.serve(async (req) => {
     // Update auth user (email, password)
     const authUpdate: Record<string, any> = {};
     // Only update email if it's different from current
-    if (email && email !== currentUser.email) authUpdate.email = email;
+    if (email && email.toLowerCase() !== (currentUser.email || "").toLowerCase()) {
+      authUpdate.email = email;
+      authUpdate.email_confirm = true; // Admin-level email change, skip confirmation
+    }
     if (password) authUpdate.password = password;
     
     const metaUpdate: Record<string, any> = {};
-    if (full_name) metaUpdate.full_name = full_name;
+    if (full_name && full_name !== (currentUser.user_metadata?.full_name || "")) {
+      metaUpdate.full_name = full_name;
+    }
     if (role) {
       metaUpdate.role = role;
       metaUpdate.tenant_type = ["platform_owner", "platform_admin"].includes(role) ? "platform" : "agency";
