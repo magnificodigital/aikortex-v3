@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TIER_CONFIG, type PartnerProfile } from "@/types/partner";
-import { Upload, Globe, Mail, Award, Users, DollarSign, Package, Save } from "lucide-react";
+import { Upload, Globe, Mail, Award, Save } from "lucide-react";
 import { toast } from "sonner";
 
 interface Props {
@@ -24,9 +24,14 @@ const PartnerProfileTab = ({ profile, onUpdate }: Props) => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(profile);
   const tier = TIER_CONFIG[profile.tier];
+  const selectedSpecializations = Array.isArray(draft.specializations) ? draft.specializations : [];
+
+  useEffect(() => {
+    setDraft(profile);
+  }, [profile]);
 
   const handleSave = () => {
-    onUpdate(draft);
+    onUpdate({ ...draft, specializations: selectedSpecializations });
     setEditing(false);
     toast.success("Perfil atualizado!");
   };
@@ -35,14 +40,14 @@ const PartnerProfileTab = ({ profile, onUpdate }: Props) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => setDraft({ ...draft, logo: reader.result as string });
+    reader.onload = () => setDraft((current) => ({ ...current, logo: reader.result as string }));
     reader.readAsDataURL(file);
   };
 
   const toggleSpec = (s: string) => {
-    const specs = draft.specializations.includes(s)
-      ? draft.specializations.filter((x) => x !== s)
-      : [...draft.specializations, s];
+    const specs = selectedSpecializations.includes(s)
+      ? selectedSpecializations.filter((x) => x !== s)
+      : [...selectedSpecializations, s];
     setDraft({ ...draft, specializations: specs });
   };
 
