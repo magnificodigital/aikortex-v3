@@ -1,6 +1,6 @@
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Users, CreditCard, BarChart3, Settings, Award, Shield, Coins, BookOpen, MessageSquare, Key, LayoutTemplate } from "lucide-react";
+import { Users, CreditCard, BarChart3, Settings, Award, Shield, Coins, BookOpen, MessageSquare, Key, LayoutTemplate, Building2, Contact } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import AdminUsersTab from "@/components/admin/AdminUsersTab";
 import AdminPlansTab from "@/components/admin/AdminPlansTab";
@@ -13,6 +13,8 @@ import AdminTutorialsTab from "@/components/admin/AdminTutorialsTab";
 import AdminSupportTab from "@/components/admin/AdminSupportTab";
 import AdminConfigTab from "@/components/admin/AdminConfigTab";
 import AdminTemplatesTab from "@/components/admin/AdminTemplatesTab";
+import AdminAgenciesTab from "@/components/admin/AdminAgenciesTab";
+import AdminClientsTab from "@/components/admin/AdminClientsTab";
 import { useSearchParams } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,7 +22,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const AdminPanel = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { isPlatformOwner } = useAuth();
-  const activeTab = searchParams.get("tab") || "users";
+  const activeTab = searchParams.get("tab") || "agencies";
 
   const handleTabChange = (value: string) => {
     setSearchParams({ tab: value });
@@ -46,6 +48,12 @@ const AdminPanel = () => {
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
           <TabsList className="bg-muted/50 p-1 flex-wrap">
+            <TabsTrigger value="agencies" className="text-xs gap-1.5">
+              <Building2 className="w-3.5 h-3.5" /> Agências
+            </TabsTrigger>
+            <TabsTrigger value="clients" className="text-xs gap-1.5">
+              <Contact className="w-3.5 h-3.5" /> Clientes
+            </TabsTrigger>
             <TabsTrigger value="users" className="text-xs gap-1.5">
               <Users className="w-3.5 h-3.5" /> Usuários
             </TabsTrigger>
@@ -85,6 +93,8 @@ const AdminPanel = () => {
             )}
           </TabsList>
 
+          <TabsContent value="agencies"><AdminAgenciesTab /></TabsContent>
+          <TabsContent value="clients"><AdminClientsTab /></TabsContent>
           <TabsContent value="users"><AdminUsersTab /></TabsContent>
           <TabsContent value="plans"><AdminPlansTab /></TabsContent>
           <TabsContent value="subscriptions"><AdminSubscriptionsTab /></TabsContent>
