@@ -52,6 +52,7 @@ const getTierProgress = (tier: string, clients: number) => {
 const AdminUsersTab = () => {
   const { user, loading: authLoading } = useAuth();
   const [users, setUsers] = useState<UserRow[]>([]);
+  const [agencies, setAgencies] = useState<AgencyInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
