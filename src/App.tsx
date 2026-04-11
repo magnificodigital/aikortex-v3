@@ -46,6 +46,7 @@ const Meetings = lazy(() => import("./pages/Meetings"));
 const MeetingRoom = lazy(() => import("./pages/MeetingRoom"));
 const Tutorials = lazy(() => import("./pages/Tutorials"));
 const CallLogs = lazy(() => import("./pages/CallLogs"));
+const Financeiro = lazy(() => import("./pages/Financeiro"));
 
 const queryClient = new QueryClient();
 
@@ -83,6 +84,7 @@ const App = () => (
               <Route path="/tasks" element={<P><Tasks /></P>} />
               <Route path="/team" element={<P><Team /></P>} />
               <Route path="/financial" element={<P><Financial /></P>} />
+              <Route path="/financeiro" element={<P><Financeiro /></P>} />
               <Route path="/contracts" element={<P><Contracts /></P>} />
               <Route path="/reports" element={<P><Reports /></P>} />
               <Route path="/partners" element={<P><Partners /></P>} />
