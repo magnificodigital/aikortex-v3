@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/use-theme";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Users, Building2, Contact, CreditCard, LayoutTemplate, DollarSign, Key, BookOpen, MessageSquare,
+  Building2, CreditCard, LayoutTemplate, DollarSign, Key, BookOpen, MessageSquare,
   ArrowLeft, Sun, Moon, BarChart3, Search, X,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -14,9 +14,7 @@ import aikortexIconBlack from "@/assets/aikortex-icon-black.png";
 
 const adminNavItems: { label: string; icon: any; path: string; ownerOnly?: boolean }[] = [
   { label: "Visão Geral", icon: BarChart3, path: "/admin?tab=overview" },
-  { label: "Agências", icon: Building2, path: "/admin?tab=agencies" },
-  { label: "Clientes", icon: Contact, path: "/admin?tab=clients" },
-  { label: "Usuários", icon: Users, path: "/admin?tab=users" },
+  { label: "Gestão", icon: Building2, path: "/admin?tab=gestao" },
   { label: "Planos", icon: CreditCard, path: "/admin?tab=plans" },
   { label: "Templates", icon: LayoutTemplate, path: "/admin?tab=templates" },
   { label: "Financeiro", icon: DollarSign, path: "/admin?tab=financeiro" },
@@ -76,9 +74,9 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
   const handleSearchSelect = (r: SearchResult) => {
     setGlobalSearch("");
     setSearchOpen(false);
-    if (r.type === "agency") navigate(`/admin?tab=agencies`);
-    else if (r.type === "client") navigate(`/admin?tab=clients`);
-    else navigate(`/admin?tab=users`);
+    if (r.type === "agency") navigate(`/admin?tab=gestao`);
+    else if (r.type === "client") navigate(`/admin?tab=gestao`);
+    else navigate(`/admin?tab=gestao`);
   };
 
   const isActive = (path: string) => {

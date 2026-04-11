@@ -141,8 +141,8 @@ const AdminOverviewTab = ({ onNavigate }: OverviewProps) => {
       {/* Clickable stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { icon: Building2, iconCls: "bg-blue-500/10 text-blue-600", value: stats.totalAgencies, label: "Agências ativas", tab: "agencies" },
-          { icon: Users, iconCls: "bg-emerald-500/10 text-emerald-600", value: stats.totalClients, label: "Clientes ativos", tab: "clients" },
+          { icon: Building2, iconCls: "bg-blue-500/10 text-blue-600", value: stats.totalAgencies, label: "Agências ativas", tab: "gestao" },
+          { icon: Users, iconCls: "bg-emerald-500/10 text-emerald-600", value: stats.totalClients, label: "Clientes ativos", tab: "gestao" },
           { icon: DollarSign, iconCls: "bg-primary/10 text-primary", value: `R$ ${stats.platformMRR.toFixed(0)}`, label: "MRR da plataforma", tab: "financeiro" },
           { icon: LayoutTemplate, iconCls: "bg-purple-500/10 text-purple-600", value: stats.templatesSold, label: "Templates vendidos", tab: "templates" },
         ].map(s => (
@@ -215,7 +215,7 @@ const AdminOverviewTab = ({ onNavigate }: OverviewProps) => {
                 <div
                   key={t.key}
                   className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-accent/50 transition-colors"
-                  onClick={() => nav("agencies", { tier: t.key })}
+                  onClick={() => nav("gestao", { tier: t.key })}
                 >
                   <div className="flex items-center gap-3">
                     <Badge className={`${t.cls} ${t.textCls} border-0 text-xs min-w-[70px] justify-center`}>{t.label}</Badge>
@@ -250,8 +250,8 @@ const AdminOverviewTab = ({ onNavigate }: OverviewProps) => {
                   key={e.id}
                   className="flex items-center justify-between px-4 py-3 text-sm cursor-pointer hover:bg-accent/50 transition-colors"
                   onClick={() => {
-                    if (e.client_id) nav("clients", { clientId: e.client_id });
-                    else if (e.agency_id) nav("agencies", { agencyId: e.agency_id });
+                    if (e.client_id) nav("gestao", { clientId: e.client_id });
+                    else if (e.agency_id) nav("gestao", { agencyId: e.agency_id });
                   }}
                 >
                   <div className="flex-1 min-w-0">
