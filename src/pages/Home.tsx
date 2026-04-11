@@ -8,7 +8,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { AGENT_PRESETS } from "@/types/agent-presets";
 import type { AgentType } from "@/types/agent-builder";
-import AgencyOnboarding from "@/components/onboarding/AgencyOnboarding";
+// AgencyOnboarding disabled for now
+// import AgencyOnboarding from "@/components/onboarding/AgencyOnboarding";
 
 const suggestionsByTab = {
   app: [
