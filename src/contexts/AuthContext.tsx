@@ -21,6 +21,8 @@ interface AuthContextType {
   isPlatformAdmin: boolean;
   isPlatform: boolean;
   isAgencyOwner: boolean;
+  isClient: boolean;
+  getRedirectPath: () => string;
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
