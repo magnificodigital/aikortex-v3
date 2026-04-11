@@ -22,12 +22,6 @@ const TIER_COLORS: Record<Tier, string> = {
   hack: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
 };
 
-const TIER_LABELS: Record<Tier, string> = {
-  starter: "Starter",
-  explorer: "Explorer",
-  hack: "Hack",
-};
-
 interface SubFeatureDef {
   key: string;
   label: string;
@@ -44,8 +38,7 @@ const MODULE_GROUPS: { group: string; modules: ModuleDef[] }[] = [
     group: "Aikortex",
     modules: [
       {
-        key: "aikortex.agentes",
-        label: "Agentes",
+        key: "aikortex.agentes", label: "Agentes",
         subFeatures: [
           { key: "template_sdr", label: "Template SDR" },
           { key: "template_sac", label: "Template SAC" },
@@ -55,38 +48,23 @@ const MODULE_GROUPS: { group: string; modules: ModuleDef[] }[] = [
         ],
       },
       {
-        key: "aikortex.flows",
-        label: "Flows",
+        key: "aikortex.flows", label: "Flows",
         subFeatures: [
           { key: "comercial", label: "Templates Comerciais" },
           { key: "atendimento", label: "Templates Atendimento" },
-          { key: "customer_success", label: "Templates Customer Success" },
-          { key: "operacao", label: "Templates Operação" },
-          { key: "marketing", label: "Templates Marketing" },
           { key: "custom", label: "Fluxo em branco" },
         ],
       },
       {
-        key: "aikortex.apps",
-        label: "Apps",
+        key: "aikortex.apps", label: "Apps",
         subFeatures: [
           { key: "web", label: "Apps Web" },
           { key: "whatsapp", label: "Apps WhatsApp" },
-          { key: "custom_code", label: "Edição de código" },
         ],
       },
+      { key: "aikortex.templates", label: "Templates" },
       {
-        key: "aikortex.templates",
-        label: "Templates",
-        subFeatures: [
-          { key: "sdr", label: "Templates SDR" },
-          { key: "sac", label: "Templates SAC" },
-          { key: "fluxos_comerciais", label: "Fluxos Comerciais" },
-        ],
-      },
-      {
-        key: "aikortex.mensagens",
-        label: "Mensagens",
+        key: "aikortex.mensagens", label: "Mensagens",
         subFeatures: [
           { key: "whatsapp", label: "WhatsApp" },
           { key: "email", label: "E-mail" },
@@ -94,12 +72,10 @@ const MODULE_GROUPS: { group: string; modules: ModuleDef[] }[] = [
         ],
       },
       {
-        key: "aikortex.disparos",
-        label: "Disparos",
+        key: "aikortex.disparos", label: "Disparos",
         subFeatures: [
           { key: "whatsapp", label: "Disparos WhatsApp" },
           { key: "email", label: "Disparos E-mail" },
-          { key: "agendamento", label: "Agendamento" },
         ],
       },
     ],
@@ -107,81 +83,34 @@ const MODULE_GROUPS: { group: string; modules: ModuleDef[] }[] = [
   {
     group: "Gestão",
     modules: [
+      { key: "gestao.clientes", label: "Clientes" },
+      { key: "gestao.contratos", label: "Contratos" },
+      { key: "gestao.vendas", label: "Vendas" },
       {
-        key: "gestao.clientes",
-        label: "Clientes",
-        subFeatures: [
-          { key: "cadastro", label: "Cadastro" },
-          { key: "health_score", label: "Health Score" },
-          { key: "timeline", label: "Timeline" },
-        ],
-      },
-      {
-        key: "gestao.contratos",
-        label: "Contratos",
-        subFeatures: [
-          { key: "criacao", label: "Criação" },
-          { key: "assinatura_digital", label: "Assinatura Digital" },
-          { key: "relatorios", label: "Relatórios" },
-        ],
-      },
-      {
-        key: "gestao.vendas",
-        label: "Vendas",
-        subFeatures: [
-          { key: "pipeline", label: "Pipeline" },
-          { key: "propostas", label: "Propostas" },
-          { key: "metas", label: "Metas de vendas" },
-        ],
-      },
-      {
-        key: "gestao.crm",
-        label: "CRM",
+        key: "gestao.crm", label: "CRM",
         subFeatures: [
           { key: "kanban", label: "Kanban" },
           { key: "lead_scoring", label: "Lead Scoring" },
-          { key: "relatorios", label: "Relatórios" },
-          { key: "automacoes", label: "Automações" },
         ],
       },
       {
-        key: "gestao.reunioes",
-        label: "Reuniões",
+        key: "gestao.reunioes", label: "Reuniões",
         subFeatures: [
           { key: "video", label: "Videochamadas" },
           { key: "gravacao", label: "Gravação" },
           { key: "traducao", label: "Tradução em tempo real" },
-          { key: "sales_mentor", label: "Sales Mentor IA" },
         ],
       },
       {
-        key: "gestao.financeiro",
-        label: "Financeiro",
+        key: "gestao.financeiro", label: "Financeiro",
         subFeatures: [
           { key: "faturas", label: "Faturas" },
           { key: "despesas", label: "Despesas" },
-          { key: "relatorios", label: "Relatórios financeiros" },
           { key: "fluxo_caixa", label: "Fluxo de caixa" },
         ],
       },
-      {
-        key: "gestao.equipe",
-        label: "Equipe",
-        subFeatures: [
-          { key: "membros", label: "Gestão de membros" },
-          { key: "performance", label: "Performance" },
-          { key: "produtividade", label: "Produtividade" },
-        ],
-      },
-      {
-        key: "gestao.tarefas",
-        label: "Tarefas",
-        subFeatures: [
-          { key: "kanban", label: "Kanban" },
-          { key: "calendario", label: "Calendário" },
-          { key: "equipe", label: "Visão por equipe" },
-        ],
-      },
+      { key: "gestao.equipe", label: "Equipe" },
+      { key: "gestao.tarefas", label: "Tarefas" },
     ],
   },
 ];
@@ -224,7 +153,7 @@ const TierAccessManager = () => {
     queryKey: ["tier-module-access-admin"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("tier_module_access" as any)
+        .from("tier_module_access")
         .select("*");
       if (error) throw error;
       return (data ?? []) as unknown as AccessRow[];
@@ -234,11 +163,11 @@ const TierAccessManager = () => {
   // Build maps
   const accessMap: Record<string, Record<string, boolean>> = {};
   const subFeaturesMap: Record<string, Record<string, Record<string, boolean>>> = {};
+  for (const tier of TIERS) {
+    accessMap[tier] = {};
+    subFeaturesMap[tier] = {};
+  }
   if (rows) {
-    for (const tier of TIERS) {
-      accessMap[tier] = {};
-      subFeaturesMap[tier] = {};
-    }
     for (const row of rows) {
       if (!accessMap[row.tier]) accessMap[row.tier] = {};
       if (!subFeaturesMap[row.tier]) subFeaturesMap[row.tier] = {};
@@ -252,8 +181,8 @@ const TierAccessManager = () => {
   const toggleMutation = useMutation({
     mutationFn: async ({ tier, moduleKey, value }: { tier: string; moduleKey: string; value: boolean }) => {
       const { error } = await supabase
-        .from("tier_module_access" as any)
-        .update({ has_access: value, updated_by: user?.id } as any)
+        .from("tier_module_access")
+        .update({ has_access: value, updated_by: user?.id })
         .eq("tier", tier)
         .eq("module_key", moduleKey);
       if (error) throw error;
@@ -261,6 +190,7 @@ const TierAccessManager = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tier-module-access-admin"] });
       queryClient.invalidateQueries({ queryKey: ["tier-module-access"] });
+      queryClient.invalidateQueries({ queryKey: ["tier-module-access-all"] });
       toast.success("Acesso atualizado");
     },
     onError: () => toast.error("Erro ao atualizar acesso"),
@@ -269,8 +199,8 @@ const TierAccessManager = () => {
   const subFeatureMutation = useMutation({
     mutationFn: async ({ tier, moduleKey, subFeatures }: { tier: string; moduleKey: string; subFeatures: Record<string, boolean> }) => {
       const { error } = await supabase
-        .from("tier_module_access" as any)
-        .update({ sub_features: subFeatures, updated_by: user?.id } as any)
+        .from("tier_module_access")
+        .update({ sub_features: subFeatures as any, updated_by: user?.id })
         .eq("tier", tier)
         .eq("module_key", moduleKey);
       if (error) throw error;
@@ -278,6 +208,7 @@ const TierAccessManager = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tier-module-access-admin"] });
       queryClient.invalidateQueries({ queryKey: ["tier-module-access"] });
+      queryClient.invalidateQueries({ queryKey: ["tier-module-access-all"] });
       toast.success("Sub-funcionalidade atualizada");
     },
     onError: () => toast.error("Erro ao atualizar"),
@@ -285,6 +216,7 @@ const TierAccessManager = () => {
 
   const handleToggle = (tier: string, moduleKey: string, newValue: boolean) => {
     if (newValue) {
+      // Enable for this tier and all higher tiers
       const tierIdx = TIERS.indexOf(tier as Tier);
       for (let i = tierIdx; i < TIERS.length; i++) {
         const t = TIERS[i];
@@ -309,27 +241,20 @@ const TierAccessManager = () => {
       for (const key of ALL_MODULE_KEYS) {
         const defaultVal = DEFAULT_ACCESS[tier]?.[key] ?? false;
         await supabase
-          .from("tier_module_access" as any)
-          .update({ has_access: defaultVal, updated_by: user?.id, sub_features: {} } as any)
+          .from("tier_module_access")
+          .update({ has_access: defaultVal, updated_by: user?.id, sub_features: {} as any })
           .eq("tier", tier)
           .eq("module_key", key);
       }
     }
     queryClient.invalidateQueries({ queryKey: ["tier-module-access-admin"] });
     queryClient.invalidateQueries({ queryKey: ["tier-module-access"] });
+    queryClient.invalidateQueries({ queryKey: ["tier-module-access-all"] });
     toast.success("Padrões restaurados");
   };
 
   const countEnabled = (tier: string) =>
     ALL_MODULE_KEYS.filter((k) => accessMap[tier]?.[k]).length;
-
-  const getModuleDef = (key: string): ModuleDef | undefined => {
-    for (const g of MODULE_GROUPS) {
-      const found = g.modules.find((m) => m.key === key);
-      if (found) return found;
-    }
-    return undefined;
-  };
 
   if (isLoading) {
     return (
@@ -349,7 +274,7 @@ const TierAccessManager = () => {
         <div className="flex-1">
           <h2 className="text-lg font-semibold text-foreground">Funcionalidades por Tier</h2>
           <p className="text-xs text-muted-foreground">
-            Configure quais módulos e sub-funcionalidades cada tier pode acessar. Clique no módulo para gerenciar detalhes.
+            Configure quais módulos e sub-funcionalidades cada tier pode acessar.
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={handleResetDefaults} className="gap-1.5">
@@ -358,7 +283,7 @@ const TierAccessManager = () => {
       </div>
 
       {/* Tier summary cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         {TIERS.map((tier) => {
           const enabled = countEnabled(tier);
           const pct = Math.round((enabled / TOTAL_MODULES) * 100);
@@ -391,9 +316,9 @@ const TierAccessManager = () => {
           </thead>
           <tbody>
             {MODULE_GROUPS.map((group) => (
-              <> 
-                <tr key={group.group} className="bg-muted/10">
-                  <td colSpan={5} className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <React.Fragment key={group.group}>
+                <tr className="bg-muted/10">
+                  <td colSpan={4} className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     {group.group}
                   </td>
                 </tr>
@@ -402,9 +327,8 @@ const TierAccessManager = () => {
                   const hasSubFeatures = mod.subFeatures && mod.subFeatures.length > 0;
 
                   return (
-                    <> 
+                    <React.Fragment key={mod.key}>
                       <tr
-                        key={mod.key}
                         className={`border-b border-border/50 transition-colors ${
                           isExpanded ? "bg-primary/5" : "hover:bg-muted/20"
                         } ${hasSubFeatures ? "cursor-pointer" : ""}`}
@@ -438,8 +362,8 @@ const TierAccessManager = () => {
 
                       {/* Sub-features expanded row */}
                       {isExpanded && hasSubFeatures && (
-                        <tr key={`${mod.key}-sub`} className="bg-primary/5 border-b border-border/50">
-                          <td colSpan={5} className="px-4 py-3">
+                        <tr className="bg-primary/5 border-b border-border/50">
+                          <td colSpan={4} className="px-4 py-3">
                             <div className="ml-6 space-y-3">
                               <p className="text-xs font-medium text-muted-foreground mb-2">
                                 Sub-funcionalidades de {mod.label}
@@ -485,10 +409,10 @@ const TierAccessManager = () => {
                           </td>
                         </tr>
                       )}
-                    </>
+                    </React.Fragment>
                   );
                 })}
-              </>
+              </React.Fragment>
             ))}
           </tbody>
         </table>
