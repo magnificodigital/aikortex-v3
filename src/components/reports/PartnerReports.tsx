@@ -7,9 +7,9 @@ const COLORS = [
 ];
 
 const tierDistribution = [
-  { name: "Bronze", value: 42, fill: "hsl(30, 60%, 50%)" },
-  { name: "Prata", value: 28, fill: "hsl(0, 0%, 65%)" },
-  { name: "Gold", value: 18, fill: "hsl(45, 90%, 50%)" },
+  { name: "Starter", value: 42, fill: "hsl(30, 60%, 50%)" },
+  { name: "Explorer", value: 28, fill: "hsl(0, 0%, 65%)" },
+  { name: "Hack", value: 18, fill: "hsl(45, 90%, 50%)" },
 ];
 
 const marketplaceData = [
@@ -31,9 +31,9 @@ const certificationsTrend = [
 ];
 
 const revenueByTier = [
-  { tier: "Bronze", receita: 12000 },
-  { tier: "Prata", receita: 45000 },
-  { tier: "Gold", receita: 120000 },
+  { tier: "Starter", receita: 12000 },
+  { tier: "Explorer", receita: 45000 },
+  { tier: "Hack", receita: 120000 },
 ];
 
 const engagementData = [

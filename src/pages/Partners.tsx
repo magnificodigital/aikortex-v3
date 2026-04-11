@@ -20,7 +20,7 @@ const DEFAULT_PROFILE: PartnerProfile = {
   description: "Agência especializada em soluções de inteligência artificial para negócios.",
   specializations: ["Automação IA", "Agentes de IA", "CRM"],
   certifications: ["AI Automation Specialist", "CRM Implementation Expert"],
-  tier: "prata",
+  tier: "explorer",
   clientsServed: 12,
   revenue: 35000,
   solutionsPublished: 3,

@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { TIER_CONFIG, type PartnerTier } from "@/types/partner";
 import { useAuth } from "@/contexts/AuthContext";
 
-const TIERS: PartnerTier[] = ["bronze", "prata", "gold"];
+const TIERS: PartnerTier[] = ["starter", "explorer", "hack"];
 
 const tierBadge = (tier: string) => {
   const cfg = TIER_CONFIG[tier as PartnerTier];
@@ -41,7 +41,7 @@ const AdminPartnersTab = () => {
   const [search, setSearch] = useState("");
   const [filterTier, setFilterTier] = useState("all");
   const [editPartner, setEditPartner] = useState<PartnerRow | null>(null);
-  const [newTier, setNewTier] = useState<PartnerTier>("bronze");
+  const [newTier, setNewTier] = useState<PartnerTier>("starter");
   const [note, setNote] = useState("");
 
   const { data: partners = [], isLoading } = useQuery({
