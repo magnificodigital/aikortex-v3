@@ -57,6 +57,7 @@ const AddClientWizard = ({ open, onOpenChange, agencyId, customPricing, agencyTi
     if (open) {
       setStep(1); setName(""); setEmail(""); setPhone(""); setDocument("");
       setSelected(new Set()); setPaymentLink(""); setCreatedClientId("");
+      setCreateWorkspaceAccess(false); setClientPassword("");
       supabase.from("platform_templates").select("*").eq("is_active", true).then(({ data }) => {
         if (data) setTemplates(data.filter((t: any) => TIER_ORDER[agencyTier] >= TIER_ORDER[t.min_tier]) as Template[]);
       });
