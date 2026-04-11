@@ -38,7 +38,7 @@ const allRoles = [
   { value: "agency_member", label: "Membro" },
 ];
 
-const TIERS: PartnerTier[] = ["bronze", "prata", "gold"];
+const TIERS: PartnerTier[] = ["starter", "explorer", "hack"];
 
 interface PlanOption {
   id: string;
@@ -73,7 +73,7 @@ const EditUserDialog = ({ open, onClose, onSuccess, user }: EditUserDialogProps)
 
   // Agency / Partner tier state
   const [partnerData, setPartnerData] = useState<PartnerTierData | null>(null);
-  const [agencyTier, setAgencyTier] = useState<PartnerTier>("bronze");
+  const [agencyTier, setAgencyTier] = useState<PartnerTier>("starter");
   const [clientsServed, setClientsServed] = useState(0);
   const [revenue, setRevenue] = useState(0);
   const [solutionsPublished, setSolutionsPublished] = useState(0);
@@ -123,7 +123,7 @@ const EditUserDialog = ({ open, onClose, onSuccess, user }: EditUserDialogProps)
             setTierNote("");
           } else {
             setPartnerData(null);
-            setAgencyTier("bronze");
+            setAgencyTier("starter");
             setClientsServed(0);
             setRevenue(0);
             setSolutionsPublished(0);

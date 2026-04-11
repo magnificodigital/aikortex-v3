@@ -63,7 +63,7 @@ export type FeatureFlag =
   | "module.team"
   | "module.tasks";
 
-export type PartnerTier = "bronze" | "prata" | "gold";
+export type PartnerTier = "starter" | "explorer" | "hack";
 
 export interface TierFeatureConfig {
   label: string;
@@ -178,8 +178,8 @@ export const ROLE_CONFIG: Record<SystemRole, { label: string; level: "platform" 
 };
 
 export const TIER_FEATURE_CONFIG: Record<PartnerTier, TierFeatureConfig> = {
-  bronze: {
-    label: "Bronze",
+  starter: {
+    label: "Starter",
     color: "text-amber-700",
     bg: "bg-amber-500/10",
     icon: "🥉",
@@ -193,8 +193,8 @@ export const TIER_FEATURE_CONFIG: Record<PartnerTier, TierFeatureConfig> = {
       "module.tasks",
     ],
   },
-  prata: {
-    label: "Prata",
+  explorer: {
+    label: "Explorer",
     color: "text-gray-400",
     bg: "bg-gray-500/10",
     icon: "🥈",
@@ -216,8 +216,8 @@ export const TIER_FEATURE_CONFIG: Record<PartnerTier, TierFeatureConfig> = {
       "feature.custom_reports",
     ],
   },
-  gold: {
-    label: "Gold",
+  hack: {
+    label: "Hack",
     color: "text-yellow-500",
     bg: "bg-yellow-500/10",
     icon: "🥇",
@@ -348,7 +348,7 @@ export const mockAuditLog: AuditLogEntry[] = [
   { id: "au-1", userId: "tm-1", userName: "Rafael Costa", action: "role_assigned", target: "Ana Oliveira", details: "Atribuiu role agency_admin", timestamp: "2025-03-09T10:30:00" },
   { id: "au-2", userId: "tm-2", userName: "Ana Oliveira", action: "permission_changed", target: "Lucas Mendes", details: "Alterou permissões de Financeiro para somente leitura", timestamp: "2025-03-09T09:15:00" },
   { id: "au-3", userId: "tm-1", userName: "Rafael Costa", action: "user_invited", target: "beatriz@agency.com", details: "Convidou como agency_member", timestamp: "2025-03-08T17:00:00" },
-  { id: "au-4", userId: "tm-1", userName: "Rafael Costa", action: "feature_enabled", target: "feature.ai_agents", details: "Ativou Agentes de IA para tier Gold", timestamp: "2025-03-08T14:00:00" },
+  { id: "au-4", userId: "tm-1", userName: "Rafael Costa", action: "feature_enabled", target: "feature.ai_agents", details: "Ativou Agentes de IA para tier Hack", timestamp: "2025-03-08T14:00:00" },
   { id: "au-5", userId: "tm-2", userName: "Ana Oliveira", action: "user_suspended", target: "Diego Nascimento", details: "Conta suspensa por inatividade", timestamp: "2025-02-15T14:00:00" },
   { id: "au-6", userId: "tm-1", userName: "Rafael Costa", action: "financial_change", target: "Invoice #2847", details: "Aprovou pagamento de R$ 15.000", timestamp: "2025-03-07T11:00:00" },
 ];

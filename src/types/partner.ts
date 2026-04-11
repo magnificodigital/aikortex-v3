@@ -1,4 +1,4 @@
-export type PartnerTier = "bronze" | "prata" | "gold";
+export type PartnerTier = "starter" | "explorer" | "hack";
 
 export interface PartnerProfile {
   id: string;
@@ -76,8 +76,8 @@ export interface CommunityChannel {
 }
 
 export const TIER_CONFIG: Record<PartnerTier, { label: string; color: string; minClients: number; minRevenue: number; minSolutions: number; minCerts: number; benefits: string[] }> = {
-  bronze: {
-    label: "Bronze",
+  starter: {
+    label: "Starter",
     color: "text-amber-700",
     minClients: 0,
     minRevenue: 0,
@@ -85,8 +85,8 @@ export const TIER_CONFIG: Record<PartnerTier, { label: string; color: string; mi
     minCerts: 0,
     benefits: ["Acesso à comunidade", "Treinamentos básicos", "Suporte padrão"],
   },
-  prata: {
-    label: "Prata",
+  explorer: {
+    label: "Explorer",
     color: "text-gray-400",
     minClients: 5,
     minRevenue: 10000,
@@ -94,8 +94,8 @@ export const TIER_CONFIG: Record<PartnerTier, { label: string; color: string; mi
     minCerts: 1,
     benefits: ["Marketplace básico", "Badge de parceiro", "Eventos exclusivos", "Suporte prioritário"],
   },
-  gold: {
-    label: "Gold",
+  hack: {
+    label: "Hack",
     color: "text-yellow-500",
     minClients: 20,
     minRevenue: 50000,

@@ -5,7 +5,7 @@ import { type FeatureFlag, type PartnerTier } from "@/types/rbac";
 import { TIER_CONFIG } from "@/types/partner";
 import type { Tables } from "@/integrations/supabase/types";
 
-const TIERS: PartnerTier[] = ["bronze", "prata", "gold"];
+const TIERS: PartnerTier[] = ["starter", "explorer", "hack"];
 
 // Map FeatureFlag keys to tier_module_access module_key values in DB
 const FEATURE_TO_MODULE_KEY: Record<string, string> = {
@@ -65,10 +65,10 @@ export function usePartnerTier() {
 
       if (existing) return existing as PartnerTierData;
 
-      // Auto-create bronze tier on first access
+      // Auto-create starter tier on first access
       const { data: created, error: insertError } = await supabase
         .from("partner_tiers")
-        .insert({ user_id: user!.id, tier: "bronze" })
+        .insert({ user_id: user!.id, tier: "starter" })
         .select()
         .single();
 
@@ -77,7 +77,7 @@ export function usePartnerTier() {
     },
   });
 
-  const tier: PartnerTier = (data?.tier as PartnerTier) ?? "bronze";
+  const tier: PartnerTier = (data?.tier as PartnerTier) ?? "starter";
   const tierIdx = TIERS.indexOf(tier);
   const nextTier = tierIdx < TIERS.length - 1 ? TIERS[tierIdx + 1] : null;
 
@@ -106,7 +106,7 @@ export function usePartnerTier() {
 
   const hasFeature = (flag: FeatureFlag): boolean => {
     const moduleKey = FEATURE_TO_MODULE_KEY[flag];
-    if (!moduleKey) return false; // standalone feature flags not in module system
+    if (!moduleKey) return false;
     if (!allAccessRows) return true; // still loading, don't block
     return tierAccessMap[tier]?.[moduleKey] ?? false;
   };

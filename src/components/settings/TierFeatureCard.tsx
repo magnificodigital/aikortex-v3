@@ -134,25 +134,25 @@ export const MODULE_SUB_FEATURES: Partial<Record<FeatureFlag, SubFeature[]>> = {
 export type TierSubFeatures = Record<PartnerTier, Record<string, boolean>>;
 
 export const initTierSubFeatures = (): TierSubFeatures => {
-  const result: TierSubFeatures = { bronze: {}, prata: {}, gold: {} };
-  // Gold has everything enabled by default
+  const result: TierSubFeatures = { starter: {}, explorer: {}, hack: {} };
+  // Hack has everything enabled by default
   for (const [, subs] of Object.entries(MODULE_SUB_FEATURES)) {
     for (const sub of subs ?? []) {
-      result.gold[sub.key] = true;
-      result.prata[sub.key] = false;
-      result.bronze[sub.key] = false;
+      result.hack[sub.key] = true;
+      result.explorer[sub.key] = false;
+      result.starter[sub.key] = false;
     }
   }
-  // Prata: enable basic sub-features
+  // Explorer: enable basic sub-features
   for (const [flag, subs] of Object.entries(MODULE_SUB_FEATURES)) {
     if (!subs) continue;
-    // Enable the first 2 sub-features for prata by default
-    subs.slice(0, 2).forEach(s => { result.prata[s.key] = true; });
+    // Enable the first 2 sub-features for explorer by default
+    subs.slice(0, 2).forEach(s => { result.explorer[s.key] = true; });
   }
-  // Bronze: enable only first sub-feature
+  // Starter: enable only first sub-feature
   for (const [flag, subs] of Object.entries(MODULE_SUB_FEATURES)) {
     if (!subs) continue;
-    if (subs[0]) result.bronze[subs[0].key] = true;
+    if (subs[0]) result.starter[subs[0].key] = true;
   }
   return result;
 };
