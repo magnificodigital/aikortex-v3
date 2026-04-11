@@ -88,7 +88,7 @@ const LandingPage = () => {
     return (localStorage.getItem("app-lang") as Lang) || "pt";
   });
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
+  const { user, loading, getRedirectPath } = useAuth();
   const { theme, toggle: toggleTheme } = useTheme();
 
   const t = translations[lang];
