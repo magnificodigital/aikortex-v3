@@ -200,12 +200,14 @@ const AdminUsersTab = () => {
             <SelectTrigger className="w-44"><SelectValue placeholder="Papel" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os Papéis</SelectItem>
-              <SelectItem value="platform_owner">Dono da Plataforma</SelectItem>
-              <SelectItem value="platform_admin">Admin da Plataforma</SelectItem>
-              <SelectItem value="agency_owner">Dono da Agência</SelectItem>
-              <SelectItem value="agency_admin">Admin da Agência</SelectItem>
+              <SelectItem value="platform_owner">Admin</SelectItem>
+              <SelectItem value="platform_admin">Admin Plataforma</SelectItem>
+              <SelectItem value="agency_owner">Agência</SelectItem>
+              <SelectItem value="agency_admin">Admin Agência</SelectItem>
               <SelectItem value="agency_manager">Gerente</SelectItem>
               <SelectItem value="agency_member">Membro</SelectItem>
+              <SelectItem value="client_owner">Cliente</SelectItem>
+              <SelectItem value="client_viewer">Visualizador</SelectItem>
             </SelectContent>
           </Select>
         </div>
