@@ -12,7 +12,7 @@ import { usePartnerTier } from "@/hooks/use-partner-tier";
 import { Award, Check, Lock, ChevronRight, Users, DollarSign, Package, GraduationCap, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
-const tiers: PartnerTier[] = ["bronze", "prata", "gold"];
+const tiers: PartnerTier[] = ["starter", "explorer", "hack"];
 const allFeatures = Object.keys(FEATURE_FLAG_LABELS) as FeatureFlag[];
 
 const PartnerTiersTab = () => {
