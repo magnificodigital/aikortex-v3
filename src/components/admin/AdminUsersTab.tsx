@@ -31,6 +31,24 @@ interface UserRow {
   subscription?: { status: string; plan?: { name: string } | null; billing_cycle?: string } | null;
 }
 
+interface AgencyInfo {
+  user_id: string;
+  tier: string;
+  active_clients_count: number | null;
+}
+
+const TIER_BADGES: Record<string, { label: string; className: string }> = {
+  starter: { label: "Starter", className: "bg-muted text-muted-foreground" },
+  explorer: { label: "Explorer", className: "bg-blue-500/10 text-blue-600" },
+  hack: { label: "Hack", className: "bg-purple-500/10 text-purple-600" },
+};
+
+const getTierProgress = (tier: string, clients: number) => {
+  if (tier === "hack") return null;
+  if (tier === "explorer") return { target: 15, label: "Hack", remaining: Math.max(0, 15 - clients) };
+  return { target: 5, label: "Explorer", remaining: Math.max(0, 5 - clients) };
+};
+
 const AdminUsersTab = () => {
   const { user, loading: authLoading } = useAuth();
   const [users, setUsers] = useState<UserRow[]>([]);
