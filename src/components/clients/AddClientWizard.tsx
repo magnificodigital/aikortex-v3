@@ -121,7 +121,25 @@ const AddClientWizard = ({ open, onOpenChange, agencyId, customPricing, agencyTi
             <div><Label>Email *</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="cliente@email.com" /></div>
             <div><Label>Telefone</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+55 11 99999-9999" /></div>
             <div><Label>CPF/CNPJ</Label><Input value={document} onChange={(e) => setDocument(e.target.value)} placeholder="000.000.000-00" /></div>
-            <Button className="w-full" disabled={!name || !email} onClick={() => setStep(2)}>
+
+            <div className="border border-border rounded-lg p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">Criar acesso ao workspace</p>
+                  <p className="text-xs text-muted-foreground">O cliente poderá acessar seu próprio painel</p>
+                </div>
+                <Switch checked={createWorkspaceAccess} onCheckedChange={setCreateWorkspaceAccess} />
+              </div>
+              {createWorkspaceAccess && (
+                <div>
+                  <Label>Senha temporária *</Label>
+                  <Input type="password" value={clientPassword} onChange={(e) => setClientPassword(e.target.value)} placeholder="Senha de acesso" />
+                  <p className="text-[10px] text-muted-foreground mt-1">O cliente usará o email acima + esta senha para entrar.</p>
+                </div>
+              )}
+            </div>
+
+            <Button className="w-full" disabled={!name || !email || (createWorkspaceAccess && !clientPassword)} onClick={() => setStep(2)}>
               Próximo <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           </div>
