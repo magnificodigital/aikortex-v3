@@ -24,13 +24,10 @@ interface ClientRow {
   templates_count: number;
   mrr: number;
   platformRevenue: number;
+  last_payment_date: string | null;
 }
 
-interface Agency {
-  id: string;
-  agency_name: string | null;
-  tier: string;
-}
+interface Agency { id: string; agency_name: string | null; tier: string; }
 
 interface SubDetail {
   template_name: string;
@@ -38,6 +35,12 @@ interface SubDetail {
   platform_price: number;
   status: string;
   channel: string | null;
+}
+
+interface AdminClientsProps {
+  initialAgencyFilter?: string;
+  initialClientId?: string;
+  onNavigateToAgency?: (agencyId: string) => void;
 }
 
 const TIER_BADGES: Record<string, { label: string; className: string }> = {
@@ -64,28 +67,37 @@ const relativeDate = (d: string | null) => {
   return new Date(d).toLocaleDateString("pt-BR");
 };
 
-const AdminClientsTab = () => {
+const AdminClientsTab = ({ initialAgencyFilter, initialClientId, onNavigateToAgency }: AdminClientsProps) => {
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [agencies, setAgencies] = useState<Agency[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [agencyFilter, setAgencyFilter] = useState("all");
+  const [agencyFilter, setAgencyFilter] = useState(initialAgencyFilter || "all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [tierFilter, setTierFilter] = useState("all");
   const [selectedClient, setSelectedClient] = useState<ClientRow | null>(null);
   const [clientSubs, setClientSubs] = useState<SubDetail[]>([]);
   const [clientEvents, setClientEvents] = useState<any[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
 
   useEffect(() => { fetchClients(); }, []);
+  useEffect(() => { if (initialAgencyFilter) setAgencyFilter(initialAgencyFilter); }, [initialAgencyFilter]);
+  useEffect(() => {
+    if (initialClientId && clients.length > 0) {
+      const c = clients.find(cl => cl.id === initialClientId);
+      if (c) openDetail(c);
+    }
+  }, [initialClientId, clients]);
 
   const fetchClients = async () => {
     setLoading(true);
     try {
-      const [clientsRes, agenciesRes, subsRes, templatesRes] = await Promise.all([
+      const [clientsRes, agenciesRes, subsRes, templatesRes, eventsRes] = await Promise.all([
         supabase.from("agency_clients").select("id, client_name, client_email, status, created_at, agency_id"),
         supabase.from("agency_profiles").select("id, agency_name, tier"),
         supabase.from("client_template_subscriptions").select("client_id, template_id, agency_price_monthly, platform_price_monthly, status").in("status", ["active", "trial"]),
         supabase.from("platform_templates").select("id, name"),
+        supabase.from("billing_events").select("client_id, created_at").eq("event_type", "payment_received").order("created_at", { ascending: false }),
       ]);
 
       const agenciesData = agenciesRes.data || [];
@@ -94,6 +106,10 @@ const AdminClientsTab = () => {
       setAgencies(agenciesData);
 
       const templateMap = new Map((templatesRes.data || []).map(t => [t.id, t.name]));
+      const lastPayment = new Map<string, string>();
+      (eventsRes.data || []).forEach(e => {
+        if (e.client_id && !lastPayment.has(e.client_id)) lastPayment.set(e.client_id, e.created_at);
+      });
 
       const templateCount = new Map<string, number>();
       const mrrMap = new Map<string, number>();
@@ -118,6 +134,7 @@ const AdminClientsTab = () => {
           templates_count: templateCount.get(c.id) || 0,
           mrr: mrrMap.get(c.id) || 0,
           platformRevenue: platMap.get(c.id) || 0,
+          last_payment_date: lastPayment.get(c.id) || null,
         };
       }));
     } catch {
@@ -152,7 +169,8 @@ const AdminClientsTab = () => {
     const matchSearch = !search || c.client_name.toLowerCase().includes(search.toLowerCase()) || (c.client_email || "").toLowerCase().includes(search.toLowerCase());
     const matchAgency = agencyFilter === "all" || c.agency_id === agencyFilter;
     const matchStatus = statusFilter === "all" || c.status === statusFilter;
-    return matchSearch && matchAgency && matchStatus;
+    const matchTier = tierFilter === "all" || c.agency_tier === tierFilter;
+    return matchSearch && matchAgency && matchStatus && matchTier;
   });
 
   return (
@@ -170,6 +188,15 @@ const AdminClientsTab = () => {
               {agencies.map(a => (
                 <SelectItem key={a.id} value={a.id}>{a.agency_name || "Sem nome"}</SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+          <Select value={tierFilter} onValueChange={setTierFilter}>
+            <SelectTrigger className="w-36"><SelectValue placeholder="Tier" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos tiers</SelectItem>
+              <SelectItem value="starter">Starter</SelectItem>
+              <SelectItem value="explorer">Explorer</SelectItem>
+              <SelectItem value="hack">Hack</SelectItem>
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -201,17 +228,18 @@ const AdminClientsTab = () => {
                 <TableHead>MRR cliente</TableHead>
                 <TableHead>Receita plataforma</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Último pagamento</TableHead>
                 <TableHead>Cadastro</TableHead>
                 <TableHead className="w-10" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                   <Loader2 className="w-5 h-5 animate-spin inline mr-2" />Carregando...
                 </TableCell></TableRow>
               ) : filtered.length === 0 ? (
-                <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Nenhum cliente encontrado</TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Nenhum cliente encontrado</TableCell></TableRow>
               ) : filtered.map(c => {
                 const st = STATUS_MAP[c.status || ""] || STATUS_MAP.inactive;
                 const agencyTier = TIER_BADGES[c.agency_tier] || TIER_BADGES.starter;
@@ -225,7 +253,12 @@ const AdminClientsTab = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-sm">{c.agency_name}</span>
+                        <span
+                          className={`text-sm ${onNavigateToAgency ? "text-blue-600 hover:underline cursor-pointer" : ""}`}
+                          onClick={() => onNavigateToAgency?.(c.agency_id)}
+                        >
+                          {c.agency_name}
+                        </span>
                         <Badge className={`${agencyTier.className} border-0 text-[10px]`}>{agencyTier.label}</Badge>
                       </div>
                     </TableCell>
@@ -245,6 +278,7 @@ const AdminClientsTab = () => {
                     <TableCell>
                       <Badge className={`${st.cls} border-0 text-xs`}>{st.label}</Badge>
                     </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{relativeDate(c.last_payment_date)}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{relativeDate(c.created_at)}</TableCell>
                     <TableCell>
                       <Button variant="ghost" size="sm" className="text-xs" onClick={() => openDetail(c)}>
@@ -270,7 +304,15 @@ const AdminClientsTab = () => {
             <div className="space-y-5 mt-4">
               <div className="space-y-1">
                 <p className="text-sm"><span className="text-muted-foreground">E-mail:</span> {selectedClient.client_email || "—"}</p>
-                <p className="text-sm"><span className="text-muted-foreground">Agência:</span> {selectedClient.agency_name}</p>
+                <p className="text-sm">
+                  <span className="text-muted-foreground">Agência:</span>{" "}
+                  <span
+                    className={onNavigateToAgency ? "text-blue-600 hover:underline cursor-pointer" : ""}
+                    onClick={() => { setSelectedClient(null); onNavigateToAgency?.(selectedClient.agency_id); }}
+                  >
+                    {selectedClient.agency_name}
+                  </span>
+                </p>
                 <Badge className={`${STATUS_MAP[selectedClient.status || ""]?.cls || ""} border-0 text-xs`}>
                   {STATUS_MAP[selectedClient.status || ""]?.label || selectedClient.status}
                 </Badge>

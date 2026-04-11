@@ -6,10 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Separator } from "@/components/ui/separator";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { UserPlus, Search, MoreHorizontal, Pencil, Trash2, Loader2, ShieldCheck, ShieldOff, KeyRound, Mail, RefreshCw } from "lucide-react";
+import { UserPlus, Search, MoreHorizontal, Pencil, Trash2, Loader2, ShieldCheck, ShieldOff, KeyRound, RefreshCw, Building2, User } from "lucide-react";
 import { ROLE_CONFIG } from "@/types/rbac";
 import CreateUserDialog from "@/components/shared/CreateUserDialog";
 import EditUserDialog from "@/components/admin/EditUserDialog";
@@ -29,12 +31,13 @@ interface UserRow {
   last_sign_in_at: string | null;
   email_confirmed_at: string | null;
   subscription?: { status: string; plan?: { name: string } | null; billing_cycle?: string } | null;
+  agency?: { id: string; agency_name: string | null; tier: string; active_clients_count: number | null } | null;
+  client?: { id: string; client_name: string; agency_id: string; agency_name: string | null } | null;
 }
 
-interface AgencyInfo {
-  user_id: string;
-  tier: string;
-  active_clients_count: number | null;
+interface AdminUsersProps {
+  onNavigateToAgency?: (agencyId: string) => void;
+  onNavigateToClient?: (clientId: string) => void;
 }
 
 const TIER_BADGES: Record<string, { label: string; className: string }> = {
@@ -43,16 +46,9 @@ const TIER_BADGES: Record<string, { label: string; className: string }> = {
   hack: { label: "Hack", className: "bg-purple-500/10 text-purple-600" },
 };
 
-const getTierProgress = (tier: string, clients: number) => {
-  if (tier === "hack") return null;
-  if (tier === "explorer") return { target: 15, label: "Hack", remaining: Math.max(0, 15 - clients) };
-  return { target: 5, label: "Explorer", remaining: Math.max(0, 5 - clients) };
-};
-
-const AdminUsersTab = () => {
+const AdminUsersTab = ({ onNavigateToAgency, onNavigateToClient }: AdminUsersProps) => {
   const { user, loading: authLoading } = useAuth();
   const [users, setUsers] = useState<UserRow[]>([]);
-  const [agencies, setAgencies] = useState<AgencyInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -64,43 +60,30 @@ const AdminUsersTab = () => {
   const [toggleTarget, setToggleTarget] = useState<UserRow | null>(null);
   const [toggleLoading, setToggleLoading] = useState(false);
   const [resetPwTarget, setResetPwTarget] = useState<UserRow | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
-
-    if (!user) {
-      setUsers([]);
-      setLoading(false);
-      return;
-    }
-
+    if (!user) { setUsers([]); setLoading(false); return; }
     fetchUsers();
   }, [authLoading, user?.id]);
 
   const fetchUsers = async () => {
     if (authLoading || !user) return;
-
     setLoading(true);
     try {
-      const [usersRes, agenciesRes] = await Promise.all([
-        supabase.functions.invoke("list-users"),
-        supabase.from("agency_profiles").select("user_id, tier, active_clients_count"),
-      ]);
-      
+      const usersRes = await supabase.functions.invoke("admin-get-users");
       if (usersRes.error || usersRes.data?.error) {
         toast.error("Erro ao carregar usuários");
         setUsers([]);
       } else {
         setUsers(usersRes.data?.users || []);
       }
-      setAgencies((agenciesRes.data as AgencyInfo[]) || []);
     } catch {
       toast.error("Erro ao carregar usuários");
     }
     setLoading(false);
   };
-
-  const getAgencyInfo = (userId: string) => agencies.find(a => a.user_id === userId);
 
   const getRoleBadge = (role: string) => {
     const config = ROLE_CONFIG[role as keyof typeof ROLE_CONFIG];
@@ -108,32 +91,13 @@ const AdminUsersTab = () => {
     return <Badge className={`${config.bg} ${config.color} border-0 text-xs`}>{config.label}</Badge>;
   };
 
-  const getStatusBadge = (sub: UserRow["subscription"], isActive: boolean) => {
-    if (!isActive) return <Badge className="bg-red-500/10 text-red-600 border-0 text-xs">Inativo</Badge>;
-    if (!sub) return <Badge variant="secondary" className="text-xs">Sem plano</Badge>;
-    const colors: Record<string, string> = {
-      trialing: "bg-yellow-500/10 text-yellow-600", active: "bg-green-500/10 text-green-600",
-      past_due: "bg-red-500/10 text-red-600", canceled: "bg-muted text-muted-foreground",
-      paused: "bg-orange-500/10 text-orange-600",
-    };
-    const labels: Record<string, string> = {
-      trialing: "Trial", active: "Ativo", past_due: "Inadimplente", canceled: "Cancelado", paused: "Pausado",
-    };
-    return <Badge className={`${colors[sub.status] || ""} border-0 text-xs`}>{labels[sub.status] || sub.status}</Badge>;
-  };
-
   const handleDeleteUser = async () => {
     if (!deleteTarget) return;
     setDeleteLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("delete-user", { body: { user_id: deleteTarget.user_id } });
-      if (error || data?.error) {
-        toast.error(data?.error || "Erro ao excluir usuário");
-      } else {
-        toast.success("Usuário excluído com sucesso");
-        setDeleteTarget(null);
-        fetchUsers();
-      }
+      if (error || data?.error) toast.error(data?.error || "Erro ao excluir usuário");
+      else { toast.success("Usuário excluído"); setDeleteTarget(null); fetchUsers(); }
     } catch { toast.error("Erro ao excluir usuário"); }
     finally { setDeleteLoading(false); }
   };
@@ -146,13 +110,8 @@ const AdminUsersTab = () => {
       const { data, error } = await supabase.functions.invoke("update-user", {
         body: { user_id: toggleTarget.user_id, is_active: newActive },
       });
-      if (error || data?.error) {
-        toast.error(data?.error || "Erro ao alterar status");
-      } else {
-        toast.success(newActive ? "Usuário ativado" : "Usuário desativado");
-        setToggleTarget(null);
-        fetchUsers();
-      }
+      if (error || data?.error) toast.error(data?.error || "Erro ao alterar status");
+      else { toast.success(newActive ? "Usuário ativado" : "Usuário desativado"); setToggleTarget(null); fetchUsers(); }
     } catch { toast.error("Erro ao alterar status"); }
     finally { setToggleLoading(false); }
   };
@@ -161,21 +120,22 @@ const AdminUsersTab = () => {
     const matchSearch = !search ||
       (u.full_name || "").toLowerCase().includes(search.toLowerCase()) ||
       (u.email || "").toLowerCase().includes(search.toLowerCase());
-    
     let matchStatus = true;
-    if (statusFilter === "active") matchStatus = u.is_active && u.subscription?.status === "active";
-    else if (statusFilter === "trialing") matchStatus = u.subscription?.status === "trialing";
-    else if (statusFilter === "canceled") matchStatus = u.subscription?.status === "canceled";
+    if (statusFilter === "active") matchStatus = u.is_active;
     else if (statusFilter === "inactive") matchStatus = !u.is_active;
-    else if (statusFilter === "no_plan") matchStatus = !u.subscription;
-
     let matchRole = true;
     if (roleFilter !== "all") matchRole = u.role === roleFilter;
-
     return matchSearch && matchStatus && matchRole;
   });
 
   const isSelf = (u: UserRow) => u.user_id === user?.id;
+
+  const getConnectionInfo = (u: UserRow) => {
+    if (u.agency) return { type: "agency" as const, label: u.agency.agency_name || "Agência", id: u.agency.id, tier: u.agency.tier };
+    if (u.client) return { type: "client" as const, label: `${u.client.agency_name || "Agência"} → ${u.client.client_name}`, agencyId: u.client.agency_id, clientId: u.client.id };
+    if (["platform_owner", "platform_admin"].includes(u.role)) return { type: "platform" as const, label: "Plataforma" };
+    return null;
+  };
 
   return (
     <div className="space-y-4">
@@ -188,12 +148,9 @@ const AdminUsersTab = () => {
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-36"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos Status</SelectItem>
+              <SelectItem value="all">Todos</SelectItem>
               <SelectItem value="active">Ativos</SelectItem>
-              <SelectItem value="trialing">Em Trial</SelectItem>
-              <SelectItem value="canceled">Cancelados</SelectItem>
               <SelectItem value="inactive">Inativos</SelectItem>
-              <SelectItem value="no_plan">Sem plano</SelectItem>
             </SelectContent>
           </Select>
           <Select value={roleFilter} onValueChange={setRoleFilter}>
@@ -221,9 +178,7 @@ const AdminUsersTab = () => {
         </div>
       </div>
 
-      <div className="text-xs text-muted-foreground">
-        {filtered.length} de {users.length} usuário(s)
-      </div>
+      <div className="text-xs text-muted-foreground">{filtered.length} de {users.length} usuário(s)</div>
 
       <Card>
         <CardContent className="p-0">
@@ -233,8 +188,8 @@ const AdminUsersTab = () => {
                 <TableHead>Nome</TableHead>
                 <TableHead>E-mail</TableHead>
                 <TableHead>Papel</TableHead>
+                <TableHead>Vinculado a</TableHead>
                 <TableHead>Tier</TableHead>
-                <TableHead>Plano</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Último login</TableHead>
                 <TableHead className="w-10" />
@@ -248,64 +203,80 @@ const AdminUsersTab = () => {
               ) : filtered.length === 0 ? (
                 <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Nenhum usuário encontrado</TableCell></TableRow>
               ) : filtered.map(u => {
-                const agency = getAgencyInfo(u.user_id);
-                const tierBadge = agency ? TIER_BADGES[agency.tier] || TIER_BADGES.starter : null;
-                const progress = agency ? getTierProgress(agency.tier, agency.active_clients_count || 0) : null;
+                const conn = getConnectionInfo(u);
+                const tierBadge = u.agency ? TIER_BADGES[u.agency.tier] || TIER_BADGES.starter : null;
 
                 return (
-                <TableRow key={u.id} className={!u.is_active ? "opacity-50" : ""}>
-                  <TableCell className="font-medium">{u.full_name || "—"}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{u.email || "—"}</TableCell>
-                  <TableCell>{getRoleBadge(u.role)}</TableCell>
-                  <TableCell>
-                    {tierBadge ? (
-                      <div className="space-y-1">
-                        <Badge className={`${tierBadge.className} border-0 text-xs`}>{tierBadge.label}</Badge>
-                        {progress && (
-                          <div className="text-[10px] text-muted-foreground">
-                            {agency!.active_clients_count || 0}/{progress.target} para {progress.label}
+                  <TableRow key={u.id} className={`${!u.is_active ? "opacity-50" : ""} cursor-pointer hover:bg-accent/50`} onClick={() => setSelectedUser(u)}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {u.avatar_url ? (
+                          <img src={u.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
+                        ) : (
+                          <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                            {(u.full_name || u.email || "?")[0].toUpperCase()}
                           </div>
                         )}
+                        <span className="font-medium">{u.full_name || "—"}</span>
                       </div>
-                    ) : "—"}
-                  </TableCell>
-                  <TableCell>{u.subscription?.plan?.name || "—"}</TableCell>
-                  <TableCell>{getStatusBadge(u.subscription, u.is_active)}</TableCell>
-                  <TableCell className="text-muted-foreground text-xs">
-                    {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }) : "Nunca"}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="w-4 h-4" /></Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setEditTarget(u)}>
-                          <Pencil className="w-4 h-4 mr-2" /> Editar Usuário
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setResetPwTarget(u)}>
-                          <KeyRound className="w-4 h-4 mr-2" /> Alterar Senha
-                        </DropdownMenuItem>
-                        {!isSelf(u) && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => setToggleTarget(u)}>
-                              {u.is_active ? (
-                                <><ShieldOff className="w-4 h-4 mr-2" /> Desativar Conta</>
-                              ) : (
-                                <><ShieldCheck className="w-4 h-4 mr-2" /> Ativar Conta</>
-                              )}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setDeleteTarget(u)}>
-                              <Trash2 className="w-4 h-4 mr-2" /> Excluir Usuário
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{u.email || "—"}</TableCell>
+                    <TableCell>{getRoleBadge(u.role)}</TableCell>
+                    <TableCell>
+                      {conn ? (
+                        <span
+                          className={conn.type !== "platform" ? "text-blue-600 hover:underline cursor-pointer text-sm" : "text-sm text-muted-foreground"}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (conn.type === "agency") onNavigateToAgency?.(conn.id!);
+                            else if (conn.type === "client") onNavigateToClient?.((conn as any).clientId);
+                          }}
+                        >
+                          {conn.type === "agency" && <Building2 className="w-3 h-3 inline mr-1" />}
+                          {conn.type === "client" && <User className="w-3 h-3 inline mr-1" />}
+                          {conn.label}
+                        </span>
+                      ) : <span className="text-sm text-muted-foreground">—</span>}
+                    </TableCell>
+                    <TableCell>
+                      {tierBadge ? <Badge className={`${tierBadge.className} border-0 text-xs`}>{tierBadge.label}</Badge> : "—"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={`border-0 text-xs ${u.is_active ? "bg-green-500/10 text-green-600" : "bg-red-500/10 text-red-600"}`}>
+                        {u.is_active ? "Ativo" : "Inativo"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-xs">
+                      {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }) : "Nunca"}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={e => e.stopPropagation()}><MoreHorizontal className="w-4 h-4" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditTarget(u); }}>
+                            <Pencil className="w-4 h-4 mr-2" /> Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setResetPwTarget(u); }}>
+                            <KeyRound className="w-4 h-4 mr-2" /> Alterar Senha
+                          </DropdownMenuItem>
+                          {!isSelf(u) && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setToggleTarget(u); }}>
+                                {u.is_active ? <><ShieldOff className="w-4 h-4 mr-2" /> Desativar</> : <><ShieldCheck className="w-4 h-4 mr-2" /> Ativar</>}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteTarget(u); }}>
+                                <Trash2 className="w-4 h-4 mr-2" /> Excluir
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
             </TableBody>
@@ -313,24 +284,116 @@ const AdminUsersTab = () => {
         </CardContent>
       </Card>
 
+      {/* User detail side panel */}
+      <Sheet open={!!selectedUser} onOpenChange={o => !o && setSelectedUser(null)}>
+        <SheetContent className="sm:max-w-md overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              {selectedUser?.avatar_url ? (
+                <img src={selectedUser.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
+                  {(selectedUser?.full_name || selectedUser?.email || "?")[0].toUpperCase()}
+                </div>
+              )}
+              {selectedUser?.full_name || selectedUser?.email || "Usuário"}
+            </SheetTitle>
+          </SheetHeader>
+
+          {selectedUser && (() => {
+            const conn = getConnectionInfo(selectedUser);
+            return (
+              <div className="space-y-4 mt-4">
+                <div className="space-y-1">
+                  <p className="text-sm"><span className="text-muted-foreground">E-mail:</span> {selectedUser.email || "—"}</p>
+                  <p className="text-sm"><span className="text-muted-foreground">Papel:</span> {getRoleBadge(selectedUser.role)}</p>
+                  <p className="text-sm"><span className="text-muted-foreground">Tenant:</span> {selectedUser.tenant_type}</p>
+                  <p className="text-sm"><span className="text-muted-foreground">Status:</span>{" "}
+                    <Badge className={`border-0 text-xs ${selectedUser.is_active ? "bg-green-500/10 text-green-600" : "bg-red-500/10 text-red-600"}`}>
+                      {selectedUser.is_active ? "Ativo" : "Inativo"}
+                    </Badge>
+                  </p>
+                </div>
+
+                <Separator />
+
+                {conn && conn.type === "agency" && selectedUser.agency && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase">Agência</p>
+                    <p className="text-sm">
+                      <span
+                        className="text-blue-600 hover:underline cursor-pointer"
+                        onClick={() => { setSelectedUser(null); onNavigateToAgency?.(selectedUser.agency!.id); }}
+                      >
+                        {selectedUser.agency.agency_name}
+                      </span>
+                    </p>
+                    <div className="flex gap-2 items-center">
+                      <Badge className={`${(TIER_BADGES[selectedUser.agency.tier] || TIER_BADGES.starter).className} border-0 text-xs`}>
+                        {(TIER_BADGES[selectedUser.agency.tier] || TIER_BADGES.starter).label}
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">{selectedUser.agency.active_clients_count || 0} clientes</span>
+                    </div>
+                  </div>
+                )}
+
+                {conn && conn.type === "client" && selectedUser.client && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase">Cliente</p>
+                    <p className="text-sm">{selectedUser.client.client_name}</p>
+                    <p className="text-sm">
+                      <span className="text-muted-foreground">Agência: </span>
+                      <span
+                        className="text-blue-600 hover:underline cursor-pointer"
+                        onClick={() => { setSelectedUser(null); onNavigateToAgency?.(selectedUser.client!.agency_id); }}
+                      >
+                        {selectedUser.client.agency_name}
+                      </span>
+                    </p>
+                  </div>
+                )}
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase">Ações</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" variant="outline" onClick={() => { setSelectedUser(null); setEditTarget(selectedUser); }}>
+                      <Pencil className="w-3 h-3 mr-1" /> Editar
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => { setSelectedUser(null); setResetPwTarget(selectedUser); }}>
+                      <KeyRound className="w-3 h-3 mr-1" /> Resetar senha
+                    </Button>
+                    {!isSelf(selectedUser) && (
+                      <>
+                        <Button size="sm" variant="outline" onClick={() => { setSelectedUser(null); setToggleTarget(selectedUser); }}>
+                          {selectedUser.is_active ? <><ShieldOff className="w-3 h-3 mr-1" /> Suspender</> : <><ShieldCheck className="w-3 h-3 mr-1" /> Ativar</>}
+                        </Button>
+                        <Button size="sm" variant="destructive" onClick={() => { setSelectedUser(null); setDeleteTarget(selectedUser); }}>
+                          <Trash2 className="w-3 h-3 mr-1" /> Excluir
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+        </SheetContent>
+      </Sheet>
+
       <CreateUserDialog open={createOpen} onClose={() => setCreateOpen(false)} onSuccess={fetchUsers} context="platform" />
       <EditUserDialog open={!!editTarget} onClose={() => setEditTarget(null)} onSuccess={fetchUsers} user={editTarget} />
-      <ResetPasswordDialog
-        open={!!resetPwTarget}
-        onClose={() => setResetPwTarget(null)}
-        userId={resetPwTarget?.user_id || ""}
-        userName={resetPwTarget?.full_name || resetPwTarget?.email || ""}
-      />
+      <ResetPasswordDialog open={!!resetPwTarget} onClose={() => setResetPwTarget(null)} userId={resetPwTarget?.user_id || ""} userName={resetPwTarget?.full_name || resetPwTarget?.email || ""} />
 
-      {/* Toggle active dialog */}
       <AlertDialog open={!!toggleTarget} onOpenChange={(o) => !o && setToggleTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{toggleTarget?.is_active ? "Desativar" : "Ativar"} conta</AlertDialogTitle>
             <AlertDialogDescription>
               {toggleTarget?.is_active
-                ? <>Tem certeza que deseja desativar <span className="font-medium">{toggleTarget?.full_name || toggleTarget?.email}</span>? O usuário não conseguirá mais acessar a plataforma.</>
-                : <>Deseja reativar a conta de <span className="font-medium">{toggleTarget?.full_name || toggleTarget?.email}</span>?</>
+                ? <>Desativar <span className="font-medium">{toggleTarget?.full_name || toggleTarget?.email}</span>?</>
+                : <>Reativar <span className="font-medium">{toggleTarget?.full_name || toggleTarget?.email}</span>?</>
               }
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -344,14 +407,12 @@ const AdminUsersTab = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Delete dialog */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir usuário</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir <span className="font-medium">{deleteTarget?.full_name || deleteTarget?.email || "este usuário"}</span>?
-              Esta ação é irreversível e removerá todos os dados associados.
+              Excluir <span className="font-medium">{deleteTarget?.full_name || deleteTarget?.email || "este usuário"}</span>? Ação irreversível.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
