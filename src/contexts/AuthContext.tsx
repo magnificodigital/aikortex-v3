@@ -89,6 +89,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isPlatformAdmin = profile?.role === "platform_admin";
   const isPlatform = profile?.tenant_type === "platform";
   const isAgencyOwner = profile?.role === "agency_owner";
+  const isClient = profile?.tenant_type === "client";
+
+  const getRedirectPath = () => {
+    if (isPlatformOwner || isPlatformAdmin) return "/admin";
+    if (isClient) return "/workspace";
+    return "/home";
+  };
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     const { error } = await supabase.auth.signUp({
