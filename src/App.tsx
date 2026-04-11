@@ -38,6 +38,7 @@ const Apps = lazy(() => import("./pages/Apps"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const Credits = lazy(() => import("./pages/Credits"));
 const ClientDetailPage = lazy(() => import("./pages/ClientDetail"));
+const Workspace = lazy(() => import("./pages/Workspace"));
 
 const Pricing = lazy(() => import("./pages/Pricing"));
 const Templates = lazy(() => import("./pages/Templates"));
@@ -50,8 +51,14 @@ const Financeiro = lazy(() => import("./pages/Financeiro"));
 
 const queryClient = new QueryClient();
 
-const P = ({ children }: { children: React.ReactNode }) => (
-  <ProtectedRoute>{children}</ProtectedRoute>
+// Agency-only route guard
+const AgencyRoute = ({ children }: { children: React.ReactNode }) => (
+  <ProtectedRoute tenantTypes={['agency', 'platform']}>{children}</ProtectedRoute>
+);
+
+// Client-only route guard
+const ClientRoute = ({ children }: { children: React.ReactNode }) => (
+  <ProtectedRoute tenantTypes={['client']}>{children}</ProtectedRoute>
 );
 
 const Loading = () => (
@@ -71,43 +78,50 @@ const App = () => (
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/pricing" element={<Pricing />} />
-              <Route path="/home" element={<P><Home /></P>} />
-              <Route path="/apps" element={<P><Apps /></P>} />
-              <Route path="/app-builder" element={<P><AppBuilder /></P>} />
-              
-              <Route path="/templates" element={<P><Templates /></P>} />
-              <Route path="/dashboard" element={<P><Index /></P>} />
+
+              {/* Agency routes */}
+              <Route path="/home" element={<AgencyRoute><Home /></AgencyRoute>} />
+              <Route path="/apps" element={<AgencyRoute><Apps /></AgencyRoute>} />
+              <Route path="/app-builder" element={<AgencyRoute><AppBuilder /></AgencyRoute>} />
+              <Route path="/templates" element={<AgencyRoute><Templates /></AgencyRoute>} />
+              <Route path="/dashboard" element={<AgencyRoute><Index /></AgencyRoute>} />
               <Route path="/cadastro-cliente/:token" element={<ClientRegistration />} />
-              <Route path="/clients" element={<P><Clients /></P>} />
-              <Route path="/clients/:clientId" element={<P><ClientDetailPage /></P>} />
-              <Route path="/projects" element={<P><Projects /></P>} />
-              <Route path="/tasks" element={<P><Tasks /></P>} />
-              <Route path="/team" element={<P><Team /></P>} />
-              <Route path="/financial" element={<P><Financial /></P>} />
-              <Route path="/financeiro" element={<P><Financeiro /></P>} />
-              <Route path="/contracts" element={<P><Contracts /></P>} />
-              <Route path="/reports" element={<P><Reports /></P>} />
-              <Route path="/partners" element={<P><Partners /></P>} />
-              <Route path="/sales" element={<P><Sales /></P>} />
-              <Route path="/aikortex" element={<P><AikortexCRM /></P>} />
-              <Route path="/aikortex/crm" element={<P><AikortexCRM /></P>} />
-              <Route path="/aikortex/agents" element={<P><Aikortex /></P>} />
-              <Route path="/aikortex/agents/:agentId" element={<P><AgentDetail /></P>} />
-              <Route path="/calls" element={<P><CallLogs /></P>} />
-              
-              <Route path="/aikortex/automations" element={<P><AikortexAutomations /></P>} />
-              <Route path="/aikortex/messages" element={<P><AikortexMessages /></P>} />
-              <Route path="/aikortex/broadcasts" element={<P><AikortexBroadcasts /></P>} />
-              <Route path="/webedit" element={<P><WebEdit /></P>} />
-              <Route path="/alowdigital" element={<P><AlowDigital /></P>} />
-              <Route path="/iagora" element={<P><IAgora /></P>} />
-              <Route path="/sintonia" element={<P><SintonIA /></P>} />
-              <Route path="/admin" element={<ProtectedRoute roles={['platform_owner','platform_admin']}><AdminPanel /></ProtectedRoute>} />
-              <Route path="/ai-setup" element={<P><Credits /></P>} />
+              <Route path="/clients" element={<AgencyRoute><Clients /></AgencyRoute>} />
+              <Route path="/clients/:clientId" element={<AgencyRoute><ClientDetailPage /></AgencyRoute>} />
+              <Route path="/projects" element={<AgencyRoute><Projects /></AgencyRoute>} />
+              <Route path="/tasks" element={<AgencyRoute><Tasks /></AgencyRoute>} />
+              <Route path="/team" element={<AgencyRoute><Team /></AgencyRoute>} />
+              <Route path="/financial" element={<AgencyRoute><Financial /></AgencyRoute>} />
+              <Route path="/financeiro" element={<AgencyRoute><Financeiro /></AgencyRoute>} />
+              <Route path="/contracts" element={<AgencyRoute><Contracts /></AgencyRoute>} />
+              <Route path="/reports" element={<AgencyRoute><Reports /></AgencyRoute>} />
+              <Route path="/partners" element={<AgencyRoute><Partners /></AgencyRoute>} />
+              <Route path="/sales" element={<AgencyRoute><Sales /></AgencyRoute>} />
+              <Route path="/aikortex" element={<AgencyRoute><AikortexCRM /></AgencyRoute>} />
+              <Route path="/aikortex/crm" element={<AgencyRoute><AikortexCRM /></AgencyRoute>} />
+              <Route path="/aikortex/agents" element={<AgencyRoute><Aikortex /></AgencyRoute>} />
+              <Route path="/aikortex/agents/:agentId" element={<AgencyRoute><AgentDetail /></AgencyRoute>} />
+              <Route path="/calls" element={<AgencyRoute><CallLogs /></AgencyRoute>} />
+              <Route path="/aikortex/automations" element={<AgencyRoute><AikortexAutomations /></AgencyRoute>} />
+              <Route path="/aikortex/messages" element={<AgencyRoute><AikortexMessages /></AgencyRoute>} />
+              <Route path="/aikortex/broadcasts" element={<AgencyRoute><AikortexBroadcasts /></AgencyRoute>} />
+              <Route path="/webedit" element={<AgencyRoute><WebEdit /></AgencyRoute>} />
+              <Route path="/alowdigital" element={<AgencyRoute><AlowDigital /></AgencyRoute>} />
+              <Route path="/iagora" element={<AgencyRoute><IAgora /></AgencyRoute>} />
+              <Route path="/sintonia" element={<AgencyRoute><SintonIA /></AgencyRoute>} />
+              <Route path="/ai-setup" element={<AgencyRoute><Credits /></AgencyRoute>} />
               <Route path="/credits" element={<Navigate to="/ai-setup" replace />} />
-              <Route path="/settings" element={<P><SettingsPage /></P>} />
-              <Route path="/meetings" element={<P><Meetings /></P>} />
+              <Route path="/settings" element={<AgencyRoute><SettingsPage /></AgencyRoute>} />
+              <Route path="/meetings" element={<AgencyRoute><Meetings /></AgencyRoute>} />
               <Route path="/meetings/:roomId" element={<ProtectedRoute><MeetingRoom /></ProtectedRoute>} />
+
+              {/* Admin routes - platform only */}
+              <Route path="/admin" element={<ProtectedRoute roles={['platform_owner','platform_admin']}><AdminPanel /></ProtectedRoute>} />
+
+              {/* Client workspace routes */}
+              <Route path="/workspace" element={<ClientRoute><Workspace /></ClientRoute>} />
+              <Route path="/workspace/*" element={<ClientRoute><Workspace /></ClientRoute>} />
+
               <Route path="/tutorials" element={<Navigate to="/home" replace />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
