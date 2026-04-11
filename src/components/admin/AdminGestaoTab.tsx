@@ -97,7 +97,11 @@ const generatePassword = () => {
 
 const adminInvoke = async (body: Record<string, any>) => {
   const { data, error } = await supabase.functions.invoke("admin-users", { body });
-  if (error) throw new Error(error.message);
+  if (error) {
+    // Try to extract the real error message from the response context
+    const msg = (data as any)?.error || error.message || "Erro desconhecido";
+    throw new Error(msg);
+  }
   if (data?.error) throw new Error(data.error);
   return data;
 };

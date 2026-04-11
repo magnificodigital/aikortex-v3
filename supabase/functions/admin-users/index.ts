@@ -102,7 +102,10 @@ Deno.serve(async (req) => {
           email_confirm: true,
           user_metadata: { full_name: full_name || email, role: role || "agency_owner", tenant_type: tenant_type || "agency" },
         });
-        if (createError) return json({ error: createError.message }, 400);
+        if (createError) {
+          console.error("createUser error:", createError.message);
+          return json({ error: createError.message }, 400);
+        }
 
         // Profile is created by trigger, but update if role/tenant differs
         const effectiveRole = role || "agency_owner";
