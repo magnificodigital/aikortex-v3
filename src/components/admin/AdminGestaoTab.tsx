@@ -12,15 +12,19 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import {
   Search, Loader2, RefreshCw, Building2, CheckCircle, XCircle,
   ArrowLeft, Users, DollarSign, LayoutTemplate, ChevronRight, Plus, Pencil, Trash2, Ban, ShieldOff, Copy, KeyRound,
+  MoreHorizontal, ShieldCheck, UserX, RotateCcw,
 } from "lucide-react";
 import {
   Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { ROLE_CONFIG } from "@/types/rbac";
+import EditUserDialog from "@/components/admin/EditUserDialog";
+import CreateUserDialog from "@/components/shared/CreateUserDialog";
 
 /* ────────────────────── types ────────────────────── */
 
