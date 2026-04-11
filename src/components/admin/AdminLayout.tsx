@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/use-theme";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Users, Building2, Contact, CreditCard, LayoutTemplate, DollarSign, Key, BookOpen, MessageSquare,
+  Building2, CreditCard, LayoutTemplate, DollarSign, Key, BookOpen, MessageSquare,
   ArrowLeft, Sun, Moon, BarChart3, Search, X,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
