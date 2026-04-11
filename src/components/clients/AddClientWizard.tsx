@@ -84,6 +84,23 @@ const AddClientWizard = ({ open, onOpenChange, agencyId, customPricing, agencyTi
       const clientId = res.data.client?.id;
       setCreatedClientId(clientId);
 
+      // Optionally create workspace access for client
+      if (createWorkspaceAccess && email && clientPassword) {
+        const createRes = await supabase.functions.invoke("create-user", {
+          body: {
+            email,
+            password: clientPassword,
+            full_name: name,
+            role: "client_owner",
+            tenant_type: "client",
+          },
+        });
+        if (createRes.data?.user?.id) {
+          // Link client_user_id
+          await supabase.from("agency_clients").update({ client_user_id: createRes.data.user.id }).eq("id", clientId);
+        }
+      }
+
       // Subscribe templates
       for (const t of selectedTemplates) {
         await supabase.functions.invoke("asaas-subscribe-template", {
