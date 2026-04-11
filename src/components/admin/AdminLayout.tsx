@@ -3,24 +3,24 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/use-theme";
 import {
-  Users, CreditCard, BarChart3, Settings, Award, ArrowLeft, Sun, Moon, ShieldCheck, Coins, BookOpen, MessageSquare,
+  Users, Building2, Contact, CreditCard, LayoutTemplate, DollarSign, Key, BookOpen, MessageSquare,
+  ArrowLeft, Sun, Moon, BarChart3,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import aikortexIconWhite from "@/assets/aikortex-icon-white.png";
 import aikortexIconBlack from "@/assets/aikortex-icon-black.png";
 
 const adminNavItems: { label: string; icon: any; path: string; ownerOnly?: boolean }[] = [
-  { label: "Agências", icon: Users, path: "/admin?tab=agencies" },
-  { label: "Clientes", icon: Users, path: "/admin?tab=clients" },
+  { label: "Visão Geral", icon: BarChart3, path: "/admin?tab=overview" },
+  { label: "Agências", icon: Building2, path: "/admin?tab=agencies" },
+  { label: "Clientes", icon: Contact, path: "/admin?tab=clients" },
   { label: "Usuários", icon: Users, path: "/admin?tab=users" },
   { label: "Planos", icon: CreditCard, path: "/admin?tab=plans" },
-  { label: "Assinaturas", icon: BarChart3, path: "/admin?tab=subscriptions" },
-  { label: "Parceiros", icon: Award, path: "/admin?tab=partners" },
-  { label: "Pagamentos", icon: Settings, path: "/admin?tab=payment" },
-  { label: "Créditos", icon: Coins, path: "/admin?tab=credits" },
-  { label: "Tutoriais", icon: BookOpen, path: "/admin?tab=tutorials" },
+  { label: "Templates", icon: LayoutTemplate, path: "/admin?tab=templates" },
+  { label: "Financeiro", icon: DollarSign, path: "/admin?tab=financeiro" },
+  { label: "Chaves de API", icon: Key, path: "/admin?tab=api-keys", ownerOnly: true },
   { label: "Suporte", icon: MessageSquare, path: "/admin?tab=support" },
-  { label: "Chaves de API", icon: Settings, path: "/admin?tab=api-keys", ownerOnly: true },
+  { label: "Tutoriais", icon: BookOpen, path: "/admin?tab=tutorials" },
 ];
 
 const AdminLayout = ({ children }: { children: ReactNode }) => {
@@ -32,7 +32,11 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
   const isActive = (path: string) => {
     if (path.includes("?tab=")) {
       const [, query] = path.split("?");
-      return location.search === `?${query}`;
+      const currentTab = new URLSearchParams(location.search).get("tab");
+      const navTab = new URLSearchParams(query).get("tab");
+      // Default tab is overview
+      if (!currentTab && navTab === "overview") return true;
+      return currentTab === navTab;
     }
     return location.pathname === path && !location.search;
   };
@@ -47,7 +51,6 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       <aside className="flex h-full w-56 flex-col border-r border-sidebar-border bg-sidebar shrink-0">
-        {/* Header */}
         <div className="flex h-14 items-center gap-2 border-b border-sidebar-border px-4">
           <img
             src={theme === "dark" ? aikortexIconWhite : aikortexIconBlack}
@@ -60,13 +63,11 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
           </Badge>
         </div>
 
-        {/* Welcome */}
         <div className="px-4 py-3 border-b border-sidebar-border">
           <p className="text-xs text-muted-foreground">Olá, {profile?.full_name?.split(" ")[0] ?? "Admin"}</p>
           <p className="text-[10px] text-muted-foreground/70 mt-0.5">Painel de controle Aikortex</p>
         </div>
 
-        {/* Nav */}
         <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5">
           {adminNavItems
             .filter((item) => !item.ownerOnly || profile?.role === "platform_owner")
@@ -82,7 +83,6 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
             ))}
         </nav>
 
-        {/* Footer */}
         <div className="space-y-0.5 border-t border-sidebar-border px-2 py-2">
           <button onClick={toggle} className={`${linkClasses(false)} w-full`}>
             {theme === "dark" ? <Sun className="w-4 h-4 shrink-0" /> : <Moon className="w-4 h-4 shrink-0" />}
