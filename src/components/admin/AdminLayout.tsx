@@ -74,9 +74,9 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
   const handleSearchSelect = (r: SearchResult) => {
     setGlobalSearch("");
     setSearchOpen(false);
-    if (r.type === "agency") navigate(`/admin?tab=agencies`);
-    else if (r.type === "client") navigate(`/admin?tab=clients`);
-    else navigate(`/admin?tab=users`);
+    if (r.type === "agency") navigate(`/admin?tab=gestao`);
+    else if (r.type === "client") navigate(`/admin?tab=gestao`);
+    else navigate(`/admin?tab=gestao`);
   };
 
   const isActive = (path: string) => {
