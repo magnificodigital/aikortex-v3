@@ -41,6 +41,10 @@ const AddClientWizard = ({ open, onOpenChange, agencyId, customPricing, agencyTi
   const [phone, setPhone] = useState("");
   const [document, setDocument] = useState("");
 
+  // Client workspace access
+  const [createWorkspaceAccess, setCreateWorkspaceAccess] = useState(false);
+  const [clientPassword, setClientPassword] = useState("");
+
   // Step 2
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
