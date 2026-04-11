@@ -119,9 +119,9 @@ const LandingPage = () => {
 
   useEffect(() => {
     if (!loading && user) {
-      navigate("/home");
+      navigate(getRedirectPath());
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, getRedirectPath]);
 
   const isDark = theme === "dark";
   const bg = isDark ? "bg-[#0a0a0f] text-white" : "bg-white text-foreground";
