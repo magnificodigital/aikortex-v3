@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import TierAccessManager from "@/components/admin/TierAccessManager";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -158,6 +160,11 @@ const AdminPlansTab = () => {
           );
         })}
       </div>
+
+      <Separator className="my-6" />
+
+      {/* Tier Access Matrix */}
+      <TierAccessManager />
     </div>
   );
 };
