@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -54,9 +54,16 @@ Deno.serve(async (req) => {
     }
 
     // Get all auth users
-    const {
-      data: { users },
-    } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+    const allUsers: any[] = [];
+    let page = 1;
+    const perPage = 1000;
+    while (true) {
+      const { data: { users }, error } = await supabase.auth.admin.listUsers({ page, perPage });
+      if (error) break;
+      allUsers.push(...users);
+      if (users.length < perPage) break;
+      page++;
+    }
 
     // Get all profiles with agency info
     const { data: profiles } = await supabase
@@ -73,10 +80,17 @@ Deno.serve(async (req) => {
       .select("*, plans(name)")
       .in("status", ["active", "trialing", "past_due", "paused"]);
 
-    const combined = (users || []).map((u) => {
+    // Get agency clients for client users
+    const { data: agencyClients } = await supabase
+      .from("agency_clients")
+      .select("id, client_name, client_user_id, agency_id");
+
+    const combined = (allUsers || []).map((u) => {
       const prof = profiles?.find((p) => p.user_id === u.id);
       const agency = agencyProfiles?.find((a) => a.user_id === u.id);
       const sub = subscriptions?.find((s) => s.user_id === u.id);
+      const clientRecord = agencyClients?.find((c) => c.client_user_id === u.id);
+      const clientAgency = clientRecord ? agencyProfiles?.find((a) => a.id === clientRecord.agency_id) : null;
 
       return {
         id: prof?.id || u.id,
@@ -103,6 +117,14 @@ Deno.serve(async (req) => {
               agency_name: agency.agency_name,
               tier: agency.tier,
               active_clients_count: agency.active_clients_count,
+            }
+          : null,
+        client: clientRecord
+          ? {
+              id: clientRecord.id,
+              client_name: clientRecord.client_name,
+              agency_id: clientRecord.agency_id,
+              agency_name: clientAgency?.agency_name || null,
             }
           : null,
       };
