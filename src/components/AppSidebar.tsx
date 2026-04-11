@@ -283,12 +283,23 @@ const AppSidebar = ({ mobileOpen = false, onMobileClose }: AppSidebarProps) => {
 
         {(!collapsed || isMobile) && (
           <div className="px-2 pt-3">
-            <Select defaultValue="workspace-1">
+            <Select
+              value={activeWorkspace.type === "agency" ? "__agency__" : activeWorkspace.id}
+              onValueChange={(val) => {
+                if (val === "__agency__") {
+                  switchToAgency();
+                } else {
+                  const client = clients.find(c => c.id === val);
+                  if (client) switchToClient(client);
+                }
+              }}
+            >
               <SelectTrigger className="w-full h-8 text-xs border-sidebar-border"><SelectValue placeholder="Workspace" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="workspace-1">Meu Workspace</SelectItem>
-                <SelectItem value="workspace-2">Agência Alpha</SelectItem>
-                <SelectItem value="workspace-3">Cliente Beta</SelectItem>
+                <SelectItem value="__agency__">{agencyName}</SelectItem>
+                {clients.map(c => (
+                  <SelectItem key={c.id} value={c.id}>{c.client_name}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
