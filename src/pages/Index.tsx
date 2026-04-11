@@ -7,6 +7,7 @@ import ClientSnapshot from "@/components/dashboard/ClientSnapshot";
 import AutomationStatus from "@/components/dashboard/AutomationStatus";
 import NotificationsCenter from "@/components/dashboard/NotificationsCenter";
 import PerformanceWidgets from "@/components/dashboard/PerformanceWidgets";
+import AgencyOverview from "@/components/dashboard/AgencyOverview";
 
 const Index = () => {
   return (
@@ -22,6 +23,9 @@ const Index = () => {
             <p className="text-sm text-muted-foreground">Central de comando da agência</p>
           </div>
         </div>
+
+        {/* Agency Overview */}
+        <AgencyOverview />
 
         {/* 1. Business Overview */}
         <BusinessOverview />
