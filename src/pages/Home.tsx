@@ -152,7 +152,18 @@ const Home = () => {
       .then(({ data }) => {
         if (data?.full_name) setUserName(data.full_name);
       });
-  }, [user]);
+
+    // Check if agency onboarding is needed
+    if (!isPlatform) {
+      supabase.from("agency_profiles").select("id, agency_name").eq("user_id", user.id).maybeSingle()
+        .then(({ data }) => {
+          if (!data?.agency_name) setShowOnboarding(true);
+          setOnboardingChecked(true);
+        });
+    } else {
+      setOnboardingChecked(true);
+    }
+  }, [user, isPlatform]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
