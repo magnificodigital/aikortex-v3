@@ -46,6 +46,7 @@ import {
   Zap,
   Shield,
   Radio,
+  DollarSign,
 } from "lucide-react";
 import { IntegrationsPanel, ChannelsPanel } from "@/components/settings/IntegrationsPanel";
 import AgencyPermissions from "@/components/settings/AgencyPermissions";
