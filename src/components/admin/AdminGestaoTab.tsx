@@ -894,14 +894,17 @@ const Level2 = ({ agency, onSelectClient, onAgencyUpdated }: { agency: AgencyRow
 
       {/* Agency users */}
       <div>
-        <h3 className="text-sm font-semibold mb-3">Usuários da agência ({users.length})</h3>
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="text-sm font-semibold">Usuários da agência ({users.length})</h3>
+          <Button size="sm" onClick={() => setShowCreateUser(true)}><Plus className="w-4 h-4 mr-1.5" />Criar usuário</Button>
+        </div>
         <Card>
           <CardContent className="p-0">
             <Table>
-              <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>E-mail</TableHead><TableHead>Papel</TableHead><TableHead>Último acesso</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>E-mail</TableHead><TableHead>Papel</TableHead><TableHead>Status</TableHead><TableHead>Último acesso</TableHead><TableHead className="w-10"></TableHead></TableRow></TableHeader>
               <TableBody>
                 {users.length === 0 ? (
-                  <TableRow><TableCell colSpan={4} className="text-center py-6 text-muted-foreground">Nenhum usuário</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center py-6 text-muted-foreground">Nenhum usuário</TableCell></TableRow>
                 ) : users.map(u => {
                   const cfg = ROLE_CONFIG[u.role as keyof typeof ROLE_CONFIG];
                   return (
@@ -909,7 +912,41 @@ const Level2 = ({ agency, onSelectClient, onAgencyUpdated }: { agency: AgencyRow
                       <TableCell className="font-medium">{u.full_name || "—"}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{u.email || "—"}</TableCell>
                       <TableCell>{cfg ? <Badge className={`${cfg.bg} ${cfg.color} border-0 text-xs`}>{cfg.label}</Badge> : <Badge variant="secondary" className="text-xs">{u.role}</Badge>}</TableCell>
+                      <TableCell>
+                        {u.is_active ? (
+                          <Badge className="bg-green-500/10 text-green-600 border-0 text-xs">Ativo</Badge>
+                        ) : (
+                          <Badge className="bg-red-500/10 text-red-500 border-0 text-xs">Suspenso</Badge>
+                        )}
+                      </TableCell>
                       <TableCell className="text-xs text-muted-foreground">{u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString("pt-BR") : "Nunca"}</TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="w-4 h-4" /></Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setEditingUser(u)}>
+                              <Pencil className="w-3.5 h-3.5 mr-2" />Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setConfirmUserAction({ type: "reset-password", user: u })}>
+                              <RotateCcw className="w-3.5 h-3.5 mr-2" />Resetar senha
+                            </DropdownMenuItem>
+                            {u.is_active ? (
+                              <DropdownMenuItem onClick={() => setConfirmUserAction({ type: "suspend", user: u })} className="text-yellow-600">
+                                <Ban className="w-3.5 h-3.5 mr-2" />Suspender
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem onClick={() => setConfirmUserAction({ type: "unsuspend", user: u })} className="text-green-600">
+                                <ShieldCheck className="w-3.5 h-3.5 mr-2" />Reativar
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem onClick={() => setConfirmUserAction({ type: "delete", user: u })} className="text-destructive">
+                              <Trash2 className="w-3.5 h-3.5 mr-2" />Excluir
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
                     </TableRow>
                   );
                 })}
@@ -921,6 +958,69 @@ const Level2 = ({ agency, onSelectClient, onAgencyUpdated }: { agency: AgencyRow
 
       <EditAgencyModal open={showEditAgency} onClose={() => setShowEditAgency(false)} agency={agency} onSuccess={(updated) => { setShowEditAgency(false); onAgencyUpdated(updated); }} />
       <CreateClientModal open={showCreateClient} onClose={() => setShowCreateClient(false)} agencyId={agency.id} onSuccess={fetchData} />
+      <CreateUserDialog open={showCreateUser} onClose={() => setShowCreateUser(false)} onSuccess={fetchData} context="agency" />
+      <EditUserDialog open={!!editingUser} onClose={() => setEditingUser(null)} onSuccess={fetchData} user={editingUser} />
+
+      {/* User action confirmation */}
+      <AlertDialog open={!!confirmUserAction} onOpenChange={(o) => !o && setConfirmUserAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmUserAction?.type === "suspend" && "Suspender usuário?"}
+              {confirmUserAction?.type === "unsuspend" && "Reativar usuário?"}
+              {confirmUserAction?.type === "delete" && "Excluir usuário?"}
+              {confirmUserAction?.type === "reset-password" && "Resetar senha?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmUserAction?.type === "suspend" && `O usuário "${confirmUserAction.user.full_name || confirmUserAction.user.email}" não poderá mais acessar a plataforma.`}
+              {confirmUserAction?.type === "unsuspend" && `O usuário "${confirmUserAction.user.full_name || confirmUserAction.user.email}" poderá acessar a plataforma novamente.`}
+              {confirmUserAction?.type === "delete" && `O usuário "${confirmUserAction.user.full_name || confirmUserAction.user.email}" será excluído permanentemente. Esta ação é irreversível.`}
+              {confirmUserAction?.type === "reset-password" && `Um link de recuperação será gerado para "${confirmUserAction.user.email}".`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (!confirmUserAction) return;
+                setUserActionLoading(true);
+                try {
+                  const { type, user: u } = confirmUserAction;
+                  if (type === "suspend") {
+                    await adminInvoke({ action: "suspend", user_id: u.user_id });
+                    toast.success("Usuário suspenso.");
+                  } else if (type === "unsuspend") {
+                    await adminInvoke({ action: "unsuspend", user_id: u.user_id });
+                    toast.success("Usuário reativado.");
+                  } else if (type === "delete") {
+                    await adminInvoke({ action: "delete", user_id: u.user_id });
+                    toast.success("Usuário excluído.");
+                  } else if (type === "reset-password") {
+                    const result = await adminInvoke({ action: "reset-password", email: u.email });
+                    if (result?.link) {
+                      await navigator.clipboard.writeText(result.link);
+                      toast.success("Link de recuperação copiado!");
+                    } else {
+                      toast.success("E-mail de recuperação enviado.");
+                    }
+                  }
+                  setConfirmUserAction(null);
+                  fetchData();
+                } catch (err: any) { toast.error(err.message); }
+                setUserActionLoading(false);
+              }}
+              disabled={userActionLoading}
+              className={confirmUserAction?.type === "delete" ? "bg-destructive hover:bg-destructive/90" : confirmUserAction?.type === "suspend" ? "bg-yellow-600 hover:bg-yellow-700" : ""}
+            >
+              {userActionLoading && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
+              {confirmUserAction?.type === "suspend" && "Suspender"}
+              {confirmUserAction?.type === "unsuspend" && "Reativar"}
+              {confirmUserAction?.type === "delete" && "Excluir"}
+              {confirmUserAction?.type === "reset-password" && "Resetar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={confirmSuspend} onOpenChange={setConfirmSuspend}>
         <AlertDialogContent>
