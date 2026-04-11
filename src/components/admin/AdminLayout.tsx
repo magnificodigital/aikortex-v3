@@ -14,9 +14,7 @@ import aikortexIconBlack from "@/assets/aikortex-icon-black.png";
 
 const adminNavItems: { label: string; icon: any; path: string; ownerOnly?: boolean }[] = [
   { label: "Visão Geral", icon: BarChart3, path: "/admin?tab=overview" },
-  { label: "Agências", icon: Building2, path: "/admin?tab=agencies" },
-  { label: "Clientes", icon: Contact, path: "/admin?tab=clients" },
-  { label: "Usuários", icon: Users, path: "/admin?tab=users" },
+  { label: "Gestão", icon: Building2, path: "/admin?tab=gestao" },
   { label: "Planos", icon: CreditCard, path: "/admin?tab=plans" },
   { label: "Templates", icon: LayoutTemplate, path: "/admin?tab=templates" },
   { label: "Financeiro", icon: DollarSign, path: "/admin?tab=financeiro" },
