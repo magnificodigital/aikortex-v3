@@ -75,11 +75,16 @@ Deno.serve(async (req) => {
     // Update auth user (email, password)
     const authUpdate: Record<string, any> = {};
     // Only update email if it's different from current
-    if (email && email !== currentUser.email) authUpdate.email = email;
+    if (email && email.toLowerCase() !== (currentUser.email || "").toLowerCase()) {
+      authUpdate.email = email;
+      authUpdate.email_confirm = true; // Admin-level email change, skip confirmation
+    }
     if (password) authUpdate.password = password;
     
     const metaUpdate: Record<string, any> = {};
-    if (full_name) metaUpdate.full_name = full_name;
+    if (full_name && full_name !== (currentUser.user_metadata?.full_name || "")) {
+      metaUpdate.full_name = full_name;
+    }
     if (role) {
       metaUpdate.role = role;
       metaUpdate.tenant_type = ["platform_owner", "platform_admin"].includes(role) ? "platform" : "agency";
@@ -88,8 +93,10 @@ Deno.serve(async (req) => {
     if (Object.keys(metaUpdate).length > 0) authUpdate.user_metadata = metaUpdate;
     
     if (Object.keys(authUpdate).length > 0) {
+      console.log("authUpdate payload:", JSON.stringify(authUpdate));
       const { error: authUpdateError } = await supabaseAdmin.auth.admin.updateUserById(user_id, authUpdate);
       if (authUpdateError) {
+        console.error("Auth update error:", JSON.stringify(authUpdateError));
         const errStr = authUpdateError.message || String(authUpdateError);
         const isDuplicate = errStr.includes("already been registered") 
           || errStr.includes("duplicate key") 
@@ -163,7 +170,8 @@ Deno.serve(async (req) => {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: "Erro interno do servidor" }), {
+    console.error("update-user error:", err);
+    return new Response(JSON.stringify({ error: err?.message || "Erro interno do servidor" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
