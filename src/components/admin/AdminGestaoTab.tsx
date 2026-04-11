@@ -115,7 +115,7 @@ const AdminGestaoTab = ({ initialAgencyId, initialClientId, initialTier }: Gesta
           <BreadcrumbItem>
             <BreadcrumbLink className="cursor-pointer" onClick={() => setNav({ level: 1 })}>Gestão</BreadcrumbLink>
           </BreadcrumbItem>
-          {nav.level >= 2 && (
+          {nav.level >= 2 && "agency" in nav && (
             <>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
@@ -127,7 +127,7 @@ const AdminGestaoTab = ({ initialAgencyId, initialClientId, initialTier }: Gesta
               </BreadcrumbItem>
             </>
           )}
-          {nav.level >= 3 && (
+          {nav.level >= 3 && "client" in nav && (
             <>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
