@@ -88,6 +88,7 @@ export type Database = {
           logo_url: string | null
           platform_fee_monthly: number | null
           tier: string
+          tier_manually_overridden: boolean | null
           updated_at: string | null
           user_id: string
         }
@@ -102,6 +103,7 @@ export type Database = {
           logo_url?: string | null
           platform_fee_monthly?: number | null
           tier?: string
+          tier_manually_overridden?: boolean | null
           updated_at?: string | null
           user_id: string
         }
@@ -116,6 +118,7 @@ export type Database = {
           logo_url?: string | null
           platform_fee_monthly?: number | null
           tier?: string
+          tier_manually_overridden?: boolean | null
           updated_at?: string | null
           user_id?: string
         }
