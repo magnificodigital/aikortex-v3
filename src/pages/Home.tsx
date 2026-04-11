@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { AGENT_PRESETS } from "@/types/agent-presets";
 import type { AgentType } from "@/types/agent-builder";
+import AgencyOnboarding from "@/components/onboarding/AgencyOnboarding";
 
 const suggestionsByTab = {
   app: [
@@ -50,7 +51,9 @@ const Home = () => {
   const [suggestionIndex, setSuggestionIndex] = useState(0);
   const [userName, setUserName] = useState("Usuário");
   const [detectedChannel, setDetectedChannel] = useState<AppChannel>(null);
-  const { user } = useAuth();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
+  const { user, isPlatform } = useAuth();
   const navigate = useNavigate();
 
   const FLOW_KEYWORDS = ["fluxo", "flow", "automação", "automatizar", "automatização", "automation", "pipeline", "workflow", "nutrição", "sequência", "automacao", "sequencia"];
