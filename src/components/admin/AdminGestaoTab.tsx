@@ -962,7 +962,7 @@ const Level2 = ({ agency, onSelectClient, onAgencyUpdated }: { agency: AgencyRow
 
       <EditAgencyModal open={showEditAgency} onClose={() => setShowEditAgency(false)} agency={agency} onSuccess={(updated) => { setShowEditAgency(false); onAgencyUpdated(updated); }} />
       <CreateClientModal open={showCreateClient} onClose={() => setShowCreateClient(false)} agencyId={agency.id} onSuccess={fetchData} />
-      <CreateUserDialog open={showCreateUser} onClose={() => setShowCreateUser(false)} onSuccess={fetchData} context="agency" />
+      <CreateUserDialog open={showCreateUser} onClose={() => setShowCreateUser(false)} onSuccess={fetchData} context="agency" workspaceOwnerUserId={agency.user_id} />
       <EditUserDialog open={!!editingUser} onClose={() => setEditingUser(null)} onSuccess={fetchData} user={editingUser} />
 
       {/* User action confirmation */}
