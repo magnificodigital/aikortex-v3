@@ -1,9 +1,8 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/use-theme";
 import { useIsMobile } from "@/hooks/use-mobile";
-import NotificationBell from "@/components/notifications/NotificationBell";
 import aikortexLogoWhite from "@/assets/aikortex-logo-white.png";
 import aikortexLogoBlack from "@/assets/aikortex-logo-black.png";
 import {
@@ -102,7 +101,7 @@ const Workspace = () => {
                 <Menu className="h-5 w-5" />
               </button>
             ) : <div />}
-            <NotificationBell />
+            <div />
           </div>
 
           <div className="p-6">

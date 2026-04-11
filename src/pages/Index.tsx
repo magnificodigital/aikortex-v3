@@ -5,7 +5,6 @@ import ActivityFeed from "@/components/dashboard/ActivityFeed";
 import TaskOverview from "@/components/dashboard/TaskOverview";
 import ClientSnapshot from "@/components/dashboard/ClientSnapshot";
 import AutomationStatus from "@/components/dashboard/AutomationStatus";
-import NotificationsCenter from "@/components/dashboard/NotificationsCenter";
 import PerformanceWidgets from "@/components/dashboard/PerformanceWidgets";
 import AgencyOverview from "@/components/dashboard/AgencyOverview";
 
@@ -33,11 +32,10 @@ const Index = () => {
         {/* 7. Performance Widgets */}
         <PerformanceWidgets />
 
-        {/* Middle row: Activity + Tasks + Notifications */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Middle row: Activity + Tasks */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <ActivityFeed />
           <TaskOverview />
-          <NotificationsCenter />
         </div>
 
         {/* Bottom row: Clients + Automation */}
