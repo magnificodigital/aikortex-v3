@@ -728,6 +728,10 @@ const Level2 = ({ agency, onSelectClient, onAgencyUpdated }: { agency: AgencyRow
   const [confirmSuspend, setConfirmSuspend] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [showCreateUser, setShowCreateUser] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserRow | null>(null);
+  const [confirmUserAction, setConfirmUserAction] = useState<{ type: "suspend" | "unsuspend" | "delete" | "reset-password"; user: UserRow } | null>(null);
+  const [userActionLoading, setUserActionLoading] = useState(false);
 
   useEffect(() => { fetchData(); }, [agency.id]);
 
