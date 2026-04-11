@@ -227,147 +227,141 @@ const AdminAgenciesTab = ({ initialTierFilter, initialAgencyId, onOpenClient }: 
                 const isExpanded = expandedId === a.id;
 
                 return (
-                  <Collapsible key={a.id} open={isExpanded} onOpenChange={() => toggleExpand(a.id)} asChild>
-                    <>
-                      <CollapsibleTrigger asChild>
-                        <TableRow className="cursor-pointer hover:bg-accent/50">
-                          <TableCell>
-                            {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              {a.logo_url ? (
-                                <img src={a.logo_url} alt="" className="w-7 h-7 rounded-full object-cover" />
-                              ) : (
-                                <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center">
-                                  <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
-                                </div>
-                              )}
-                              <span className="font-medium">{a.agency_name || "Sem nome"}</span>
+                  <React.Fragment key={a.id}>
+                    <TableRow className="cursor-pointer hover:bg-accent/50" onClick={() => toggleExpand(a.id)}>
+                      <TableCell>
+                        {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {a.logo_url ? (
+                            <img src={a.logo_url} alt="" className="w-7 h-7 rounded-full object-cover" />
+                          ) : (
+                            <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center">
+                              <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
                             </div>
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">{a.email || "—"}</TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              <Badge className={`${tier.className} border-0 text-xs`}>{tier.label}</Badge>
-                              {progress.next && (
-                                <div className="text-[10px] text-muted-foreground">
-                                  {a.active_clients_count || 0}/{progress.target} → {progress.next}
-                                </div>
-                              )}
+                          )}
+                          <span className="font-medium">{a.agency_name || "Sem nome"}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{a.email || "—"}</TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <Badge className={`${tier.className} border-0 text-xs`}>{tier.label}</Badge>
+                          {progress.next && (
+                            <div className="text-[10px] text-muted-foreground">
+                              {a.active_clients_count || 0}/{progress.target} → {progress.next}
                             </div>
-                          </TableCell>
-                          <TableCell>{a.active_clients_count || 0}</TableCell>
-                          <TableCell className="font-medium">R$ {(a.mrr || 0).toFixed(2)}</TableCell>
-                          <TableCell>
-                            {a.asaas_api_key ? (
-                              <Badge className="bg-green-500/10 text-green-600 border-0 text-xs"><CheckCircle className="w-3 h-3 mr-1" />Conectado</Badge>
-                            ) : (
-                              <Badge className="bg-red-500/10 text-red-500 border-0 text-xs"><XCircle className="w-3 h-3 mr-1" />Não config.</Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-xs text-muted-foreground">{relativeDate(a.created_at)}</TableCell>
-                        </TableRow>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent asChild>
-                        <TableRow>
-                          <TableCell colSpan={8} className="bg-accent/30 p-0">
-                            <div className="p-4 space-y-4">
-                              {/* Agency expanded info */}
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="space-y-2">
-                                  <p className="text-xs font-semibold text-muted-foreground uppercase">Informações</p>
-                                  <p className="text-sm"><span className="text-muted-foreground">E-mail:</span> {a.email || "—"}</p>
-                                  <p className="text-sm"><span className="text-muted-foreground">Asaas:</span> {a.asaas_api_key ? "Configurado" : "Não configurado"}</p>
-                                  {a.asaas_wallet_id && <p className="text-xs text-muted-foreground">Wallet: {a.asaas_wallet_id.slice(0, 8)}••••</p>}
-                                  {a.custom_pricing && Object.keys(a.custom_pricing).length > 0 && (
-                                    <p className="text-sm"><span className="text-muted-foreground">Preços customizados:</span> Sim</p>
-                                  )}
-                                </div>
-                                <div className="space-y-2">
-                                  <p className="text-xs font-semibold text-muted-foreground uppercase">Tier</p>
-                                  <div className="flex items-center gap-2">
-                                    <Badge className={`${tier.className} border-0`}>{tier.label}</Badge>
-                                    <span className="text-sm">{a.active_clients_count || 0} clientes</span>
-                                  </div>
-                                  <Progress value={progress.pct} className="h-2" />
-                                  {progress.next && (
-                                    <p className="text-xs text-muted-foreground">
-                                      Faltam {progress.target - (a.active_clients_count || 0)} clientes para {progress.next}
-                                    </p>
-                                  )}
-                                </div>
-                                <div className="space-y-2">
-                                  <p className="text-xs font-semibold text-muted-foreground uppercase">Financeiro</p>
-                                  <p className="text-sm">MRR Total: <span className="font-bold">R$ {((a.mrr || 0) + (a.platformRevenue || 0)).toFixed(2)}</span></p>
-                                  <p className="text-sm">Plataforma: <span className="font-medium text-primary">R$ {(a.platformRevenue || 0).toFixed(2)}</span></p>
-                                  <p className="text-sm">Lucro Agência: <span className="font-medium">R$ {(a.mrr || 0).toFixed(2)}</span></p>
-                                </div>
-                              </div>
-
-                              <Separator />
-
-                              {/* Inline clients table */}
-                              <div>
-                                <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Clientes ({expandedClients.length})</p>
-                                {expandedLoading ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : expandedClients.length === 0 ? (
-                                  <p className="text-sm text-muted-foreground">Nenhum cliente cadastrado.</p>
-                                ) : (
-                                  <Table>
-                                    <TableHeader>
-                                      <TableRow>
-                                        <TableHead>Cliente</TableHead>
-                                        <TableHead>Templates</TableHead>
-                                        <TableHead>MRR</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead className="w-10" />
-                                      </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                      {expandedClients.map(c => (
-                                        <TableRow key={c.id}>
-                                          <TableCell>
-                                            <div>
-                                              <span className="font-medium text-sm">{c.client_name}</span>
-                                              {c.client_email && <p className="text-xs text-muted-foreground">{c.client_email}</p>}
-                                            </div>
-                                          </TableCell>
-                                          <TableCell>
-                                            <div className="flex flex-wrap gap-1">
-                                              {c.templates.slice(0, 2).map(t => (
-                                                <Badge key={t} variant="outline" className="text-[10px]">{t}</Badge>
-                                              ))}
-                                              {c.templates.length > 2 && <Badge variant="outline" className="text-[10px]">+{c.templates.length - 2}</Badge>}
-                                              {c.templates.length === 0 && <span className="text-xs text-muted-foreground">—</span>}
-                                            </div>
-                                          </TableCell>
-                                          <TableCell className="font-medium text-sm">R$ {c.mrr.toFixed(2)}</TableCell>
-                                          <TableCell>
-                                            <Badge className={`border-0 text-xs ${c.status === "active" ? "bg-green-500/10 text-green-600" : "bg-muted text-muted-foreground"}`}>
-                                              {c.status === "active" ? "Ativo" : c.status || "—"}
-                                            </Badge>
-                                          </TableCell>
-                                          <TableCell>
-                                            {onOpenClient && (
-                                              <Button variant="ghost" size="sm" className="text-xs h-7" onClick={(e) => { e.stopPropagation(); onOpenClient(c.id); }}>
-                                                <Eye className="w-3 h-3 mr-1" /> Ver
-                                              </Button>
-                                            )}
-                                          </TableCell>
-                                        </TableRow>
-                                      ))}
-                                    </TableBody>
-                                  </Table>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>{a.active_clients_count || 0}</TableCell>
+                      <TableCell className="font-medium">R$ {(a.mrr || 0).toFixed(2)}</TableCell>
+                      <TableCell>
+                        {a.asaas_api_key ? (
+                          <Badge className="bg-green-500/10 text-green-600 border-0 text-xs"><CheckCircle className="w-3 h-3 mr-1" />Conectado</Badge>
+                        ) : (
+                          <Badge className="bg-red-500/10 text-red-500 border-0 text-xs"><XCircle className="w-3 h-3 mr-1" />Não config.</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{relativeDate(a.created_at)}</TableCell>
+                    </TableRow>
+                    {isExpanded && (
+                      <TableRow>
+                        <TableCell colSpan={8} className="bg-accent/30 p-0">
+                          <div className="p-4 space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="space-y-2">
+                                <p className="text-xs font-semibold text-muted-foreground uppercase">Informações</p>
+                                <p className="text-sm"><span className="text-muted-foreground">E-mail:</span> {a.email || "—"}</p>
+                                <p className="text-sm"><span className="text-muted-foreground">Asaas:</span> {a.asaas_api_key ? "Configurado" : "Não configurado"}</p>
+                                {a.asaas_wallet_id && <p className="text-xs text-muted-foreground">Wallet: {a.asaas_wallet_id.slice(0, 8)}••••</p>}
+                                {a.custom_pricing && Object.keys(a.custom_pricing).length > 0 && (
+                                  <p className="text-sm"><span className="text-muted-foreground">Preços customizados:</span> Sim</p>
                                 )}
                               </div>
+                              <div className="space-y-2">
+                                <p className="text-xs font-semibold text-muted-foreground uppercase">Tier</p>
+                                <div className="flex items-center gap-2">
+                                  <Badge className={`${tier.className} border-0`}>{tier.label}</Badge>
+                                  <span className="text-sm">{a.active_clients_count || 0} clientes</span>
+                                </div>
+                                <Progress value={progress.pct} className="h-2" />
+                                {progress.next && (
+                                  <p className="text-xs text-muted-foreground">
+                                    Faltam {progress.target - (a.active_clients_count || 0)} clientes para {progress.next}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="space-y-2">
+                                <p className="text-xs font-semibold text-muted-foreground uppercase">Financeiro</p>
+                                <p className="text-sm">MRR Total: <span className="font-bold">R$ {((a.mrr || 0) + (a.platformRevenue || 0)).toFixed(2)}</span></p>
+                                <p className="text-sm">Plataforma: <span className="font-medium text-primary">R$ {(a.platformRevenue || 0).toFixed(2)}</span></p>
+                                <p className="text-sm">Lucro Agência: <span className="font-medium">R$ {(a.mrr || 0).toFixed(2)}</span></p>
+                              </div>
                             </div>
-                          </TableCell>
-                        </TableRow>
-                      </CollapsibleContent>
-                    </>
-                  </Collapsible>
+
+                            <Separator />
+
+                            <div>
+                              <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Clientes ({expandedClients.length})</p>
+                              {expandedLoading ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : expandedClients.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">Nenhum cliente cadastrado.</p>
+                              ) : (
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead>Cliente</TableHead>
+                                      <TableHead>Templates</TableHead>
+                                      <TableHead>MRR</TableHead>
+                                      <TableHead>Status</TableHead>
+                                      <TableHead className="w-10" />
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {expandedClients.map(c => (
+                                      <TableRow key={c.id}>
+                                        <TableCell>
+                                          <div>
+                                            <span className="font-medium text-sm">{c.client_name}</span>
+                                            {c.client_email && <p className="text-xs text-muted-foreground">{c.client_email}</p>}
+                                          </div>
+                                        </TableCell>
+                                        <TableCell>
+                                          <div className="flex flex-wrap gap-1">
+                                            {c.templates.slice(0, 2).map(t => (
+                                              <Badge key={t} variant="outline" className="text-[10px]">{t}</Badge>
+                                            ))}
+                                            {c.templates.length > 2 && <Badge variant="outline" className="text-[10px]">+{c.templates.length - 2}</Badge>}
+                                            {c.templates.length === 0 && <span className="text-xs text-muted-foreground">—</span>}
+                                          </div>
+                                        </TableCell>
+                                        <TableCell className="font-medium text-sm">R$ {c.mrr.toFixed(2)}</TableCell>
+                                        <TableCell>
+                                          <Badge className={`border-0 text-xs ${c.status === "active" ? "bg-green-500/10 text-green-600" : "bg-muted text-muted-foreground"}`}>
+                                            {c.status === "active" ? "Ativo" : c.status || "—"}
+                                          </Badge>
+                                        </TableCell>
+                                        <TableCell>
+                                          {onOpenClient && (
+                                            <Button variant="ghost" size="sm" className="text-xs h-7" onClick={(e) => { e.stopPropagation(); onOpenClient(c.id); }}>
+                                              <Eye className="w-3 h-3 mr-1" /> Ver
+                                            </Button>
+                                          )}
+                                        </TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </React.Fragment>
                 );
               })}
             </TableBody>
