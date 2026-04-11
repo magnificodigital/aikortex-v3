@@ -46,10 +46,12 @@ import {
   Zap,
   Shield,
   Radio,
+  DollarSign,
 } from "lucide-react";
 import { IntegrationsPanel, ChannelsPanel } from "@/components/settings/IntegrationsPanel";
 import AgencyPermissions from "@/components/settings/AgencyPermissions";
 import SubscriptionTab from "@/components/settings/SubscriptionTab";
+import AsaasConfigTab from "@/components/settings/AsaasConfigTab";
 
 // ─── TYPES ──────────────────────────────────────────
 interface BrandColors {
@@ -358,6 +360,7 @@ const SettingsPage = () => {
             <TabsTrigger value="channels" className="shrink-0 gap-1 whitespace-nowrap text-xs"><Radio className="h-3.5 w-3.5" /> Canais</TabsTrigger>
             
             <TabsTrigger value="subscription" className="shrink-0 gap-1 whitespace-nowrap text-xs"><CreditCard className="h-3.5 w-3.5" /> Assinatura & Planos</TabsTrigger>
+            <TabsTrigger value="financeiro" className="shrink-0 gap-1 whitespace-nowrap text-xs"><DollarSign className="h-3.5 w-3.5" /> Financeiro</TabsTrigger>
           </TabsList>
 
           {/* ── CORES ──────────────────────────────── */}
@@ -699,6 +702,11 @@ const SettingsPage = () => {
           {/* ── ASSINATURA ─────────────────────────── */}
           <TabsContent value="subscription">
             <SubscriptionTab />
+          </TabsContent>
+
+          {/* ── FINANCEIRO (ASAAS) ────────────────── */}
+          <TabsContent value="financeiro">
+            <AsaasConfigTab />
           </TabsContent>
         </Tabs>
       </div>
