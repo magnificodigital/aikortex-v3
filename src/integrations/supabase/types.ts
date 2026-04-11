@@ -14,6 +14,113 @@ export type Database = {
   }
   public: {
     Tables: {
+      agency_clients: {
+        Row: {
+          agency_id: string
+          asaas_customer_id: string | null
+          client_document: string | null
+          client_email: string | null
+          client_logo_url: string | null
+          client_name: string
+          client_phone: string | null
+          client_primary_color: string | null
+          client_user_id: string | null
+          created_at: string | null
+          id: string
+          platform_subscription_id: string | null
+          platform_subscription_status: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          agency_id: string
+          asaas_customer_id?: string | null
+          client_document?: string | null
+          client_email?: string | null
+          client_logo_url?: string | null
+          client_name: string
+          client_phone?: string | null
+          client_primary_color?: string | null
+          client_user_id?: string | null
+          created_at?: string | null
+          id?: string
+          platform_subscription_id?: string | null
+          platform_subscription_status?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          agency_id?: string
+          asaas_customer_id?: string | null
+          client_document?: string | null
+          client_email?: string | null
+          client_logo_url?: string | null
+          client_name?: string
+          client_phone?: string | null
+          client_primary_color?: string | null
+          client_user_id?: string | null
+          created_at?: string | null
+          id?: string
+          platform_subscription_id?: string | null
+          platform_subscription_status?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_clients_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agency_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agency_profiles: {
+        Row: {
+          active_clients_count: number | null
+          agency_name: string | null
+          asaas_api_key: string | null
+          asaas_wallet_id: string | null
+          created_at: string | null
+          custom_pricing: Json | null
+          id: string
+          logo_url: string | null
+          platform_fee_monthly: number | null
+          tier: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          active_clients_count?: number | null
+          agency_name?: string | null
+          asaas_api_key?: string | null
+          asaas_wallet_id?: string | null
+          created_at?: string | null
+          custom_pricing?: Json | null
+          id?: string
+          logo_url?: string | null
+          platform_fee_monthly?: number | null
+          tier?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          active_clients_count?: number | null
+          agency_name?: string | null
+          asaas_api_key?: string | null
+          asaas_wallet_id?: string | null
+          created_at?: string | null
+          custom_pricing?: Json | null
+          id?: string
+          logo_url?: string | null
+          platform_fee_monthly?: number | null
+          tier?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       agency_wallets: {
         Row: {
           balance: number
@@ -131,6 +238,70 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "user_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      billing_events: {
+        Row: {
+          agency_amount: number | null
+          agency_id: string | null
+          amount: number | null
+          asaas_payment_id: string | null
+          client_id: string | null
+          created_at: string | null
+          description: string | null
+          event_type: string
+          id: string
+          platform_amount: number | null
+          subscription_id: string | null
+        }
+        Insert: {
+          agency_amount?: number | null
+          agency_id?: string | null
+          amount?: number | null
+          asaas_payment_id?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          event_type: string
+          id?: string
+          platform_amount?: number | null
+          subscription_id?: string | null
+        }
+        Update: {
+          agency_amount?: number | null
+          agency_id?: string | null
+          amount?: number | null
+          asaas_payment_id?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          event_type?: string
+          id?: string
+          platform_amount?: number | null
+          subscription_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_events_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agency_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_events_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "agency_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_events_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "client_template_subscriptions"
             referencedColumns: ["id"]
           },
         ]
@@ -276,6 +447,95 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "user_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_template_subscriptions: {
+        Row: {
+          activated_at: string | null
+          activated_channel: string | null
+          agency_id: string
+          agency_price_monthly: number
+          agency_profit_monthly: number | null
+          agent_id: string | null
+          asaas_subscription_id: string | null
+          asaas_subscription_status: string | null
+          client_id: string
+          created_at: string | null
+          id: string
+          is_activated: boolean | null
+          platform_price_monthly: number
+          status: string | null
+          template_id: string
+          trial_ends_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          activated_at?: string | null
+          activated_channel?: string | null
+          agency_id: string
+          agency_price_monthly: number
+          agency_profit_monthly?: number | null
+          agent_id?: string | null
+          asaas_subscription_id?: string | null
+          asaas_subscription_status?: string | null
+          client_id: string
+          created_at?: string | null
+          id?: string
+          is_activated?: boolean | null
+          platform_price_monthly: number
+          status?: string | null
+          template_id: string
+          trial_ends_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          activated_at?: string | null
+          activated_channel?: string | null
+          agency_id?: string
+          agency_price_monthly?: number
+          agency_profit_monthly?: number | null
+          agent_id?: string | null
+          asaas_subscription_id?: string | null
+          asaas_subscription_status?: string | null
+          client_id?: string
+          created_at?: string | null
+          id?: string
+          is_activated?: boolean | null
+          platform_price_monthly?: number
+          status?: string | null
+          template_id?: string
+          trial_ends_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_template_subscriptions_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agency_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_template_subscriptions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "user_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_template_subscriptions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "agency_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_template_subscriptions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "platform_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -893,6 +1153,60 @@ export type Database = {
           updated_at?: string | null
           updated_by?: string | null
           value?: string
+        }
+        Relationships: []
+      }
+      platform_templates: {
+        Row: {
+          category: string
+          created_at: string | null
+          demo_url: string | null
+          description: string | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          is_exclusive: boolean | null
+          min_tier: string
+          name: string
+          platform_price_monthly: number
+          slug: string
+          sort_order: number | null
+          thumbnail_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          demo_url?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_exclusive?: boolean | null
+          min_tier?: string
+          name: string
+          platform_price_monthly: number
+          slug: string
+          sort_order?: number | null
+          thumbnail_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          demo_url?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_exclusive?: boolean | null
+          min_tier?: string
+          name?: string
+          platform_price_monthly?: number
+          slug?: string
+          sort_order?: number | null
+          thumbnail_url?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
