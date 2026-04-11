@@ -154,16 +154,8 @@ const Home = () => {
         if (data?.full_name) setUserName(data.full_name);
       });
 
-    // Check if agency onboarding is needed
-    if (!isPlatform) {
-      supabase.from("agency_profiles").select("id, agency_name").eq("user_id", user.id).maybeSingle()
-        .then(({ data }) => {
-          if (!data?.agency_name) setShowOnboarding(true);
-          setOnboardingChecked(true);
-        });
-    } else {
-      setOnboardingChecked(true);
-    }
+    // Onboarding disabled — go directly to dashboard
+    setOnboardingChecked(true);
   }, [user, isPlatform]);
 
   const getGreeting = () => {
