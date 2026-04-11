@@ -1,17 +1,10 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
-import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Crown, Rocket, Zap, Check, X, Users, RefreshCw } from "lucide-react";
 
 interface Plan {
   id: string;
@@ -22,196 +15,149 @@ interface Plan {
   price_yearly: number;
   is_active: boolean | null;
   is_featured: boolean | null;
-  trial_days: number | null;
   features: any;
-  limits: any;
 }
 
-const FEATURE_OPTIONS = [
-  "Agentes de IA",
-  "Flows de automação",
-  "App Builder",
-  "Templates",
-  "Mensagens (WhatsApp/Web)",
-  "Disparos em massa",
-  "Clientes e Contratos",
-  "Vendas e CRM",
-  "Reuniões com vídeo",
-  "Financeiro",
-  "Equipe e Tarefas",
-  "Agentes de Voz",
-  "Automação Avançada",
-  "Relatórios Customizados",
-  "Acesso via API",
-  "White-label",
-  "Marketplace",
-];
+const TIER_CONFIG: Record<string, { icon: React.ReactNode; badge: string; badgeClass: string; unlock: string }> = {
+  starter: {
+    icon: <Users className="w-5 h-5" />,
+    badge: "Starter",
+    badgeClass: "bg-muted text-muted-foreground",
+    unlock: "Disponível ao se cadastrar",
+  },
+  explorer: {
+    icon: <Rocket className="w-5 h-5" />,
+    badge: "Explorer",
+    badgeClass: "bg-blue-500/10 text-blue-600",
+    unlock: "Desbloqueado com 5 clientes ativos",
+  },
+  hack: {
+    icon: <Crown className="w-5 h-5" />,
+    badge: "Hack",
+    badgeClass: "bg-purple-500/10 text-purple-600",
+    unlock: "Desbloqueado com 15 clientes ativos",
+  },
+};
 
-const LIMIT_FIELDS = [
-  { key: "agents", label: "Máx. agentes" },
-  { key: "flows", label: "Máx. fluxos" },
-  { key: "contacts", label: "Máx. contatos" },
-  { key: "team_members", label: "Máx. membros" },
-  { key: "apps", label: "Máx. aplicativos" },
-];
-
-const emptyPlan = (): Partial<Plan> => ({
-  name: "", slug: "", description: "", price_monthly: 0, price_yearly: 0,
-  is_active: true, is_featured: false, trial_days: 7, features: [], limits: {},
-});
+const FEATURE_LABELS: Record<string, string> = {
+  clients: "Clientes",
+  agents_per_client: "Agentes por cliente",
+  channels: "Canais",
+  flow_builder: "Flow Builder",
+  app_builder: "App Builder",
+  voice_calls: "Chamadas de voz",
+  white_label: "White-label",
+  custom_domain: "Domínio customizado",
+  priority_support: "Suporte prioritário",
+  training: "Treinamento mensal",
+  exclusive_templates: "Templates exclusivos",
+};
 
 const AdminPlansTab = () => {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [editing, setEditing] = useState<Partial<Plan>>(emptyPlan());
 
   useEffect(() => { fetchPlans(); }, []);
 
   const fetchPlans = async () => {
     setLoading(true);
-    const { data } = await supabase.from("plans").select("*").order("price_monthly");
+    const { data } = await supabase.from("plans").select("*").eq("is_active", true).order("price_monthly");
     setPlans((data as Plan[]) || []);
     setLoading(false);
   };
 
-  const openNew = () => { setEditing(emptyPlan()); setSheetOpen(true); };
-  const openEdit = (p: Plan) => { setEditing({ ...p }); setSheetOpen(true); };
-
-  const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-
-  const handleSave = async () => {
-    if (!editing.name || !editing.slug) { toast.error("Nome e slug são obrigatórios"); return; }
-    const payload = {
-      name: editing.name,
-      slug: editing.slug,
-      description: editing.description || null,
-      price_monthly: editing.price_monthly || 0,
-      price_yearly: editing.price_yearly || 0,
-      is_active: editing.is_active ?? true,
-      is_featured: editing.is_featured ?? false,
-      trial_days: editing.trial_days ?? 7,
-      features: editing.features || [],
-      limits: editing.limits || {},
-    };
-
-    if (editing.id) {
-      const { error } = await supabase.from("plans").update(payload).eq("id", editing.id);
-      if (error) { toast.error("Erro ao atualizar plano"); return; }
-      toast.success("Plano atualizado");
-    } else {
-      const { error } = await supabase.from("plans").insert(payload as any);
-      if (error) { toast.error("Erro ao criar plano: " + error.message); return; }
-      toast.success("Plano criado");
+  const renderFeatureValue = (key: string, value: any) => {
+    if (typeof value === "boolean") {
+      return value
+        ? <Check className="w-4 h-4 text-emerald-500" />
+        : <X className="w-4 h-4 text-muted-foreground/40" />;
     }
-    setSheetOpen(false);
-    fetchPlans();
+    if (Array.isArray(value)) {
+      return <span className="text-sm text-muted-foreground">{value.join(", ")}</span>;
+    }
+    if (value === "ilimitado" || value === "all") {
+      return <Badge variant="outline" className="text-xs">Ilimitado</Badge>;
+    }
+    return <span className="text-sm">{String(value)}</span>;
   };
 
-  const handleDelete = async (id: string) => {
-    const { error } = await supabase.from("plans").delete().eq("id", id);
-    if (error) { toast.error("Erro ao excluir plano"); return; }
-    toast.success("Plano excluído");
-    fetchPlans();
-  };
-
-  const features = Array.isArray(editing.features) ? editing.features as string[] : [];
-  const limits = (editing.limits || {}) as Record<string, number>;
-
-  const toggleFeature = (f: string) => {
-    const next = features.includes(f) ? features.filter(x => x !== f) : [...features, f];
-    setEditing(prev => ({ ...prev, features: next }));
-  };
+  if (loading) {
+    return <div className="flex items-center justify-center py-12 text-muted-foreground">Carregando planos...</div>;
+  }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button size="sm" onClick={openNew}><Plus className="w-4 h-4 mr-1.5" /> Novo Plano</Button>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold">Planos da Plataforma</h3>
+          <p className="text-sm text-muted-foreground">
+            Todos os planos são gratuitos — agências sobem de tier ao conquistar clientes ativos.
+          </p>
+        </div>
+        <Button size="sm" variant="outline" onClick={fetchPlans}>
+          <RefreshCw className="w-4 h-4 mr-1.5" /> Atualizar
+        </Button>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Mensal</TableHead>
-                <TableHead>Anual</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Destaque</TableHead>
-                <TableHead className="w-24">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Carregando...</TableCell></TableRow>
-              ) : plans.map(p => (
-                <TableRow key={p.id}>
-                  <TableCell className="font-medium">{p.name}</TableCell>
-                  <TableCell>R$ {Number(p.price_monthly).toFixed(2)}</TableCell>
-                  <TableCell>R$ {Number(p.price_yearly).toFixed(2)}</TableCell>
-                  <TableCell><Badge variant={p.is_active ? "default" : "secondary"} className="text-xs">{p.is_active ? "Ativo" : "Inativo"}</Badge></TableCell>
-                  <TableCell>{p.is_featured ? "⭐" : "—"}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(p)}><Pencil className="w-3.5 h-3.5" /></Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDelete(p.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {plans.map((plan) => {
+          const tier = TIER_CONFIG[plan.slug] || TIER_CONFIG.starter;
+          const features = plan.features || {};
+          const templates = features.templates;
 
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent className="overflow-y-auto w-full sm:max-w-lg">
-          <SheetHeader><SheetTitle>{editing.id ? "Editar Plano" : "Novo Plano"}</SheetTitle></SheetHeader>
-          <div className="space-y-4 mt-4">
-            <div><Label>Nome</Label><Input value={editing.name || ""} onChange={e => setEditing(prev => ({ ...prev, name: e.target.value, slug: prev.id ? prev.slug : generateSlug(e.target.value) }))} /></div>
-            <div><Label>Slug</Label><Input value={editing.slug || ""} onChange={e => setEditing(prev => ({ ...prev, slug: e.target.value }))} /></div>
-            <div><Label>Descrição</Label><Textarea value={editing.description || ""} onChange={e => setEditing(prev => ({ ...prev, description: e.target.value }))} rows={2} /></div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>Preço mensal (R$)</Label><Input type="number" value={editing.price_monthly || 0} onChange={e => setEditing(prev => ({ ...prev, price_monthly: parseFloat(e.target.value) || 0 }))} /></div>
-              <div><Label>Preço anual (R$)</Label><Input type="number" value={editing.price_yearly || 0} onChange={e => setEditing(prev => ({ ...prev, price_yearly: parseFloat(e.target.value) || 0 }))} /></div>
-            </div>
-            <div><Label>Dias de trial</Label><Input type="number" value={editing.trial_days ?? 7} onChange={e => setEditing(prev => ({ ...prev, trial_days: parseInt(e.target.value) || 0 }))} /></div>
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2"><Switch checked={editing.is_active ?? true} onCheckedChange={v => setEditing(prev => ({ ...prev, is_active: v }))} /><Label>Ativo</Label></div>
-              <div className="flex items-center gap-2"><Switch checked={editing.is_featured ?? false} onCheckedChange={v => setEditing(prev => ({ ...prev, is_featured: v }))} /><Label>Destaque</Label></div>
-            </div>
-
-            <div>
-              <Label className="mb-2 block">Funcionalidades do Plano</Label>
-              <div className="space-y-2">
-                {FEATURE_OPTIONS.map(f => (
-                  <div key={f} className="flex items-center gap-2">
-                    <Checkbox checked={features.includes(f)} onCheckedChange={() => toggleFeature(f)} />
-                    <span className="text-sm">{f}</span>
+          return (
+            <Card key={plan.id} className={plan.is_featured ? "border-purple-500/50 shadow-md" : ""}>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {tier.icon}
+                    <CardTitle className="text-lg">{plan.name}</CardTitle>
                   </div>
-                ))}
-              </div>
-            </div>
+                  <Badge className={tier.badgeClass}>{tier.badge}</Badge>
+                </div>
+                <CardDescription>{plan.description}</CardDescription>
+                <div className="pt-2">
+                  <span className="text-2xl font-bold">Gratuito</span>
+                </div>
+                <div className="flex items-center gap-1.5 pt-1">
+                  <Zap className="w-3.5 h-3.5 text-amber-500" />
+                  <span className="text-xs text-muted-foreground">{tier.unlock}</span>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="space-y-2">
+                  <p className="text-xs font-medium uppercase text-muted-foreground tracking-wider">Funcionalidades</p>
+                  {Object.entries(features).map(([key, value]) => {
+                    if (key === "templates" || key === "max_tier") return null;
+                    const label = FEATURE_LABELS[key] || key;
+                    return (
+                      <div key={key} className="flex items-center justify-between text-sm">
+                        <span>{label}</span>
+                        {renderFeatureValue(key, value)}
+                      </div>
+                    );
+                  })}
+                </div>
 
-            <div>
-              <Label className="mb-2 block">Limites do Plano <span className="text-xs text-muted-foreground">(-1 = ilimitado)</span></Label>
-              <div className="space-y-2">
-                {LIMIT_FIELDS.map(l => (
-                  <div key={l.key} className="flex items-center gap-3">
-                    <Label className="w-32 text-xs">{l.label}</Label>
-                    <Input type="number" className="w-24 h-8" value={limits[l.key] ?? 0} onChange={e => setEditing(prev => ({ ...prev, limits: { ...(prev.limits as any || {}), [l.key]: parseInt(e.target.value) } }))} />
+                {templates && (
+                  <div className="space-y-1.5 pt-2 border-t">
+                    <p className="text-xs font-medium uppercase text-muted-foreground tracking-wider">Templates</p>
+                    {templates === "all" ? (
+                      <Badge variant="outline" className="text-xs">Todos os templates</Badge>
+                    ) : Array.isArray(templates) ? (
+                      <div className="flex flex-wrap gap-1">
+                        {templates.map((t: string) => (
+                          <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          <SheetFooter className="mt-6">
-            <Button variant="outline" onClick={() => setSheetOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave}>Salvar</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 };

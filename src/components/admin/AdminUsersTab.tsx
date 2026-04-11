@@ -31,9 +31,28 @@ interface UserRow {
   subscription?: { status: string; plan?: { name: string } | null; billing_cycle?: string } | null;
 }
 
+interface AgencyInfo {
+  user_id: string;
+  tier: string;
+  active_clients_count: number | null;
+}
+
+const TIER_BADGES: Record<string, { label: string; className: string }> = {
+  starter: { label: "Starter", className: "bg-muted text-muted-foreground" },
+  explorer: { label: "Explorer", className: "bg-blue-500/10 text-blue-600" },
+  hack: { label: "Hack", className: "bg-purple-500/10 text-purple-600" },
+};
+
+const getTierProgress = (tier: string, clients: number) => {
+  if (tier === "hack") return null;
+  if (tier === "explorer") return { target: 15, label: "Hack", remaining: Math.max(0, 15 - clients) };
+  return { target: 5, label: "Explorer", remaining: Math.max(0, 5 - clients) };
+};
+
 const AdminUsersTab = () => {
   const { user, loading: authLoading } = useAuth();
   const [users, setUsers] = useState<UserRow[]>([]);
+  const [agencies, setAgencies] = useState<AgencyInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -63,18 +82,25 @@ const AdminUsersTab = () => {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("list-users");
-      if (error || data?.error) {
+      const [usersRes, agenciesRes] = await Promise.all([
+        supabase.functions.invoke("list-users"),
+        supabase.from("agency_profiles").select("user_id, tier, active_clients_count"),
+      ]);
+      
+      if (usersRes.error || usersRes.data?.error) {
         toast.error("Erro ao carregar usuários");
         setUsers([]);
       } else {
-        setUsers(data?.users || []);
+        setUsers(usersRes.data?.users || []);
       }
+      setAgencies((agenciesRes.data as AgencyInfo[]) || []);
     } catch {
       toast.error("Erro ao carregar usuários");
     }
     setLoading(false);
   };
+
+  const getAgencyInfo = (userId: string) => agencies.find(a => a.user_id === userId);
 
   const getRoleBadge = (role: string) => {
     const config = ROLE_CONFIG[role as keyof typeof ROLE_CONFIG];
@@ -205,10 +231,10 @@ const AdminUsersTab = () => {
                 <TableHead>Nome</TableHead>
                 <TableHead>E-mail</TableHead>
                 <TableHead>Papel</TableHead>
+                <TableHead>Tier</TableHead>
                 <TableHead>Plano</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Último login</TableHead>
-                <TableHead>Cadastro</TableHead>
                 <TableHead className="w-10" />
               </TableRow>
             </TableHeader>
@@ -219,18 +245,32 @@ const AdminUsersTab = () => {
                 </TableCell></TableRow>
               ) : filtered.length === 0 ? (
                 <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Nenhum usuário encontrado</TableCell></TableRow>
-              ) : filtered.map(u => (
+              ) : filtered.map(u => {
+                const agency = getAgencyInfo(u.user_id);
+                const tierBadge = agency ? TIER_BADGES[agency.tier] || TIER_BADGES.starter : null;
+                const progress = agency ? getTierProgress(agency.tier, agency.active_clients_count || 0) : null;
+
+                return (
                 <TableRow key={u.id} className={!u.is_active ? "opacity-50" : ""}>
                   <TableCell className="font-medium">{u.full_name || "—"}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{u.email || "—"}</TableCell>
                   <TableCell>{getRoleBadge(u.role)}</TableCell>
+                  <TableCell>
+                    {tierBadge ? (
+                      <div className="space-y-1">
+                        <Badge className={`${tierBadge.className} border-0 text-xs`}>{tierBadge.label}</Badge>
+                        {progress && (
+                          <div className="text-[10px] text-muted-foreground">
+                            {agency!.active_clients_count || 0}/{progress.target} para {progress.label}
+                          </div>
+                        )}
+                      </div>
+                    ) : "—"}
+                  </TableCell>
                   <TableCell>{u.subscription?.plan?.name || "—"}</TableCell>
                   <TableCell>{getStatusBadge(u.subscription, u.is_active)}</TableCell>
                   <TableCell className="text-muted-foreground text-xs">
                     {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }) : "Nunca"}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-xs">
-                    {new Date(u.created_at).toLocaleDateString("pt-BR")}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -264,7 +304,8 @@ const AdminUsersTab = () => {
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>
