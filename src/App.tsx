@@ -37,6 +37,7 @@ const AppBuilder = lazy(() => import("./pages/AppBuilder"));
 const Apps = lazy(() => import("./pages/Apps"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const Credits = lazy(() => import("./pages/Credits"));
+const ClientDetailPage = lazy(() => import("./pages/ClientDetail"));
 
 const Pricing = lazy(() => import("./pages/Pricing"));
 const Templates = lazy(() => import("./pages/Templates"));
@@ -77,6 +78,7 @@ const App = () => (
               <Route path="/dashboard" element={<P><Index /></P>} />
               <Route path="/cadastro-cliente/:token" element={<ClientRegistration />} />
               <Route path="/clients" element={<P><Clients /></P>} />
+              <Route path="/clients/:clientId" element={<P><ClientDetailPage /></P>} />
               <Route path="/projects" element={<P><Projects /></P>} />
               <Route path="/tasks" element={<P><Tasks /></P>} />
               <Route path="/team" element={<P><Team /></P>} />
