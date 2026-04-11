@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { AGENT_PRESETS } from "@/types/agent-presets";
 import type { AgentType } from "@/types/agent-builder";
+import AgencyOnboarding from "@/components/onboarding/AgencyOnboarding";
 
 const suggestionsByTab = {
   app: [
@@ -50,7 +51,9 @@ const Home = () => {
   const [suggestionIndex, setSuggestionIndex] = useState(0);
   const [userName, setUserName] = useState("Usuário");
   const [detectedChannel, setDetectedChannel] = useState<AppChannel>(null);
-  const { user } = useAuth();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
+  const { user, isPlatform } = useAuth();
   const navigate = useNavigate();
 
   const FLOW_KEYWORDS = ["fluxo", "flow", "automação", "automatizar", "automatização", "automation", "pipeline", "workflow", "nutrição", "sequência", "automacao", "sequencia"];
@@ -149,7 +152,18 @@ const Home = () => {
       .then(({ data }) => {
         if (data?.full_name) setUserName(data.full_name);
       });
-  }, [user]);
+
+    // Check if agency onboarding is needed
+    if (!isPlatform) {
+      supabase.from("agency_profiles").select("id, agency_name").eq("user_id", user.id).maybeSingle()
+        .then(({ data }) => {
+          if (!data?.agency_name) setShowOnboarding(true);
+          setOnboardingChecked(true);
+        });
+    } else {
+      setOnboardingChecked(true);
+    }
+  }, [user, isPlatform]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -173,6 +187,20 @@ const Home = () => {
       setDetectedChannel(null);
     }
   };
+
+  if (!onboardingChecked) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-96">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (showOnboarding) {
+    return <AgencyOnboarding onComplete={() => setShowOnboarding(false)} />;
+  }
 
   return (
     <DashboardLayout>
