@@ -59,7 +59,7 @@ serve(async (req) => {
       // Check platform subscription
       const { data: client } = await supabase
         .from('agency_clients')
-        .select('*')
+        .select('*, agency_profiles(user_id)')
         .eq('platform_subscription_id', payment.subscription)
         .single()
 
@@ -79,6 +79,46 @@ serve(async (req) => {
           asaas_payment_id: payment.id,
           description: 'Plataforma mensal'
         })
+
+        // Notification: payment received
+        const ownerUserId = (client as any).agency_profiles?.user_id
+        if (ownerUserId) {
+          await supabase.from('notifications').insert({
+            user_id: ownerUserId,
+            title: 'Pagamento recebido',
+            message: `Pagamento de R$ ${payment.value} recebido de ${client.client_name}`,
+            type: 'success',
+            action_url: `/clients/${client.id}`
+          })
+
+          // Check tier upgrade
+          const { data: agency } = await supabase
+            .from('agency_profiles')
+            .select('*')
+            .eq('id', client.agency_id)
+            .single()
+
+          if (agency) {
+            const previousTier = agency.tier
+            // The trigger_update_agency_tier trigger handles tier update automatically
+            // Re-read to check if tier changed
+            const { data: updatedAgency } = await supabase
+              .from('agency_profiles')
+              .select('tier, active_clients_count')
+              .eq('id', agency.id)
+              .single()
+
+            if (updatedAgency && updatedAgency.tier !== previousTier) {
+              await supabase.from('notifications').insert({
+                user_id: ownerUserId,
+                title: `Você subiu para o tier ${updatedAgency.tier.toUpperCase()}!`,
+                message: `Parabéns! Com ${updatedAgency.active_clients_count} clientes ativos você desbloqueou novos templates e benefícios.`,
+                type: 'success',
+                action_url: '/templates'
+              })
+            }
+          }
+        }
       }
 
       break
@@ -97,6 +137,26 @@ serve(async (req) => {
         .from('agency_clients')
         .update({ platform_subscription_status: 'suspended' })
         .eq('platform_subscription_id', payment.subscription)
+
+      // Notification: payment overdue
+      const { data: overdueClient } = await supabase
+        .from('agency_clients')
+        .select('*, agency_profiles(user_id)')
+        .eq('platform_subscription_id', payment.subscription)
+        .single()
+
+      if (overdueClient) {
+        const ownerUserId = (overdueClient as any).agency_profiles?.user_id
+        if (ownerUserId) {
+          await supabase.from('notifications').insert({
+            user_id: ownerUserId,
+            title: 'Pagamento atrasado',
+            message: `Pagamento atrasado de ${overdueClient.client_name} — regularize para evitar suspensão`,
+            type: 'warning',
+            action_url: `/clients/${overdueClient.id}`
+          })
+        }
+      }
 
       break
     }
