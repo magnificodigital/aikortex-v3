@@ -88,8 +88,10 @@ Deno.serve(async (req) => {
     if (Object.keys(metaUpdate).length > 0) authUpdate.user_metadata = metaUpdate;
     
     if (Object.keys(authUpdate).length > 0) {
+      console.log("authUpdate payload:", JSON.stringify(authUpdate));
       const { error: authUpdateError } = await supabaseAdmin.auth.admin.updateUserById(user_id, authUpdate);
       if (authUpdateError) {
+        console.error("Auth update error:", JSON.stringify(authUpdateError));
         const errStr = authUpdateError.message || String(authUpdateError);
         const isDuplicate = errStr.includes("already been registered") 
           || errStr.includes("duplicate key") 
