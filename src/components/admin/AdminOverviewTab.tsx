@@ -250,8 +250,8 @@ const AdminOverviewTab = ({ onNavigate }: OverviewProps) => {
                   key={e.id}
                   className="flex items-center justify-between px-4 py-3 text-sm cursor-pointer hover:bg-accent/50 transition-colors"
                   onClick={() => {
-                    if (e.client_id) nav("clients", { clientId: e.client_id });
-                    else if (e.agency_id) nav("agencies", { agencyId: e.agency_id });
+                    if (e.client_id) nav("gestao", { clientId: e.client_id });
+                    else if (e.agency_id) nav("gestao", { agencyId: e.agency_id });
                   }}
                 >
                   <div className="flex-1 min-w-0">
