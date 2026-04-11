@@ -10,6 +10,8 @@ import aikortexIconWhite from "@/assets/aikortex-icon-white.png";
 import aikortexIconBlack from "@/assets/aikortex-icon-black.png";
 
 const adminNavItems: { label: string; icon: any; path: string; ownerOnly?: boolean }[] = [
+  { label: "Agências", icon: Users, path: "/admin?tab=agencies" },
+  { label: "Clientes", icon: Users, path: "/admin?tab=clients" },
   { label: "Usuários", icon: Users, path: "/admin?tab=users" },
   { label: "Planos", icon: CreditCard, path: "/admin?tab=plans" },
   { label: "Assinaturas", icon: BarChart3, path: "/admin?tab=subscriptions" },
