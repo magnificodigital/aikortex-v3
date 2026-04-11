@@ -191,9 +191,10 @@ const Home = () => {
     );
   }
 
-  if (showOnboarding) {
-    return <AgencyOnboarding onComplete={() => setShowOnboarding(false)} />;
-  }
+  // Onboarding disabled
+  // if (showOnboarding) {
+  //   return <AgencyOnboarding onComplete={() => setShowOnboarding(false)} />;
+  // }
 
   return (
     <DashboardLayout>
