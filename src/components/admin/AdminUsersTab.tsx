@@ -68,19 +68,22 @@ const AdminUsersTab = ({ onNavigateToAgency, onNavigateToClient }: AdminUsersPro
     fetchUsers();
   }, [authLoading, user?.id]);
 
+  const adminInvoke = async (body: Record<string, any>) => {
+    const { data, error } = await supabase.functions.invoke("admin-users", { body });
+    if (error) throw new Error((data as any)?.error || error.message || "Erro desconhecido");
+    if (data?.error) throw new Error(data.error);
+    return data;
+  };
+
   const fetchUsers = async () => {
     if (authLoading || !user) return;
     setLoading(true);
     try {
-      const usersRes = await supabase.functions.invoke("admin-get-users");
-      if (usersRes.error || usersRes.data?.error) {
-        toast.error("Erro ao carregar usuários");
-        setUsers([]);
-      } else {
-        setUsers(usersRes.data?.users || []);
-      }
+      const data = await adminInvoke({ action: "list" });
+      setUsers(data?.users || []);
     } catch {
       toast.error("Erro ao carregar usuários");
+      setUsers([]);
     }
     setLoading(false);
   };
@@ -95,9 +98,10 @@ const AdminUsersTab = ({ onNavigateToAgency, onNavigateToClient }: AdminUsersPro
     if (!deleteTarget) return;
     setDeleteLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("delete-user", { body: { user_id: deleteTarget.user_id } });
-      if (error || data?.error) toast.error(data?.error || "Erro ao excluir usuário");
-      else { toast.success("Usuário excluído"); setDeleteTarget(null); fetchUsers(); }
+      await adminInvoke({ action: "delete", user_id: deleteTarget.user_id });
+      toast.success("Usuário excluído");
+      setDeleteTarget(null);
+      fetchUsers();
     } catch { toast.error("Erro ao excluir usuário"); }
     finally { setDeleteLoading(false); }
   };
@@ -107,11 +111,10 @@ const AdminUsersTab = ({ onNavigateToAgency, onNavigateToClient }: AdminUsersPro
     setToggleLoading(true);
     try {
       const newActive = !toggleTarget.is_active;
-      const { data, error } = await supabase.functions.invoke("update-user", {
-        body: { user_id: toggleTarget.user_id, is_active: newActive },
-      });
-      if (error || data?.error) toast.error(data?.error || "Erro ao alterar status");
-      else { toast.success(newActive ? "Usuário ativado" : "Usuário desativado"); setToggleTarget(null); fetchUsers(); }
+      await adminInvoke({ action: newActive ? "unsuspend" : "suspend", user_id: toggleTarget.user_id });
+      toast.success(newActive ? "Usuário ativado" : "Usuário desativado");
+      setToggleTarget(null);
+      fetchUsers();
     } catch { toast.error("Erro ao alterar status"); }
     finally { setToggleLoading(false); }
   };

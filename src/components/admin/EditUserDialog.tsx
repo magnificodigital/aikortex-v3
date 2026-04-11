@@ -35,6 +35,12 @@ const allRoles = [
   { value: "client_viewer", label: "Visualizador" },
 ];
 
+const getTenantTypeFromRole = (role: string) => {
+  if (["platform_owner", "platform_admin"].includes(role)) return "platform";
+  if (["client_owner", "client_viewer"].includes(role)) return "client";
+  return "agency";
+};
+
 const EditUserDialog = ({ open, onClose, onSuccess, user }: EditUserDialogProps) => {
   const [fullName, setFullName] = useState("");
   const [role, setRole] = useState("");
@@ -47,7 +53,7 @@ const EditUserDialog = ({ open, onClose, onSuccess, user }: EditUserDialogProps)
     if (open && user) {
       setFullName(user.full_name || "");
       setRole(user.role);
-      setTenantType(user.tenant_type);
+      setTenantType(getTenantTypeFromRole(user.role));
       setIsActive(user.is_active);
       setError("");
     }
@@ -60,13 +66,16 @@ const EditUserDialog = ({ open, onClose, onSuccess, user }: EditUserDialogProps)
 
     try {
       const body: Record<string, any> = { user_id: user.user_id };
+      const resolvedTenantType = getTenantTypeFromRole(role);
 
       if (fullName.trim() !== (user.full_name || "")) body.full_name = fullName.trim();
       if (role !== user.role) body.role = role;
-      if (tenantType !== user.tenant_type) body.tenant_type = tenantType;
+      if (resolvedTenantType !== user.tenant_type || role !== user.role) body.tenant_type = resolvedTenantType;
       if (isActive !== user.is_active) body.is_active = isActive;
 
-      const { data, error: fnError } = await supabase.functions.invoke("update-user", { body });
+      const { data, error: fnError } = await supabase.functions.invoke("admin-users", {
+        body: { action: "update", ...body },
+      });
 
       if (fnError || data?.error) {
         const errMsg = typeof data?.error === "string" ? data.error : JSON.stringify(data?.error);
@@ -113,7 +122,7 @@ const EditUserDialog = ({ open, onClose, onSuccess, user }: EditUserDialogProps)
 
           <div>
             <Label>Papel / Role</Label>
-            <Select value={role} onValueChange={setRole}>
+            <Select value={role} onValueChange={(value) => { setRole(value); setTenantType(getTenantTypeFromRole(value)); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {allRoles.map((r) => (
@@ -125,7 +134,7 @@ const EditUserDialog = ({ open, onClose, onSuccess, user }: EditUserDialogProps)
 
           <div>
             <Label>Tipo de tenant</Label>
-            <Select value={tenantType} onValueChange={setTenantType}>
+            <Select value={tenantType} onValueChange={setTenantType} disabled>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="platform">Plataforma</SelectItem>
