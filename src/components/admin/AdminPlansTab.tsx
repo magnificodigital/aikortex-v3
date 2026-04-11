@@ -160,6 +160,11 @@ const AdminPlansTab = () => {
           );
         })}
       </div>
+
+      <Separator className="my-6" />
+
+      {/* Tier Access Matrix */}
+      <TierAccessManager />
     </div>
   );
 };
