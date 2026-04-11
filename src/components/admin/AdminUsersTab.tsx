@@ -231,10 +231,10 @@ const AdminUsersTab = () => {
                 <TableHead>Nome</TableHead>
                 <TableHead>E-mail</TableHead>
                 <TableHead>Papel</TableHead>
+                <TableHead>Tier</TableHead>
                 <TableHead>Plano</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Último login</TableHead>
-                <TableHead>Cadastro</TableHead>
                 <TableHead className="w-10" />
               </TableRow>
             </TableHeader>
@@ -245,11 +245,28 @@ const AdminUsersTab = () => {
                 </TableCell></TableRow>
               ) : filtered.length === 0 ? (
                 <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Nenhum usuário encontrado</TableCell></TableRow>
-              ) : filtered.map(u => (
+              ) : filtered.map(u => {
+                const agency = getAgencyInfo(u.user_id);
+                const tierBadge = agency ? TIER_BADGES[agency.tier] || TIER_BADGES.starter : null;
+                const progress = agency ? getTierProgress(agency.tier, agency.active_clients_count || 0) : null;
+
+                return (
                 <TableRow key={u.id} className={!u.is_active ? "opacity-50" : ""}>
                   <TableCell className="font-medium">{u.full_name || "—"}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{u.email || "—"}</TableCell>
                   <TableCell>{getRoleBadge(u.role)}</TableCell>
+                  <TableCell>
+                    {tierBadge ? (
+                      <div className="space-y-1">
+                        <Badge className={`${tierBadge.className} border-0 text-xs`}>{tierBadge.label}</Badge>
+                        {progress && (
+                          <div className="text-[10px] text-muted-foreground">
+                            {agency!.active_clients_count || 0}/{progress.target} para {progress.label}
+                          </div>
+                        )}
+                      </div>
+                    ) : "—"}
+                  </TableCell>
                   <TableCell>{u.subscription?.plan?.name || "—"}</TableCell>
                   <TableCell>{getStatusBadge(u.subscription, u.is_active)}</TableCell>
                   <TableCell className="text-muted-foreground text-xs">
