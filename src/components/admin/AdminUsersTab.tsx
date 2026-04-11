@@ -82,18 +82,25 @@ const AdminUsersTab = () => {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("list-users");
-      if (error || data?.error) {
+      const [usersRes, agenciesRes] = await Promise.all([
+        supabase.functions.invoke("list-users"),
+        supabase.from("agency_profiles").select("user_id, tier, active_clients_count"),
+      ]);
+      
+      if (usersRes.error || usersRes.data?.error) {
         toast.error("Erro ao carregar usuários");
         setUsers([]);
       } else {
-        setUsers(data?.users || []);
+        setUsers(usersRes.data?.users || []);
       }
+      setAgencies((agenciesRes.data as AgencyInfo[]) || []);
     } catch {
       toast.error("Erro ao carregar usuários");
     }
     setLoading(false);
   };
+
+  const getAgencyInfo = (userId: string) => agencies.find(a => a.user_id === userId);
 
   const getRoleBadge = (role: string) => {
     const config = ROLE_CONFIG[role as keyof typeof ROLE_CONFIG];
