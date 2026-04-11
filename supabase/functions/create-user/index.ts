@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
     if (role === "agency_owner") {
       await supabaseAdmin.from("partner_tiers").insert({
         user_id: newUser.user!.id,
-        tier: "bronze",
+        tier: "starter",
       });
     }
 
