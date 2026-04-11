@@ -272,9 +272,6 @@ const AdminUsersTab = () => {
                   <TableCell className="text-muted-foreground text-xs">
                     {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }) : "Nunca"}
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-xs">
-                    {new Date(u.created_at).toLocaleDateString("pt-BR")}
-                  </TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -307,7 +304,8 @@ const AdminUsersTab = () => {
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>
