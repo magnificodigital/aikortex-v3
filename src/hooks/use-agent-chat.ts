@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/app-chat`;
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-runtime`;
 const FLUSH_INTERVAL_MS = 60;
 
 export interface ChatMessage {
@@ -183,6 +183,9 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
           payload.provider = options.provider || inferredProvider;
           payload.model = options.model;
           payload.agentContext = options.agentContext;
+          payload.agentId = (options.agentContext as any)?.agentId || undefined;
+          payload.agentConfig = options.agentContext || undefined;
+          payload.contactId = "browser-test";
           if (options.apiConfig) {
             payload.temperature = options.apiConfig.temperature;
             payload.max_tokens = options.apiConfig.maxTokens;
