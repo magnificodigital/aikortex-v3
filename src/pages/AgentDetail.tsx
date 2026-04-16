@@ -799,16 +799,34 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
         </div>
 
         {/* Voice call interface */}
-        <ConversationProvider>
-          <VoiceCallPanel
-            agentName={loadedAgent.name}
-            agentAvatar={loadedAgent.avatar}
-            agentPrompt={agentConfig?.instructions || agentConfig?.objective || ""}
-            agentGreeting={agentConfig?.greetingMessage || ""}
-            hasElevenLabsKey={!!keys["elevenlabs"]?.configured}
-            onGoToIntegrations={() => { setShowConfig(true); setRightPanelTab("connectors"); }}
-          />
-        </ConversationProvider>
+        <div className="flex-1 relative overflow-hidden">
+          <ConversationProvider>
+            <VoiceCallPanel
+              agentName={loadedAgent.name}
+              agentAvatar={loadedAgent.avatar}
+              agentPrompt={agentConfig?.instructions || agentConfig?.objective || ""}
+              agentGreeting={agentConfig?.greetingMessage || ""}
+              hasElevenLabsKey={!!keys["elevenlabs"]?.configured}
+              onGoToIntegrations={() => { setShowConfig(true); setRightPanelTab("connectors"); }}
+            />
+          </ConversationProvider>
+          {!keys["elevenlabs"]?.configured && !keys["telnyx"]?.configured && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-background/80 backdrop-blur-sm p-6 text-center">
+              <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
+                <Lock className="w-6 h-6 text-muted-foreground" />
+              </div>
+              <p className="text-sm text-muted-foreground max-w-xs">
+                Ligações disponíveis após configurar voz nas Integrações
+              </p>
+              <Button
+                size="sm"
+                onClick={() => { setShowConfig(true); setRightPanelTab("connectors"); }}
+              >
+                Configurar
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Outbound Call Dialog */}
