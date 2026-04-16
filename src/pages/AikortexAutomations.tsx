@@ -11,7 +11,7 @@ import type { SavedFlow, FlowFolder, FlowTemplate } from "@/types/flow-builder";
 import FlowCanvas from "@/components/flows/FlowCanvas";
 import FlowTemplateGallery from "@/components/flows/FlowTemplateGallery";
 import FlowList from "@/components/flows/FlowList";
-import FlowCreationSplit from "@/components/flows/FlowCreationSplit";
+// FlowCreationSplit removed — Copilot panel handles DeerFlow integration directly
 import { useFlows } from "@/hooks/use-flows";
 
 const AikortexAutomations = () => {
@@ -19,7 +19,6 @@ const AikortexAutomations = () => {
   const { flows, isLoading, toggleFlow, deleteFlow } = useFlows();
 
   const [copilotPrompt, setCopilotPrompt] = useState<string | null>(null);
-  const [aiCreation, setAiCreation] = useState(false);
   const [buildingFlow, setBuildingFlow] = useState<{
     name: string;
     nodes?: unknown[];
@@ -55,11 +54,10 @@ const AikortexAutomations = () => {
   };
 
   const handleNewBlank = () => {
-    setAiCreation(true);
+    setBuildingFlow({ name: "Novo Fluxo" });
   };
 
   const handleSkipToCanvas = () => {
-    setAiCreation(false);
     setBuildingFlow({ name: "Novo Fluxo" });
   };
 
@@ -109,21 +107,6 @@ const AikortexAutomations = () => {
   const handleMoveFlow = (_flowId: string, _folderId: string | null) => {
     toast.info("Mover fluxo entre pastas (em breve)");
   };
-
-  if (aiCreation) {
-    return (
-      <ModuleGate moduleKey="aikortex.flows">
-        <FlowCreationSplit
-          onBack={() => setAiCreation(false)}
-          onSaveFlow={handleSaveFlow}
-          flows={flows}
-          onOpenFlow={handleOpenFlow}
-          onNewFlow={handleSkipToCanvas}
-          onSkipToCanvas={handleSkipToCanvas}
-        />
-      </ModuleGate>
-    );
-  }
 
   if (buildingFlow) {
     return (

@@ -6,9 +6,7 @@ import { cn } from "@/lib/utils";
 import { NODE_TEMPLATES } from "@/types/flow-builder";
 import { AGENT_TEMPLATES } from "@/types/agent-builder";
 import ReactMarkdown from "react-markdown";
-import { supabase } from "@/integrations/supabase/client";
-
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-chat`;
+const DEERFLOW_URL = "https://aikortex-flow-production.up.railway.app/api/chat/completions";
 
 interface Message {
   id: string;
@@ -89,6 +87,20 @@ export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, init
         return;
       }
 
+      // Check for ```json ... ``` flow definition from DeerFlow
+      const jsonBlockMatch = text.match(/```json\s*([\s\S]*?)\s*```/);
+      if (jsonBlockMatch && onBuildFlow) {
+        try {
+          const flowDef = JSON.parse(jsonBlockMatch[1].trim());
+          if (flowDef.nodes && flowDef.edges) {
+            onBuildFlow(flowDef);
+            return;
+          }
+        } catch (e) {
+          console.error("Failed to parse JSON flow block:", e);
+        }
+      }
+
       // Fallback: individual ADD_NODE commands
       if (!onAddNode) return;
       const regex = /\[ADD_NODE:(\w+)\]/g;
@@ -120,23 +132,14 @@ export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, init
     ];
 
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData?.session?.access_token;
-      if (!accessToken) {
-        throw new Error("Você precisa estar logado para usar o Copilot.");
-      }
-
-      // Use OpenRouter free model via edge function
-      const resp = await fetch(CHAT_URL, {
+      const resp = await fetch(DEERFLOW_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
+          model: "gemini-flash",
           messages: apiMessages,
-          model: "google/gemini-2.5-flash",
-          useGateway: true,
         }),
       });
 
@@ -287,7 +290,7 @@ export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, init
                     {msg.role === "assistant" ? (
                       <div className="prose prose-xs prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
                         <ReactMarkdown>
-                          {msg.content.replace(/\[BUILD_FLOW\][\s\S]*?\[\/BUILD_FLOW\]/g, "").replace(/\[ADD_NODE:\w+\]/g, "").trim()}
+                          {msg.content.replace(/\[BUILD_FLOW\][\s\S]*?\[\/BUILD_FLOW\]/g, "").replace(/\[ADD_NODE:\w+\]/g, "").replace(/```json[\s\S]*?```/g, "").trim()}
                         </ReactMarkdown>
                       </div>
                     ) : (
