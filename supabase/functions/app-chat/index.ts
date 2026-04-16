@@ -498,13 +498,16 @@ serve(async (req) => {
       ? buildStructuringPrompt(appContext?.app_type || "web", appContext?.language || "pt-BR")
       : buildAppStatePrompt(appContext);
 
-    const structured = await buildStructuredResponse({
-      messages,
-      systemPrompt,
-      requestedModel,
-      requestedProvider,
-      authHeader,
-    });
+    /* For structure mode, always use gateway directly (skip user API keys) */
+    const structured = isStructureMode
+      ? { response: await buildGatewayResponse([{ role: "system", content: systemPrompt }, ...messages], requestedModel, false), parser: "openai" as const, provider: "gateway" as const }
+      : await buildStructuredResponse({
+          messages,
+          systemPrompt,
+          requestedModel,
+          requestedProvider,
+          authHeader,
+        });
 
     if (structured instanceof Response) {
       return structured;

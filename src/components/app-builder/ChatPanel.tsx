@@ -127,7 +127,11 @@ async function requestStructure(description: string, appType: string, language: 
       mode: "structure",
     }),
   });
-  if (!resp.ok) return null;
+  if (!resp.ok) {
+    const errorBody = await resp.text();
+    console.error("requestStructure error:", resp.status, errorBody);
+    return null;
+  }
   const data = await resp.json();
   try {
     const raw = typeof data.structuredConfig === "string" ? extractJson(data.structuredConfig) : data.structuredConfig;
