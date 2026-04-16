@@ -6,7 +6,6 @@ import { RightPanelProvider } from "./RightPanel";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMonthlyUsage } from "@/hooks/use-monthly-usage";
-import NotificationBell from "@/components/notifications/NotificationBell";
 
 const DashboardLayout = ({ children }: { children: ReactNode }) => {
   const isMobile = useIsMobile();
@@ -64,7 +63,7 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
                 <Menu className="h-5 w-5" />
               </button>
             ) : <div />}
-            <NotificationBell />
+            <div />
           </div>
 
           <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">

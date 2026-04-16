@@ -20,6 +20,12 @@ const BodySchema = z.object({
   job_title: z.string().optional(),
 });
 
+const mapAuthError = (message: string) => {
+  if (message.includes("already been registered")) return "Este e-mail já está em uso";
+  if (message.toLowerCase().includes("weak")) return "Senha muito fraca";
+  return message;
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -105,22 +111,39 @@ Deno.serve(async (req) => {
     });
 
     if (createError) {
-      const msg = createError.message.includes("already been registered")
-        ? "Este e-mail já está em uso"
-        : createError.message.includes("weak")
-        ? "Senha muito fraca"
-        : createError.message;
+      const msg = mapAuthError(createError.message);
       return new Response(JSON.stringify({ error: msg }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Update profile with correct role (trigger creates it, but we ensure role is correct)
     await supabaseAdmin
       .from("profiles")
-      .update({ role, tenant_type })
-      .eq("user_id", newUser.user!.id);
+      .upsert({
+        user_id: newUser.user!.id,
+        full_name,
+        role,
+        tenant_type,
+        is_active: true,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "user_id" });
+
+    if (role === "agency_owner" && tenant_type === "agency") {
+      const { data: existingAgency } = await supabaseAdmin
+        .from("agency_profiles")
+        .select("id")
+        .eq("user_id", newUser.user!.id)
+        .maybeSingle();
+
+      if (!existingAgency) {
+        await supabaseAdmin.from("agency_profiles").insert({
+          user_id: newUser.user!.id,
+          agency_name: full_name,
+          tier: "starter",
+        });
+      }
+    }
 
     // If creating an agency owner, create partner_tiers entry
     if (role === "agency_owner") {

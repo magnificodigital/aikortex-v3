@@ -41,6 +41,10 @@ const AddClientWizard = ({ open, onOpenChange, agencyId, customPricing, agencyTi
   const [phone, setPhone] = useState("");
   const [document, setDocument] = useState("");
 
+  // Client workspace access
+  const [createWorkspaceAccess, setCreateWorkspaceAccess] = useState(false);
+  const [clientPassword, setClientPassword] = useState("");
+
   // Step 2
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -53,6 +57,7 @@ const AddClientWizard = ({ open, onOpenChange, agencyId, customPricing, agencyTi
     if (open) {
       setStep(1); setName(""); setEmail(""); setPhone(""); setDocument("");
       setSelected(new Set()); setPaymentLink(""); setCreatedClientId("");
+      setCreateWorkspaceAccess(false); setClientPassword("");
       supabase.from("platform_templates").select("*").eq("is_active", true).then(({ data }) => {
         if (data) setTemplates(data.filter((t: any) => TIER_ORDER[agencyTier] >= TIER_ORDER[t.min_tier]) as Template[]);
       });
@@ -78,6 +83,23 @@ const AddClientWizard = ({ open, onOpenChange, agencyId, customPricing, agencyTi
 
       const clientId = res.data.client?.id;
       setCreatedClientId(clientId);
+
+      // Optionally create workspace access for client
+      if (createWorkspaceAccess && email && clientPassword) {
+        const createRes = await supabase.functions.invoke("create-user", {
+          body: {
+            email,
+            password: clientPassword,
+            full_name: name,
+            role: "client_owner",
+            tenant_type: "client",
+          },
+        });
+        if (createRes.data?.user?.id) {
+          // Link client_user_id
+          await supabase.from("agency_clients").update({ client_user_id: createRes.data.user.id }).eq("id", clientId);
+        }
+      }
 
       // Subscribe templates
       for (const t of selectedTemplates) {
@@ -116,7 +138,25 @@ const AddClientWizard = ({ open, onOpenChange, agencyId, customPricing, agencyTi
             <div><Label>Email *</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="cliente@email.com" /></div>
             <div><Label>Telefone</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+55 11 99999-9999" /></div>
             <div><Label>CPF/CNPJ</Label><Input value={document} onChange={(e) => setDocument(e.target.value)} placeholder="000.000.000-00" /></div>
-            <Button className="w-full" disabled={!name || !email} onClick={() => setStep(2)}>
+
+            <div className="border border-border rounded-lg p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">Criar acesso ao workspace</p>
+                  <p className="text-xs text-muted-foreground">O cliente poderá acessar seu próprio painel</p>
+                </div>
+                <Switch checked={createWorkspaceAccess} onCheckedChange={setCreateWorkspaceAccess} />
+              </div>
+              {createWorkspaceAccess && (
+                <div>
+                  <Label>Senha temporária *</Label>
+                  <Input type="password" value={clientPassword} onChange={(e) => setClientPassword(e.target.value)} placeholder="Senha de acesso" />
+                  <p className="text-[10px] text-muted-foreground mt-1">O cliente usará o email acima + esta senha para entrar.</p>
+                </div>
+              )}
+            </div>
+
+            <Button className="w-full" disabled={!name || !email || (createWorkspaceAccess && !clientPassword)} onClick={() => setStep(2)}>
               Próximo <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           </div>

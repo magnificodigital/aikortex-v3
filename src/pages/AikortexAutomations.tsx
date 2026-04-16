@@ -11,6 +11,7 @@ import type { SavedFlow, FlowFolder, FlowTemplate } from "@/types/flow-builder";
 import FlowCanvas from "@/components/flows/FlowCanvas";
 import FlowTemplateGallery from "@/components/flows/FlowTemplateGallery";
 import FlowList from "@/components/flows/FlowList";
+// FlowCreationSplit removed — Copilot panel handles DeerFlow integration directly
 import { useFlows } from "@/hooks/use-flows";
 
 const AikortexAutomations = () => {
@@ -53,6 +54,10 @@ const AikortexAutomations = () => {
   };
 
   const handleNewBlank = () => {
+    setBuildingFlow({ name: "Novo Fluxo" });
+  };
+
+  const handleSkipToCanvas = () => {
     setBuildingFlow({ name: "Novo Fluxo" });
   };
 

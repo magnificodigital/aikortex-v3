@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useModuleAccess } from "@/hooks/use-module-access";
 import { useMonthlyUsage } from "@/hooks/use-monthly-usage";
 import aikortexLogoWhite from "@/assets/aikortex-logo-white.png";
@@ -137,6 +138,7 @@ const AppSidebar = ({ mobileOpen = false, onMobileClose }: AppSidebarProps) => {
   const location = useLocation();
   const { theme, toggle } = useTheme();
   const { signOut, isPlatform } = useAuth();
+  const { agencyName, clients, activeWorkspace, switchToAgency, switchToClient } = useWorkspace();
   const { canAccess } = useModuleAccess();
   const { messageCount, monthlyLimit, hasByok, isNearLimit, isUnlimited } = useMonthlyUsage();
   const navigate = useNavigate();
@@ -281,12 +283,23 @@ const AppSidebar = ({ mobileOpen = false, onMobileClose }: AppSidebarProps) => {
 
         {(!collapsed || isMobile) && (
           <div className="px-2 pt-3">
-            <Select defaultValue="workspace-1">
+            <Select
+              value={activeWorkspace.type === "agency" ? "__agency__" : activeWorkspace.id}
+              onValueChange={(val) => {
+                if (val === "__agency__") {
+                  switchToAgency();
+                } else {
+                  const client = clients.find(c => c.id === val);
+                  if (client) switchToClient(client);
+                }
+              }}
+            >
               <SelectTrigger className="w-full h-8 text-xs border-sidebar-border"><SelectValue placeholder="Workspace" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="workspace-1">Meu Workspace</SelectItem>
-                <SelectItem value="workspace-2">Agência Alpha</SelectItem>
-                <SelectItem value="workspace-3">Cliente Beta</SelectItem>
+                <SelectItem value="__agency__">{agencyName}</SelectItem>
+                {clients.map(c => (
+                  <SelectItem key={c.id} value={c.id}>{c.client_name}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
