@@ -1,6 +1,6 @@
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
 Deno.serve(async (req) => {
@@ -8,18 +8,16 @@ Deno.serve(async (req) => {
 
   try {
     const { messages } = await req.json()
-    const DEERFLOW_URL = Deno.env.get('DEERFLOW_URL') ?? 'https://aikortex-flow-production.up.railway.app'
+    const OPENROUTER_API_KEY = Deno.env.get('OPENROUTER_API_KEY')
 
-    const response = await fetch(`${DEERFLOW_URL}/api/chat/completions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'gemini-flash',
-        stream: false,
-        messages: [
-          {
-            role: 'system',
-            content: `Você é um assistente de criação de fluxos de automação para a plataforma Aikortex, usada por agências de marketing no Brasil. Ajude o usuário a criar fluxos de automação fazendo perguntas para entender o objetivo. Quando tiver informações suficientes, gere o fluxo como JSON dentro de um bloco de código assim:
+    if (!OPENROUTER_API_KEY) {
+      return new Response(JSON.stringify({ error: 'OPENROUTER_API_KEY not configured' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
+    const systemPrompt = `Você é um assistente de criação de fluxos de automação para a plataforma Aikortex, usada por agências de marketing no Brasil. Ajude o usuário a criar fluxos de automação fazendo perguntas para entender o objetivo. Quando tiver informações suficientes, gere o fluxo como JSON dentro de um bloco de código assim:
 \`\`\`json
 {
   "nodes": [
@@ -34,7 +32,20 @@ Deno.serve(async (req) => {
 }
 \`\`\`
 Sempre responda em português do Brasil. Seja conversacional e útil.`
-          },
+
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+        'HTTP-Referer': 'https://aikortex.com',
+        'X-Title': 'Aikortex Flow Copilot',
+      },
+      body: JSON.stringify({
+        model: 'openai/gpt-4o-mini',
+        stream: false,
+        messages: [
+          { role: 'system', content: systemPrompt },
           ...messages
         ]
       })

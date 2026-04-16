@@ -110,11 +110,17 @@ export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, init
       setIsStreaming(true);
 
       try {
-        const { data, error } = await supabase.functions.invoke("deerflow-proxy", {
-          body: { messages: conversationHistory },
-        });
+        const res = await fetch(
+          "https://kbknehyfksugykrovfxs.supabase.co/functions/v1/deerflow-proxy",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ messages: conversationHistory }),
+          }
+        );
 
-        if (error) throw new Error(error.message || "Erro ao conectar");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
 
         const aiContent = data?.choices?.[0]?.message?.content || data?.error;
         if (!aiContent) throw new Error("Resposta vazia do servidor");
