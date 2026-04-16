@@ -519,9 +519,15 @@ const AgentRightPanel = ({
                     </div>
                     <div className="space-y-2">
                       <h3 className="text-sm font-semibold text-foreground">Tom de voz</h3>
-                      <Select value={agentToneOfVoice} onValueChange={setAgentToneOfVoice}>
+                      <Select
+                        value={agentToneOfVoice || "Profissional e amigável — responde de forma clara, objetiva e empática, sem ser formal em excesso."}
+                        onValueChange={setAgentToneOfVoice}
+                      >
                         <SelectTrigger className="text-sm"><SelectValue placeholder="Selecione" /></SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="Profissional e amigável — responde de forma clara, objetiva e empática, sem ser formal em excesso.">
+                            Profissional e amigável (padrão)
+                          </SelectItem>
                           <SelectItem value="Profissional e Amigável">Profissional e Amigável</SelectItem>
                           <SelectItem value="Formal">Formal</SelectItem>
                           <SelectItem value="Casual e Descontraído">Casual e Descontraído</SelectItem>
