@@ -3,9 +3,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const AI_GATEWAY_URL = 'https://kbknehyfksugykrovfxs.supabase.co/functions/v1/ai-gateway'
+const GATEWAY_URL = 'https://kbknehyfksugykrovfxs.supabase.co/functions/v1/ai-gateway'
 
-const systemPrompt = `Você é um assistente de criação de fluxos de automação para a plataforma Aikortex, usada por agências de marketing no Brasil. Ajude o usuário a criar fluxos de automação fazendo perguntas para entender o objetivo. Quando tiver informações suficientes, gere o fluxo como JSON dentro de um bloco de código assim:
+const SYSTEM_PROMPT = `Você é um assistente de criação de fluxos de automação para a plataforma Aikortex, usada por agências de marketing no Brasil. Ajude o usuário a criar fluxos de automação fazendo perguntas para entender o objetivo. Quando tiver informações suficientes, gere o fluxo como JSON dentro de um bloco de código assim:
 \`\`\`json
 {
   "nodes": [
@@ -27,20 +27,20 @@ Deno.serve(async (req) => {
   try {
     const { messages } = await req.json()
 
-    const response = await fetch(AI_GATEWAY_URL, {
+    const response = await fetch(GATEWAY_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         messages,
-        system: systemPrompt,
+        system: SYSTEM_PROMPT,
         module: 'flow',
         mode: 'chat',
       }),
     })
 
     if (!response.ok) {
-      const errText = await response.text()
-      return new Response(JSON.stringify({ error: errText }), {
+      const err = await response.json().catch(() => ({ error: 'Erro desconhecido' }))
+      return new Response(JSON.stringify({ error: err.error }), {
         status: response.status,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -48,13 +48,10 @@ Deno.serve(async (req) => {
 
     const data = await response.json()
 
-    // Wrap in OpenAI-compatible format for the frontend
-    const result = {
-      choices: [{ message: { content: data.content || '' } }],
+    return new Response(JSON.stringify({
+      choices: [{ message: { role: 'assistant', content: data.content || '' } }],
       model: data.model || '',
-    }
-
-    return new Response(JSON.stringify(result), {
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (e: unknown) {
