@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-const CHAT_URL = `https://kbknehyfksugykrovfxs.supabase.co/functions/v1/agent-runtime`;
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-runtime`;
 const FLUSH_INTERVAL_MS = 60;
 
 export interface ChatMessage {
