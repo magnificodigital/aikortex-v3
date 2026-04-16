@@ -6,7 +6,21 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const AI_GATEWAY_URL = "https://kbknehyfksugykrovfxs.supabase.co/functions/v1/ai-gateway";
+
+function extractJsonFromResponse(response: string): unknown {
+  let cleaned = response
+    .replace(/```json\s*/gi, "")
+    .replace(/```\s*/g, "")
+    .trim();
+
+  const jsonStart = cleaned.search(/[\{\[]/);
+  const jsonEnd = cleaned.lastIndexOf(jsonStart !== -1 && cleaned[jsonStart] === '[' ? ']' : '}');
+
+  if (jsonStart === -1 || jsonEnd === -1) throw new Error("No JSON found in response");
+
+  return JSON.parse(cleaned.substring(jsonStart, jsonEnd + 1));
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -14,81 +28,39 @@ serve(async (req) => {
   try {
     const { description, agent_type, language } = await req.json();
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
-
     const systemPrompt = `Você é um especialista em configurar agentes de IA conversacionais.
 Dado a descrição do usuário, gere uma configuração estruturada completa para o agente.
-Responda APENAS chamando a tool "structure_agent" com os dados preenchidos.
 Adapte o tom, mensagem de saudação e funcionalidades ao tipo de agente (${agent_type || "Custom"}).
 Idioma padrão: ${language || "pt-BR"}.
-Seja criativo mas realista nas funcionalidades sugeridas.`;
+Seja criativo mas realista nas funcionalidades sugeridas.
 
-    const response = await fetch(GATEWAY_URL, {
+Responda APENAS com um JSON válido, sem texto antes ou depois, sem markdown, seguindo EXATAMENTE este formato:
+
+{
+  "agent_name": "Nome do agente",
+  "agent_type": "SDR | BDR | SAC | CS | Custom",
+  "description": "Descrição curta do agente (1-2 frases)",
+  "objective": "Objetivo principal do agente",
+  "tone": "professional_friendly | formal | casual | empathetic | direct",
+  "language": "pt-BR",
+  "greeting_message": "Mensagem de saudação inicial",
+  "instructions": "Instruções detalhadas de comportamento",
+  "channels": ["whatsapp", "web"],
+  "quick_replies": ["Opção 1", "Opção 2", "Opção 3"],
+  "selected_features": ["feature1", "feature2", "feature3"],
+  "onboarding_level": "none | soft | strict"
+}
+
+Retorne SOMENTE o JSON.`;
+
+    const response = await fetch(AI_GATEWAY_URL, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: description },
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "structure_agent",
-              description: "Return the structured agent configuration.",
-              parameters: {
-                type: "object",
-                properties: {
-                  agent_name: { type: "string", description: "Nome do agente" },
-                  agent_type: { type: "string", description: "Tipo: SDR, BDR, SAC, CS ou Custom" },
-                  description: { type: "string", description: "Descrição curta do agente (1-2 frases)" },
-                  objective: { type: "string", description: "Objetivo principal do agente" },
-                  tone: {
-                    type: "string",
-                    enum: ["professional_friendly", "formal", "casual", "empathetic", "direct"],
-                    description: "Tom de voz",
-                  },
-                  language: { type: "string", description: "Idioma (ex: pt-BR)" },
-                  greeting_message: { type: "string", description: "Mensagem de saudação inicial" },
-                  instructions: { type: "string", description: "Instruções detalhadas de comportamento" },
-                  channels: {
-                    type: "array",
-                    items: { type: "string" },
-                    description: "Canais de atuação (whatsapp, web, instagram, etc)",
-                  },
-                  quick_replies: {
-                    type: "array",
-                    items: { type: "string" },
-                    description: "Respostas rápidas sugeridas (3-5)",
-                  },
-                  selected_features: {
-                    type: "array",
-                    items: { type: "string" },
-                    description: "Funcionalidades principais do agente (3-6 palavras-chave)",
-                  },
-                  onboarding_level: {
-                    type: "string",
-                    enum: ["none", "soft", "strict"],
-                    description: "Nível de onboarding",
-                  },
-                },
-                required: [
-                  "agent_name", "agent_type", "description", "objective", "tone",
-                  "language", "greeting_message", "instructions", "channels",
-                  "selected_features", "onboarding_level",
-                ],
-                additionalProperties: false,
-              },
-            },
-          },
-        ],
-        tool_choice: { type: "function", function: { name: "structure_agent" } },
+        messages: [{ role: "user", content: description }],
+        system: systemPrompt,
+        module: "agent",
+        mode: "structure",
       }),
     });
 
@@ -114,11 +86,10 @@ Seja criativo mas realista nas funcionalidades sugeridas.`;
     }
 
     const data = await response.json();
+    const content = data.content;
 
-    // Extract tool call result
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall?.function?.arguments) {
-      console.error("No tool call in response:", JSON.stringify(data).slice(0, 500));
+    if (!content) {
+      console.error("No content in response:", JSON.stringify(data).slice(0, 500));
       return new Response(JSON.stringify({ error: "IA não retornou configuração estruturada" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -127,11 +98,9 @@ Seja criativo mas realista nas funcionalidades sugeridas.`;
 
     let structuredConfig;
     try {
-      structuredConfig = typeof toolCall.function.arguments === "string"
-        ? JSON.parse(toolCall.function.arguments)
-        : toolCall.function.arguments;
+      structuredConfig = extractJsonFromResponse(content);
     } catch (e) {
-      console.error("JSON parse error:", e, toolCall.function.arguments);
+      console.error("JSON parse error:", e, content.slice(0, 500));
       return new Response(JSON.stringify({ error: "Erro ao processar resposta da IA" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
