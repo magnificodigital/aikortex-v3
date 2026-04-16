@@ -176,6 +176,7 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
           mode: "agent-chat",
           messages: apiMessages,
           useGateway: options.useGateway ?? false,
+          userId,
         };
 
         if (options.useGateway) {
