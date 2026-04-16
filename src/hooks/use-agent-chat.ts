@@ -60,7 +60,7 @@ function deriveProvider(model?: string): string | undefined {
   if (!model) return undefined;
   // Models with a slash are OpenRouter-routed (platform-provided) — no single "provider" to validate against
   if (model.includes("/")) return undefined;
-  if (model.startsWith("gemini")) return "gemini";
+  if (model.startsWith("gemini")) return "google";
   if (model.startsWith("gpt")) return "openai";
   if (model.startsWith("claude")) return "anthropic";
   return undefined;
