@@ -76,6 +76,22 @@ const buildSavedConfig = (config: AgentConfig, agentType: string) => ({
 
 /* ── Component ── */
 
+const TYPE_LABELS: Record<AgentType, string> = {
+  SDR: "SDR", BDR: "BDR", SAC: "Atendimento", CS: "Sucesso do Cliente", Custom: "Assistente",
+};
+
+function suggestAgentName(prompt: string | undefined | null, type: AgentType): string {
+  const fallback = `Agente ${TYPE_LABELS[type] || "IA"}`;
+  if (!prompt || typeof prompt !== "string") return fallback;
+  const clean = prompt.trim().replace(/\s+/g, " ");
+  if (!clean) return fallback;
+  const stop = new Set(["para","com","que","uma","como","quero","preciso","criar","fazer","agente","assistente","meu","minha","sobre","dos","das","por","mais","menos","todo","toda","esse","essa","isso"]);
+  const words = clean.split(" ").filter(w => w.length > 3 && !stop.has(w.toLowerCase())).slice(0, 2);
+  if (words.length === 0) return fallback;
+  const topic = words.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+  return `Agente ${TYPE_LABELS[type] || ""} ${topic}`.replace(/\s+/g, " ").trim().slice(0, 60);
+}
+
 const AgentDetail = () => {
   const navigate    = useNavigate();
   const location    = useLocation();
@@ -93,7 +109,7 @@ const AgentDetail = () => {
     if (templateAgent) {
       return { name: templateAgent.name, avatar: templateAgent.avatar, model: templateAgent.model, agentType: templateAgent.agentType, savedConfig: null };
     }
-    return { name: "Carregando...", avatar: avatar1, model: "gemini-2.5-flash", agentType: initialType, savedConfig: null };
+    return { name: suggestAgentName(navState?.initialPrompt, initialType), avatar: avatar1, model: "gemini-2.5-flash", agentType: initialType, savedConfig: null };
   });
   const [agentLoading, setAgentLoading] = useState(!isTemplate);
 
