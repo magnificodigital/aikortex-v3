@@ -7,62 +7,62 @@ const OPENROUTER_KEY = () => Deno.env.get('OPENROUTER_API_KEY') ?? ''
 
 // ── Model strategy per module ──────────────────────────────────────────────
 const MODULE_MODELS: Record<string, string[]> = {
-  // Conversational agents (SDR, SAC, Custom) — 8 fallbacks
+  // Conversational agents (SDR, SAC, Custom)
   agent: [
+    'meta-llama/llama-4-maverick:free',
+    'meta-llama/llama-4-scout:free',
     'meta-llama/llama-3.3-70b-instruct:free',
     'google/gemma-3-27b-it:free',
-    'mistralai/mistral-7b-instruct:free',
-    'microsoft/phi-4-reasoning-plus:free',
-    'qwen/qwen3-8b:free',
-    'google/gemma-4-31b-it:free',
-    'deepseek/deepseek-r1-0528-qwen3-8b:free',
-    'nvidia/nemotron-3-super-120b-a12b:free',
+    'deepseek/deepseek-r1:free',
+    'deepseek/deepseek-chat-v3-0324:free',
+    'qwen/qwen3-30b-a3b:free',
+    'mistralai/mistral-small-3.2-24b-instruct:free',
   ],
   // App Builder — code & JSON generation
   app: [
-    'qwen/qwen3-coder:free',
-    'openai/gpt-oss-120b:free',
-    'microsoft/phi-4-reasoning-plus:free',
-    'nousresearch/hermes-3-llama-3.1-405b:free',
-    'qwen/qwen3-8b:free',
+    'meta-llama/llama-4-maverick:free',
+    'deepseek/deepseek-r1:free',
+    'qwen/qwen3-30b-a3b:free',
     'meta-llama/llama-3.3-70b-instruct:free',
+    'google/gemma-3-27b-it:free',
+    'mistralai/mistral-small-3.2-24b-instruct:free',
   ],
   // Flow Copilot — reasoning + JSON
   flow: [
-    'microsoft/phi-4-reasoning-plus:free',
+    'deepseek/deepseek-r1:free',
+    'meta-llama/llama-4-maverick:free',
     'meta-llama/llama-3.3-70b-instruct:free',
-    'qwen/qwen3-8b:free',
-    'nvidia/nemotron-3-super-120b-a12b:free',
+    'qwen/qwen3-30b-a3b:free',
     'google/gemma-3-27b-it:free',
-    'mistralai/mistral-7b-instruct:free',
+    'deepseek/deepseek-chat-v3-0324:free',
   ],
   // Multi-agent complex tasks
   multiagent: [
-    'nvidia/nemotron-3-super-120b-a12b:free',
-    'microsoft/phi-4-reasoning-plus:free',
+    'meta-llama/llama-4-maverick:free',
+    'deepseek/deepseek-r1:free',
     'meta-llama/llama-3.3-70b-instruct:free',
-    'qwen/qwen3-8b:free',
-    'nousresearch/hermes-3-llama-3.1-405b:free',
+    'qwen/qwen3-30b-a3b:free',
+    'google/gemma-3-27b-it:free',
   ],
   // Structure/JSON extraction
   structure: [
-    'microsoft/phi-4-reasoning-plus:free',
+    'deepseek/deepseek-r1:free',
     'meta-llama/llama-3.3-70b-instruct:free',
-    'qwen/qwen3-8b:free',
+    'meta-llama/llama-4-scout:free',
     'google/gemma-3-27b-it:free',
-    'mistralai/mistral-7b-instruct:free',
-    'deepseek/deepseek-r1-0528-qwen3-8b:free',
+    'qwen/qwen3-30b-a3b:free',
+    'deepseek/deepseek-chat-v3-0324:free',
   ],
   // Default fallback
   default: [
+    'meta-llama/llama-4-maverick:free',
+    'meta-llama/llama-4-scout:free',
     'meta-llama/llama-3.3-70b-instruct:free',
     'google/gemma-3-27b-it:free',
-    'mistralai/mistral-7b-instruct:free',
-    'qwen/qwen3-8b:free',
-    'microsoft/phi-4-reasoning-plus:free',
-    'google/gemma-4-31b-it:free',
-    'deepseek/deepseek-r1-0528-qwen3-8b:free',
-    'nvidia/nemotron-3-super-120b-a12b:free',
+    'deepseek/deepseek-r1:free',
+    'deepseek/deepseek-chat-v3-0324:free',
+    'qwen/qwen3-30b-a3b:free',
+    'mistralai/mistral-small-3.2-24b-instruct:free',
   ],
 }
 
