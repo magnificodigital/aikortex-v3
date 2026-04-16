@@ -290,7 +290,7 @@ export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, init
                     {msg.role === "assistant" ? (
                       <div className="prose prose-xs prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
                         <ReactMarkdown>
-                          {msg.content.replace(/\[BUILD_FLOW\][\s\S]*?\[\/BUILD_FLOW\]/g, "").replace(/\[ADD_NODE:\w+\]/g, "").trim()}
+                          {msg.content.replace(/\[BUILD_FLOW\][\s\S]*?\[\/BUILD_FLOW\]/g, "").replace(/\[ADD_NODE:\w+\]/g, "").replace(/```json[\s\S]*?```/g, "").trim()}
                         </ReactMarkdown>
                       </div>
                     ) : (

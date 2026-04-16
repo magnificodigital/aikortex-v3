@@ -11,7 +11,7 @@ import type { SavedFlow, FlowFolder, FlowTemplate } from "@/types/flow-builder";
 import FlowCanvas from "@/components/flows/FlowCanvas";
 import FlowTemplateGallery from "@/components/flows/FlowTemplateGallery";
 import FlowList from "@/components/flows/FlowList";
-import FlowCreationSplit from "@/components/flows/FlowCreationSplit";
+// FlowCreationSplit removed — Copilot panel handles DeerFlow integration directly
 import { useFlows } from "@/hooks/use-flows";
 
 const AikortexAutomations = () => {
