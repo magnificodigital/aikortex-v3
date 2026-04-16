@@ -94,8 +94,7 @@ const CHANNELS = [
 const SETTINGS_NAV = [
   { section: "AGENTE", items: [
     { key: "general",      icon: User,      label: "Identidade" },
-    { key: "objective",    icon: Zap,       label: "Objetivo" },
-    { key: "instructions", icon: Settings2, label: "Instruções" },
+    { key: "behavior",     icon: Brain,     label: "Comportamento" },
     { key: "files_nav",    icon: FileText,  label: "Conhecimento" },
     { key: "voice_nav",    icon: Mic,       label: "Voz" },
   ]},
