@@ -188,6 +188,22 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
           payload.agentId = (options.agentContext as any)?.agentId || undefined;
           payload.agentConfig = options.agentContext || undefined;
           payload.contactId = "browser-test";
+
+          // Send user's configured API key for BYOK
+          if (options.agentContext?.provider && options.agentContext?.model) {
+            try {
+              const { data: keyData } = await supabase
+                .from("user_api_keys")
+                .select("api_key")
+                .eq("provider", options.agentContext.provider)
+                .maybeSingle();
+              if (keyData?.api_key) {
+                payload.byok_key = keyData.api_key;
+                payload.provider = options.agentContext.provider;
+              }
+            } catch { /* ignore */ }
+          }
+
           if (options.apiConfig) {
             payload.temperature = options.apiConfig.temperature;
             payload.max_tokens = options.apiConfig.maxTokens;
