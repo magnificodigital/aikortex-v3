@@ -110,6 +110,21 @@ const AikortexAutomations = () => {
     toast.info("Mover fluxo entre pastas (em breve)");
   };
 
+  if (aiCreation) {
+    return (
+      <ModuleGate moduleKey="aikortex.flows">
+        <FlowCreationSplit
+          onBack={() => setAiCreation(false)}
+          onSaveFlow={handleSaveFlow}
+          flows={flows}
+          onOpenFlow={handleOpenFlow}
+          onNewFlow={handleSkipToCanvas}
+          onSkipToCanvas={handleSkipToCanvas}
+        />
+      </ModuleGate>
+    );
+  }
+
   if (buildingFlow) {
     return (
       <ModuleGate moduleKey="aikortex.flows">
