@@ -129,6 +129,7 @@ const AgentDetail = () => {
     if (isTemplate && hasAutoPrompt) return "done";
     if (isTemplate) return "discover";
     if (isNewCustomFromHome) return "discover";
+    if (!agentId || agentId === "new" || agentId.startsWith("new-")) return "discover";
     // Existing saved agent
     return "done";
   });
