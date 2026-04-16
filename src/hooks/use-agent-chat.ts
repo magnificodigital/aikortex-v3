@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { AGENT_RUNTIME_URL } from "@/lib/ai-endpoints";
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/app-chat`;
+const CHAT_URL = AGENT_RUNTIME_URL;
 const FLUSH_INTERVAL_MS = 60;
 
 export interface ChatMessage {
