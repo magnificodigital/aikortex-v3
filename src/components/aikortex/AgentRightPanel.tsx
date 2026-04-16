@@ -519,9 +519,15 @@ const AgentRightPanel = ({
                     </div>
                     <div className="space-y-2">
                       <h3 className="text-sm font-semibold text-foreground">Tom de voz</h3>
-                      <Select value={agentToneOfVoice} onValueChange={setAgentToneOfVoice}>
+                      <Select
+                        value={agentToneOfVoice || "Profissional e amigável — responde de forma clara, objetiva e empática, sem ser formal em excesso."}
+                        onValueChange={setAgentToneOfVoice}
+                      >
                         <SelectTrigger className="text-sm"><SelectValue placeholder="Selecione" /></SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="Profissional e amigável — responde de forma clara, objetiva e empática, sem ser formal em excesso.">
+                            Profissional e amigável (padrão)
+                          </SelectItem>
                           <SelectItem value="Profissional e Amigável">Profissional e Amigável</SelectItem>
                           <SelectItem value="Formal">Formal</SelectItem>
                           <SelectItem value="Casual e Descontraído">Casual e Descontraído</SelectItem>
@@ -609,6 +615,20 @@ const AgentRightPanel = ({
                                     <button onClick={() => setUrls(urls.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive"><X className="w-4 h-4" /></button>
                                   </div>
                                 ))}
+                                {urls.length === 0 && knowledgeFiles.length === 0 && (
+                                  <div className="space-y-1.5 pt-1">
+                                    {[
+                                      "Ex: https://seusite.com.br/faq",
+                                      "Ex: https://seusite.com.br/sobre",
+                                      "Ex: https://seusite.com.br/produtos",
+                                    ].map((ex) => (
+                                      <div key={ex} className="flex items-center gap-3 rounded-lg border border-dashed border-border/60 bg-muted/10 px-3 py-1.5">
+                                        <Globe className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0" />
+                                        <p className="text-xs text-muted-foreground/60 truncate flex-1 italic">{ex}</p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                               {/* YouTube */}
                               <div className="space-y-2">
