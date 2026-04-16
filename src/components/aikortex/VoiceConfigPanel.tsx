@@ -193,13 +193,45 @@ const VoiceConfigPanel = ({ config, onChange }: Props) => {
     update("pronunciations", next);
   };
 
+  const isVoiceConfigured = !!config.elevenLabsApiKey?.trim();
+
   return (
     <ScrollArea className="flex-1">
       <div className="p-4 space-y-6">
 
-        {/* ════════════════════════════════════════════════════
-            SEÇÃO 1: VOZ
-        ════════════════════════════════════════════════════ */}
+        {/* ── Status indicator ── */}
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-card/50">
+          <span
+            className={`w-2 h-2 rounded-full ${isVoiceConfigured ? "bg-emerald-500" : "bg-destructive"}`}
+          />
+          <span className="text-xs font-medium text-foreground">
+            {isVoiceConfigured ? "Voz configurada" : "Voz não configurada"}
+          </span>
+        </div>
+
+        {/* ── 1. Chave ElevenLabs ── */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs">Chave ElevenLabs</Label>
+            <a
+              href="https://elevenlabs.io"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] text-primary hover:underline"
+            >
+              Obter chave
+            </a>
+          </div>
+          <Input
+            type="password"
+            value={config.elevenLabsApiKey}
+            onChange={e => update("elevenLabsApiKey", e.target.value)}
+            placeholder="sk_..."
+            className="h-8 text-xs font-mono"
+          />
+        </div>
+
+        {/* ── 2. Voz ── */}
         <section className="space-y-3">
           <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
             <Mic className="w-3.5 h-3.5" /> Voz
