@@ -124,7 +124,23 @@ async function callWithFallback(
     return response
   }
 
-  // All models exhausted
+  // OpenRouter exhausted — try Groq as last resort (free, fast, reliable)
+  const groqKey = Deno.env.get('GROQ_API_KEY') ?? ''
+  if (groqKey) {
+    const groqModels = ['llama-3.3-70b-versatile', 'llama3-70b-8192', 'gemma2-9b-it']
+    for (const model of groqModels) {
+      const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${groqKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ...body, model, stream: false }),
+      })
+      if (r.ok) return r
+    }
+  }
+
   return new Response(JSON.stringify({ error: 'Serviço de IA temporariamente indisponível. Tente novamente em instantes.' }), {
     status: 429,
   })
