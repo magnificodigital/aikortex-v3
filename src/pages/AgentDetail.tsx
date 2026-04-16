@@ -93,7 +93,7 @@ const AgentDetail = () => {
     if (templateAgent) {
       return { name: templateAgent.name, avatar: templateAgent.avatar, model: templateAgent.model, agentType: templateAgent.agentType, savedConfig: null };
     }
-    return { name: "Carregando...", avatar: avatar1, model: "gemini-2.5-flash", agentType: initialType, savedConfig: null };
+    return { name: suggestAgentName(navState?.initialPrompt, initialType), avatar: avatar1, model: "gemini-2.5-flash", agentType: initialType, savedConfig: null };
   });
   const [agentLoading, setAgentLoading] = useState(!isTemplate);
 
