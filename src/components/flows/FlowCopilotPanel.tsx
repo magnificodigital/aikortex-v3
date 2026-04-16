@@ -152,7 +152,7 @@ export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, init
           {
             id: `e-${Date.now()}`,
             role: "assistant",
-            content: "⚠️ Erro ao conectar com o DeerFlow. Verifique sua conexão.",
+            content: "⚠️ Erro ao conectar com a IA. Verifique sua conexão.",
           },
         ]);
       } finally {
@@ -187,7 +187,7 @@ export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, init
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-semibold text-foreground leading-tight">Copilot IA</h3>
-          <p className="text-[10px] text-muted-foreground leading-tight">Powered by DeerFlow</p>
+          <p className="text-[10px] text-muted-foreground leading-tight">Powered by Aikortex AI</p>
         </div>
       </div>
 
@@ -305,7 +305,7 @@ export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, init
           </Button>
         </div>
         <p className="text-[9px] text-muted-foreground mt-1.5 text-center">
-          DeerFlow analisa e gera seu fluxo automaticamente
+          Aikortex AI analisa e gera seu fluxo automaticamente
         </p>
       </div>
     </div>
