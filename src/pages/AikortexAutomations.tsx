@@ -55,7 +55,7 @@ const AikortexAutomations = () => {
   };
 
   const handleNewBlank = () => {
-    setAiCreation(true);
+    setBuildingFlow({ name: "Novo Fluxo" });
   };
 
   const handleSkipToCanvas = () => {

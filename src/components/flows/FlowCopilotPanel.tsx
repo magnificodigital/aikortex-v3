@@ -6,9 +6,7 @@ import { cn } from "@/lib/utils";
 import { NODE_TEMPLATES } from "@/types/flow-builder";
 import { AGENT_TEMPLATES } from "@/types/agent-builder";
 import ReactMarkdown from "react-markdown";
-import { supabase } from "@/integrations/supabase/client";
-
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-chat`;
+const DEERFLOW_URL = "https://aikortex-flow-production.up.railway.app/api/chat/completions";
 
 interface Message {
   id: string;
