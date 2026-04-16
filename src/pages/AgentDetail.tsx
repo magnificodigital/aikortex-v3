@@ -743,27 +743,6 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
             <span className="text-sm font-semibold">Agente de Ligação</span>
           </div>
           <div className="flex items-center gap-1">
-            {/* Outbound call button */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs gap-1 px-2"
-              onClick={() => setShowOutboundCall(true)}
-            >
-              <Phone className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">Iniciar Ligação</span>
-            </Button>
-            {/* Browser call button (LiveKit-based) */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs gap-1 px-2"
-              onClick={() => setShowBrowserCall(true)}
-            >
-              <Monitor className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">Testar no navegador</span>
-            </Button>
-            <div className="w-px h-5 bg-border mx-1" />
             {[
               { label: "Agente",       icon: Bot,               tab: "agent" },
               ...(keys["anthropic"]?.configured ? [{ label: "Memória", icon: Brain, tab: "memory" }] : []),
@@ -810,19 +789,17 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
               onGoToIntegrations={() => { setShowConfig(true); setRightPanelTab("connectors"); }}
             />
           </ConversationProvider>
-          {!keys["elevenlabs"]?.configured && !keys["telnyx"]?.configured && (
+          {!keys["elevenlabs"]?.configured && (
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-background/80 backdrop-blur-sm p-6 text-center">
               <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
                 <Lock className="w-6 h-6 text-muted-foreground" />
               </div>
+              <h3 className="text-base font-semibold">Voz não configurada</h3>
               <p className="text-sm text-muted-foreground max-w-xs">
-                Ligações disponíveis após configurar voz nas Integrações
+                Configure sua chave ElevenLabs nas Integrações para habilitar ligações e voz
               </p>
-              <Button
-                size="sm"
-                onClick={() => { setShowConfig(true); setRightPanelTab("connectors"); }}
-              >
-                Configurar
+              <Button size="sm" onClick={() => navigate("/integrations")}>
+                Ir para Integrações
               </Button>
             </div>
           )}
