@@ -306,6 +306,30 @@ const VoiceConfigPanel = ({ config, onChange }: Props) => {
               )}
             </>
           ) : null}
+        </section>
+
+        {/* ── 3. Número Telnyx ── */}
+        <div className="space-y-1.5">
+          <Label className="text-xs">Número Telnyx</Label>
+          <Input
+            value={config.phoneNumber}
+            onChange={e => update("phoneNumber", e.target.value)}
+            placeholder="+55 11 99999-9999"
+            className="h-8 text-xs"
+          />
+          <p className="text-[10px] text-muted-foreground">Necessário apenas para ligações telefônicas</p>
+        </div>
+
+        {/* ── Configurações avançadas ── */}
+        <Collapsible defaultOpen={false}>
+          <CollapsibleTrigger className="flex items-center justify-between w-full px-3 py-2 rounded-lg border border-border bg-card/50 hover:bg-muted/30 transition-colors text-left group">
+            <span className="text-xs font-semibold text-foreground">Configurações avançadas</span>
+            <ChevronDown className="w-3.5 h-3.5 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-4 space-y-6">
+
+        <section className="space-y-3">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Idioma e ajustes finos</h3>
 
           <div className="space-y-1.5">
             <Label className="text-xs">Idioma</Label>
