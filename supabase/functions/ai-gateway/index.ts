@@ -7,35 +7,62 @@ const OPENROUTER_KEY = () => Deno.env.get('OPENROUTER_API_KEY') ?? ''
 
 // ── Model strategy per module ──────────────────────────────────────────────
 const MODULE_MODELS: Record<string, string[]> = {
-  // Conversational agents (SDR, SAC, Custom)
+  // Conversational agents (SDR, SAC, Custom) — 8 fallbacks
   agent: [
-    'google/gemma-4-31b-it:free',
     'meta-llama/llama-3.3-70b-instruct:free',
+    'google/gemma-3-27b-it:free',
+    'mistralai/mistral-7b-instruct:free',
+    'microsoft/phi-4-reasoning-plus:free',
+    'qwen/qwen3-8b:free',
+    'google/gemma-4-31b-it:free',
+    'deepseek/deepseek-r1-0528-qwen3-8b:free',
     'nvidia/nemotron-3-super-120b-a12b:free',
   ],
   // App Builder — code & JSON generation
   app: [
     'qwen/qwen3-coder:free',
     'openai/gpt-oss-120b:free',
+    'microsoft/phi-4-reasoning-plus:free',
     'nousresearch/hermes-3-llama-3.1-405b:free',
+    'qwen/qwen3-8b:free',
+    'meta-llama/llama-3.3-70b-instruct:free',
   ],
   // Flow Copilot — reasoning + JSON
   flow: [
-    'qwen/qwen3-next-80b-a3b-instruct:free',
+    'microsoft/phi-4-reasoning-plus:free',
+    'meta-llama/llama-3.3-70b-instruct:free',
+    'qwen/qwen3-8b:free',
     'nvidia/nemotron-3-super-120b-a12b:free',
-    'minimax/minimax-m2.5:free',
+    'google/gemma-3-27b-it:free',
+    'mistralai/mistral-7b-instruct:free',
   ],
   // Multi-agent complex tasks
   multiagent: [
     'nvidia/nemotron-3-super-120b-a12b:free',
-    'qwen/qwen3-next-80b-a3b-instruct:free',
+    'microsoft/phi-4-reasoning-plus:free',
+    'meta-llama/llama-3.3-70b-instruct:free',
+    'qwen/qwen3-8b:free',
     'nousresearch/hermes-3-llama-3.1-405b:free',
+  ],
+  // Structure/JSON extraction
+  structure: [
+    'microsoft/phi-4-reasoning-plus:free',
+    'meta-llama/llama-3.3-70b-instruct:free',
+    'qwen/qwen3-8b:free',
+    'google/gemma-3-27b-it:free',
+    'mistralai/mistral-7b-instruct:free',
+    'deepseek/deepseek-r1-0528-qwen3-8b:free',
   ],
   // Default fallback
   default: [
-    'google/gemma-4-31b-it:free',
-    'qwen/qwen3-next-80b-a3b-instruct:free',
     'meta-llama/llama-3.3-70b-instruct:free',
+    'google/gemma-3-27b-it:free',
+    'mistralai/mistral-7b-instruct:free',
+    'qwen/qwen3-8b:free',
+    'microsoft/phi-4-reasoning-plus:free',
+    'google/gemma-4-31b-it:free',
+    'deepseek/deepseek-r1-0528-qwen3-8b:free',
+    'nvidia/nemotron-3-super-120b-a12b:free',
   ],
 }
 
@@ -88,9 +115,9 @@ async function callWithFallback(
       body: JSON.stringify({ ...body, model }),
     })
 
-    // Retry with next model on rate limit only
-    if (response.status === 429) {
-      console.warn(`Rate limit on ${model}, trying next...`)
+    // Retry on rate limit, model not found, or service unavailable
+    if (response.status === 429 || response.status === 400 || response.status === 404 || response.status === 503) {
+      console.warn(`Model ${model} failed (${response.status}), trying next...`)
       continue
     }
 
@@ -98,7 +125,7 @@ async function callWithFallback(
   }
 
   // All models exhausted
-  return new Response(JSON.stringify({ error: 'Todos os modelos atingiram o limite. Tente novamente em instantes.' }), {
+  return new Response(JSON.stringify({ error: 'Serviço de IA temporariamente indisponível. Tente novamente em instantes.' }), {
     status: 429,
   })
 }
