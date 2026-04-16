@@ -111,7 +111,7 @@ export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, init
 
       try {
         const res = await fetch(
-          "https://kbknehyfksugykrovfxs.supabase.co/functions/v1/deerflow-proxy",
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/deerflow-proxy`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
