@@ -42,7 +42,7 @@ Sempre responda em português do Brasil. Seja conversacional e útil.`
         'X-Title': 'Aikortex Flow Copilot',
       },
       body: JSON.stringify({
-        model: 'openai/gpt-4o-mini',
+        model: 'google/gemma-4-31b-it:free',
         stream: false,
         messages: [
           { role: 'system', content: systemPrompt },
