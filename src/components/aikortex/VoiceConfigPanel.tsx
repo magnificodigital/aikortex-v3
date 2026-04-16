@@ -574,6 +574,9 @@ const VoiceConfigPanel = ({ config, onChange }: Props) => {
           </ActionToggle>
         </section>
 
+          </CollapsibleContent>
+        </Collapsible>
+
       </div>
     </ScrollArea>
   );
