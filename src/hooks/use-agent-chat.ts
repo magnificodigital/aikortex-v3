@@ -1,8 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { AGENT_RUNTIME_URL } from "@/lib/ai-endpoints";
 
-const CHAT_URL = AGENT_RUNTIME_URL;
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/app-chat`;
 const FLUSH_INTERVAL_MS = 60;
 
 export interface ChatMessage {
@@ -61,7 +60,7 @@ function deriveProvider(model?: string): string | undefined {
   if (!model) return undefined;
   // Models with a slash are OpenRouter-routed (platform-provided) — no single "provider" to validate against
   if (model.includes("/")) return undefined;
-  if (model.startsWith("gemini")) return "google";
+  if (model.startsWith("gemini")) return "gemini";
   if (model.startsWith("gpt")) return "openai";
   if (model.startsWith("claude")) return "anthropic";
   return undefined;
@@ -168,7 +167,6 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
         data: { session },
       } = await supabase.auth.getSession();
       const accessToken = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-      const userId = session?.user?.id;
 
       let resp: Response | null = null;
       const maxRetries = 2;
@@ -177,7 +175,6 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
           mode: "agent-chat",
           messages: apiMessages,
           useGateway: options.useGateway ?? false,
-          userId,
         };
 
         if (options.useGateway) {
@@ -186,25 +183,6 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
           payload.provider = options.provider || inferredProvider;
           payload.model = options.model;
           payload.agentContext = options.agentContext;
-          payload.agentId = (options.agentContext as any)?.agentId || undefined;
-          payload.agentConfig = options.agentContext || undefined;
-          payload.contactId = "browser-test";
-
-          // Send user's configured API key for BYOK
-          if (options.agentContext?.provider && options.agentContext?.model) {
-            try {
-              const { data: keyData } = await supabase
-                .from("user_api_keys")
-                .select("api_key")
-                .eq("provider", options.agentContext.provider)
-                .maybeSingle();
-              if (keyData?.api_key) {
-                payload.byok_key = keyData.api_key;
-                payload.provider = options.agentContext.provider;
-              }
-            } catch { /* ignore */ }
-          }
-
           if (options.apiConfig) {
             payload.temperature = options.apiConfig.temperature;
             payload.max_tokens = options.apiConfig.maxTokens;

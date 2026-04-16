@@ -156,6 +156,7 @@ export interface ProviderConfig {
 const KEY_VALIDATORS: Partial<Record<string, (key: string) => boolean>> = {
   openai: (key) => key.startsWith("sk-"),
   openrouter: (key) => key.startsWith("sk-or-"),
+  gemini: (key) => key.startsWith("AIza"),
 };
 
 function getKeyValidationError(provider: string, apiKey: string) {
@@ -170,6 +171,10 @@ function getKeyValidationError(provider: string, apiKey: string) {
 
   if (provider === "openrouter") {
     return "A chave do OpenRouter parece inválida. Ela deve começar com 'sk-or-'.";
+  }
+
+  if (provider === "gemini") {
+    return "A chave do Gemini parece inválida. Ela deve começar com 'AIza'.";
   }
 
   return "A chave informada parece inválida.";

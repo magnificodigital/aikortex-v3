@@ -88,7 +88,7 @@ const LandingPage = () => {
     return (localStorage.getItem("app-lang") as Lang) || "pt";
   });
   const navigate = useNavigate();
-  const { user, loading, getRedirectPath } = useAuth();
+  const { user, loading } = useAuth();
   const { theme, toggle: toggleTheme } = useTheme();
 
   const t = translations[lang];
@@ -119,9 +119,9 @@ const LandingPage = () => {
 
   useEffect(() => {
     if (!loading && user) {
-      navigate(getRedirectPath());
+      navigate("/home");
     }
-  }, [user, loading, navigate, getRedirectPath]);
+  }, [user, loading, navigate]);
 
   const isDark = theme === "dark";
   const bg = isDark ? "bg-[#0a0a0f] text-white" : "bg-white text-foreground";

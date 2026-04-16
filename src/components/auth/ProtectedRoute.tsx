@@ -5,11 +5,10 @@ import AccessDenied from "./AccessDenied";
 interface ProtectedRouteProps {
   children: React.ReactNode;
   roles?: string[];
-  tenantTypes?: string[];
 }
 
-const ProtectedRoute = ({ children, roles, tenantTypes }: ProtectedRouteProps) => {
-  const { user, profile, loading, getRedirectPath } = useAuth();
+const ProtectedRoute = ({ children, roles }: ProtectedRouteProps) => {
+  const { user, profile, loading } = useAuth();
 
   if (loading) {
     return (
@@ -25,14 +24,7 @@ const ProtectedRoute = ({ children, roles, tenantTypes }: ProtectedRouteProps) =
 
   if (roles && roles.length > 0 && profile) {
     if (!roles.includes(profile.role)) {
-      // Redirect to their correct area instead of access denied
-      return <Navigate to={getRedirectPath()} replace />;
-    }
-  }
-
-  if (tenantTypes && tenantTypes.length > 0 && profile) {
-    if (!tenantTypes.includes(profile.tenant_type)) {
-      return <Navigate to={getRedirectPath()} replace />;
+      return <AccessDenied />;
     }
   }
 

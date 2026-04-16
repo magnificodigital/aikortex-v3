@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { type FeatureFlag, type PartnerTier, TIER_FEATURE_CONFIG } from "@/types/rbac";
+import { type FeatureFlag, type PartnerTier } from "@/types/rbac";
 import { TIER_CONFIG } from "@/types/partner";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -106,23 +106,14 @@ export function usePartnerTier() {
 
   const hasFeature = (flag: FeatureFlag): boolean => {
     const moduleKey = FEATURE_TO_MODULE_KEY[flag];
-    if (!moduleKey) {
-      // For non-module features (e.g. feature.saas_builder), use static tier config
-      return TIER_FEATURE_CONFIG[tier]?.features.includes(flag) ?? false;
-    }
+    if (!moduleKey) return false;
     if (!allAccessRows) return true; // still loading, don't block
     return tierAccessMap[tier]?.[moduleKey] ?? false;
   };
 
   const getMinTierForFeature = (flag: FeatureFlag): PartnerTier | null => {
     const moduleKey = FEATURE_TO_MODULE_KEY[flag];
-    if (!moduleKey) {
-      // For non-module features, check static config
-      for (const t of TIERS) {
-        if (TIER_FEATURE_CONFIG[t]?.features.includes(flag)) return t;
-      }
-      return null;
-    }
+    if (!moduleKey) return null;
     for (const t of TIERS) {
       if (tierAccessMap[t]?.[moduleKey]) return t;
     }

@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import TierAccessManager from "@/components/admin/TierAccessManager";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Crown, Rocket, Zap, Check, X, Users, RefreshCw, ShieldCheck, LayoutGrid } from "lucide-react";
+import { toast } from "sonner";
+import { Crown, Rocket, Zap, Check, X, Users, RefreshCw } from "lucide-react";
 
 interface Plan {
   id: string;
@@ -19,7 +18,7 @@ interface Plan {
   features: any;
 }
 
-const TIER_VISUAL: Record<string, { icon: React.ReactNode; badge: string; badgeClass: string; unlock: string }> = {
+const TIER_CONFIG: Record<string, { icon: React.ReactNode; badge: string; badgeClass: string; unlock: string }> = {
   starter: {
     icon: <Users className="w-5 h-5" />,
     badge: "Starter",
@@ -82,106 +81,83 @@ const AdminPlansTab = () => {
     return <span className="text-sm">{String(value)}</span>;
   };
 
+  if (loading) {
+    return <div className="flex items-center justify-center py-12 text-muted-foreground">Carregando planos...</div>;
+  }
+
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="permissions" className="space-y-4">
-        <TabsList className="bg-muted/50">
-          <TabsTrigger value="permissions" className="gap-1.5">
-            <ShieldCheck className="w-4 h-4" />
-            Permissões por Tier
-          </TabsTrigger>
-          <TabsTrigger value="plans" className="gap-1.5">
-            <LayoutGrid className="w-4 h-4" />
-            Planos
-          </TabsTrigger>
-        </TabsList>
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold">Planos da Plataforma</h3>
+          <p className="text-sm text-muted-foreground">
+            Todos os planos são gratuitos — agências sobem de tier ao conquistar clientes ativos.
+          </p>
+        </div>
+        <Button size="sm" variant="outline" onClick={fetchPlans}>
+          <RefreshCw className="w-4 h-4 mr-1.5" /> Atualizar
+        </Button>
+      </div>
 
-        {/* Permissions Tab */}
-        <TabsContent value="permissions">
-          <TierAccessManager />
-        </TabsContent>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {plans.map((plan) => {
+          const tier = TIER_CONFIG[plan.slug] || TIER_CONFIG.starter;
+          const features = plan.features || {};
+          const templates = features.templates;
 
-        {/* Plans Tab */}
-        <TabsContent value="plans">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold">Planos da Plataforma</h3>
-                <p className="text-sm text-muted-foreground">
-                  Todos os planos são gratuitos — agências sobem de tier ao conquistar clientes ativos.
-                </p>
-              </div>
-              <Button size="sm" variant="outline" onClick={fetchPlans}>
-                <RefreshCw className="w-4 h-4 mr-1.5" /> Atualizar
-              </Button>
-            </div>
+          return (
+            <Card key={plan.id} className={plan.is_featured ? "border-purple-500/50 shadow-md" : ""}>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {tier.icon}
+                    <CardTitle className="text-lg">{plan.name}</CardTitle>
+                  </div>
+                  <Badge className={tier.badgeClass}>{tier.badge}</Badge>
+                </div>
+                <CardDescription>{plan.description}</CardDescription>
+                <div className="pt-2">
+                  <span className="text-2xl font-bold">Gratuito</span>
+                </div>
+                <div className="flex items-center gap-1.5 pt-1">
+                  <Zap className="w-3.5 h-3.5 text-amber-500" />
+                  <span className="text-xs text-muted-foreground">{tier.unlock}</span>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="space-y-2">
+                  <p className="text-xs font-medium uppercase text-muted-foreground tracking-wider">Funcionalidades</p>
+                  {Object.entries(features).map(([key, value]) => {
+                    if (key === "templates" || key === "max_tier") return null;
+                    const label = FEATURE_LABELS[key] || key;
+                    return (
+                      <div key={key} className="flex items-center justify-between text-sm">
+                        <span>{label}</span>
+                        {renderFeatureValue(key, value)}
+                      </div>
+                    );
+                  })}
+                </div>
 
-            {loading ? (
-              <div className="flex items-center justify-center py-12 text-muted-foreground">Carregando planos...</div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {plans.map((plan) => {
-                  const tier = TIER_VISUAL[plan.slug] || TIER_VISUAL.starter;
-                  const features = plan.features || {};
-                  const templates = features.templates;
-
-                  return (
-                    <Card key={plan.id} className={plan.is_featured ? "border-purple-500/50 shadow-md" : ""}>
-                      <CardHeader className="pb-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            {tier.icon}
-                            <CardTitle className="text-lg">{plan.name}</CardTitle>
-                          </div>
-                          <Badge className={tier.badgeClass}>{tier.badge}</Badge>
-                        </div>
-                        <CardDescription>{plan.description}</CardDescription>
-                        <div className="pt-2">
-                          <span className="text-2xl font-bold">Gratuito</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 pt-1">
-                          <Zap className="w-3.5 h-3.5 text-amber-500" />
-                          <span className="text-xs text-muted-foreground">{tier.unlock}</span>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="space-y-2">
-                          <p className="text-xs font-medium uppercase text-muted-foreground tracking-wider">Funcionalidades</p>
-                          {Object.entries(features).map(([key, value]) => {
-                            if (key === "templates" || key === "max_tier") return null;
-                            const label = FEATURE_LABELS[key] || key;
-                            return (
-                              <div key={key} className="flex items-center justify-between text-sm">
-                                <span>{label}</span>
-                                {renderFeatureValue(key, value)}
-                              </div>
-                            );
-                          })}
-                        </div>
-
-                        {templates && (
-                          <div className="space-y-1.5 pt-2 border-t">
-                            <p className="text-xs font-medium uppercase text-muted-foreground tracking-wider">Templates</p>
-                            {templates === "all" ? (
-                              <Badge variant="outline" className="text-xs">Todos os templates</Badge>
-                            ) : Array.isArray(templates) ? (
-                              <div className="flex flex-wrap gap-1">
-                                {templates.map((t: string) => (
-                                  <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>
-                                ))}
-                              </div>
-                            ) : null}
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </TabsContent>
-      </Tabs>
+                {templates && (
+                  <div className="space-y-1.5 pt-2 border-t">
+                    <p className="text-xs font-medium uppercase text-muted-foreground tracking-wider">Templates</p>
+                    {templates === "all" ? (
+                      <Badge variant="outline" className="text-xs">Todos os templates</Badge>
+                    ) : Array.isArray(templates) ? (
+                      <div className="flex flex-wrap gap-1">
+                        {templates.map((t: string) => (
+                          <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 };

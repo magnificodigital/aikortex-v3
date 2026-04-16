@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  User, Zap, Settings2, AlertTriangle, Mic, Brain,
+  User, Zap, Settings2, AlertTriangle, Mic,
   Upload, X, FileText, Image, File, Plus, Globe, Link2, Check, Camera,
   Webhook, KeyRound, Blocks, Eye, EyeOff, ExternalLink, Trash2, Settings, Rocket,
   Youtube, Rss, Map, CloudUpload, Type, ChevronDown, ChevronUp, BookOpen,
@@ -94,7 +94,8 @@ const CHANNELS = [
 const SETTINGS_NAV = [
   { section: "AGENTE", items: [
     { key: "general",      icon: User,      label: "Identidade" },
-    { key: "behavior",     icon: Brain,     label: "Comportamento" },
+    { key: "objective",    icon: Zap,       label: "Objetivo" },
+    { key: "instructions", icon: Settings2, label: "Instruções" },
     { key: "files_nav",    icon: FileText,  label: "Conhecimento" },
     { key: "voice_nav",    icon: Mic,       label: "Voz" },
   ]},
@@ -141,7 +142,6 @@ interface PresetData {
   instructions?: string;
   toneOfVoice?: string;
   greetingMessage?: string;
-  urls?: string[];
 }
 
 interface Props {
@@ -303,11 +303,7 @@ const AgentRightPanel = ({
   const [agentDesc,           setAgentDesc]           = useState(() => resolveInitial("desc",           savedConfig?.description,    presetData?.description));
   const [agentObjective,      setAgentObjective]      = useState(() => resolveInitial("objective",      savedConfig?.objective,      presetData?.objective));
   const [agentInstructions,   setAgentInstructions]   = useState(() => resolveInitial("instructions",   savedConfig?.instructions,   presetData?.instructions));
-  const [agentToneOfVoice,    setAgentToneOfVoice]    = useState(() => {
-    const VALID_TONES = ["Profissional e Amigável", "Formal", "Casual e Descontraído", "Empático e Acolhedor", "Direto e Objetivo"];
-    const raw = resolveInitial("toneOfVoice", savedConfig?.toneOfVoice, presetData?.toneOfVoice) || "";
-    return VALID_TONES.includes(raw) ? raw : "Profissional e Amigável";
-  });
+  const [agentToneOfVoice,    setAgentToneOfVoice]    = useState(() => resolveInitial("toneOfVoice",    savedConfig?.toneOfVoice,    presetData?.toneOfVoice));
   const [agentGreetingMessage,setAgentGreetingMessage]= useState(() => resolveInitial("greetingMessage",savedConfig?.greetingMessage,presetData?.greetingMessage));
 
   const [knowledgeFiles,    setKnowledgeFiles]    = useState<KnowledgeFileLocal[]>(() => {
@@ -350,7 +346,6 @@ const AgentRightPanel = ({
     if (presetData.instructions)    setAgentInstructions(presetData.instructions);
     if (presetData.toneOfVoice)     setAgentToneOfVoice(presetData.toneOfVoice);
     if (presetData.greetingMessage) setAgentGreetingMessage(presetData.greetingMessage);
-    if (presetData.urls?.length)    setUrls(presetData.urls);
   }, [presetData]);
 
   // FIX: fieldUpdates do chat — atualiza campos em tempo real
@@ -544,8 +539,8 @@ const AgentRightPanel = ({
                   </>
                 )}
 
-                {/* Comportamento (Objetivo + Instruções) */}
-                {settingsNav === "behavior" && (
+                {/* Objetivo */}
+                {settingsNav === "objective" && (
                   <div className="space-y-6">
                     <div>
                       <h2 className="text-lg font-bold text-foreground">Objetivo</h2>
@@ -553,18 +548,18 @@ const AgentRightPanel = ({
                     </div>
                     <Textarea value={agentObjective} onChange={(e) => setAgentObjective(e.target.value)}
                       placeholder="Ex: Qualificar leads e agendar reuniões." className="text-sm min-h-[100px]" />
+                  </div>
+                )}
 
-                    <div className="border-t border-border" />
-
+                {/* Instruções */}
+                {settingsNav === "instructions" && (
+                  <div className="space-y-6">
                     <div>
                       <h2 className="text-lg font-bold text-foreground">Instruções</h2>
                       <p className="text-sm text-muted-foreground mt-1">Regras e comportamento do agente.</p>
                     </div>
-                    <p className="text-xs text-muted-foreground bg-muted/40 border border-border rounded-md px-3 py-2">
-                      💡 Dica: organize as instruções por etapas numeradas (ex: 1. Apresentação → 2. Qualificação → 3. Encaminhamento)
-                    </p>
                     <Textarea value={agentInstructions} onChange={(e) => setAgentInstructions(e.target.value)}
-                      placeholder="Ex: 1. Apresente-se. 2. Pergunte o nome. 3. Qualifique o lead." className="text-sm min-h-[140px]" />
+                      placeholder="Ex: Sempre pergunte o nome antes de agendar." className="text-sm min-h-[140px]" />
                   </div>
                 )}
 
@@ -615,20 +610,6 @@ const AgentRightPanel = ({
                                     <button onClick={() => setUrls(urls.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive"><X className="w-4 h-4" /></button>
                                   </div>
                                 ))}
-                                {urls.length === 0 && knowledgeFiles.length === 0 && (
-                                  <div className="space-y-1.5 pt-1">
-                                    {[
-                                      "Ex: https://seusite.com.br/faq",
-                                      "Ex: https://seusite.com.br/sobre",
-                                      "Ex: https://seusite.com.br/produtos",
-                                    ].map((ex) => (
-                                      <div key={ex} className="flex items-center gap-3 rounded-lg border border-dashed border-border/60 bg-muted/10 px-3 py-1.5">
-                                        <Globe className="w-3.5 h-3.5 text-muted-foreground/50 shrink-0" />
-                                        <p className="text-xs text-muted-foreground/60 truncate flex-1 italic">{ex}</p>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
                               </div>
                               {/* YouTube */}
                               <div className="space-y-2">

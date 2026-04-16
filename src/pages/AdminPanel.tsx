@@ -1,57 +1,34 @@
-import { useState, useCallback } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Users, CreditCard, BarChart3, Settings, Award, Shield, Coins, BookOpen, MessageSquare, Key, LayoutTemplate } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useSearchParams } from "react-router-dom";
-import { ShieldCheck, ChevronRight } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-
-import AdminOverviewTab from "@/components/admin/AdminOverviewTab";
-import AdminGestaoTab from "@/components/admin/AdminGestaoTab";
+import AdminUsersTab from "@/components/admin/AdminUsersTab";
 import AdminPlansTab from "@/components/admin/AdminPlansTab";
-import AdminTemplatesTab from "@/components/admin/AdminTemplatesTab";
-import AdminFinanceiroTab from "@/components/admin/AdminFinanceiroTab";
-import AdminConfigTab from "@/components/admin/AdminConfigTab";
-import AdminSupportTab from "@/components/admin/AdminSupportTab";
+import AdminSubscriptionsTab from "@/components/admin/AdminSubscriptionsTab";
+import AdminPaymentTab from "@/components/admin/AdminPaymentTab";
+import AdminPartnersTab from "@/components/admin/AdminPartnersTab";
+import TierAccessManager from "@/components/admin/TierAccessManager";
+import AdminCreditsTab from "@/components/admin/AdminCreditsTab";
 import AdminTutorialsTab from "@/components/admin/AdminTutorialsTab";
-
-const TAB_LABELS: Record<string, string> = {
-  overview: "Visão Geral",
-  gestao: "Gestão",
-  plans: "Planos",
-  templates: "Templates",
-  financeiro: "Financeiro",
-  "api-keys": "Chaves de API",
-  support: "Suporte",
-  tutorials: "Tutoriais",
-};
+import AdminSupportTab from "@/components/admin/AdminSupportTab";
+import AdminConfigTab from "@/components/admin/AdminConfigTab";
+import AdminTemplatesTab from "@/components/admin/AdminTemplatesTab";
+import { useSearchParams } from "react-router-dom";
+import { ShieldCheck } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const AdminPanel = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { isPlatformOwner } = useAuth();
-  const activeTab = searchParams.get("tab") || "overview";
+  const activeTab = searchParams.get("tab") || "users";
 
-  const [gestaoTier, setGestaoTier] = useState<string | undefined>();
-  const [gestaoAgencyId, setGestaoAgencyId] = useState<string | undefined>();
-  const [gestaoClientId, setGestaoClientId] = useState<string | undefined>();
-
-  const navigateToTab = useCallback((tab: string, params?: Record<string, string>) => {
-    setSearchParams({ tab });
-    setGestaoTier(undefined);
-    setGestaoAgencyId(undefined);
-    setGestaoClientId(undefined);
-
-    if (tab === "gestao") {
-      if (params?.tier) setGestaoTier(params.tier);
-      if (params?.agencyId) setGestaoAgencyId(params.agencyId);
-      if (params?.clientId) setGestaoClientId(params.clientId);
-    }
-  }, [setSearchParams]);
+  const handleTabChange = (value: string) => {
+    setSearchParams({ tab: value });
+  };
 
   return (
     <AdminLayout>
-      <div className="p-4 md:p-6 space-y-4 max-w-7xl mx-auto">
-        {/* Header */}
+      <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
             <ShieldCheck className="h-5 w-5 text-primary" />
@@ -62,38 +39,67 @@ const AdminPanel = () => {
               <Badge className="bg-primary/10 text-primary border-0 text-[10px]">Admin</Badge>
             </div>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Gerencie agências, planos e configurações da plataforma.
+              Gerencie todas as agências, planos e configurações da plataforma.
             </p>
           </div>
         </div>
 
-        {/* Breadcrumb */}
-        <nav className="flex items-center gap-1 text-sm text-muted-foreground">
-          <span className="hover:text-foreground cursor-pointer" onClick={() => navigateToTab("overview")}>Admin</span>
-          {activeTab !== "overview" && (
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
+          <TabsList className="bg-muted/50 p-1 flex-wrap">
+            <TabsTrigger value="users" className="text-xs gap-1.5">
+              <Users className="w-3.5 h-3.5" /> Usuários
+            </TabsTrigger>
+            <TabsTrigger value="plans" className="text-xs gap-1.5">
+              <CreditCard className="w-3.5 h-3.5" /> Planos
+            </TabsTrigger>
+            <TabsTrigger value="subscriptions" className="text-xs gap-1.5">
+              <BarChart3 className="w-3.5 h-3.5" /> Assinaturas
+            </TabsTrigger>
+            <TabsTrigger value="payment" className="text-xs gap-1.5">
+              <Settings className="w-3.5 h-3.5" /> Pagamento
+            </TabsTrigger>
+            <TabsTrigger value="partners" className="text-xs gap-1.5">
+              <Award className="w-3.5 h-3.5" /> Parceiros
+            </TabsTrigger>
+            <TabsTrigger value="permissions" className="text-xs gap-1.5">
+              <Shield className="w-3.5 h-3.5" /> Permissões & Features
+            </TabsTrigger>
+            <TabsTrigger value="credits" className="text-xs gap-1.5">
+              <Coins className="w-3.5 h-3.5" /> Créditos
+            </TabsTrigger>
+            <TabsTrigger value="tutorials" className="text-xs gap-1.5">
+              <BookOpen className="w-3.5 h-3.5" /> Tutoriais
+            </TabsTrigger>
+            <TabsTrigger value="support" className="text-xs gap-1.5">
+              <MessageSquare className="w-3.5 h-3.5" /> Suporte
+            </TabsTrigger>
+            {isPlatformOwner && (
+              <>
+                <TabsTrigger value="templates" className="text-xs gap-1.5">
+                  <LayoutTemplate className="w-3.5 h-3.5" /> Templates
+                </TabsTrigger>
+                <TabsTrigger value="api-keys" className="text-xs gap-1.5">
+                  <Key className="w-3.5 h-3.5" /> Chaves de API
+                </TabsTrigger>
+              </>
+            )}
+          </TabsList>
+
+          <TabsContent value="users"><AdminUsersTab /></TabsContent>
+          <TabsContent value="plans"><AdminPlansTab /></TabsContent>
+          <TabsContent value="subscriptions"><AdminSubscriptionsTab /></TabsContent>
+          <TabsContent value="payment"><AdminPaymentTab /></TabsContent>
+          <TabsContent value="partners"><AdminPartnersTab /></TabsContent>
+          <TabsContent value="permissions"><TierAccessManager /></TabsContent>
+          <TabsContent value="credits"><AdminCreditsTab /></TabsContent>
+          <TabsContent value="tutorials"><AdminTutorialsTab /></TabsContent>
+          <TabsContent value="support"><AdminSupportTab /></TabsContent>
+          {isPlatformOwner && (
             <>
-              <ChevronRight className="w-3 h-3" />
-              <span className="text-foreground font-medium">{TAB_LABELS[activeTab] || activeTab}</span>
+              <TabsContent value="templates"><AdminTemplatesTab /></TabsContent>
+              <TabsContent value="api-keys"><AdminConfigTab /></TabsContent>
             </>
           )}
-        </nav>
-
-        {/* Tabs */}
-        <Tabs value={activeTab} className="space-y-4">
-          <TabsContent value="overview">
-            <AdminOverviewTab onNavigate={navigateToTab} />
-          </TabsContent>
-          <TabsContent value="gestao">
-            <AdminGestaoTab initialTier={gestaoTier} initialAgencyId={gestaoAgencyId} initialClientId={gestaoClientId} />
-          </TabsContent>
-          <TabsContent value="plans"><AdminPlansTab /></TabsContent>
-          <TabsContent value="templates"><AdminTemplatesTab /></TabsContent>
-          <TabsContent value="financeiro"><AdminFinanceiroTab /></TabsContent>
-          {isPlatformOwner && (
-            <TabsContent value="api-keys"><AdminConfigTab /></TabsContent>
-          )}
-          <TabsContent value="support"><AdminSupportTab /></TabsContent>
-          <TabsContent value="tutorials"><AdminTutorialsTab /></TabsContent>
         </Tabs>
       </div>
     </AdminLayout>

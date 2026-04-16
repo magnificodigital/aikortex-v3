@@ -88,7 +88,6 @@ export type Database = {
           logo_url: string | null
           platform_fee_monthly: number | null
           tier: string
-          tier_manually_overridden: boolean | null
           updated_at: string | null
           user_id: string
         }
@@ -103,7 +102,6 @@ export type Database = {
           logo_url?: string | null
           platform_fee_monthly?: number | null
           tier?: string
-          tier_manually_overridden?: boolean | null
           updated_at?: string | null
           user_id: string
         }
@@ -118,7 +116,6 @@ export type Database = {
           logo_url?: string | null
           platform_fee_monthly?: number | null
           tier?: string
-          tier_manually_overridden?: boolean | null
           updated_at?: string | null
           user_id?: string
         }
@@ -834,72 +831,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      leads: {
-        Row: {
-          activities: Json
-          agent_id: string | null
-          assignee: string
-          company: string
-          created_at: string
-          email: string
-          id: string
-          lost_reason: string | null
-          name: string
-          notes: string
-          phone: string
-          position: string
-          source: string
-          stage: string
-          tags: string[]
-          temperature: string
-          updated_at: string
-          user_id: string
-          value: number
-        }
-        Insert: {
-          activities?: Json
-          agent_id?: string | null
-          assignee?: string
-          company?: string
-          created_at?: string
-          email?: string
-          id?: string
-          lost_reason?: string | null
-          name: string
-          notes?: string
-          phone?: string
-          position?: string
-          source?: string
-          stage?: string
-          tags?: string[]
-          temperature?: string
-          updated_at?: string
-          user_id: string
-          value?: number
-        }
-        Update: {
-          activities?: Json
-          agent_id?: string | null
-          assignee?: string
-          company?: string
-          created_at?: string
-          email?: string
-          id?: string
-          lost_reason?: string | null
-          name?: string
-          notes?: string
-          phone?: string
-          position?: string
-          source?: string
-          stage?: string
-          tags?: string[]
-          temperature?: string
-          updated_at?: string
-          user_id?: string
-          value?: number
-        }
-        Relationships: []
       }
       meeting_messages: {
         Row: {

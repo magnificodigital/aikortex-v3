@@ -29,34 +29,6 @@ const DEFAULT_PROFILE: PartnerProfile = {
   website: "https://minhaagencia.com",
 };
 
-const normalizePartnerProfile = (value: unknown): PartnerProfile => {
-  const saved = value && typeof value === "object" ? (value as Partial<PartnerProfile>) : {};
-
-  return {
-    ...DEFAULT_PROFILE,
-    ...saved,
-    id: typeof saved.id === "string" && saved.id ? saved.id : DEFAULT_PROFILE.id,
-    name: typeof saved.name === "string" && saved.name.trim() ? saved.name : DEFAULT_PROFILE.name,
-    description: typeof saved.description === "string" ? saved.description : DEFAULT_PROFILE.description,
-    specializations: Array.isArray(saved.specializations)
-      ? saved.specializations.filter((item): item is string => typeof item === "string")
-      : DEFAULT_PROFILE.specializations,
-    certifications: Array.isArray(saved.certifications)
-      ? saved.certifications.filter((item): item is string => typeof item === "string")
-      : DEFAULT_PROFILE.certifications,
-    tier: saved.tier === "starter" || saved.tier === "explorer" || saved.tier === "hack"
-      ? saved.tier
-      : DEFAULT_PROFILE.tier,
-    clientsServed: typeof saved.clientsServed === "number" ? saved.clientsServed : DEFAULT_PROFILE.clientsServed,
-    revenue: typeof saved.revenue === "number" ? saved.revenue : DEFAULT_PROFILE.revenue,
-    solutionsPublished: typeof saved.solutionsPublished === "number" ? saved.solutionsPublished : DEFAULT_PROFILE.solutionsPublished,
-    joinedAt: typeof saved.joinedAt === "string" && saved.joinedAt ? saved.joinedAt : DEFAULT_PROFILE.joinedAt,
-    email: typeof saved.email === "string" && saved.email ? saved.email : DEFAULT_PROFILE.email,
-    website: typeof saved.website === "string" ? saved.website : DEFAULT_PROFILE.website,
-    logo: typeof saved.logo === "string" ? saved.logo : undefined,
-  };
-};
-
 const Partners = () => {
   const [searchParams] = useSearchParams();
   const tabFromUrl = searchParams.get("tab") || "profile";
@@ -67,16 +39,12 @@ const Partners = () => {
   }, [tabFromUrl]);
 
   const [profile, setProfile] = useState<PartnerProfile>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? normalizePartnerProfile(JSON.parse(saved)) : DEFAULT_PROFILE;
-    } catch {
-      return DEFAULT_PROFILE;
-    }
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : DEFAULT_PROFILE;
   });
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(normalizePartnerProfile(profile)));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
   }, [profile]);
 
   return (

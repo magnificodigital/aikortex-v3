@@ -1,9 +1,25 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { z } from "npm:zod@3";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const BodySchema = z.object({
+  user_id: z.string().uuid(),
+  full_name: z.string().min(1).max(255).optional(),
+  email: z.string().email().optional(),
+  password: z.string().min(8).optional(),
+  role: z.enum([
+    "platform_owner", "platform_admin",
+    "agency_owner", "agency_admin", "agency_manager", "agency_member",
+    "client_owner", "client_viewer",
+  ]).optional(),
+  is_active: z.boolean().optional(),
+  plan_id: z.string().uuid().nullable().optional(),
+  billing_cycle: z.enum(["monthly", "yearly"]).optional(),
+});
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -11,7 +27,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
+    const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
@@ -24,14 +40,14 @@ Deno.serve(async (req) => {
     }
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user: caller }, error: authError } = await supabase.auth.getUser(token);
+    const { data: { user: caller }, error: authError } = await supabaseAdmin.auth.getUser(token);
     if (authError || !caller) {
       return new Response(JSON.stringify({ error: "Token inválido" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const { data: callerProfile } = await supabase
+    const { data: callerProfile } = await supabaseAdmin
       .from("profiles")
       .select("role")
       .eq("user_id", caller.id)
@@ -43,52 +59,114 @@ Deno.serve(async (req) => {
       });
     }
 
-    const body = await req.json();
-    const { user_id, full_name, role, tenant_type, is_active } = body;
-
-    if (!user_id) {
-      return new Response(JSON.stringify({ error: "user_id é obrigatório" }), {
+    const parsed = BodySchema.safeParse(await req.json());
+    if (!parsed.success) {
+      return new Response(JSON.stringify({ error: parsed.error.flatten().fieldErrors }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Build profile update
-    const profileUpdate: Record<string, any> = { updated_at: new Date().toISOString() };
-    if (full_name !== undefined) profileUpdate.full_name = full_name;
-    if (role !== undefined) {
-      profileUpdate.role = role;
-      profileUpdate.tenant_type = ["platform_owner", "platform_admin"].includes(role) ? "platform" : 
-        ["client_owner", "client_viewer"].includes(role) ? "client" : "agency";
+    const { user_id, full_name, email, password, role, is_active, plan_id, billing_cycle } = parsed.data;
+
+    // Fetch current user to avoid unnecessary email updates
+    const { data: { user: currentUser }, error: fetchError } = await supabaseAdmin.auth.admin.getUserById(user_id);
+    if (fetchError || !currentUser) {
+      return new Response(JSON.stringify({ error: "Usuário não encontrado" }), {
+        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
-    if (tenant_type !== undefined) profileUpdate.tenant_type = tenant_type;
+
+    // Update auth user (email, password)
+    const authUpdate: Record<string, any> = {};
+    // Only update email if it's different from current
+    if (email && email.toLowerCase() !== (currentUser.email || "").toLowerCase()) {
+      authUpdate.email = email;
+      authUpdate.email_confirm = true; // Admin-level email change, skip confirmation
+    }
+    if (password) authUpdate.password = password;
+    
+    const metaUpdate: Record<string, any> = {};
+    if (full_name && full_name !== (currentUser.user_metadata?.full_name || "")) {
+      metaUpdate.full_name = full_name;
+    }
+    if (role) {
+      metaUpdate.role = role;
+      metaUpdate.tenant_type = ["platform_owner", "platform_admin"].includes(role) ? "platform" : "agency";
+    }
+    
+    if (Object.keys(metaUpdate).length > 0) authUpdate.user_metadata = metaUpdate;
+    
+    if (Object.keys(authUpdate).length > 0) {
+      console.log("authUpdate payload:", JSON.stringify(authUpdate));
+      const { error: authUpdateError } = await supabaseAdmin.auth.admin.updateUserById(user_id, authUpdate);
+      if (authUpdateError) {
+        console.error("Auth update error:", JSON.stringify(authUpdateError));
+        const errStr = authUpdateError.message || String(authUpdateError);
+        const isDuplicate = errStr.includes("already been registered") 
+          || errStr.includes("duplicate key") 
+          || errStr.includes("unique constraint")
+          || errStr.includes("users_email_partial_key");
+        const msg = isDuplicate
+          ? "Este e-mail já está em uso por outro usuário"
+          : errStr;
+        return new Response(JSON.stringify({ error: msg }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    // Update profile
+    const profileUpdate: Record<string, any> = {};
+    if (full_name) profileUpdate.full_name = full_name;
+    if (role) {
+      profileUpdate.role = role;
+      profileUpdate.tenant_type = ["platform_owner", "platform_admin"].includes(role) ? "platform" : "agency";
+    }
     if (is_active !== undefined) profileUpdate.is_active = is_active;
 
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .update(profileUpdate)
-      .eq("user_id", user_id);
-
-    if (profileError) {
-      console.error("Profile update error:", profileError);
-      return new Response(JSON.stringify({ error: profileError.message }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (Object.keys(profileUpdate).length > 0) {
+      const { error: profileError } = await supabaseAdmin
+        .from("profiles")
+        .update(profileUpdate)
+        .eq("user_id", user_id);
+      if (profileError) {
+        return new Response(JSON.stringify({ error: profileError.message }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
-    // Update auth metadata if name or role changed
-    const metaUpdate: Record<string, any> = {};
-    if (full_name !== undefined) metaUpdate.full_name = full_name;
-    if (role !== undefined) {
-      metaUpdate.role = role;
-      metaUpdate.tenant_type = profileUpdate.tenant_type;
-    }
+    // Handle plan/subscription changes
+    if (plan_id !== undefined) {
+      // Get existing subscription
+      const { data: existingSub } = await supabaseAdmin
+        .from("subscriptions")
+        .select("id")
+        .eq("user_id", user_id)
+        .maybeSingle();
 
-    if (Object.keys(metaUpdate).length > 0) {
-      const { error: authUpdateError } = await supabase.auth.admin.updateUserById(user_id, {
-        user_metadata: metaUpdate,
-      });
-      if (authUpdateError) {
-        console.error("Auth metadata update error:", authUpdateError);
+      if (plan_id === null) {
+        // Remove subscription
+        if (existingSub) {
+          await supabaseAdmin.from("subscriptions").delete().eq("id", existingSub.id);
+        }
+      } else if (existingSub) {
+        // Update existing
+        await supabaseAdmin.from("subscriptions").update({
+          plan_id,
+          billing_cycle: billing_cycle || "monthly",
+          status: "active",
+          current_period_start: new Date().toISOString(),
+        }).eq("id", existingSub.id);
+      } else {
+        // Create new
+        await supabaseAdmin.from("subscriptions").insert({
+          user_id,
+          plan_id,
+          billing_cycle: billing_cycle || "monthly",
+          status: "active",
+          current_period_start: new Date().toISOString(),
+        });
       }
     }
 
@@ -97,7 +175,7 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("update-user error:", err);
-    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : "Erro interno" }), {
+    return new Response(JSON.stringify({ error: err?.message || "Erro interno do servidor" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

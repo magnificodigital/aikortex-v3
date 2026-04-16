@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import ModuleGate from "@/components/shared/ModuleGate";
 import CRMKanban from "@/components/crm/CRMKanban";
@@ -13,45 +13,9 @@ import { Contact, Plus, Search, Users, TrendingUp, DollarSign, BarChart3, Layout
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { supabase } from "@/integrations/supabase/client";
-
-const mapRowToLead = (row: any): Lead => ({
-  id: row.id,
-  name: row.name ?? "",
-  email: row.email ?? "",
-  phone: row.phone ?? "",
-  company: row.company ?? "",
-  position: row.position ?? "",
-  stage: row.stage as PipelineStage,
-  source: row.source,
-  temperature: row.temperature,
-  value: Number(row.value ?? 0),
-  assignee: row.assignee ?? "",
-  tags: row.tags ?? [],
-  notes: row.notes ?? "",
-  activities: row.activities ?? [],
-  createdAt: row.created_at,
-  updatedAt: row.updated_at,
-  lostReason: row.lost_reason ?? undefined,
-});
 
 const AikortexCRM = () => {
   const [leads, setLeads] = useState<Lead[]>(MOCK_LEADS);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const { data, error } = await supabase
-        .from("leads" as any)
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (cancelled) return;
-      if (!error && data && data.length > 0) {
-        setLeads((data as any[]).map(mapRowToLead));
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [newLeadOpen, setNewLeadOpen] = useState(false);
@@ -98,8 +62,6 @@ const AikortexCRM = () => {
     if (selectedLead?.id === leadId) {
       setSelectedLead((prev) => prev ? { ...prev, stage: newStage } : null);
     }
-    // Persist new stage to Supabase (no-op for mock leads not in DB)
-    void supabase.from("leads" as any).update({ stage: newStage } as any).eq("id", leadId);
   };
 
   const handleAddActivity = (leadId: string, activity: { type: string; description: string }) => {

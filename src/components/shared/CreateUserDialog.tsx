@@ -15,12 +15,11 @@ interface CreateUserDialogProps {
   onClose: () => void;
   onSuccess: () => void;
   context: "platform" | "agency";
-  workspaceOwnerUserId?: string;
 }
 
 const platformRoles = [
-  { value: "platform_owner", label: "Dono da Plataforma" },
-  { value: "platform_admin", label: "Admin da Plataforma" },
+  { value: "agency_owner", label: "Dono da Agência" },
+  { value: "agency_admin", label: "Admin da Agência" },
 ];
 
 const agencyRoles = [
@@ -39,13 +38,7 @@ const departments = [
   { value: "support", label: "Suporte" },
 ];
 
-const getTenantTypeFromRole = (role: string) => {
-  if (["platform_owner", "platform_admin"].includes(role)) return "platform";
-  if (["client_owner", "client_viewer"].includes(role)) return "client";
-  return "agency";
-};
-
-const CreateUserDialog = ({ open, onClose, onSuccess, context, workspaceOwnerUserId }: CreateUserDialogProps) => {
+const CreateUserDialog = ({ open, onClose, onSuccess, context }: CreateUserDialogProps) => {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -101,30 +94,20 @@ const CreateUserDialog = ({ open, onClose, onSuccess, context, workspaceOwnerUse
     setError("");
 
     try {
-      const payload = {
-        email: email.trim(),
-        password,
-        full_name: fullName.trim(),
-        role,
-        tenant_type: getTenantTypeFromRole(role),
-        department: department || undefined,
-        job_title: jobTitle.trim() || undefined,
-      };
-
-      const { data, error: fnError } = (context === "platform" || workspaceOwnerUserId)
-        ? await supabase.functions.invoke("admin-users", {
-            body: {
-              action: "create",
-              ...payload,
-              workspace_owner_user_id: workspaceOwnerUserId,
-            },
-          })
-        : await supabase.functions.invoke("create-user", {
-            body: payload,
-          });
+      const { data, error: fnError } = await supabase.functions.invoke("create-user", {
+        body: {
+          email: email.trim(),
+          password,
+          full_name: fullName.trim(),
+          role,
+          tenant_type: ["platform_owner", "platform_admin"].includes(role) ? "platform" : context === "platform" ? "agency" : "agency",
+          department: department || undefined,
+          job_title: jobTitle.trim() || undefined,
+        },
+      });
 
       if (fnError) {
-        setError((data as any)?.error || fnError.message || "Erro ao criar usuário. Tente novamente.");
+        setError("Erro ao criar usuário. Tente novamente.");
         setLoading(false);
         return;
       }

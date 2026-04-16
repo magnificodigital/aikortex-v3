@@ -21,8 +21,6 @@ interface AuthContextType {
   isPlatformAdmin: boolean;
   isPlatform: boolean;
   isAgencyOwner: boolean;
-  isClient: boolean;
-  getRedirectPath: () => string;
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -89,13 +87,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isPlatformAdmin = profile?.role === "platform_admin";
   const isPlatform = profile?.tenant_type === "platform";
   const isAgencyOwner = profile?.role === "agency_owner";
-  const isClient = profile?.tenant_type === "client";
-
-  const getRedirectPath = () => {
-    if (isPlatformOwner || isPlatformAdmin) return "/admin";
-    if (isClient) return "/workspace";
-    return "/home";
-  };
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     const { error } = await supabase.auth.signUp({
@@ -121,8 +112,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   return (
     <AuthContext.Provider value={{
       user, session, profile, loading,
-      isPlatformOwner, isPlatformAdmin, isPlatform, isAgencyOwner, isClient,
-      getRedirectPath, signUp, signIn, signOut,
+      isPlatformOwner, isPlatformAdmin, isPlatform, isAgencyOwner,
+      signUp, signIn, signOut,
     }}>
       {children}
     </AuthContext.Provider>

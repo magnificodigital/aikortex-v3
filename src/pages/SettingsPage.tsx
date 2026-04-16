@@ -1,7 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -313,20 +311,10 @@ const SettingsPage = () => {
     toast({ title: "Link copiado!" });
   };
 
-  const { user } = useAuth();
-
-  const saveBrand = async () => {
+  const saveBrand = () => {
     const data = { colors, logoUrl, faviconUrl, agencyName, agencySlogan, bioLinks, bioTitle, bioDescription, sections };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     applyColorsToCSS(colors);
-
-    // Sync agency name to database
-    if (user) {
-      await supabase
-        .from("agency_profiles")
-        .upsert({ user_id: user.id, agency_name: agencyName }, { onConflict: "user_id" });
-    }
-
     toast({ title: "Brand salvo com sucesso", description: "Todas as configurações foram aplicadas." });
   };
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { Loader2, ArrowLeft, Sparkles, Bot, Settings, Plug, Share2, Rocket, Phone, Brain, Monitor, Lock } from "lucide-react";
+import { Loader2, ArrowLeft, Sparkles, Bot, Settings, Plug, Share2, Rocket, Phone, Brain, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ConversationProvider } from "@elevenlabs/react";
@@ -44,7 +44,7 @@ const LLM_MODELS = ALL_LLM_MODELS.map(m => ({
   badge: (m.byok ? (m.provider === "anthropic" ? "byok-anthropic" : "byok") : "free") as "free" | "byok" | "byok-anthropic",
 }));
 
-const STRUCTURE_URL = `https://kbknehyfksugykrovfxs.supabase.co/functions/v1/agent-structure`;
+const STRUCTURE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-structure`;
 
 /* ── Types ── */
 
@@ -76,22 +76,6 @@ const buildSavedConfig = (config: AgentConfig, agentType: string) => ({
 
 /* ── Component ── */
 
-const TYPE_LABELS: Record<AgentType, string> = {
-  SDR: "SDR", BDR: "BDR", SAC: "Atendimento", CS: "Sucesso do Cliente", Custom: "Assistente",
-};
-
-function suggestAgentName(prompt: string | undefined | null, type: AgentType): string {
-  const fallback = `Agente ${TYPE_LABELS[type] || "IA"}`;
-  if (!prompt || typeof prompt !== "string") return fallback;
-  const clean = prompt.trim().replace(/\s+/g, " ");
-  if (!clean) return fallback;
-  const stop = new Set(["para","com","que","uma","como","quero","preciso","criar","fazer","agente","assistente","meu","minha","sobre","dos","das","por","mais","menos","todo","toda","esse","essa","isso"]);
-  const words = clean.split(" ").filter(w => w.length > 3 && !stop.has(w.toLowerCase())).slice(0, 2);
-  if (words.length === 0) return fallback;
-  const topic = words.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
-  return `Agente ${TYPE_LABELS[type] || ""} ${topic}`.replace(/\s+/g, " ").trim().slice(0, 60);
-}
-
 const AgentDetail = () => {
   const navigate    = useNavigate();
   const location    = useLocation();
@@ -109,7 +93,7 @@ const AgentDetail = () => {
     if (templateAgent) {
       return { name: templateAgent.name, avatar: templateAgent.avatar, model: templateAgent.model, agentType: templateAgent.agentType, savedConfig: null };
     }
-    return { name: suggestAgentName(navState?.initialPrompt, initialType), avatar: avatar1, model: "gemini-2.5-flash", agentType: initialType, savedConfig: null };
+    return { name: "Carregando...", avatar: avatar1, model: "gemini-2.5-flash", agentType: initialType, savedConfig: null };
   });
   const [agentLoading, setAgentLoading] = useState(!isTemplate);
 
@@ -145,7 +129,6 @@ const AgentDetail = () => {
     if (isTemplate && hasAutoPrompt) return "done";
     if (isTemplate) return "discover";
     if (isNewCustomFromHome) return "discover";
-    if (!agentId || agentId === "new" || agentId.startsWith("new-")) return "discover";
     // Existing saved agent
     return "done";
   });
@@ -316,7 +299,6 @@ const AgentDetail = () => {
   const [presetData, setPresetData] = useState<{
     name?: string; description?: string; objective?: string;
     toneOfVoice?: string; greetingMessage?: string; instructions?: string;
-    urls?: string[];
   } | undefined>(undefined);
 
   const handleConfigStructured = useCallback((config: StructuredAgentConfig) => {
@@ -327,7 +309,6 @@ const AgentDetail = () => {
       toneOfVoice:     config.tone,
       greetingMessage: config.greeting_message,
       instructions:    config.instructions,
-      urls:            config.urls,
     });
   }, []);
 
@@ -761,6 +742,27 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
             <span className="text-sm font-semibold">Agente de Ligação</span>
           </div>
           <div className="flex items-center gap-1">
+            {/* Outbound call button */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1 px-2"
+              onClick={() => setShowOutboundCall(true)}
+            >
+              <Phone className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Iniciar Ligação</span>
+            </Button>
+            {/* Browser call button (LiveKit-based) */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1 px-2"
+              onClick={() => setShowBrowserCall(true)}
+            >
+              <Monitor className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Testar no navegador</span>
+            </Button>
+            <div className="w-px h-5 bg-border mx-1" />
             {[
               { label: "Agente",       icon: Bot,               tab: "agent" },
               ...(keys["anthropic"]?.configured ? [{ label: "Memória", icon: Brain, tab: "memory" }] : []),
@@ -796,32 +798,16 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
         </div>
 
         {/* Voice call interface */}
-        <div className="flex-1 relative overflow-hidden">
-          <ConversationProvider>
-            <VoiceCallPanel
-              agentName={loadedAgent.name}
-              agentAvatar={loadedAgent.avatar}
-              agentPrompt={agentConfig?.instructions || agentConfig?.objective || ""}
-              agentGreeting={agentConfig?.greetingMessage || ""}
-              hasElevenLabsKey={!!keys["elevenlabs"]?.configured}
-              onGoToIntegrations={() => { setShowConfig(true); setRightPanelTab("connectors"); }}
-            />
-          </ConversationProvider>
-          {!keys["elevenlabs"]?.configured && (
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-background/80 backdrop-blur-sm p-6 text-center">
-              <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
-                <Lock className="w-6 h-6 text-muted-foreground" />
-              </div>
-              <h3 className="text-base font-semibold">Voz não configurada</h3>
-              <p className="text-sm text-muted-foreground max-w-xs">
-                Configure sua chave ElevenLabs nas Integrações para habilitar ligações e voz
-              </p>
-              <Button size="sm" onClick={() => navigate("/integrations")}>
-                Ir para Integrações
-              </Button>
-            </div>
-          )}
-        </div>
+        <ConversationProvider>
+          <VoiceCallPanel
+            agentName={loadedAgent.name}
+            agentAvatar={loadedAgent.avatar}
+            agentPrompt={agentConfig?.instructions || agentConfig?.objective || ""}
+            agentGreeting={agentConfig?.greetingMessage || ""}
+            hasElevenLabsKey={!!keys["elevenlabs"]?.configured}
+            onGoToIntegrations={() => { setShowConfig(true); setRightPanelTab("connectors"); }}
+          />
+        </ConversationProvider>
       </div>
 
       {/* Outbound Call Dialog */}
