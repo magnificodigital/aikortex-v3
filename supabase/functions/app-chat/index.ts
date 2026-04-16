@@ -209,7 +209,7 @@ Crie a V1 mais sólida possível. Priorize clareza e coerência.`}
 RETORNE SOMENTE O JSON.`;
 }
 
-const DEFAULT_GATEWAY_MODEL = "google/gemini-2.5-flash";
+const AI_GATEWAY_URL = "https://kbknehyfksugykrovfxs.supabase.co/functions/v1/ai-gateway";
 
 const OPENAI_MODEL_MAP: Record<string, string> = {
   "gpt-5.2": "gpt-4o",
@@ -304,21 +304,19 @@ function pickPreferredProvider(
   return ["openai", "gemini", "anthropic", "openrouter"].find((provider) => !!keys[provider as SupportedProvider]) as SupportedProvider | null;
 }
 
-function buildGatewayResponse(messages: Array<{ role: string; content: string }>, requestedModel?: string, stream = true) {
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
-
-  return fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+async function callAiGateway(
+  messages: Array<{ role: string; content: string }>,
+  opts: { system?: string; module?: string; mode?: string; byok_key?: string; provider?: string }
+): Promise<Response> {
+  return fetch(AI_GATEWAY_URL, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${LOVABLE_API_KEY}`,
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: requestedModel || DEFAULT_GATEWAY_MODEL,
       messages,
-      stream,
-      ...(stream ? {} : { response_format: { type: "json_object" } }),
+      system: opts.system,
+      module: opts.module || "app",
+      mode: opts.mode || "chat",
+      ...(opts.byok_key ? { byok_key: opts.byok_key, provider: opts.provider } : {}),
     }),
   });
 }
@@ -342,7 +340,10 @@ async function proxyAgentChat(body: Record<string, unknown>, authHeader: string 
   });
 
   if (response.status === 401 && ((body.useGateway === true) || !body.provider)) {
-    response = await buildGatewayResponse((body.messages as Array<{ role: string; content: string }>) || [], body.model as string | undefined, true);
+    response = await callAiGateway(
+      (body.messages as Array<{ role: string; content: string }>) || [],
+      { module: "agent", mode: "stream" }
+    );
   }
 
   if (!response.ok) {
@@ -474,8 +475,8 @@ async function buildStructuredResponse({
     return { response, parser: "openai" as const, provider: selectedProvider };
   }
 
-  const response = await buildGatewayResponse(finalMessages, requestedModel, false);
-  return { response, parser: "openai" as const, provider: "gateway" as const };
+  const response = await callAiGateway(messages, { system: finalMessages[0]?.content, module: "app", mode: "structure" });
+  return { response, parser: "gateway" as const, provider: "gateway" as const };
 }
 
 serve(async (req) => {
@@ -500,7 +501,7 @@ serve(async (req) => {
 
     /* For structure mode, always use gateway directly (skip user API keys) */
     const structured = isStructureMode
-      ? { response: await buildGatewayResponse([{ role: "system", content: systemPrompt }, ...messages], requestedModel, false), parser: "openai" as const, provider: "gateway" as const }
+      ? { response: await callAiGateway(messages, { system: systemPrompt, module: "app", mode: "structure" }), parser: "gateway" as const, provider: "gateway" as const }
       : await buildStructuredResponse({
           messages,
           systemPrompt,
@@ -539,9 +540,11 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const content = parser === "anthropic"
-      ? data.content?.find?.((block: { type?: string }) => block.type === "text")?.text || "{}"
-      : data.choices?.[0]?.message?.content || "{}";
+    const content = parser === "gateway"
+      ? data.content || "{}"
+      : parser === "anthropic"
+        ? data.content?.find?.((block: { type?: string }) => block.type === "text")?.text || "{}"
+        : data.choices?.[0]?.message?.content || "{}";
 
     if (isStructureMode) {
       return new Response(JSON.stringify({ structuredConfig: content }), {

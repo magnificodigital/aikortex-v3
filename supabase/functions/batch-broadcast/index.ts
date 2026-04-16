@@ -259,9 +259,9 @@ serve(async (req) => {
     const logId = logRow?.id;
 
     // Process async
-    EdgeRuntime.waitUntil(
-      processBroadcast(supabase, logId, user.id, contacts, message_template, use_ai, agent_db_id, waToken, waPhoneId)
-    );
+    // Fire-and-forget async processing
+    processBroadcast(supabase, logId, user.id, contacts, message_template, use_ai, agent_db_id, waToken, waPhoneId)
+      .catch((err: unknown) => console.error("Broadcast processing error:", err));
 
     return new Response(JSON.stringify({
       success: true,
