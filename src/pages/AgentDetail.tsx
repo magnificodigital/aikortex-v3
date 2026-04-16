@@ -316,6 +316,7 @@ const AgentDetail = () => {
   const [presetData, setPresetData] = useState<{
     name?: string; description?: string; objective?: string;
     toneOfVoice?: string; greetingMessage?: string; instructions?: string;
+    urls?: string[];
   } | undefined>(undefined);
 
   const handleConfigStructured = useCallback((config: StructuredAgentConfig) => {
@@ -326,6 +327,7 @@ const AgentDetail = () => {
       toneOfVoice:     config.tone,
       greetingMessage: config.greeting_message,
       instructions:    config.instructions,
+      urls:            config.urls,
     });
   }, []);
 

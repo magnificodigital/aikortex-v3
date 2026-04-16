@@ -141,6 +141,7 @@ interface PresetData {
   instructions?: string;
   toneOfVoice?: string;
   greetingMessage?: string;
+  urls?: string[];
 }
 
 interface Props {
@@ -302,7 +303,7 @@ const AgentRightPanel = ({
   const [agentDesc,           setAgentDesc]           = useState(() => resolveInitial("desc",           savedConfig?.description,    presetData?.description));
   const [agentObjective,      setAgentObjective]      = useState(() => resolveInitial("objective",      savedConfig?.objective,      presetData?.objective));
   const [agentInstructions,   setAgentInstructions]   = useState(() => resolveInitial("instructions",   savedConfig?.instructions,   presetData?.instructions));
-  const [agentToneOfVoice,    setAgentToneOfVoice]    = useState(() => resolveInitial("toneOfVoice",    savedConfig?.toneOfVoice,    presetData?.toneOfVoice));
+  const [agentToneOfVoice,    setAgentToneOfVoice]    = useState(() => resolveInitial("toneOfVoice",    savedConfig?.toneOfVoice,    presetData?.toneOfVoice) || "Profissional e Amigável");
   const [agentGreetingMessage,setAgentGreetingMessage]= useState(() => resolveInitial("greetingMessage",savedConfig?.greetingMessage,presetData?.greetingMessage));
 
   const [knowledgeFiles,    setKnowledgeFiles]    = useState<KnowledgeFileLocal[]>(() => {
@@ -345,6 +346,7 @@ const AgentRightPanel = ({
     if (presetData.instructions)    setAgentInstructions(presetData.instructions);
     if (presetData.toneOfVoice)     setAgentToneOfVoice(presetData.toneOfVoice);
     if (presetData.greetingMessage) setAgentGreetingMessage(presetData.greetingMessage);
+    if (presetData.urls?.length)    setUrls(presetData.urls);
   }, [presetData]);
 
   // FIX: fieldUpdates do chat — atualiza campos em tempo real

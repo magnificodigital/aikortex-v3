@@ -25,6 +25,7 @@ export interface StructuredAgentConfig {
   stages?: Array<{ id: string; name: string; description: string; example: string }>;
   selected_features?: string[];
   onboarding_level?: string;
+  urls?: string[];
 }
 
 interface AgentChatPanelProps {
