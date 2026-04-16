@@ -106,7 +106,10 @@ export function usePartnerTier() {
 
   const hasFeature = (flag: FeatureFlag): boolean => {
     const moduleKey = FEATURE_TO_MODULE_KEY[flag];
-    if (!moduleKey) return false;
+    if (!moduleKey) {
+      // For non-module features (e.g. feature.saas_builder), use static tier config
+      return TIER_FEATURE_CONFIG[tier]?.features.includes(flag) ?? false;
+    }
     if (!allAccessRows) return true; // still loading, don't block
     return tierAccessMap[tier]?.[moduleKey] ?? false;
   };
