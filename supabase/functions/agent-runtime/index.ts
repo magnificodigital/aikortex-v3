@@ -157,20 +157,41 @@ ${tone}
 - Quando o lead quiser agendar, ofereça horários disponíveis
 - Responda sempre em português do Brasil`;
 
-    // Call gateway for the conversation (reliable, works without API key)
-    const resp = await fetch(GATEWAY_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        messages,
-        system,
-        module: "agent",
-        mode: "chat",
-      }),
-    });
+    // Try BYOK key from request (user's configured provider key)
+    const byokKey      = body.byok_key  || "";
+    const byokProvider = body.provider  || "";
 
-    const gatewayData = await resp.json();
-    const finalContent = gatewayData.content || "Desculpe, ocorreu um erro.";
+    let finalContent = "";
+
+    if (byokKey && byokProvider) {
+      // Use user's own API key via gateway BYOK path
+      const resp = await fetch(GATEWAY_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages,
+          system,
+          module: "agent",
+          mode: "chat",
+          byok_key: byokKey,
+          provider: byokProvider,
+          quality: "fast",
+        }),
+      });
+      const data = await resp.json();
+      finalContent = data.content || "";
+    }
+
+    // Fallback: free models via gateway
+    if (!finalContent) {
+      const resp = await fetch(GATEWAY_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages, system, module: "agent", mode: "chat" }),
+      });
+      const data = await resp.json();
+      finalContent = data.content || "Desculpe, o serviço de IA está temporariamente indisponível. Tente novamente em instantes.";
+    }
 
     // After responding, extract lead data in background (non-blocking)
     if (userId !== "anonymous") {
