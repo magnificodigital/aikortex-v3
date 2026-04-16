@@ -208,7 +208,7 @@ export default function FlowCreationSplit({ onBack, onSaveFlow, flows, onOpenFlo
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-foreground">Criar com IA</h3>
-                  <Badge variant="outline" className="text-[9px] px-1.5 py-0">DeerFlow</Badge>
+                  <Badge variant="outline" className="text-[9px] px-1.5 py-0">Aikortex AI</Badge>
                 </div>
               </div>
             </div>
