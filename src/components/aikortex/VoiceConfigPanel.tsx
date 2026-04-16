@@ -20,6 +20,7 @@ import PhoneNumberSection from "./PhoneNumberSection";
 
 export interface VoiceConfig {
   agentName: string;
+  elevenLabsApiKey: string;
   voiceId: string;
   language: string;
   tone: number;
@@ -50,6 +51,7 @@ export interface VoiceConfig {
 
 export const DEFAULT_VOICE_CONFIG: VoiceConfig = {
   agentName: "",
+  elevenLabsApiKey: "",
   voiceId: "EXAVITQu4vr4xnSDxMaL",
   language: "pt-BR",
   tone: 1.0,
