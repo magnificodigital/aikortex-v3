@@ -116,7 +116,13 @@ export function usePartnerTier() {
 
   const getMinTierForFeature = (flag: FeatureFlag): PartnerTier | null => {
     const moduleKey = FEATURE_TO_MODULE_KEY[flag];
-    if (!moduleKey) return null;
+    if (!moduleKey) {
+      // For non-module features, check static config
+      for (const t of TIERS) {
+        if (TIER_FEATURE_CONFIG[t]?.features.includes(flag)) return t;
+      }
+      return null;
+    }
     for (const t of TIERS) {
       if (tierAccessMap[t]?.[moduleKey]) return t;
     }
