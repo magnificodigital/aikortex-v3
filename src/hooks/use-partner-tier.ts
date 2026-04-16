@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { type FeatureFlag, type PartnerTier } from "@/types/rbac";
+import { type FeatureFlag, type PartnerTier, TIER_FEATURE_CONFIG } from "@/types/rbac";
 import { TIER_CONFIG } from "@/types/partner";
 import type { Tables } from "@/integrations/supabase/types";
 
