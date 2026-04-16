@@ -538,8 +538,8 @@ const AgentRightPanel = ({
                   </>
                 )}
 
-                {/* Objetivo */}
-                {settingsNav === "objective" && (
+                {/* Comportamento (Objetivo + Instruções) */}
+                {settingsNav === "behavior" && (
                   <div className="space-y-6">
                     <div>
                       <h2 className="text-lg font-bold text-foreground">Objetivo</h2>
@@ -547,18 +547,18 @@ const AgentRightPanel = ({
                     </div>
                     <Textarea value={agentObjective} onChange={(e) => setAgentObjective(e.target.value)}
                       placeholder="Ex: Qualificar leads e agendar reuniões." className="text-sm min-h-[100px]" />
-                  </div>
-                )}
 
-                {/* Instruções */}
-                {settingsNav === "instructions" && (
-                  <div className="space-y-6">
+                    <div className="border-t border-border" />
+
                     <div>
                       <h2 className="text-lg font-bold text-foreground">Instruções</h2>
                       <p className="text-sm text-muted-foreground mt-1">Regras e comportamento do agente.</p>
                     </div>
+                    <p className="text-xs text-muted-foreground bg-muted/40 border border-border rounded-md px-3 py-2">
+                      💡 Dica: organize as instruções por etapas numeradas (ex: 1. Apresentação → 2. Qualificação → 3. Encaminhamento)
+                    </p>
                     <Textarea value={agentInstructions} onChange={(e) => setAgentInstructions(e.target.value)}
-                      placeholder="Ex: Sempre pergunte o nome antes de agendar." className="text-sm min-h-[140px]" />
+                      placeholder="Ex: 1. Apresente-se. 2. Pergunte o nome. 3. Qualifique o lead." className="text-sm min-h-[140px]" />
                   </div>
                 )}
 
