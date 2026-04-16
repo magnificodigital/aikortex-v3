@@ -87,6 +87,20 @@ export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, init
         return;
       }
 
+      // Check for ```json ... ``` flow definition from DeerFlow
+      const jsonBlockMatch = text.match(/```json\s*([\s\S]*?)\s*```/);
+      if (jsonBlockMatch && onBuildFlow) {
+        try {
+          const flowDef = JSON.parse(jsonBlockMatch[1].trim());
+          if (flowDef.nodes && flowDef.edges) {
+            onBuildFlow(flowDef);
+            return;
+          }
+        } catch (e) {
+          console.error("Failed to parse JSON flow block:", e);
+        }
+      }
+
       // Fallback: individual ADD_NODE commands
       if (!onAddNode) return;
       const regex = /\[ADD_NODE:(\w+)\]/g;
@@ -118,23 +132,14 @@ export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, init
     ];
 
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData?.session?.access_token;
-      if (!accessToken) {
-        throw new Error("Você precisa estar logado para usar o Copilot.");
-      }
-
-      // Use OpenRouter free model via edge function
-      const resp = await fetch(CHAT_URL, {
+      const resp = await fetch(DEERFLOW_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
+          model: "gemini-flash",
           messages: apiMessages,
-          model: "google/gemini-2.5-flash",
-          useGateway: true,
         }),
       });
 
