@@ -98,6 +98,8 @@ const AikortexCRM = () => {
     if (selectedLead?.id === leadId) {
       setSelectedLead((prev) => prev ? { ...prev, stage: newStage } : null);
     }
+    // Persist new stage to Supabase (no-op for mock leads not in DB)
+    void supabase.from("leads" as any).update({ stage: newStage } as any).eq("id", leadId);
   };
 
   const handleAddActivity = (leadId: string, activity: { type: string; description: string }) => {
