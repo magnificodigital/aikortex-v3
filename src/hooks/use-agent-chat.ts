@@ -167,6 +167,7 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
         data: { session },
       } = await supabase.auth.getSession();
       const accessToken = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const userId = session?.user?.id;
 
       let resp: Response | null = null;
       const maxRetries = 2;
@@ -175,6 +176,7 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
           mode: "agent-chat",
           messages: apiMessages,
           useGateway: options.useGateway ?? false,
+          userId,
         };
 
         if (options.useGateway) {
