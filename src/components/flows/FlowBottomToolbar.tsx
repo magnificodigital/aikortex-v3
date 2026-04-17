@@ -78,7 +78,7 @@ export default function FlowBottomToolbar({ onAddNode, flowId }: Props) {
   return (
     <>
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 bg-card/90 backdrop-blur-sm border border-border rounded-2xl px-3 py-2 shadow-lg">
-        {NODE_CATEGORIES.map((cat) => (
+        {NODE_CATEGORIES.filter((c) => ["trigger", "processing", "logic", "output", "crm_actions"].includes(c.key)).map((cat) => (
           <button
             key={cat.key}
             onClick={() => setOpenCategory(cat.key)}

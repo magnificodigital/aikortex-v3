@@ -180,17 +180,6 @@ export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, init
 
   return (
     <div className="flex flex-col h-full bg-[hsl(var(--background))]">
-      {/* Header */}
-      <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border bg-card/60 backdrop-blur-sm flex-shrink-0">
-        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
-          <Brain className="w-4 h-4 text-white" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold text-foreground leading-tight">Copilot IA</h3>
-          <p className="text-[10px] text-muted-foreground leading-tight">Powered by DeerFlow</p>
-        </div>
-      </div>
-
       {/* Chat area */}
       <div className="flex-1 overflow-y-auto px-3 py-3" ref={scrollRef}>
         <div className="space-y-3">
@@ -305,7 +294,7 @@ export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, init
           </Button>
         </div>
         <p className="text-[9px] text-muted-foreground mt-1.5 text-center">
-          DeerFlow analisa e gera seu fluxo automaticamente
+          Pressione Enter para enviar
         </p>
       </div>
     </div>

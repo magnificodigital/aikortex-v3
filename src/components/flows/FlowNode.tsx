@@ -23,15 +23,22 @@ const defaultCat = { bg: "bg-muted/30", border: "border-border", iconBg: "bg-mut
 
 /** Labels for config keys */
 const CONFIG_LABELS: Record<string, string> = {
-  channel: "Channel", model: "Model", temperature: "Temperature", systemPrompt: "System Prompt",
-  url: "URL", method: "Method", code: "Code", language: "Language",
-  expression: "Expression", criteria: "Criteria", variable: "Variable", value: "Value",
-  duration: "Duration", unit: "Unit", approvalMessage: "Message", branches: "Branches",
-  maxIterations: "Max Iterations", iterableVariable: "Iterable", format: "Format",
-  template: "Template", provider: "Provider", action: "Action", to: "To",
-  subject: "Subject", body: "Body", phone: "Phone", spreadsheetId: "Spreadsheet",
-  range: "Range", workflowId: "Workflow", frequency: "Run Frequency", time: "Time",
-  rules: "Rules", routes: "Routes",
+  channel: "Canal", model: "Modelo", temperature: "Temperatura", systemPrompt: "Prompt",
+  url: "URL", method: "Método", code: "Código", language: "Linguagem",
+  expression: "Expressão", criteria: "Critério", variable: "Variável", value: "Valor",
+  duration: "Duração", unit: "Unidade", approvalMessage: "Mensagem", branches: "Ramos",
+  maxIterations: "Máx. Iterações", iterableVariable: "Lista", format: "Formato",
+  template: "Template", provider: "Provedor", action: "Ação", to: "Para",
+  subject: "Assunto", body: "Corpo", phone: "Telefone", spreadsheetId: "Planilha",
+  range: "Intervalo", workflowId: "Workflow", frequency: "Frequência", time: "Horário",
+  rules: "Regras", routes: "Rotas", prompt: "Pergunta", required: "Obrigatório",
+  message: "Mensagem", title: "Título", tag: "Tag", delay: "Atraso", type: "Tipo",
+  source: "Origem", agentId: "Agente", maxResults: "Resultados", lookbackMessages: "Histórico",
+  collection: "Coleção", topK: "Top K", table: "Tabela", filter: "Filtro",
+  fields: "Campos", recordId: "ID Registro", data: "Dados", reason: "Motivo",
+  intents: "Intenções", maxLength: "Máx. Caracteres", condition: "Condição",
+  assignee: "Responsável", dueDate: "Vencimento", dealId: "Negócio", targetStage: "Etapa Destino",
+  leadId: "ID Lead", scoreChange: "Δ Score", ownerId: "Dono", statusCode: "Status HTTP",
 };
 
 function FlowNode({ data, selected, id }: NodeProps) {
