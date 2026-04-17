@@ -430,13 +430,16 @@ const AgentDetail = () => {
     const preset = AGENT_PRESETS[templateAgent.agentType];
     const presetContext = preset?.context || {};
     
+    const operationalInstructions = getOperationalInstructions(templateAgent.agentType);
+    const fallbackInstructions = `1. Sempre se apresentar como assistente\n2. Focar em entender as necessidades\n3. Ser ${presetContext.toneOfVoice || "profissional"}\n4. Nunca prometer o que não pode cumprir\n5. Direcionar para próximo passo claro`;
+
     const immediatePreset = {
       name: templateAgent.name,
       description: presetContext.targetAudienceDescription || templateAgent.autoPrompt.slice(0, 150),
       objective: presetContext.painPoints || "",
       toneOfVoice: presetContext.toneOfVoice || "Profissional e amigável",
       greetingMessage: presetContext.greetingMessage || "",
-      instructions: `1. Sempre se apresentar como assistente\n2. Focar em entender as necessidades\n3. Ser ${presetContext.toneOfVoice || "profissional"}\n4. Nunca prometer o que não pode cumprir\n5. Direcionar para próximo passo claro`,
+      instructions: operationalInstructions || fallbackInstructions,
     };
     
     // Immediately populate the right panel
