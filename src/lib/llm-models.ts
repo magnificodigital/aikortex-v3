@@ -37,46 +37,23 @@ export const LLM_MODELS: LLMModel[] = [
   { id: 'google/gemini-1.5-flash', name: 'Gemini 1.5 Flash', provider: 'google', byok: false },
   { id: 'google/gemini-1.5-flash-8b', name: 'Gemini 1.5 Flash 8B', provider: 'google', byok: false },
 
-  // ── META LLAMA (via OpenRouter — plataforma paga) ──
-  { id: 'meta-llama/llama-4-maverick', name: 'Llama 4 Maverick', provider: 'meta', byok: false },
-  { id: 'meta-llama/llama-4-scout', name: 'Llama 4 Scout', provider: 'meta', byok: false },
-  { id: 'meta-llama/llama-3.3-70b-instruct', name: 'Llama 3.3 70B', provider: 'meta', byok: false },
-  { id: 'meta-llama/llama-3.1-405b-instruct', name: 'Llama 3.1 405B', provider: 'meta', byok: false },
-  { id: 'meta-llama/llama-3.1-70b-instruct', name: 'Llama 3.1 70B', provider: 'meta', byok: false },
-  { id: 'meta-llama/llama-3.1-8b-instruct', name: 'Llama 3.1 8B', provider: 'meta', byok: false },
-  { id: 'meta-llama/llama-3-70b-instruct', name: 'Llama 3 70B', provider: 'meta', byok: false },
-
   // ── DEEPSEEK (via OpenRouter — plataforma paga) ──
   { id: 'deepseek/deepseek-r1', name: 'DeepSeek R1', provider: 'deepseek', byok: false },
   { id: 'deepseek/deepseek-chat-v3-0324', name: 'DeepSeek V3', provider: 'deepseek', byok: false },
   { id: 'deepseek/deepseek-r1-distill-llama-70b', name: 'DeepSeek R1 Distill 70B', provider: 'deepseek', byok: false },
 
-  // ── MISTRAL (via OpenRouter — plataforma paga) ──
-  { id: 'mistralai/mistral-large', name: 'Mistral Large', provider: 'mistral', byok: false },
-  { id: 'mistralai/mistral-medium-3', name: 'Mistral Medium 3', provider: 'mistral', byok: false },
-  { id: 'mistralai/mistral-small-3.1-24b-instruct', name: 'Mistral Small 3.1', provider: 'mistral', byok: false },
-  { id: 'mistralai/mixtral-8x7b-instruct', name: 'Mixtral 8x7B', provider: 'mistral', byok: false },
-  { id: 'mistralai/mistral-7b-instruct', name: 'Mistral 7B', provider: 'mistral', byok: false },
-
   // ── QWEN / ALIBABA (via OpenRouter — plataforma paga) ──
   { id: 'qwen/qwen3-235b-a22b', name: 'Qwen3 235B', provider: 'qwen', byok: false },
   { id: 'qwen/qwen3-30b-a3b', name: 'Qwen3 30B', provider: 'qwen', byok: false },
   { id: 'qwen/qwen-2.5-72b-instruct', name: 'Qwen 2.5 72B', provider: 'qwen', byok: false },
-
-  // ── MICROSOFT (via OpenRouter — plataforma paga) ──
-  { id: 'microsoft/phi-4', name: 'Phi-4', provider: 'microsoft', byok: false },
-  { id: 'microsoft/phi-4-multimodal-instruct', name: 'Phi-4 Multimodal', provider: 'microsoft', byok: false },
 ];
 
 export const PROVIDER_LABELS: Record<string, string> = {
   anthropic: "Anthropic",
   openai: "OpenAI",
   google: "Google Gemini",
-  meta: "Meta Llama",
   deepseek: "DeepSeek",
-  mistral: "Mistral",
   qwen: "Qwen",
-  microsoft: "Microsoft",
 };
 
 /** Group models by provider for grouped selects */
@@ -93,10 +70,10 @@ export function getGroupedModels() {
   return groups;
 }
 
-export const DEFAULT_FREE_MODEL = "google/gemini-2.5-flash-preview-04-17";
+export const DEFAULT_FREE_MODEL = "qwen/qwen3-30b-a3b";
 
 export function getProviderForModel(modelId: string): string {
-  return LLM_MODELS.find(m => m.id === modelId)?.provider || "google";
+  return LLM_MODELS.find(m => m.id === modelId)?.provider || "qwen";
 }
 
 /** Check if a model is an OpenRouter model (has slash in ID) */
