@@ -85,7 +85,8 @@ const AgentDetail = () => {
 
   const [agentFlowId, setAgentFlowId] = useState<string | null>(null);
   useEffect(() => {
-    if (!agentId || agentId === "new" || agentId.startsWith("new-")) return;
+    setAgentFlowId(null);
+    if (!agentId || agentId === "new" || agentId.startsWith("new-") || TEMPLATE_MAP[agentId]) return;
     (async () => {
       const { data } = await (supabase
         .from("user_flows" as any)
@@ -97,11 +98,7 @@ const AgentDetail = () => {
   }, [agentId]);
 
   const handleOpenAgentFlow = () => {
-    if (!agentFlowId) {
-      toast.info("Nenhum fluxo automático encontrado para este agente.");
-      navigate("/aikortex/automations");
-      return;
-    }
+    if (!agentFlowId) return;
     navigate("/aikortex/automations", { state: { openFlowId: agentFlowId } });
   };
 
