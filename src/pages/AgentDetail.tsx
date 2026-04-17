@@ -587,19 +587,41 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
         onboarding_level: "soft",
       };
 
-      // Enrich the config via the structure endpoint using the description from the chat
+      // Enrich the config via the structure endpoint, but ALWAYS prefer the wizard's
+      // collected answers over the LLM's generated content. The structure call only
+      // fills gaps — it must never override what the user explicitly told us.
       (async () => {
+        // Build a rich description that carries ALL wizard answers to the structure endpoint.
+        const wizardSummary = [
+          parsed.name && `Nome do agente: ${parsed.name}`,
+          company && `Empresa: ${company}`,
+          parsed.description && `Descrição/contexto: ${parsed.description}`,
+          parsed.objective && `Objetivo: ${parsed.objective}`,
+          parsed.toneOfVoice && `Tom de voz: ${parsed.toneOfVoice}`,
+          parsed.greetingMessage && `Mensagem de saudação desejada: ${parsed.greetingMessage}`,
+          parsed.instructions && `Instruções/regras coletadas no wizard:\n${parsed.instructions}`,
+        ].filter(Boolean).join("\n");
+
         let finalConfig = baseConfig;
-        if (baseConfig.description) {
+        if (wizardSummary) {
           try {
-            const enriched = await handleStructureRequest(baseConfig.description);
+            const enriched = await handleStructureRequest(wizardSummary);
             if (enriched) {
+              // Wizard answers WIN. Enriched output only fills empty fields.
               finalConfig = {
                 ...enriched,
-                agent_name: baseConfig.agent_name,
-                agent_type: baseConfig.agent_type,
-                tone: baseConfig.tone, // preserva o tom dito pelo usuário no wizard
+                agent_name:       baseConfig.agent_name,
+                agent_type:       baseConfig.agent_type,
+                description:      baseConfig.description      || enriched.description,
+                objective:        baseConfig.objective        || enriched.objective,
+                tone:             baseConfig.tone             || enriched.tone,
                 greeting_message: baseConfig.greeting_message || enriched.greeting_message,
+                // Merge instructions: wizard rules first (priority), then enriched details.
+                instructions: fillCompany(
+                  [baseConfig.instructions, enriched.instructions]
+                    .filter(Boolean)
+                    .join("\n\n"),
+                ),
               };
             }
           } catch (e) {
