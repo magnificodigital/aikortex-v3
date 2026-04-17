@@ -374,8 +374,6 @@ const AgentChatPanel = ({
       ? (wizardChatMessages || [])
       : wizardMessages;
 
-  // Which messages to show based on wizard state
-  const displayMessages = wizardStep === "done" ? messages : wizardMessages;
 
   return (
     <div className="w-[420px] min-w-[360px] border-r border-border flex flex-col bg-background">
