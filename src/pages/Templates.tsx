@@ -48,7 +48,7 @@ const TIER_COLORS: Record<string, string> = {
 const CATEGORY_ICONS: Record<string, typeof Bot> = { agent: Bot, automation: Workflow, app: AppWindow };
 const CATEGORY_LABELS: Record<string, string> = { agent: "Agente", automation: "Automação", app: "Aplicativo" };
 
-const Templates = () => {
+export const TemplatesMarketplaceView = () => {
   const { user } = useAuth();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [agency, setAgency] = useState<AgencyProfile | null>(null);
@@ -127,17 +127,15 @@ const Templates = () => {
 
   if (loading) {
     return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-96">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        </div>
-      </DashboardLayout>
+      <div className="flex items-center justify-center h-96">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
     );
   }
 
   return (
-    <DashboardLayout>
-      <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <>
+      <div className="space-y-6">
         {/* Header */}
         <div className="space-y-1">
           <h1 className="text-2xl font-bold text-foreground">Marketplace de Templates</h1>
@@ -330,8 +328,16 @@ const Templates = () => {
           )}
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </>
   );
 };
+
+const Templates = () => (
+  <DashboardLayout>
+    <div className="p-6 max-w-7xl mx-auto">
+      <TemplatesMarketplaceView />
+    </div>
+  </DashboardLayout>
+);
 
 export default Templates;
