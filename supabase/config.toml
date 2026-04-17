@@ -1,1 +1,4 @@
 project_id = "ldngvhemcqsfcjehvfyd"
+
+[functions.ai-gateway]
+verify_jwt = false

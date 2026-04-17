@@ -6,6 +6,10 @@ const corsHeaders = {
 };
 
 const GATEWAY_URL = "https://kbknehyfksugykrovfxs.supabase.co/functions/v1/ai-gateway";
+const gatewayHeaders = () => ({
+  "Content-Type": "application/json",
+  "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""}`,
+});
 
 // ── SSE helpers ───────────────────────────────────────────────────────────
 function streamText(text: string): ReadableStream {
@@ -223,7 +227,7 @@ RETORNE SOMENTE O JSON.`;
 
     const resp = await fetch(GATEWAY_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: gatewayHeaders(),
       body: JSON.stringify({
         messages: [{ role: "user", content: extractPrompt }],
         module: "structure",
@@ -330,7 +334,7 @@ Deno.serve(async (req) => {
     if (byokKey && byokProvider) {
       const resp = await fetch(GATEWAY_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: gatewayHeaders(),
         body: JSON.stringify({
           messages,
           system,
@@ -348,7 +352,7 @@ Deno.serve(async (req) => {
     if (!finalContent) {
       const resp = await fetch(GATEWAY_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: gatewayHeaders(),
         body: JSON.stringify({ messages, system, module: "agent", mode: "chat" }),
       });
       const data = await resp.json();
