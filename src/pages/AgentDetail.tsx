@@ -527,7 +527,7 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
         agent_type: parsed.role || loadedAgent.agentType,
         description: parsed.description || "",
         objective: parsed.objective || "",
-        tone: parsed.toneOfVoice || "professional_friendly",
+        tone: parsed.toneOfVoice || parsed.tone || "Profissional e Amigável",
         language: "pt-BR",
         greeting_message: parsed.greetingMessage || `Olá! Sou ${parsed.name || loadedAgent.name}. Como posso ajudar?`,
         instructions: parsed.instructions || "",
@@ -543,7 +543,13 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
           try {
             const enriched = await handleStructureRequest(baseConfig.description);
             if (enriched) {
-              finalConfig = { ...enriched, agent_name: baseConfig.agent_name, agent_type: baseConfig.agent_type };
+              finalConfig = {
+                ...enriched,
+                agent_name: baseConfig.agent_name,
+                agent_type: baseConfig.agent_type,
+                tone: baseConfig.tone, // preserva o tom dito pelo usuário no wizard
+                greeting_message: baseConfig.greeting_message || enriched.greeting_message,
+              };
             }
           } catch (e) {
             console.warn("Structure enrichment failed, using base config:", e);
