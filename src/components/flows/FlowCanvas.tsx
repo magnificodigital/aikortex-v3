@@ -60,6 +60,90 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import type { SavedFlow } from "@/types/flow-builder";
 
+const AUTO_LAYOUT_X_START = 100;
+const AUTO_LAYOUT_X_GAP = 320;
+const AUTO_LAYOUT_Y_CENTER = 220;
+const AUTO_LAYOUT_Y_GAP = 180;
+
+function layoutNodesLeftToRight(flowNodes: Node[], flowEdges: Edge[]): Node[] {
+  if (flowNodes.length <= 1) return flowNodes;
+
+  const incomingCount = new Map<string, number>();
+  const adjacency = new Map<string, string[]>();
+
+  flowNodes.forEach((node) => {
+    incomingCount.set(node.id, 0);
+    adjacency.set(node.id, []);
+  });
+
+  flowEdges.forEach((edge) => {
+    incomingCount.set(edge.target, (incomingCount.get(edge.target) ?? 0) + 1);
+    adjacency.set(edge.source, [...(adjacency.get(edge.source) ?? []), edge.target]);
+  });
+
+  const queue = flowNodes
+    .filter((node) => (incomingCount.get(node.id) ?? 0) === 0)
+    .sort((a, b) => a.position.x - b.position.x || a.position.y - b.position.y)
+    .map((node) => node.id);
+
+  const depthMap = new Map<string, number>();
+
+  queue.forEach((id) => depthMap.set(id, 0));
+
+  while (queue.length > 0) {
+    const currentId = queue.shift()!;
+    const currentDepth = depthMap.get(currentId) ?? 0;
+    const targets = adjacency.get(currentId) ?? [];
+
+    targets.forEach((targetId) => {
+      const nextDepth = currentDepth + 1;
+      depthMap.set(targetId, Math.max(depthMap.get(targetId) ?? 0, nextDepth));
+      incomingCount.set(targetId, (incomingCount.get(targetId) ?? 1) - 1);
+
+      if ((incomingCount.get(targetId) ?? 0) <= 0) {
+        queue.push(targetId);
+      }
+    });
+  }
+
+  const positionedIds = new Set(depthMap.keys());
+  const fallbackDepthStart = Math.max(...Array.from(depthMap.values(), (value) => value), 0);
+  let fallbackDepth = fallbackDepthStart;
+
+  flowNodes.forEach((node) => {
+    if (!positionedIds.has(node.id)) {
+      fallbackDepth += 1;
+      depthMap.set(node.id, fallbackDepth);
+    }
+  });
+
+  const columns = new Map<number, Node[]>();
+
+  flowNodes.forEach((node) => {
+    const depth = depthMap.get(node.id) ?? 0;
+    columns.set(depth, [...(columns.get(depth) ?? []), node]);
+  });
+
+  columns.forEach((columnNodes) => {
+    columnNodes.sort((a, b) => a.position.y - b.position.y || a.position.x - b.position.x);
+  });
+
+  return flowNodes.map((node) => {
+    const depth = depthMap.get(node.id) ?? 0;
+    const columnNodes = columns.get(depth) ?? [node];
+    const index = columnNodes.findIndex((columnNode) => columnNode.id === node.id);
+    const offset = index - (columnNodes.length - 1) / 2;
+
+    return {
+      ...node,
+      position: {
+        x: AUTO_LAYOUT_X_START + depth * AUTO_LAYOUT_X_GAP,
+        y: AUTO_LAYOUT_Y_CENTER + offset * AUTO_LAYOUT_Y_GAP,
+      },
+    };
+  });
+}
+
 const nodeTypes: NodeTypes = {
   flowNode: FlowNode,
 };
@@ -128,6 +212,18 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
   const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set());
   const [savedFlowId, setSavedFlowId] = useState<string | undefined>(flowId);
 
+  useEffect(() => {
+    const nextNodes = initialNodes && (initialNodes as Node[]).length > 0
+      ? (initialNodes as Node[])
+      : [defaultStartNode];
+    const nextEdges = (initialEdges as Edge[]) || [];
+
+    setNodes(layoutNodesLeftToRight(nextNodes, nextEdges));
+    setEdges(nextEdges);
+    setSelectedNode(null);
+    setSavedFlowId(flowId);
+  }, [initialNodes, initialEdges, flowId, setNodes, setEdges]);
+
   const onConnect = useCallback(
     (connection: Connection) => {
       const edge: Edge = {
@@ -180,10 +276,6 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
 
   const handleBuildFlow = useCallback(
     (flowDef: { nodes: { id: string; type: string }[]; edges: { source: string; target: string }[] }) => {
-      const X_START = 100;
-      const X_GAP = 280;
-      const Y_CENTER = 200;
-
       const idMap = new Map<string, string>();
       const newNodes: Node[] = [];
 
@@ -198,7 +290,7 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
         newNodes.push({
           id: realId,
           type: "flowNode",
-          position: { x: X_START + i * X_GAP, y: Y_CENTER },
+          position: { x: AUTO_LAYOUT_X_START + i * AUTO_LAYOUT_X_GAP, y: AUTO_LAYOUT_Y_CENTER },
           data: {
             label: template.label,
             category: template.category,
@@ -228,7 +320,7 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
         })
         .filter(Boolean) as Edge[];
 
-      setNodes(newNodes);
+      setNodes(layoutNodesLeftToRight(newNodes, newEdges));
       setEdges(newEdges);
     },
     [setNodes, setEdges]
