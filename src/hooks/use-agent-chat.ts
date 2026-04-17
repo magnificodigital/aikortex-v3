@@ -236,10 +236,14 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
       const maxRetries = 2;
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
         const payload: Record<string, any> = {
-          mode: "agent-chat",
+          mode: options.mode || "agent-chat",
           messages: apiMessages,
           useGateway: options.useGateway ?? false,
         };
+
+        if (options.mode === "wizard-setup") {
+          payload.agentType = options.agentType || "custom";
+        }
 
         if (options.useGateway) {
           payload.model = options.gatewayModel || "google/gemini-2.5-flash";
