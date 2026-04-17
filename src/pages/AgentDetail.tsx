@@ -633,7 +633,8 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
     const prefix = `agent-detail-${agentId}`;
     try {
       ["name","desc","objective","instructions","toneOfVoice","greetingMessage",
-       "files","urls","channels","apiConfig","avatar","setup-messages","test-messages","chatMode","model","setupModel"].forEach(k =>
+       "files","urls","channels","apiConfig","avatar","setup-messages","test-messages",
+       "wizard-messages","chatMode","model","setupModel"].forEach(k =>
         localStorage.removeItem(`${prefix}-${k}`)
       );
     } catch {}
