@@ -241,6 +241,9 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
           mode: options.mode || "agent-chat",
           messages: apiMessages,
           useGateway: options.useGateway ?? false,
+          userId: session?.user?.id || "anonymous",
+          agentId: options.agentId,
+          agentConfig: options.agentContext,
         };
 
         if (options.mode === "wizard-setup") {
