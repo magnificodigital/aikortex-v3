@@ -799,6 +799,9 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
         initialWizardMessages={wizardMessages}
         onWizardMessagesChange={setWizardMessages}
         hasMemoryActive={hasMemoryActive}
+        wizardMessages={wizardChat.messages}
+        wizardSendMessage={wizardChat.sendMessage}
+        wizardIsStreaming={wizardChat.isStreaming}
       />
 
       {/* ── RIGHT: Voice Agent ── */}
