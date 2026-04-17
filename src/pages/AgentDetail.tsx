@@ -606,6 +606,21 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
     }
   }, [pendingSetupRestore, setupChat.setMessages]);
 
+  /* ── Chat (wizard-setup mode — guided Q&A to fill agent config) ── */
+
+  const wizardAgentTypeKey = (loadedAgent.agentType || "Custom").toLowerCase();
+  const wizardChat = useAgentChat(
+    [],
+    {
+      useGateway: true,
+      gatewayModel: setupModel,
+      mode: "wizard-setup",
+      agentType: wizardAgentTypeKey,
+      persistKey: `${storagePrefix}-wizard-messages`,
+      disableCrmExtraction: true,
+    }
+  );
+
   /* ── Chat (test mode) ── */
 
   const testSystemPrompt = useMemo(() => {
