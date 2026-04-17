@@ -574,27 +574,40 @@ const AgentRightPanel = ({
                   </>
                 )}
 
-                {/* Objetivo */}
-                {settingsNav === "objective" && (
-                  <div className="space-y-6">
-                    <div>
-                      <h2 className="text-lg font-bold text-foreground">Objetivo</h2>
-                      <p className="text-sm text-muted-foreground mt-1">Defina a missão principal do agente.</p>
-                    </div>
-                    <Textarea value={agentObjective} onChange={(e) => setAgentObjective(e.target.value)}
-                      placeholder="Ex: Qualificar leads e agendar reuniões." className="text-sm min-h-[100px]" />
-                  </div>
-                )}
-
-                {/* Instruções */}
+                {/* Instruções (objetivo + comportamento unificados, estruturados em tópicos) */}
                 {settingsNav === "instructions" && (
-                  <div className="space-y-6">
-                    <div>
-                      <h2 className="text-lg font-bold text-foreground">Instruções</h2>
-                      <p className="text-sm text-muted-foreground mt-1">Regras e comportamento do agente.</p>
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h2 className="text-lg font-bold text-foreground">Instruções</h2>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Prompt completo do agente: objetivo, público, tom, fluxo, regras e restrições — organizado em tópicos.
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs shrink-0"
+                        onClick={() => {
+                          const merged = agentObjective?.trim()
+                            ? `# 2. Objetivo Principal\n${agentObjective.trim()}\n\n${DEFAULT_INSTRUCTIONS_TEMPLATE.replace(/# 2\. Objetivo Principal[\s\S]*?(?=\n# 3\.)/, "")}`
+                            : DEFAULT_INSTRUCTIONS_TEMPLATE;
+                          setAgentInstructions(merged);
+                          if (agentObjective?.trim()) setAgentObjective("");
+                        }}
+                      >
+                        Carregar template
+                      </Button>
                     </div>
-                    <Textarea value={agentInstructions} onChange={(e) => setAgentInstructions(e.target.value)}
-                      placeholder="Ex: Sempre pergunte o nome antes de agendar." className="text-sm min-h-[140px]" />
+                    <Textarea
+                      value={agentInstructions}
+                      onChange={(e) => setAgentInstructions(e.target.value)}
+                      placeholder={DEFAULT_INSTRUCTIONS_TEMPLATE}
+                      className="text-sm min-h-[480px] font-mono leading-relaxed"
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      Dica: use <code className="px-1 rounded bg-muted">#</code> para títulos e <code className="px-1 rounded bg-muted">-</code> para listas. Quanto mais específico, melhor o desempenho do agente.
+                    </p>
                   </div>
                 )}
 
