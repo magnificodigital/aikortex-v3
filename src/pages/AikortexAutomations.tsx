@@ -153,24 +153,29 @@ const AikortexAutomations = () => {
   return (
     <ModuleGate moduleKey="aikortex.flows">
       <DashboardLayout>
-        <div className="max-w-5xl mx-auto px-6 py-10">
+        <div className="max-w-6xl mx-auto px-6 py-12">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-end justify-between mb-10">
             <div>
-              <h1 className="text-2xl font-bold text-foreground mb-1">Automações</h1>
-              <p className="text-sm text-muted-foreground">
-                Construa fluxos visuais que conectam agentes, ferramentas e ações.
+              <h1 className="text-3xl font-semibold tracking-tight text-foreground">Automações</h1>
+              <p className="text-sm text-muted-foreground mt-1.5">
+                Fluxos visuais que conectam agentes, ferramentas e ações.
               </p>
             </div>
-            <Button onClick={handleNewBlank} className="gap-2 rounded-full">
-              <Plus className="w-4 h-4" /> Novo Fluxo
+            <Button onClick={handleNewBlank} size="sm" className="gap-2 rounded-full h-9 px-4">
+              <Plus className="w-3.5 h-3.5" /> Novo Fluxo
             </Button>
           </div>
 
           {/* My Flows */}
           {!isLoading && flows.length > 0 && (
-            <div className="mb-10">
-              <h2 className="text-sm font-semibold text-foreground mb-3">Meus Fluxos</h2>
+            <section className="mb-12">
+              <div className="flex items-baseline justify-between mb-4">
+                <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Meus Fluxos
+                </h2>
+                <span className="text-[10px] text-muted-foreground">{flows.length} {flows.length === 1 ? "fluxo" : "fluxos"}</span>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {flows.map((flow) => {
                   const isActive = flow.status === "active";
@@ -178,84 +183,94 @@ const AikortexAutomations = () => {
                     <div
                       key={flow.id}
                       onClick={() => handleOpenFlow(flow)}
-                      className="group rounded-xl border border-border bg-card p-4 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all cursor-pointer"
+                      className="group relative rounded-xl border border-border/60 bg-card p-4 hover:border-primary/40 hover:bg-accent/20 transition-all cursor-pointer"
                     >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                            <Workflow className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold text-foreground line-clamp-1">{flow.name}</p>
-                            <p className="text-[10px] text-muted-foreground">
-                              {flow.nodes.length} blocos • {isActive ? "Ativo" : "Rascunho"}
-                            </p>
-                          </div>
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                          <Workflow className="w-4 h-4" />
                         </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100">
-                              <MoreVertical className="w-3.5 h-3.5" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-40">
-                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleOpenFlow(flow); }}>
-                              <Pencil className="w-3.5 h-3.5 mr-2" /> Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleToggleFlow(flow.id); }}>
-                              <Power className="w-3.5 h-3.5 mr-2" /> {isActive ? "Pausar" : "Ativar"}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteId(flow.id); }}>
-                              <Trash2 className="w-3.5 h-3.5 mr-2" /> Excluir
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <div className="flex items-center gap-2">
+                          <span className={`inline-flex items-center gap-1 text-[10px] font-medium ${isActive ? "text-[hsl(var(--success))]" : "text-muted-foreground"}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-[hsl(var(--success))]" : "bg-muted-foreground/40"}`} />
+                            {isActive ? "Ativo" : "Rascunho"}
+                          </span>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100">
+                                <MoreVertical className="w-3.5 h-3.5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-40">
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleOpenFlow(flow); }}>
+                                <Pencil className="w-3.5 h-3.5 mr-2" /> Editar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleToggleFlow(flow.id); }}>
+                                <Power className="w-3.5 h-3.5 mr-2" /> {isActive ? "Pausar" : "Ativar"}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteId(flow.id); }}>
+                                <Trash2 className="w-3.5 h-3.5 mr-2" /> Excluir
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                      <p className="text-sm font-medium text-foreground line-clamp-1 mb-1">{flow.name}</p>
+                      <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                        <span>{flow.nodes.length} blocos</span>
+                        <span className="w-0.5 h-0.5 rounded-full bg-muted-foreground/40" />
                         <Clock className="w-3 h-3" />
-                        Atualizado em {formatDate(flow.updatedAt)}
+                        <span>{formatDate(flow.updatedAt)}</span>
                       </div>
                     </div>
                   );
                 })}
               </div>
-            </div>
+            </section>
           )}
 
           {/* Templates showcase */}
-          <h2 className="text-sm font-semibold text-foreground mb-3">Templates</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {FLOW_TEMPLATES.map((tpl) => (
-              <div
-                key={tpl.id}
-                onClick={() => handleSelectTemplate(tpl)}
-                className="group rounded-xl border border-border bg-card p-5 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all cursor-pointer"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-lg">
-                    {tpl.icon || "⚡"}
+          <section>
+            <div className="flex items-baseline justify-between mb-4">
+              <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Templates
+              </h2>
+              <span className="text-[10px] text-muted-foreground">{FLOW_TEMPLATES.length} disponíveis</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {FLOW_TEMPLATES.map((tpl) => (
+                <div
+                  key={tpl.id}
+                  onClick={() => handleSelectTemplate(tpl)}
+                  className="group rounded-xl border border-border/60 bg-card p-4 hover:border-primary/40 hover:bg-accent/20 transition-all cursor-pointer"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="w-9 h-9 rounded-lg bg-muted/50 flex items-center justify-center text-base">
+                      {tpl.icon || "⚡"}
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">{tpl.nodes.length} blocos</span>
                   </div>
-                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-muted text-muted-foreground">
-                    {tpl.nodes.length} blocos
-                  </span>
+                  <p className="text-sm font-medium text-foreground mb-1">{tpl.name}</p>
+                  <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed mb-3">
+                    {tpl.description}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-muted-foreground">{tpl.category}</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                  </div>
                 </div>
-                <h3 className="text-sm font-bold text-foreground mb-0.5">{tpl.name}</h3>
-                <p className="text-[10px] text-primary/70 font-medium mb-1.5">{tpl.category}</p>
-                <p className="text-xs text-muted-foreground leading-relaxed mb-3 line-clamp-2">{tpl.description}</p>
-                <div className="flex items-center text-xs text-primary font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                  Usar template <ArrowRight className="w-3.5 h-3.5 ml-1" />
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </section>
 
           {/* Empty state */}
           {!isLoading && flows.length === 0 && (
-            <div className="mt-10 rounded-xl border border-dashed border-border p-8 text-center">
-              <Workflow className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+            <div className="mt-12 rounded-xl border border-dashed border-border/60 p-10 text-center">
+              <div className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center mx-auto mb-3">
+                <Workflow className="w-5 h-5 text-muted-foreground" />
+              </div>
               <p className="text-sm font-medium text-foreground">Nenhum fluxo criado ainda</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Use um template acima ou clique em "Novo Fluxo" para começar do zero.
+                Escolha um template acima ou comece do zero.
               </p>
             </div>
           )}
