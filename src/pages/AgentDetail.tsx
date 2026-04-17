@@ -497,19 +497,18 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
     }
   );
 
-  // Auto-send "start" once when wizard opens (for non-template, non-existing agents)
+  // Auto-send "start" once when wizard opens (templates AND new custom agents)
   const wizardStartedRef = useRef(false);
   useEffect(() => {
     if (wizardStartedRef.current) return;
     if (agentLoading) return;
     if (wizardStep !== "discover") return;
-    if (isTemplate) return; // templates auto-build, no Q&A needed
     if (wizardChat.messages.length > 0) { wizardStartedRef.current = true; return; }
     wizardStartedRef.current = true;
     void wizardChat.sendMessage("start");
-  }, [agentLoading, wizardStep, isTemplate, wizardChat]);
+  }, [agentLoading, wizardStep, wizardChat]);
 
-  // Detect ```agent-config {...}``` block in wizard reply → save agent
+  // Detect ```agent-config {...}``` block in wizard reply → structure + build agent
   const wizardCompletedRef = useRef(false);
   useEffect(() => {
     if (wizardCompletedRef.current) return;
@@ -521,7 +520,8 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
     try {
       const parsed = JSON.parse(match[1].trim());
       wizardCompletedRef.current = true;
-      const finalConfig: StructuredAgentConfig = {
+
+      const baseConfig: StructuredAgentConfig = {
         agent_name: parsed.name || loadedAgent.name,
         agent_type: parsed.role || loadedAgent.agentType,
         description: parsed.description || "",
@@ -534,12 +534,27 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
         selected_features: [],
         onboarding_level: "soft",
       };
-      handleConfigStructured(finalConfig);
-      void handleBuildAgent(finalConfig);
+
+      // Enrich the config via the structure endpoint using the description from the chat
+      (async () => {
+        let finalConfig = baseConfig;
+        if (baseConfig.description) {
+          try {
+            const enriched = await handleStructureRequest(baseConfig.description);
+            if (enriched) {
+              finalConfig = { ...enriched, agent_name: baseConfig.agent_name, agent_type: baseConfig.agent_type };
+            }
+          } catch (e) {
+            console.warn("Structure enrichment failed, using base config:", e);
+          }
+        }
+        handleConfigStructured(finalConfig);
+        await handleBuildAgent(finalConfig);
+      })();
     } catch (e) {
       console.warn("Failed to parse agent-config block:", e);
     }
-  }, [wizardChat.messages, wizardChat.isStreaming, loadedAgent.name, loadedAgent.agentType, handleConfigStructured, handleBuildAgent]);
+  }, [wizardChat.messages, wizardChat.isStreaming, loadedAgent.name, loadedAgent.agentType, handleConfigStructured, handleBuildAgent, handleStructureRequest]);
 
 
   const testSystemPrompt = useMemo(() => {
