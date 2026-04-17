@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const GATEWAY_URL = "https://kbknehyfksugykrovfxs.supabase.co/functions/v1/ai-gateway";
+const GATEWAY_URL = "https://ldngvhemcqsfcjehvfyd.supabase.co/functions/v1/ai-gateway";
 const gatewayHeaders = () => ({
   "Content-Type": "application/json",
   "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""}`,
