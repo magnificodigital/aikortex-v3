@@ -112,6 +112,12 @@ interface UseAgentChatOptions {
   persistKey?: string;
   apiConfig?: ApiConfigParams;
   agentContext?: AgentChatContext;
+  /** When set to "wizard-setup", routes to the backend setup wizard prompt builder. */
+  mode?: "agent-chat" | "wizard-setup";
+  /** Agent type (sdr/sac/...) — required by the wizard-setup prompt builder. */
+  agentType?: string;
+  /** Disable CRM lead extraction post-processing (e.g. during wizard). */
+  disableCrmExtraction?: boolean;
 }
 
 function deriveProvider(model?: string): string | undefined {
