@@ -124,10 +124,8 @@ const AgentDetail = () => {
 
   /* ── Wizard state ── */
 
-  const hasAutoPrompt = isTemplate && !!templateAgent?.autoPrompt;
-  // Templates skip wizard entirely — start at "done" and auto-save in background
+  // Templates now go through the wizard chat (Q&A) before building
   const [wizardStep, setWizardStep] = useState<"discover" | "structure" | "build" | "done">(() => {
-    if (isTemplate && hasAutoPrompt) return "done";
     if (isTemplate) return "discover";
     if (isNewCustomFromHome) return "discover";
     // Existing saved agent
