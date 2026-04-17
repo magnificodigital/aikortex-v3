@@ -1,11 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Bot, Send, Brain, RefreshCw, ArrowRight } from "lucide-react";
+import { ArrowUp, Bot, Mic, RefreshCw, Sparkles, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
-import { NODE_TEMPLATES } from "@/types/flow-builder";
 import ReactMarkdown from "react-markdown";
-import { supabase } from "@/integrations/supabase/client";
+import { NODE_TEMPLATES } from "@/types/flow-builder";
 
 interface Message {
   id: string;
@@ -49,19 +46,13 @@ export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, init
   }, [messages]);
 
   const extractJsonFromResponse = (text: string): any | null => {
-    // Try ```json blocks first
     const jsonBlockMatch = text.match(/```json\s*([\s\S]*?)\s*```/);
     if (jsonBlockMatch) {
-      try {
-        return JSON.parse(jsonBlockMatch[1].trim());
-      } catch { /* fall through */ }
+      try { return JSON.parse(jsonBlockMatch[1].trim()); } catch { /* */ }
     }
-    // Try [BUILD_FLOW] blocks
     const buildFlowMatch = text.match(/\[BUILD_FLOW\]\s*([\s\S]*?)\s*\[\/BUILD_FLOW\]/);
     if (buildFlowMatch) {
-      try {
-        return JSON.parse(buildFlowMatch[1].trim());
-      } catch { /* fall through */ }
+      try { return JSON.parse(buildFlowMatch[1].trim()); } catch { /* */ }
     }
     return null;
   };
@@ -73,7 +64,6 @@ export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, init
         onBuildFlow(flowDef);
         return true;
       }
-      // Fallback: individual ADD_NODE commands
       if (!onAddNode) return false;
       const regex = /\[ADD_NODE:(\w+)\]/g;
       let match;
@@ -99,7 +89,6 @@ export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, init
       lastUserMsg.current = text.trim();
 
       const userMsg: Message = { id: `u-${Date.now()}`, role: "user", content: text.trim() };
-      // Build conversation history (exclude welcome message)
       const conversationHistory = [...messages.filter((m) => m.id !== "welcome"), userMsg].map((m) => ({
         role: m.role,
         content: m.content,
@@ -127,7 +116,6 @@ export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, init
 
         const flowGenerated = parseAndExecuteCommands(aiContent);
 
-        // Clean display text
         const displayText = aiContent
           .replace(/\[BUILD_FLOW\][\s\S]*?\[\/BUILD_FLOW\]/g, "")
           .replace(/\[ADD_NODE:\w+\]/g, "")
@@ -152,7 +140,7 @@ export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, init
           {
             id: `e-${Date.now()}`,
             role: "assistant",
-            content: "⚠️ Erro ao conectar com o DeerFlow. Verifique sua conexão.",
+            content: "⚠️ Erro ao conectar. Verifique sua conexão e tente novamente.",
           },
         ]);
       } finally {
@@ -163,12 +151,9 @@ export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, init
   );
 
   const handleRetry = () => {
-    if (lastUserMsg.current) {
-      handleSend(lastUserMsg.current);
-    }
+    if (lastUserMsg.current) handleSend(lastUserMsg.current);
   };
 
-  // Auto-send initial prompt
   useEffect(() => {
     if (initialPrompt && !didAutoSend.current && !isStreaming) {
       didAutoSend.current = true;
@@ -176,126 +161,122 @@ export default function FlowCopilotPanel({ onClose, onAddNode, onBuildFlow, init
     }
   }, [initialPrompt, handleSend]);
 
-  const showSuggestions = messages.length <= 1;
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const showSuggestions = messages.length <= 1 && !isStreaming;
 
   return (
-    <div className="flex flex-col h-full bg-[hsl(var(--background))]">
-      {/* Chat area */}
-      <div className="flex-1 overflow-y-auto px-3 py-3" ref={scrollRef}>
-        <div className="space-y-3">
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={cn("flex gap-2", msg.role === "user" ? "justify-end" : "justify-start")}
-            >
-              {msg.role === "assistant" && (
-                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500/20 to-indigo-600/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Bot className="w-3.5 h-3.5 text-violet-400" />
+    <div className="flex flex-col h-full bg-background">
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4" ref={scrollRef}>
+        {messages.map((msg) => (
+          <div key={msg.id}>
+            {msg.role === "user" ? (
+              <div className="flex justify-end">
+                <div className="max-w-[85%] rounded-2xl bg-primary text-primary-foreground px-3.5 py-2 text-sm">
+                  {msg.content}
                 </div>
-              )}
-              <div className="flex flex-col gap-1.5 max-w-[85%]">
-                <div
-                  className={cn(
-                    "rounded-xl px-3 py-2 text-xs",
-                    msg.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted/70 text-foreground border border-border/50"
-                  )}
-                >
-                  {msg.role === "assistant" ? (
-                    <div className="prose prose-xs prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-                      <ReactMarkdown>{msg.content}</ReactMarkdown>
-                    </div>
-                  ) : (
-                    msg.content
-                  )}
+              </div>
+            ) : (
+              <div className="flex gap-2.5">
+                <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <Bot className="w-3.5 h-3.5 text-primary" />
                 </div>
-                {msg.isFlowGenerated && (
-                  <div className="flex items-center gap-1.5 px-1">
-                    <div className="text-[10px] text-emerald-400 font-medium">✅ Fluxo gerado no canvas</div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-5 px-2 text-[10px] text-muted-foreground hover:text-foreground"
-                      onClick={() => setInput("Refinar o fluxo: ")}
-                    >
-                      Refinar fluxo <ArrowRight className="w-3 h-3 ml-1" />
-                    </Button>
+                <div className="text-sm leading-relaxed text-foreground flex-1 min-w-0">
+                  <div className="prose prose-sm dark:prose-invert max-w-none
+                    [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_li]:mb-0.5
+                    [&_strong]:text-foreground
+                    [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm">
+                    <ReactMarkdown>{msg.content}</ReactMarkdown>
                   </div>
-                )}
+                  {msg.isFlowGenerated && (
+                    <button
+                      onClick={() => setInput("Refinar o fluxo: ")}
+                      className="mt-2 inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
+                    >
+                      Refinar fluxo <ArrowRight className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            )}
+          </div>
+        ))}
 
-          {/* Typing indicator */}
-          {isStreaming && (
-            <div className="flex gap-2">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500/20 to-indigo-600/20 flex items-center justify-center flex-shrink-0">
-                <Bot className="w-3.5 h-3.5 text-violet-400" />
-              </div>
-              <div className="bg-muted/70 border border-border/50 rounded-xl px-3 py-2 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:0ms]" />
-                <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:150ms]" />
-                <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:300ms]" />
-              </div>
+        {/* Typing indicator */}
+        {isStreaming && (
+          <div className="flex gap-2.5">
+            <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+              <Bot className="w-3.5 h-3.5 text-primary animate-pulse" />
             </div>
-          )}
+            <div className="text-sm text-muted-foreground flex items-center gap-2">
+              <div className="flex gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary/50 animate-bounce" style={{ animationDelay: "0ms" }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-primary/50 animate-bounce" style={{ animationDelay: "150ms" }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-primary/50 animate-bounce" style={{ animationDelay: "300ms" }} />
+              </div>
+              <span className="text-xs">Gerando...</span>
+            </div>
+          </div>
+        )}
 
-          {/* Error retry button */}
-          {hasError && !isStreaming && (
-            <div className="flex justify-center">
-              <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={handleRetry}>
-                <RefreshCw className="w-3 h-3" /> Tentar novamente
-              </Button>
-            </div>
-          )}
-        </div>
+        {/* Retry */}
+        {hasError && !isStreaming && (
+          <div className="flex justify-center">
+            <Button variant="outline" size="sm" className="text-xs gap-1.5 rounded-full" onClick={handleRetry}>
+              <RefreshCw className="w-3 h-3" /> Tentar novamente
+            </Button>
+          </div>
+        )}
+
+        {/* Suggestions */}
+        {showSuggestions && (
+          <div className="flex flex-wrap gap-1.5 pt-2">
+            {SUGGESTIONS.map((s) => (
+              <button
+                key={s}
+                onClick={() => handleSend(s)}
+                className="text-[11px] px-2.5 py-1.5 rounded-full border border-border hover:border-primary/30 hover:bg-primary/5 text-muted-foreground hover:text-foreground transition-all"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Suggestions */}
-      {showSuggestions && !isStreaming && (
-        <div className="px-3 pb-2 flex flex-wrap gap-1.5">
-          {SUGGESTIONS.map((s) => (
-            <button
-              key={s}
-              onClick={() => handleSend(s)}
-              className="text-[10px] px-2.5 py-1.5 rounded-full border border-border hover:border-violet-500/40 hover:bg-violet-500/10 text-muted-foreground hover:text-foreground transition-all"
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Input area */}
-      <div className="p-3 border-t border-border flex-shrink-0">
-        <div className="relative">
-          <Textarea
+      {/* Input — same style as ChatPanel (apps/agents studio) */}
+      <div className="p-3 border-t border-border">
+        <div className="rounded-xl border border-border bg-card/50 p-1 transition-colors focus-within:border-primary/30">
+          <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
+            onKeyDown={handleKeyDown}
             placeholder="Descreva seu fluxo..."
-            className="min-h-[36px] max-h-[100px] text-xs resize-none pr-10"
-            rows={1}
+            rows={2}
+            className="w-full bg-transparent border-none outline-none resize-none text-sm text-foreground placeholder:text-muted-foreground px-3 py-2 min-h-[36px] max-h-[120px]"
           />
-          <Button
-            size="icon"
-            variant="ghost"
-            className="absolute bottom-1 right-1 h-7 w-7"
-            onClick={() => handleSend()}
-            disabled={!input.trim() || isStreaming}
-          >
-            <Send className="w-3.5 h-3.5" />
-          </Button>
+          <div className="flex items-center justify-between px-2 pb-1">
+            <div className="flex items-center gap-1">
+              <button className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded" disabled={isStreaming}>
+                <Mic className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <Button
+              size="icon"
+              onClick={() => handleSend()}
+              disabled={!input.trim() || isStreaming}
+              className="h-8 w-8 rounded-full bg-primary hover:bg-primary/90"
+            >
+              <ArrowUp className="w-3.5 h-3.5" />
+            </Button>
+          </div>
         </div>
-        <p className="text-[9px] text-muted-foreground mt-1.5 text-center">
-          Pressione Enter para enviar
-        </p>
       </div>
     </div>
   );
