@@ -489,6 +489,12 @@ const AgentDetail = () => {
           onboarding_level: "soft",
         };
 
+        // ALWAYS append operational instructions (BANT, agendamento, registro CRM)
+        // even when AI generated its own instructions, so the agent stays functional end-to-end.
+        if (operationalInstructions && !finalConfig.instructions.includes("<<<CRM_LEAD>>>")) {
+          finalConfig.instructions = `${operationalInstructions}\n\n---\n\n# Instruções complementares\n${finalConfig.instructions}`;
+        }
+
         // Update preset data with AI-enhanced config
         setPresetData({
           name: finalConfig.agent_name,
