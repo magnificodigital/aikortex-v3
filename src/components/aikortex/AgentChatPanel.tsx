@@ -63,6 +63,10 @@ interface AgentChatPanelProps {
   initialWizardMessages?: Array<{ role: "user" | "assistant"; content: string }>;
   onWizardMessagesChange?: (messages: Array<{ role: "user" | "assistant"; content: string }>) => void;
   hasMemoryActive?: boolean;
+  /** Wizard chat (Q&A flow with backend wizard prompt) — used during the discover step. */
+  wizardMessages?: ChatMessage[];
+  wizardSendMessage?: (text: string) => void;
+  wizardIsStreaming?: boolean;
 }
 
 const AGENT_SUGGESTIONS: Record<string, string[]> = {
