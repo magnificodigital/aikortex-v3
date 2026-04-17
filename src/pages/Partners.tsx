@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Handshake, User, TrendingUp, BookOpen, Award, Package, Calendar, MessageCircle } from "lucide-react";
+import { Handshake, User, TrendingUp, BookOpen, Award, LayoutTemplate, Calendar, MessageCircle } from "lucide-react";
 import { type PartnerProfile } from "@/types/partner";
 import PartnerProfileTab from "@/components/partners/PartnerProfileTab";
 import PartnerTiersTab from "@/components/partners/PartnerTiersTab";
@@ -98,7 +98,7 @@ const Partners = () => {
             <TabsTrigger value="tiers" className="flex items-center gap-1.5 text-xs"><TrendingUp className="w-3.5 h-3.5" />Evolução</TabsTrigger>
             <TabsTrigger value="training" className="flex items-center gap-1.5 text-xs"><BookOpen className="w-3.5 h-3.5" />Treinamentos</TabsTrigger>
             <TabsTrigger value="certifications" className="flex items-center gap-1.5 text-xs"><Award className="w-3.5 h-3.5" />Certificações</TabsTrigger>
-            <TabsTrigger value="marketplace" className="flex items-center gap-1.5 text-xs"><Package className="w-3.5 h-3.5" />Marketplace</TabsTrigger>
+            <TabsTrigger value="marketplace" className="flex items-center gap-1.5 text-xs"><LayoutTemplate className="w-3.5 h-3.5" />Templates</TabsTrigger>
             <TabsTrigger value="events" className="flex items-center gap-1.5 text-xs"><Calendar className="w-3.5 h-3.5" />Eventos & Mídia</TabsTrigger>
             <TabsTrigger value="community" className="flex items-center gap-1.5 text-xs"><MessageCircle className="w-3.5 h-3.5" />Comunidade</TabsTrigger>
           </TabsList>
