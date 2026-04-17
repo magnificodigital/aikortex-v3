@@ -599,6 +599,8 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
       "- Responda SEMPRE em português brasileiro.",
       "- NUNCA saia do personagem. Você É este agente, não um assistente genérico.",
       "- Mantenha o tom de voz configurado em TODAS as respostas.",
+      "- NUNCA use placeholders como [Nome da Empresa], [empresa] ou {{company}}. Se a empresa não estiver definida, simplesmente não a mencione.",
+      "- Use APENAS o nome do agente definido acima. Não invente outros nomes.",
       "- Se não souber algo específico do negócio, diga educadamente que pode encaminhar.",
       "- Seja conciso e direto (máximo 3 parágrafos por resposta).",
     ];
