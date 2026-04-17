@@ -23,8 +23,6 @@ import { NODE_TEMPLATES, type FlowNodeData, type FlowExecution, type FlowNodeLog
 import FlowNode from "./FlowNode";
 import FlowEdge from "./FlowEdge";
 import FlowNodeConfig from "./FlowNodeConfig";
-import FlowCopilotPanel from "./FlowCopilotPanel";
-import FlowNodePalette from "./FlowNodePalette";
 import FlowBottomToolbar from "./FlowBottomToolbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,11 +41,7 @@ import {
   Rocket,
   Trash2,
   Copy,
-  Download,
-  PanelLeft,
   PanelRight,
-  MessageSquare,
-  Wrench,
   Settings2,
   Database,
   ListChecks,
