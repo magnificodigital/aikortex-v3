@@ -85,7 +85,8 @@ const AgentDetail = () => {
 
   const [agentFlowId, setAgentFlowId] = useState<string | null>(null);
   useEffect(() => {
-    if (!agentId || agentId === "new" || agentId.startsWith("new-")) return;
+    setAgentFlowId(null);
+    if (!agentId || agentId === "new" || agentId.startsWith("new-") || TEMPLATE_MAP[agentId]) return;
     (async () => {
       const { data } = await (supabase
         .from("user_flows" as any)
@@ -97,11 +98,7 @@ const AgentDetail = () => {
   }, [agentId]);
 
   const handleOpenAgentFlow = () => {
-    if (!agentFlowId) {
-      toast.info("Nenhum fluxo automático encontrado para este agente.");
-      navigate("/aikortex/automations");
-      return;
-    }
+    if (!agentFlowId) return;
     navigate("/aikortex/automations", { state: { openFlowId: agentFlowId } });
   };
 
@@ -775,16 +772,18 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
                 <span className="hidden lg:inline">{btn.label}</span>
               </Button>
             ))}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 text-xs gap-1 px-2"
-              onClick={handleOpenAgentFlow}
-              title="Abrir fluxo de automação deste agente"
-            >
-              <Workflow className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">Fluxo</span>
-            </Button>
+            {agentFlowId && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs gap-1 px-2"
+                onClick={handleOpenAgentFlow}
+                title="Abrir fluxo de automação deste agente"
+              >
+                <Workflow className="w-3.5 h-3.5" />
+                <span className="hidden lg:inline">Fluxo</span>
+              </Button>
+            )}
             <div className="w-px h-5 bg-border mx-1" />
             {isSaving && (
               <span className="text-[10px] text-muted-foreground animate-pulse">Salvando...</span>
