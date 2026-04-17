@@ -4,7 +4,7 @@ import type { UserAgent } from "@/hooks/use-user-agents";
 
 interface FlowNode {
   id: string;
-  type: "default";
+  type: "flowNode";
   position: { x: number; y: number };
   data: {
     label: string;
@@ -37,7 +37,7 @@ const NODE = (
   description = ""
 ): FlowNode => ({
   id,
-  type: "default",
+  type: "flowNode",
   position: { x, y },
   data: { label, category, icon, color, nodeType, config, description },
 });
