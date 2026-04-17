@@ -83,22 +83,27 @@ const AgentDetail = () => {
   const location    = useLocation();
   const { agentId } = useParams();
   const navState    = location.state as any;
-  const { flows }   = useFlows();
 
-  const agentFlow = useMemo(
-    () => flows.find((f) => (f as any).nodes?.some?.((n: any) => n?.data?.config?.agent_id === agentId))
-       || flows.find((f) => f.name?.toLowerCase().includes((loadedAgentNameRef.current || "").toLowerCase())),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [flows, agentId]
-  );
+  const [agentFlowId, setAgentFlowId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!agentId || agentId === "new" || agentId.startsWith("new-")) return;
+    (async () => {
+      const { data } = await (supabase
+        .from("user_flows" as any)
+        .select("id, trigger_config")
+        .order("created_at", { ascending: false }) as any);
+      const match = (data ?? []).find((f: any) => f?.trigger_config?.agent_id === agentId);
+      if (match) setAgentFlowId(match.id);
+    })();
+  }, [agentId]);
 
   const handleOpenAgentFlow = () => {
-    if (!agentFlow) {
+    if (!agentFlowId) {
       toast.info("Nenhum fluxo automático encontrado para este agente.");
       navigate("/aikortex/automations");
       return;
     }
-    navigate("/aikortex/automations", { state: { openFlowId: agentFlow.id } });
+    navigate("/aikortex/automations", { state: { openFlowId: agentFlowId } });
   };
 
   const isTemplate    = !!agentId && !!TEMPLATE_MAP[agentId];
