@@ -25,6 +25,7 @@ import FlowEdge from "./FlowEdge";
 import FlowNodeConfig from "./FlowNodeConfig";
 import FlowBottomToolbar from "./FlowBottomToolbar";
 import FlowCopilotPanel from "./FlowCopilotPanel";
+import FlowInfoPanel from "./FlowInfoPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -616,13 +617,12 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
               />
             )}
             {rightTab === "editor" && !selectedNode && (
-              <div className="flex flex-col items-center justify-center h-full text-center px-6">
-                <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center mb-3">
-                  <Settings2 className="w-5 h-5 text-muted-foreground" />
-                </div>
-                <p className="text-sm font-medium text-foreground mb-1">Nenhum bloco selecionado</p>
-                <p className="text-xs text-muted-foreground">Clique em um bloco no canvas para editá-lo aqui.</p>
-              </div>
+              <FlowInfoPanel
+                flowName={flowName || "Novo Fluxo"}
+                nodes={nodes}
+                edges={edges}
+                onSelectNode={(n) => { setSelectedNode(n); }}
+              />
             )}
             {rightTab === "database" && (
               <div className="flex flex-col items-center justify-center h-full text-center px-6">
