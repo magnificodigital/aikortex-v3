@@ -485,8 +485,20 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
   /* ── Chat (wizard-setup mode — guided Q&A to fill agent config) ── */
 
   const wizardAgentTypeKey = (loadedAgent.agentType || "Custom").toLowerCase();
+
+  const wizardWelcomeMessage = useMemo(() => {
+    const greetings: Record<string, string> = {
+      sdr: `Olá! 👋 Vou te ajudar a configurar seu agente **SDR**. Vou fazer algumas perguntas rápidas para entender seu negócio e criar um agente sob medida.\n\nPara começar: **qual será o nome do seu agente?** (ex: "Lia", "Carlos da Aikortex")`,
+      sac: `Olá! 👋 Vou te ajudar a configurar seu agente de **Atendimento ao Cliente**. Vou fazer algumas perguntas rápidas para deixar tudo personalizado.\n\nPara começar: **qual será o nome do seu agente?**`,
+      bdr: `Olá! 👋 Vou te ajudar a configurar seu agente **BDR** de prospecção. Vou fazer algumas perguntas para entender o público-alvo e o tom da abordagem.\n\nPara começar: **qual será o nome do seu agente?**`,
+      cs: `Olá! 👋 Vou te ajudar a configurar seu agente de **Customer Success**. Vou te guiar passo a passo.\n\nPara começar: **qual será o nome do seu agente?**`,
+      custom: `Olá! 👋 Vou te ajudar a criar seu agente personalizado. Vou fazer algumas perguntas rápidas para entender o que você precisa.\n\nPara começar: **qual será o nome do seu agente?**`,
+    };
+    return greetings[wizardAgentTypeKey] || greetings.custom;
+  }, [wizardAgentTypeKey]);
+
   const wizardChat = useAgentChat(
-    [],
+    [{ role: "agent", text: wizardWelcomeMessage }],
     {
       useGateway: true,
       gatewayModel: setupModel,
@@ -496,17 +508,6 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
       disableCrmExtraction: true,
     }
   );
-
-  // Auto-send "start" once when wizard opens (templates AND new custom agents)
-  const wizardStartedRef = useRef(false);
-  useEffect(() => {
-    if (wizardStartedRef.current) return;
-    if (agentLoading) return;
-    if (wizardStep !== "discover") return;
-    if (wizardChat.messages.length > 0) { wizardStartedRef.current = true; return; }
-    wizardStartedRef.current = true;
-    void wizardChat.sendMessage("Vamos criar seu agente inteligente");
-  }, [agentLoading, wizardStep, wizardChat]);
 
   // Detect ```agent-config {...}``` block in wizard reply → structure + build agent
   const wizardCompletedRef = useRef(false);
