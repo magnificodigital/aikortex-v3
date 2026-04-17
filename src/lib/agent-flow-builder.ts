@@ -49,18 +49,20 @@ const EDGE = (source: string, target: string): FlowEdge => ({
 });
 
 /** Returns extra nodes/edges based on agent type (SDR, SAC, Custom...). */
-function extraStepsByType(agentType: string, agentNodeId: string, lastY: number) {
+function extraStepsByType(agentType: string, agentNodeId: string, lastX: number) {
   const t = agentType.toLowerCase();
   const nodes: FlowNode[] = [];
   const edges: FlowEdge[] = [];
-  let y = lastY;
+  const Y = 200;
+  const X_GAP = 280;
+  let x = lastX;
 
   if (t.includes("sdr") || t.includes("sales") || t.includes("vend")) {
     nodes.push(
-      NODE("capture-name", "capture_name", "Capturar Nome", "data_capture", "👤", "#10b981", 100, y += 140, { prompt: "Qual é o seu nome?", variable: "name", required: true }),
-      NODE("capture-email", "capture_email", "Capturar E-mail", "data_capture", "📧", "#10b981", 100, y += 140, { prompt: "Qual é o seu e-mail?", variable: "email", required: true }),
-      NODE("crm-lead", "crm_create_lead", "Criar Lead no CRM", "crm_actions", "➕", "#f97316", 100, y += 140, { provider: "internal" }),
-      NODE("followup", "crm_create_followup", "Agendar Follow-up", "crm_actions", "🔔", "#f97316", 100, y += 140, { type: "whatsapp", delay: "24h" }),
+      NODE("capture-name", "capture_name", "Capturar Nome", "data_capture", "👤", "#10b981", x += X_GAP, Y, { prompt: "Qual é o seu nome?", variable: "name", required: true }),
+      NODE("capture-email", "capture_email", "Capturar E-mail", "data_capture", "📧", "#10b981", x += X_GAP, Y, { prompt: "Qual é o seu e-mail?", variable: "email", required: true }),
+      NODE("crm-lead", "crm_create_lead", "Criar Lead no CRM", "crm_actions", "➕", "#f97316", x += X_GAP, Y, { provider: "internal" }),
+      NODE("followup", "crm_create_followup", "Agendar Follow-up", "crm_actions", "🔔", "#f97316", x += X_GAP, Y, { type: "whatsapp", delay: "24h" }),
     );
     edges.push(
       EDGE(agentNodeId, "capture-name"),
@@ -68,29 +70,29 @@ function extraStepsByType(agentType: string, agentNodeId: string, lastY: number)
       EDGE("capture-email", "crm-lead"),
       EDGE("crm-lead", "followup"),
     );
-    return { nodes, edges, lastNodeId: "followup", lastY: y };
+    return { nodes, edges, lastNodeId: "followup", lastX: x };
   }
 
   if (t.includes("sac") || t.includes("support") || t.includes("atend")) {
     nodes.push(
-      NODE("intent", "intent_classifier", "Classificar Intenção", "processing", "🏷️", "#6366f1", 100, y += 140, { model: "gemini-2.5-flash" }),
-      NODE("kb", "knowledge_search", "Consultar Base", "knowledge", "📚", "#a855f7", 100, y += 140, { maxResults: 5 }),
-      NODE("hil", "human_in_loop", "Escalar para Humano", "control", "👤", "#ec4899", 100, y += 140, { approvalMessage: "Necessário humano?" }),
+      NODE("intent", "intent_classifier", "Classificar Intenção", "processing", "🏷️", "#6366f1", x += X_GAP, Y, { model: "gemini-2.5-flash" }),
+      NODE("kb", "knowledge_search", "Consultar Base", "knowledge", "📚", "#a855f7", x += X_GAP, Y, { maxResults: 5 }),
+      NODE("hil", "human_in_loop", "Escalar para Humano", "control", "👤", "#ec4899", x += X_GAP, Y, { approvalMessage: "Necessário humano?" }),
     );
     edges.push(
       EDGE(agentNodeId, "intent"),
       EDGE("intent", "kb"),
       EDGE("kb", "hil"),
     );
-    return { nodes, edges, lastNodeId: "hil", lastY: y };
+    return { nodes, edges, lastNodeId: "hil", lastX: x };
   }
 
   // Default (Custom): just a memory lookup
   nodes.push(
-    NODE("memory", "memory_lookup", "Memória do Agente", "knowledge", "🧠", "#a855f7", 100, y += 140, { lookbackMessages: 10 }),
+    NODE("memory", "memory_lookup", "Memória do Agente", "knowledge", "🧠", "#a855f7", x += X_GAP, Y, { lookbackMessages: 10 }),
   );
   edges.push(EDGE(agentNodeId, "memory"));
-  return { nodes, edges, lastNodeId: "memory", lastY: y };
+  return { nodes, edges, lastNodeId: "memory", lastX: x };
 }
 
 export function buildDefaultFlowForAgent(agent: UserAgent): {
@@ -106,8 +108,8 @@ export function buildDefaultFlowForAgent(agent: UserAgent): {
     "trigger",
     "💬",
     "#22c55e",
-    100,
     50,
+    200,
     { channel: "any" },
     "Inicia quando o agente recebe uma mensagem"
   );
@@ -119,8 +121,8 @@ export function buildDefaultFlowForAgent(agent: UserAgent): {
     "processing",
     "🧠",
     "#6366f1",
-    100,
-    190,
+    330,
+    200,
     {
       agentId: agent.id,
       agentType: agent.agent_type,
@@ -130,7 +132,7 @@ export function buildDefaultFlowForAgent(agent: UserAgent): {
     "Processa a mensagem com o agente IA"
   );
 
-  const extras = extraStepsByType(agent.agent_type, agentNode.id, 190);
+  const extras = extraStepsByType(agent.agent_type, agentNode.id, 330);
 
   const responseNode = NODE(
     "response",
@@ -139,8 +141,8 @@ export function buildDefaultFlowForAgent(agent: UserAgent): {
     "output",
     "💬",
     "#06b6d4",
-    100,
-    extras.lastY + 140,
+    extras.lastX + 280,
+    200,
     { message: "{{agent_response}}" },
     "Envia a resposta do agente ao usuário"
   );
