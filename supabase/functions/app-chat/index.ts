@@ -491,6 +491,38 @@ serve(async (req) => {
       return await proxyAgentChat(body, authHeader);
     }
 
+    /* ── Mode: wizard-setup (streaming, OpenRouter free models) ── */
+    if (mode === "wizard-setup") {
+      const orKey = Deno.env.get("OPENROUTER_API_KEY") ?? "";
+      const agentType: string = (body.agentType as string) || "custom";
+      const typeLabels: Record<string, string> = { sdr: "SDR", sac: "SAC/Atendimento", custom: "Personalizado" };
+      const label = typeLabels[agentType.toLowerCase()] || agentType;
+      const systemPrompt = `Você é um assistente de configuração Aikortex para agente ${label}. Faça UMA pergunta por vez sobre: nome do agente, empresa, produto/serviço, público-alvo, tom de comunicação e restrições. Ao final, gere bloco \`\`\`agent-config{"name":"...","role":"${agentType}","companyName":"...","objective":"...","instructions":"...","toneOfVoice":"...","description":"..."}\`\`\`. Responda em português do Brasil.`;
+      const wizardMessages = [{ role: "system", content: systemPrompt }, ...((body.messages as Array<{ role: string; content: string }>) || [])];
+      const models = ["meta-llama/llama-3.3-70b-instruct:free", "google/gemma-3-27b-it:free", "deepseek/deepseek-chat-v3-0324:free"];
+      for (const model of models) {
+        try {
+          const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${orKey}`,
+              "Content-Type": "application/json",
+              "HTTP-Referer": "https://aikortex.com",
+              "X-Title": "Aikortex",
+            },
+            body: JSON.stringify({ model, messages: wizardMessages, stream: true, max_tokens: 2048 }),
+          });
+          if (r.ok) return new Response(r.body, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
+        } catch {
+          continue;
+        }
+      }
+      return new Response(JSON.stringify({ error: "Serviço indisponível" }), {
+        status: 503,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     /* ── Mode: structure (non-streaming JSON) ── */
     const isStructureMode = mode === "structure";
 
