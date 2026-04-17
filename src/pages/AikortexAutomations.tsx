@@ -2,16 +2,20 @@ import { useState, useCallback, useEffect } from "react";
 import ModuleGate from "@/components/shared/ModuleGate";
 import { useLocation } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
-import { Workflow, Plus, ArrowLeft } from "lucide-react";
+import { Workflow, Plus, ArrowLeft, Trash2, Pencil, Clock, MoreVertical, Power, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import type { SavedFlow, FlowFolder, FlowTemplate } from "@/types/flow-builder";
+import { FLOW_TEMPLATES } from "@/types/flow-builder";
 import FlowCanvas from "@/components/flows/FlowCanvas";
-import FlowTemplateGallery from "@/components/flows/FlowTemplateGallery";
-import FlowList from "@/components/flows/FlowList";
-// FlowCreationSplit removed — Copilot panel handles DeerFlow integration directly
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useFlows } from "@/hooks/use-flows";
 
 const AikortexAutomations = () => {
