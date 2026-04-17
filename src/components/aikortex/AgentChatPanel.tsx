@@ -157,6 +157,9 @@ const AgentChatPanel = ({
   initialWizardMessages,
   onWizardMessagesChange,
   hasMemoryActive,
+  wizardMessages: wizardChatMessages,
+  wizardSendMessage,
+  wizardIsStreaming,
 }: AgentChatPanelProps) => {
   const [input, setInput] = useState("");
   const [editingConfig, setEditingConfig] = useState(false);
