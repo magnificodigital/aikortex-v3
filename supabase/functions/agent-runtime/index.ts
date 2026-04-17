@@ -1,0 +1,306 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const GATEWAY_URL = "https://kbknehyfksugykrovfxs.supabase.co/functions/v1/ai-gateway";
+
+// ── SSE helpers ───────────────────────────────────────────────────────────
+function streamText(text: string): ReadableStream {
+  const encoder = new TextEncoder();
+  return new ReadableStream({
+    start(ctrl) {
+      const words = text.split(" ");
+      for (let i = 0; i < words.length; i++) {
+        const chunk = i === words.length - 1 ? words[i] : words[i] + " ";
+        const payload = JSON.stringify({ choices: [{ delta: { content: chunk } }] });
+        ctrl.enqueue(encoder.encode(`data: ${payload}\n\n`));
+      }
+      ctrl.enqueue(encoder.encode("data: [DONE]\n\n"));
+      ctrl.close();
+    },
+  });
+}
+
+// ── System prompt builder ─────────────────────────────────────────────────
+function buildSystemPrompt(agentConfig: Record<string, any>): string {
+  const name        = agentConfig?.name         || "Assistente";
+  const role        = (agentConfig?.role        || "").toLowerCase();
+  const objective   = agentConfig?.objective    || "";
+  const instructions = agentConfig?.instructions || "";
+  const tone        = agentConfig?.toneOfVoice  || "Profissional e Amigável";
+  const company     = agentConfig?.companyName  || "";
+
+  const isSdr = role.includes("sdr") || role.includes("vendas") || role.includes("sales") ||
+                objective.toLowerCase().includes("qualific") ||
+                objective.toLowerCase().includes("lead") ||
+                instructions.toLowerCase().includes("bant");
+
+  if (isSdr) {
+    return `Você é ${name}, agente de SDR (Sales Development Representative)${company ? ` da ${company}` : ""}.
+
+## Seu objetivo
+${objective || "Qualificar leads, coletar dados de contato e agendar reuniões com leads qualificados."}
+
+## Método de qualificação: BANT
+Conduza a conversa de forma natural para descobrir:
+- **Budget (Orçamento):** O lead tem budget disponível? Qual o porte da empresa?
+- **Authority (Autoridade):** É o tomador de decisão? Quem mais está envolvido?
+- **Need (Necessidade):** Qual problema quer resolver? Qual a dor principal?
+- **Timeline (Prazo):** Quando pretende implementar? Há urgência?
+
+## Fluxo da conversa
+1. Apresente-se brevemente e pergunte o nome do lead
+2. Entenda o contexto e a dor principal (Need)
+3. Explore o porte/budget de forma natural ("qual o tamanho da sua equipe?")
+4. Confirme se é o decisor ou se há outros envolvidos (Authority)
+5. Entenda o prazo e urgência (Timeline)
+6. Se qualificado (pelo menos 3 de 4 critérios BANT), proponha uma reunião
+7. Colete email/WhatsApp para confirmar o agendamento
+
+## Instruções específicas
+${instructions}
+
+## Tom de voz
+${tone}
+
+## Regras obrigatórias
+- Seja natural e conversacional — NUNCA pareça um formulário
+- Faça UMA pergunta por vez, nunca várias ao mesmo tempo
+- Ouça ativamente e faça perguntas de aprofundamento
+- Quando o lead demonstrar interesse em agendar, peça email e telefone
+- Registre mentalmente os dados BANT ao longo da conversa
+- Responda SEMPRE em português do Brasil
+- Nunca invente horários de agenda — apenas manifeste interesse em agendar e colete os dados`;
+  }
+
+  // Generic / SAC / Custom prompt
+  return `Você é ${name}${company ? `, agente de IA da ${company}` : ", um agente de IA"}.
+
+## Objetivo
+${objective}
+
+## Instruções
+${instructions}
+
+## Tom de voz
+${tone}
+
+## Regras
+- Seja natural e conversacional
+- Colete nome, email ou telefone e empresa do lead durante a conversa quando pertinente
+- Responda sempre em português do Brasil`;
+}
+
+// ── Lead extractor — runs after every response ────────────────────────────
+async function extractAndSaveLead(
+  messages: Array<{ role: string; content: string }>,
+  agentResponse: string,
+  agentConfig: Record<string, any>,
+  ctx: { supabase: ReturnType<typeof createClient>; userId: string; agentId?: string }
+): Promise<void> {
+  try {
+    const role = (agentConfig?.role || "").toLowerCase();
+    const isSdr = role.includes("sdr") || role.includes("vendas") || role.includes("sales");
+
+    const fullConvo = messages
+      .map(m => `${m.role === "user" ? "Lead" : "Agente"}: ${m.content}`)
+      .join("\n");
+
+    const extractPrompt = isSdr
+      ? `Analise esta conversa de SDR e extraia todos os dados disponíveis do lead.
+
+CONVERSA COMPLETA:
+${fullConvo}
+ÚLTIMA RESPOSTA DO AGENTE: ${agentResponse.slice(0, 300)}
+
+Retorne APENAS JSON válido com esta estrutura:
+{
+  "found": true,
+  "name": "nome completo ou vazio",
+  "email": "email ou vazio",
+  "phone": "telefone/whatsapp ou vazio",
+  "company": "empresa ou vazio",
+  "notes": "resumo da conversa em 1-2 frases",
+  "temperature": "frio|morno|quente",
+  "bant_budget": "o que foi dito sobre orçamento/porte ou vazio",
+  "bant_authority": "é decisor? quem mais decide? ou vazio",
+  "bant_need": "qual a dor/necessidade principal ou vazio",
+  "bant_timeline": "prazo/urgência mencionado ou vazio",
+  "wants_meeting": true,
+  "bant_score": 0
+}
+
+Regras:
+- "temperature": "quente" se 3+ critérios BANT respondidos e quer agendar, "morno" se 1-2 critérios, "frio" se nenhum
+- "bant_score": conte quantos dos 4 critérios BANT foram respondidos (0-4)
+- "wants_meeting": true se o lead demonstrou interesse em agendar
+- Se não há nome nem contato, retorne: {"found": false}
+RETORNE SOMENTE O JSON.`
+      : `Analise esta conversa e extraia dados do lead se houver NOME + (EMAIL ou TELEFONE).
+Conversa: "${messages.filter(m => m.role === "user").map(m => m.content).join(" | ")}"
+Última resposta: "${agentResponse.slice(0, 200)}"
+
+Retorne APENAS JSON:
+{"found": true/false, "name": "", "email": "", "phone": "", "company": "", "notes": "", "temperature": "frio|morno|quente"}
+RETORNE SOMENTE O JSON.`;
+
+    const resp = await fetch(GATEWAY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages: [{ role: "user", content: extractPrompt }],
+        module: "structure",
+        mode: "structure",
+      }),
+    });
+
+    if (!resp.ok) return;
+
+    const data = await resp.json();
+    const raw = (data.content || "")
+      .replace(/^```json\s*/gm, "").replace(/^```\s*/gm, "").replace(/```\s*$/gm, "").trim();
+
+    let extracted: Record<string, unknown>;
+    try { extracted = JSON.parse(raw); } catch { return; }
+
+    if (!extracted.found || !extracted.name) return;
+
+    const bantNotes = [
+      extracted.bant_need     ? `Necessidade: ${extracted.bant_need}` : "",
+      extracted.bant_budget   ? `Budget: ${extracted.bant_budget}` : "",
+      extracted.bant_authority ? `Autoridade: ${extracted.bant_authority}` : "",
+      extracted.bant_timeline  ? `Prazo: ${extracted.bant_timeline}` : "",
+    ].filter(Boolean).join(" | ");
+
+    const leadData = {
+      user_id:     ctx.userId,
+      agent_id:    ctx.agentId || null,
+      name:        String(extracted.name    || ""),
+      email:       String(extracted.email   || ""),
+      phone:       String(extracted.phone   || ""),
+      company:     String(extracted.company || ""),
+      notes:       bantNotes || String(extracted.notes || ""),
+      temperature: ["frio","morno","quente"].includes(String(extracted.temperature))
+                     ? String(extracted.temperature) : "morno",
+      stage:       extracted.wants_meeting ? "opportunity" : "lead",
+      source:      "agent",
+      value:       0,
+      tags:        extracted.wants_meeting ? ["quer-agendar"] : [],
+      activities: [{
+        id: crypto.randomUUID(),
+        type: "note",
+        description: `Lead qualificado pelo agente SDR. Score BANT: ${extracted.bant_score ?? 0}/4.${extracted.wants_meeting ? " Lead quer agendar reunião." : ""}`,
+        createdAt: new Date().toISOString(),
+        createdBy: agentConfig?.name || "Agente IA",
+      }],
+    };
+
+    if (leadData.email) {
+      await ctx.supabase.from("leads")
+        .upsert(leadData, { onConflict: "user_id,email" });
+    } else {
+      const { data: existing } = await ctx.supabase.from("leads")
+        .select("id").eq("user_id", ctx.userId).ilike("name", leadData.name).maybeSingle();
+      if (!existing) {
+        await ctx.supabase.from("leads").insert(leadData);
+      } else {
+        // Update existing lead with latest qualification data
+        await ctx.supabase.from("leads")
+          .update({
+            notes: leadData.notes,
+            temperature: leadData.temperature,
+            stage: leadData.stage,
+            tags: leadData.tags,
+          })
+          .eq("id", existing.id);
+      }
+    }
+
+    console.log(`Lead saved: ${leadData.name} | BANT: ${extracted.bant_score ?? 0}/4 | ${leadData.temperature}`);
+  } catch (e) {
+    console.error("extractAndSaveLead error:", e);
+  }
+}
+
+// ── Main handler ──────────────────────────────────────────────────────────
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  try {
+    const body = await req.json();
+    const {
+      messages = [],
+      agentConfig = {},
+      agentId,
+      contactId = "browser-test",
+      channel = "chat",
+    } = body;
+
+    const supabaseUrl    = Deno.env.get("SUPABASE_URL") ?? "";
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const supabase       = createClient(supabaseUrl, serviceRoleKey);
+
+    const userId  = body.userId || "anonymous";
+    const system  = buildSystemPrompt(agentConfig);
+    const byokKey = body.byok_key || "";
+    const byokProvider = body.provider || "";
+
+    let finalContent = "";
+
+    if (byokKey && byokProvider) {
+      const resp = await fetch(GATEWAY_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages,
+          system,
+          module: "agent",
+          mode: "chat",
+          byok_key: byokKey,
+          provider: byokProvider,
+          quality: "fast",
+        }),
+      });
+      const data = await resp.json();
+      finalContent = data.content || "";
+    }
+
+    if (!finalContent) {
+      const resp = await fetch(GATEWAY_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages, system, module: "agent", mode: "chat" }),
+      });
+      const data = await resp.json();
+      finalContent = data.content || "Desculpe, o serviço de IA está temporariamente indisponível. Tente novamente em instantes.";
+    }
+
+    if (userId !== "anonymous") {
+      const ctx = { supabase, userId, agentId };
+      Promise.all([
+        extractAndSaveLead(messages, finalContent, agentConfig, ctx),
+        agentId ? supabase.from("conversations").upsert({
+          user_id:    userId,
+          agent_id:   agentId,
+          contact_id: contactId,
+          channel,
+          messages:   [...messages, { role: "assistant", content: finalContent }],
+        }, { onConflict: "agent_id,contact_id,channel" }) : Promise.resolve(),
+      ]).catch(e => console.error("background tasks error:", e));
+    }
+
+    return new Response(streamText(finalContent), {
+      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+    });
+
+  } catch (e) {
+    console.error("agent-runtime error:", e);
+    const msg = e instanceof Error ? e.message : "Erro desconhecido";
+    return new Response(streamText(`⚠️ ${msg}`), {
+      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+    });
+  }
+});
