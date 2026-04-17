@@ -525,15 +525,32 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
       const parsed = JSON.parse(match[1].trim());
       wizardCompletedRef.current = true;
 
+      const company = (parsed.companyName || "").trim();
+      const fillCompany = (txt: string) =>
+        company
+          ? txt
+              .replace(/\[Nome da Empresa\]/gi, company)
+              .replace(/\[empresa\]/gi, company)
+              .replace(/\{\{?\s*company(_?name)?\s*\}?\}/gi, company)
+          : txt;
+
       const baseConfig: StructuredAgentConfig = {
         agent_name: parsed.name || loadedAgent.name,
         agent_type: parsed.role || loadedAgent.agentType,
-        description: parsed.description || "",
-        objective: parsed.objective || "",
+        description: fillCompany(parsed.description || ""),
+        objective: fillCompany(parsed.objective || ""),
         tone: parsed.toneOfVoice || parsed.tone || "Profissional e Amigável",
         language: "pt-BR",
-        greeting_message: parsed.greetingMessage || `Olá! Sou ${parsed.name || loadedAgent.name}. Como posso ajudar?`,
-        instructions: parsed.instructions || "",
+        greeting_message: fillCompany(
+          parsed.greetingMessage ||
+            (company
+              ? `Olá! Sou ${parsed.name || loadedAgent.name}, da ${company}. Como posso ajudar?`
+              : `Olá! Sou ${parsed.name || loadedAgent.name}. Como posso ajudar?`),
+        ),
+        instructions: fillCompany(
+          (parsed.instructions || "") +
+            (company ? `\n\nVocê representa a empresa "${company}". Sempre que mencionar a empresa, use exatamente esse nome — NUNCA escreva "[Nome da Empresa]" ou placeholders.` : ""),
+        ),
         channels: ["whatsapp", "website"],
         selected_features: [],
         onboarding_level: "soft",
