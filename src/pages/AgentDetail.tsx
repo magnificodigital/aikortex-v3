@@ -621,7 +621,50 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
     }
   );
 
-  /* ── Chat (test mode) ── */
+  // Auto-send "start" once when wizard opens (for non-template, non-existing agents)
+  const wizardStartedRef = useRef(false);
+  useEffect(() => {
+    if (wizardStartedRef.current) return;
+    if (agentLoading) return;
+    if (wizardStep !== "discover") return;
+    if (isTemplate) return; // templates auto-build, no Q&A needed
+    if (wizardChat.messages.length > 0) { wizardStartedRef.current = true; return; }
+    wizardStartedRef.current = true;
+    void wizardChat.sendMessage("start");
+  }, [agentLoading, wizardStep, isTemplate, wizardChat]);
+
+  // Detect ```agent-config {...}``` block in wizard reply → save agent
+  const wizardCompletedRef = useRef(false);
+  useEffect(() => {
+    if (wizardCompletedRef.current) return;
+    if (wizardChat.isStreaming) return;
+    const lastAgentMsg = [...wizardChat.messages].reverse().find(m => m.role === "agent");
+    if (!lastAgentMsg) return;
+    const match = lastAgentMsg.text.match(/```agent-config\s*([\s\S]*?)```/);
+    if (!match) return;
+    try {
+      const parsed = JSON.parse(match[1].trim());
+      wizardCompletedRef.current = true;
+      const finalConfig: StructuredAgentConfig = {
+        agent_name: parsed.name || loadedAgent.name,
+        agent_type: parsed.role || loadedAgent.agentType,
+        description: parsed.description || "",
+        objective: parsed.objective || "",
+        tone: parsed.toneOfVoice || "professional_friendly",
+        language: "pt-BR",
+        greeting_message: parsed.greetingMessage || `Olá! Sou ${parsed.name || loadedAgent.name}. Como posso ajudar?`,
+        instructions: parsed.instructions || "",
+        channels: ["whatsapp", "website"],
+        selected_features: [],
+        onboarding_level: "soft",
+      };
+      handleConfigStructured(finalConfig);
+      void handleBuildAgent(finalConfig);
+    } catch (e) {
+      console.warn("Failed to parse agent-config block:", e);
+    }
+  }, [wizardChat.messages, wizardChat.isStreaming, loadedAgent.name, loadedAgent.agentType, handleConfigStructured, handleBuildAgent]);
+
 
   const testSystemPrompt = useMemo(() => {
     const name = agentConfig?.name || loadedAgent.name;
