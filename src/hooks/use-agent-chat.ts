@@ -356,7 +356,7 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
         setIsStreaming(false);
       }
     }
-  }, [isStreaming, options.provider, options.model, options.useGateway, options.gatewayModel, options.systemPrompt, options.apiConfig, options.agentContext, flushPendingText]);
+  }, [isStreaming, options.provider, options.model, options.useGateway, options.gatewayModel, options.systemPrompt, options.apiConfig, options.agentContext, options.mode, options.agentType, options.disableCrmExtraction, flushPendingText]);
 
   return { messages, setMessages, sendMessage, isStreaming };
 }
