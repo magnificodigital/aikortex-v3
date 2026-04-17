@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import type { AgentType } from "@/types/agent-builder";
 import { supabase } from "@/integrations/supabase/client";
 import { AGENT_PRESETS } from "@/types/agent-presets";
+import { getOperationalInstructions } from "@/lib/agent-operational-prompts";
 import { DEFAULT_FREE_SETUP_MODEL, GATEWAY_MODELS, normalizeFreeSetupModel } from "@/lib/free-setup-models";
 import { LLM_MODELS as ALL_LLM_MODELS, getGroupedModels, getProviderForModel, DEFAULT_FREE_MODEL } from "@/lib/llm-models";
 import AgentMemoryTab from "@/components/aikortex/AgentMemoryTab";
@@ -429,13 +430,16 @@ const AgentDetail = () => {
     const preset = AGENT_PRESETS[templateAgent.agentType];
     const presetContext = preset?.context || {};
     
+    const operationalInstructions = getOperationalInstructions(templateAgent.agentType);
+    const fallbackInstructions = `1. Sempre se apresentar como assistente\n2. Focar em entender as necessidades\n3. Ser ${presetContext.toneOfVoice || "profissional"}\n4. Nunca prometer o que não pode cumprir\n5. Direcionar para próximo passo claro`;
+
     const immediatePreset = {
       name: templateAgent.name,
       description: presetContext.targetAudienceDescription || templateAgent.autoPrompt.slice(0, 150),
       objective: presetContext.painPoints || "",
       toneOfVoice: presetContext.toneOfVoice || "Profissional e amigável",
       greetingMessage: presetContext.greetingMessage || "",
-      instructions: `1. Sempre se apresentar como assistente\n2. Focar em entender as necessidades\n3. Ser ${presetContext.toneOfVoice || "profissional"}\n4. Nunca prometer o que não pode cumprir\n5. Direcionar para próximo passo claro`,
+      instructions: operationalInstructions || fallbackInstructions,
     };
     
     // Immediately populate the right panel
@@ -484,6 +488,12 @@ const AgentDetail = () => {
           selected_features: [],
           onboarding_level: "soft",
         };
+
+        // ALWAYS append operational instructions (BANT, agendamento, registro CRM)
+        // even when AI generated its own instructions, so the agent stays functional end-to-end.
+        if (operationalInstructions && !finalConfig.instructions.includes("<<<CRM_LEAD>>>")) {
+          finalConfig.instructions = `${operationalInstructions}\n\n---\n\n# Instruções complementares\n${finalConfig.instructions}`;
+        }
 
         // Update preset data with AI-enhanced config
         setPresetData({

@@ -1,9 +1,66 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AGENT_RUNTIME_URL } from "@/lib/ai-endpoints";
+import { toast } from "sonner";
 
 const CHAT_URL = AGENT_RUNTIME_URL;
 const FLUSH_INTERVAL_MS = 60;
+const CRM_LEAD_REGEX = /<<<CRM_LEAD>>>([\s\S]*?)<<<END>>>/;
+
+/** Detects a CRM_LEAD JSON block in the agent reply and persists it to the leads table. */
+async function processCrmLeadBlock(text: string): Promise<string> {
+  const match = text.match(CRM_LEAD_REGEX);
+  if (!match) return text;
+
+  const jsonStr = match[1].trim();
+  try {
+    const data = JSON.parse(jsonStr);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return text.replace(CRM_LEAD_REGEX, "").trim();
+
+    const meeting = data.meeting || {};
+    const activities: any[] = [];
+    if (meeting.scheduled_at) {
+      activities.push({
+        id: `act-${Date.now()}`,
+        type: "meeting",
+        description: `Reunião agendada para ${new Date(meeting.scheduled_at).toLocaleString("pt-BR")} (${meeting.duration_minutes || 15} min) — ${meeting.topic || "Discovery"}`,
+        createdAt: new Date().toISOString(),
+        createdBy: "Agente IA",
+      });
+    }
+
+    const { error } = await supabase.from("leads").insert({
+      user_id: user.id,
+      name: data.name || "Lead sem nome",
+      email: data.email || "",
+      phone: data.phone || "",
+      company: data.company || "",
+      position: data.position || "",
+      stage: data.stage || "lead",
+      source: data.source || "manual",
+      temperature: data.temperature || "morno",
+      value: Number(data.value) || 0,
+      notes: data.notes || "",
+      tags: Array.isArray(data.tags) ? data.tags : [],
+      assignee: "Agente IA",
+      activities,
+      lost_reason: data.lost_reason || null,
+    });
+
+    if (error) {
+      console.error("CRM insert error:", error);
+      toast.error("Não foi possível salvar o lead no CRM.");
+    } else {
+      toast.success(meeting.scheduled_at ? "✅ Lead salvo no CRM com reunião agendada!" : "✅ Lead salvo no CRM!");
+    }
+  } catch (e) {
+    console.error("CRM block parse error:", e);
+  }
+
+  // Strip the technical block from the user-visible message
+  return text.replace(CRM_LEAD_REGEX, "").trim();
+}
 
 export interface ChatMessage {
   role: "user" | "agent" | "assistant";
@@ -260,6 +317,22 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
       }
 
       flushPendingText(true);
+
+      // After full stream completes, check for CRM_LEAD block and persist it.
+      const finalText = pendingTextRef.current;
+      if (finalText && CRM_LEAD_REGEX.test(finalText)) {
+        const cleanText = await processCrmLeadBlock(finalText);
+        if (mountedRef.current) {
+          setMessages((prev) => {
+            if (!prev.length) return prev;
+            const last = prev[prev.length - 1];
+            if (last.role !== "agent") return prev;
+            const next = prev.slice();
+            next[next.length - 1] = { role: "agent", text: cleanText };
+            return next;
+          });
+        }
+      }
     } catch (e: any) {
       console.error("Agent chat error:", e);
       if (mountedRef.current) {

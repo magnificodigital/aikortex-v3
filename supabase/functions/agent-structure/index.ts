@@ -17,11 +17,19 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const systemPrompt = `Você é um especialista em configurar agentes de IA conversacionais.
+    const operationalRules = `
+REGRAS OPERACIONAIS OBRIGATÓRIAS para tipos SDR/BDR/SAC/CS:
+1. As "instructions" devem detalhar etapas concretas: saudação, identificação, descoberta, qualificação BANT, apresentação de valor, agendamento e confirmação.
+2. Para SDR/BDR: deve incluir explicitamente "ao final da conversa, finalize a mensagem com o bloco técnico <<<CRM_LEAD>>>{...JSON...}<<<END>>> contendo nome, email, telefone, empresa, cargo, stage (agendado|qualificado|perdido), temperature, source, notes, lost_reason e meeting{scheduled_at, duration_minutes, topic}".
+3. As instruções devem orientar a fazer UMA pergunta por vez, confirmar antes de avançar e não inventar preços.
+4. greeting_message deve ser caloroso, identificar empresa e abrir espaço para o lead falar da dor.`;
+
+    const systemPrompt = `Você é um especialista em configurar agentes de IA conversacionais funcionais ponta-a-ponta.
 Dado a descrição do usuário, gere uma configuração estruturada completa para o agente.
 Responda APENAS chamando a tool "structure_agent" com os dados preenchidos.
 Adapte o tom, mensagem de saudação e funcionalidades ao tipo de agente (${agent_type || "Custom"}).
 Idioma padrão: ${language || "pt-BR"}.
+${agent_type && agent_type !== "Custom" ? operationalRules : ""}
 Seja criativo mas realista nas funcionalidades sugeridas.`;
 
     const response = await fetch(GATEWAY_URL, {
