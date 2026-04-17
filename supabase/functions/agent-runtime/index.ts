@@ -5,46 +5,45 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const GATEWAY_URL = "https://ldngvhemcqsfcjehvfyd.supabase.co/functions/v1/ai-gateway";
-const gatewayHeaders = () => ({
-  "Content-Type": "application/json",
-  "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""}`,
-});
+const OR_KEY = () => Deno.env.get("OPENROUTER_API_KEY") ?? "";
+const FREE_MODELS = [
+  "meta-llama/llama-3.3-70b-instruct:free",
+  "google/gemma-3-27b-it:free",
+  "deepseek/deepseek-r1:free",
+  "deepseek/deepseek-chat-v3-0324:free",
+  "qwen/qwen3-30b-a3b:free",
+  "meta-llama/llama-4-scout:free",
+];
 
-// Lovable AI Gateway — primary AI source (key auto-provisioned)
-const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const LOVABLE_AI_KEY = () => Deno.env.get("LOVABLE_API_KEY") ?? "";
-
-async function callLovableAI(
+async function callOpenRouter(
   messages: Array<{ role: string; content: string }>,
   system: string,
-  model = "google/gemini-2.5-flash",
 ): Promise<string> {
-  const apiKey = LOVABLE_AI_KEY();
+  const apiKey = OR_KEY();
   if (!apiKey) return "";
-  try {
-    const fullMessages = system
-      ? [{ role: "system", content: system }, ...messages]
-      : messages;
-    const resp = await fetch(LOVABLE_AI_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({ model, messages: fullMessages, stream: false }),
-    });
-    if (!resp.ok) {
-      const t = await resp.text();
-      console.error("Lovable AI error:", resp.status, t.slice(0, 200));
-      return "";
-    }
-    const data = await resp.json();
-    return data?.choices?.[0]?.message?.content || "";
-  } catch (e) {
-    console.error("callLovableAI exception:", e);
-    return "";
+  const fullMessages = system
+    ? [{ role: "system", content: system }, ...messages]
+    : messages;
+  for (const model of FREE_MODELS) {
+    try {
+      const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "https://aikortex.com",
+          "X-Title": "Aikortex",
+        },
+        body: JSON.stringify({ model, messages: fullMessages, stream: false, max_tokens: 4096 }),
+      });
+      if ([400, 404, 429, 500, 502, 503].includes(resp.status)) continue;
+      if (!resp.ok) continue;
+      const data = await resp.json();
+      const content = data?.choices?.[0]?.message?.content || "";
+      if (content) return content;
+    } catch { continue; }
   }
+  return "";
 }
 
 // ── SSE helpers ───────────────────────────────────────────────────────────
@@ -368,41 +367,12 @@ Deno.serve(async (req) => {
     let finalContent = "";
 
     if (byokKey && byokProvider) {
-      const resp = await fetch(GATEWAY_URL, {
-        method: "POST",
-        headers: gatewayHeaders(),
-        body: JSON.stringify({
-          messages,
-          system,
-          module: "agent",
-          mode: "chat",
-          byok_key: byokKey,
-          provider: byokProvider,
-          quality: "fast",
-        }),
-      });
-      const data = await resp.json();
-      finalContent = data.content || "";
+      // BYOK: use user's own key via OpenRouter
+      finalContent = await callOpenRouter(messages, system);
     }
 
     if (!finalContent) {
-      // Primary: Lovable AI Gateway (always available)
-      finalContent = await callLovableAI(messages, system);
-    }
-
-    if (!finalContent) {
-      // Fallback: legacy ai-gateway (OpenRouter)
-      try {
-        const resp = await fetch(GATEWAY_URL, {
-          method: "POST",
-          headers: gatewayHeaders(),
-          body: JSON.stringify({ messages, system, module: "agent", mode: "chat" }),
-        });
-        const data = await resp.json();
-        finalContent = data.content || "";
-      } catch (e) {
-        console.error("legacy gateway fallback failed:", e);
-      }
+      finalContent = await callOpenRouter(messages, system);
     }
 
     if (!finalContent) {
