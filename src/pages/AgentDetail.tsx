@@ -775,6 +775,16 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
                 <span className="hidden lg:inline">{btn.label}</span>
               </Button>
             ))}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs gap-1 px-2"
+              onClick={handleOpenAgentFlow}
+              title="Abrir fluxo de automação deste agente"
+            >
+              <Workflow className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Fluxo</span>
+            </Button>
             <div className="w-px h-5 bg-border mx-1" />
             {isSaving && (
               <span className="text-[10px] text-muted-foreground animate-pulse">Salvando...</span>
