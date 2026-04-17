@@ -452,7 +452,7 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
       <div className="flex-1 relative flex flex-col min-w-0">
         {/* Top bar */}
         <div className="flex items-center justify-between px-3 py-1.5 border-b border-border bg-card/80 backdrop-blur-sm flex-shrink-0">
-          <div className="flex items-center gap-1" />
+          <div className="flex items-center gap-1 min-w-0">{headerLeft}</div>
 
           <div className="flex items-center gap-1.5">
             <Button

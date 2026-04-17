@@ -117,19 +117,6 @@ const AikortexAutomations = () => {
     return (
       <ModuleGate moduleKey="aikortex.flows">
         <div className="flex flex-col h-screen">
-          <div className="flex items-center gap-3 px-3 py-1.5 border-b border-border bg-card/80 backdrop-blur-sm flex-shrink-0">
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setBuildingFlow(null)}>
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-            <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center">
-              <Workflow className="w-3 h-3 text-primary" />
-            </div>
-            <Input
-              value={buildingFlow.name}
-              onChange={(e) => setBuildingFlow((p) => p && { ...p, name: e.target.value })}
-              className="h-7 w-[200px] text-xs font-medium bg-transparent border-transparent hover:border-border focus:border-border"
-            />
-          </div>
           <div className="flex-1 overflow-hidden">
             <FlowCanvas
               initialNodes={buildingFlow.nodes}
@@ -141,6 +128,21 @@ const AikortexAutomations = () => {
               onOpenFlow={handleOpenFlow}
               onNewFlow={handleNewBlank}
               initialPrompt={copilotPrompt || undefined}
+              headerLeft={
+                <>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setBuildingFlow(null)}>
+                    <ArrowLeft className="w-4 h-4" />
+                  </Button>
+                  <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center">
+                    <Workflow className="w-3 h-3 text-primary" />
+                  </div>
+                  <Input
+                    value={buildingFlow.name}
+                    onChange={(e) => setBuildingFlow((p) => p && { ...p, name: e.target.value })}
+                    className="h-7 w-[200px] text-xs font-medium bg-transparent border-transparent hover:border-border focus:border-border"
+                  />
+                </>
+              }
             />
           </div>
         </div>
