@@ -83,6 +83,23 @@ const AgentDetail = () => {
   const location    = useLocation();
   const { agentId } = useParams();
   const navState    = location.state as any;
+  const { flows }   = useFlows();
+
+  const agentFlow = useMemo(
+    () => flows.find((f) => (f as any).nodes?.some?.((n: any) => n?.data?.config?.agent_id === agentId))
+       || flows.find((f) => f.name?.toLowerCase().includes((loadedAgentNameRef.current || "").toLowerCase())),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [flows, agentId]
+  );
+
+  const handleOpenAgentFlow = () => {
+    if (!agentFlow) {
+      toast.info("Nenhum fluxo automático encontrado para este agente.");
+      navigate("/aikortex/automations");
+      return;
+    }
+    navigate("/aikortex/automations", { state: { openFlowId: agentFlow.id } });
+  };
 
   const isTemplate    = !!agentId && !!TEMPLATE_MAP[agentId];
   const isNewCustomFromHome = navState?.fromTemplate === false && !!navState?.initialPrompt;
