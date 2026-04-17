@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { Loader2, ArrowLeft, Sparkles, Bot, Settings, Plug, Share2, Rocket, Phone, Brain, Monitor } from "lucide-react";
+import { Loader2, ArrowLeft, Sparkles, Bot, Settings, Plug, Share2, Rocket, Phone, Brain, Monitor, Workflow } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ConversationProvider } from "@elevenlabs/react";
@@ -82,6 +82,28 @@ const AgentDetail = () => {
   const location    = useLocation();
   const { agentId } = useParams();
   const navState    = location.state as any;
+
+  const [agentFlowId, setAgentFlowId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!agentId || agentId === "new" || agentId.startsWith("new-")) return;
+    (async () => {
+      const { data } = await (supabase
+        .from("user_flows" as any)
+        .select("id, trigger_config")
+        .order("created_at", { ascending: false }) as any);
+      const match = (data ?? []).find((f: any) => f?.trigger_config?.agent_id === agentId);
+      if (match) setAgentFlowId(match.id);
+    })();
+  }, [agentId]);
+
+  const handleOpenAgentFlow = () => {
+    if (!agentFlowId) {
+      toast.info("Nenhum fluxo automático encontrado para este agente.");
+      navigate("/aikortex/automations");
+      return;
+    }
+    navigate("/aikortex/automations", { state: { openFlowId: agentFlowId } });
+  };
 
   const isTemplate    = !!agentId && !!TEMPLATE_MAP[agentId];
   const isNewCustomFromHome = navState?.fromTemplate === false && !!navState?.initialPrompt;
@@ -753,6 +775,16 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
                 <span className="hidden lg:inline">{btn.label}</span>
               </Button>
             ))}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs gap-1 px-2"
+              onClick={handleOpenAgentFlow}
+              title="Abrir fluxo de automação deste agente"
+            >
+              <Workflow className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Fluxo</span>
+            </Button>
             <div className="w-px h-5 bg-border mx-1" />
             {isSaving && (
               <span className="text-[10px] text-muted-foreground animate-pulse">Salvando...</span>
