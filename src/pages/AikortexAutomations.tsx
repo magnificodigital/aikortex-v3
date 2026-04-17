@@ -23,6 +23,7 @@ const AikortexAutomations = () => {
   const { flows, isLoading, toggleFlow, deleteFlow } = useFlows();
 
   const [copilotPrompt, setCopilotPrompt] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [buildingFlow, setBuildingFlow] = useState<{
     name: string;
     nodes?: unknown[];
