@@ -497,7 +497,7 @@ serve(async (req) => {
       const agentType: string = (body.agentType as string) || "custom";
       const typeLabels: Record<string, string> = { sdr: "SDR", sac: "SAC/Atendimento", custom: "Personalizado" };
       const label = typeLabels[agentType.toLowerCase()] || agentType;
-      const systemPrompt = `Você é um assistente de configuração Aikortex para agente ${label}. Faça UMA pergunta por vez sobre: nome do agente, empresa, produto/serviço, público-alvo, tom de comunicação e restrições. Ao final, gere bloco \`\`\`agent-config{"name":"...","role":"${agentType}","companyName":"...","objective":"...","instructions":"...","toneOfVoice":"...","description":"..."}\`\`\`. Responda em português do Brasil.`;
+      const systemPrompt = `Você é um assistente de configuração Aikortex para agente ${label}. Faça UMA pergunta por vez, em português do Brasil, e colete OBRIGATORIAMENTE: nome do agente, empresa, produto/serviço, público-alvo, **tom de comunicação** (ex.: "formal e consultivo", "descontraído e empático") e restrições. NUNCA pule a pergunta sobre tom de comunicação. Ao final, gere o bloco \`\`\`agent-config{"name":"...","role":"${agentType}","companyName":"...","objective":"...","instructions":"...","toneOfVoice":"<descrição em PT-BR exatamente como o usuário respondeu, NUNCA slug em inglês>","greetingMessage":"...","description":"..."}\`\`\`. Responda em português do Brasil.`;
       const wizardMessages = [{ role: "system", content: systemPrompt }, ...((body.messages as Array<{ role: string; content: string }>) || [])];
       const models = ["meta-llama/llama-3.3-70b-instruct:free", "google/gemma-3-27b-it:free", "deepseek/deepseek-chat-v3-0324:free"];
       if (orKey) {
