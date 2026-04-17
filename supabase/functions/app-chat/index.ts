@@ -500,24 +500,39 @@ serve(async (req) => {
       const systemPrompt = `Você é um assistente de configuração Aikortex para agente ${label}. Faça UMA pergunta por vez sobre: nome do agente, empresa, produto/serviço, público-alvo, tom de comunicação e restrições. Ao final, gere bloco \`\`\`agent-config{"name":"...","role":"${agentType}","companyName":"...","objective":"...","instructions":"...","toneOfVoice":"...","description":"..."}\`\`\`. Responda em português do Brasil.`;
       const wizardMessages = [{ role: "system", content: systemPrompt }, ...((body.messages as Array<{ role: string; content: string }>) || [])];
       const models = ["meta-llama/llama-3.3-70b-instruct:free", "google/gemma-3-27b-it:free", "deepseek/deepseek-chat-v3-0324:free"];
-      for (const model of models) {
-        try {
-          const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${orKey}`,
-              "Content-Type": "application/json",
-              "HTTP-Referer": "https://aikortex.com",
-              "X-Title": "Aikortex",
-            },
-            body: JSON.stringify({ model, messages: wizardMessages, stream: true, max_tokens: 2048 }),
-          });
-          if (r.ok) return new Response(r.body, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
-        } catch {
-          continue;
+      if (orKey) {
+        for (const model of models) {
+          try {
+            const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${orKey}`,
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://aikortex.com",
+                "X-Title": "Aikortex",
+              },
+              body: JSON.stringify({ model, messages: wizardMessages, stream: true, max_tokens: 2048 }),
+            });
+            if (r.ok) return new Response(r.body, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
+            console.error(`OpenRouter ${model} → ${r.status}: ${(await r.text()).slice(0, 200)}`);
+          } catch (e) {
+            console.error(`OpenRouter ${model} threw:`, e instanceof Error ? e.message : String(e));
+          }
         }
+      } else {
+        console.warn("OPENROUTER_API_KEY missing; falling back to Lovable AI Gateway.");
       }
-      return new Response(JSON.stringify({ error: "Serviço indisponível" }), {
+
+      // Fallback: Lovable AI Gateway (always available)
+      try {
+        const fallback = await buildGatewayResponse(wizardMessages, "google/gemini-2.5-flash", true);
+        if (fallback.ok) return new Response(fallback.body, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
+        console.error("Lovable AI fallback failed:", fallback.status, (await fallback.text()).slice(0, 200));
+      } catch (e) {
+        console.error("Lovable AI fallback threw:", e);
+      }
+
+      return new Response(JSON.stringify({ error: "Serviço de IA indisponível no momento. Tente novamente em instantes." }), {
         status: 503,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
