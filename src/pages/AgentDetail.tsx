@@ -351,6 +351,9 @@ const AgentDetail = () => {
   const handleBuildAgent = useCallback(async (config: StructuredAgentConfig) => {
     setIsBuilding(true);
     const resolvedType = loadedAgent.agentType || "Custom";
+    // Após a montagem pelo assistente, o modelo do agente fica fixado em Qwen3 30B
+    const builtModel = DEFAULT_FREE_MODEL;
+    setAgentModel(builtModel);
     try {
       const result = await saveAgent({
         id:          agentId && !TEMPLATE_MAP[agentId] && agentId !== "new" && !agentId.startsWith("new-") ? agentId : undefined,
@@ -358,7 +361,7 @@ const AgentDetail = () => {
         agent_type:  resolvedType,
         description: config.description,
         avatar_url:  AVATAR_BY_TYPE[resolvedType] || avatar1,
-        model:       agentModel,
+        model:       builtModel,
         status:      "configuring",
         config: {
           objective:       config.objective,
@@ -378,7 +381,7 @@ const AgentDetail = () => {
         setLoadedAgent({
           name: config.agent_name,
           avatar: AVATAR_BY_TYPE[resolvedType] || avatar1,
-          model: agentModel,
+          model: builtModel,
           agentType: resolvedType,
           savedConfig: {
             name: config.agent_name,
