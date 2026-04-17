@@ -771,14 +771,16 @@ const AgentChatPanel = ({
             onKeyDown={handleKeyDown}
             placeholder={
               wizardStep === "discover"
-                ? "Descreva o agente que quer criar..."
+                ? "Digite sua resposta..."
                 : wizardStep === "done"
                 ? (chatMode === "setup" ? "Descreva o que quer ajustar..." : "Envie uma mensagem de teste...")
                 : "Complete as etapas acima para começar..."
             }
             rows={2}
             disabled={
-              isStreaming || isStructuring || isBuilding ||
+              isStructuring || isBuilding ||
+              (wizardStep === "done" && isStreaming) ||
+              (wizardStep === "discover" && !!wizardIsStreaming) ||
               (wizardStep !== "done" && wizardStep !== "discover") ||
               (wizardStep === "done" && chatMode === "test" && !canSendTest)
             }
