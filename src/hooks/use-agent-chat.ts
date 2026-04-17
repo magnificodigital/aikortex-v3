@@ -317,6 +317,22 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
       }
 
       flushPendingText(true);
+
+      // After full stream completes, check for CRM_LEAD block and persist it.
+      const finalText = pendingTextRef.current;
+      if (finalText && CRM_LEAD_REGEX.test(finalText)) {
+        const cleanText = await processCrmLeadBlock(finalText);
+        if (mountedRef.current) {
+          setMessages((prev) => {
+            if (!prev.length) return prev;
+            const last = prev[prev.length - 1];
+            if (last.role !== "agent") return prev;
+            const next = prev.slice();
+            next[next.length - 1] = { role: "agent", text: cleanText };
+            return next;
+          });
+        }
+      }
     } catch (e: any) {
       console.error("Agent chat error:", e);
       if (mountedRef.current) {
