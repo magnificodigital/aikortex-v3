@@ -45,11 +45,11 @@ export default function FlowNodePalette() {
   return (
     <div className="h-full flex flex-col bg-card/80 backdrop-blur-sm">
       <div className="p-3 border-b border-border">
-        <h3 className="text-xs font-bold text-foreground mb-2 uppercase tracking-wider">Blocks</h3>
+        <h3 className="text-xs font-bold text-foreground mb-2 uppercase tracking-wider">Blocos</h3>
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
           <Input
-            placeholder="Search blocks..."
+            placeholder="Buscar blocos..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-8 h-8 text-xs"
