@@ -94,12 +94,47 @@ const CHANNELS = [
 const SETTINGS_NAV = [
   { section: "AGENTE", items: [
     { key: "general",      icon: User,      label: "Identidade" },
-    { key: "objective",    icon: Zap,       label: "Objetivo" },
     { key: "instructions", icon: Settings2, label: "Instruções" },
     { key: "files_nav",    icon: FileText,  label: "Conhecimento" },
     { key: "voice_nav",    icon: Mic,       label: "Voz" },
   ]},
 ];
+
+const DEFAULT_INSTRUCTIONS_TEMPLATE = `# 1. Identidade
+Você é um assistente de IA profissional. Apresente-se sempre pelo nome configurado e mantenha consistência de personalidade em todas as interações.
+
+# 2. Objetivo Principal
+Descreva aqui a missão principal do agente. Exemplo: qualificar leads, agendar reuniões, prestar suporte ao cliente ou tirar dúvidas sobre produtos.
+
+# 3. Público-Alvo
+Defina com quem o agente irá conversar (ex: leads inbound, clientes ativos, prospects B2B). Adapte a linguagem ao perfil do interlocutor.
+
+# 4. Tom e Estilo de Comunicação
+- Mantenha tom profissional, amigável e empático.
+- Use frases curtas e objetivas (máximo 2-3 linhas por mensagem).
+- Evite jargões técnicos desnecessários.
+- Responda sempre no idioma do usuário.
+
+# 5. Fluxo de Conversa
+1. Saudação inicial e apresentação.
+2. Descoberta da necessidade (faça uma pergunta por vez).
+3. Qualificação ou aprofundamento do contexto.
+4. Apresentação da solução ou próximo passo.
+5. Confirmação e encerramento cordial.
+
+# 6. Regras de Comportamento
+- NUNCA invente informações que não estejam na base de conhecimento.
+- Sempre confirme dados sensíveis antes de prosseguir.
+- Se não souber a resposta, ofereça encaminhar para um humano.
+- Não compartilhe informações confidenciais ou de outros clientes.
+
+# 7. Restrições
+- Não emita opiniões pessoais sobre temas polêmicos (política, religião).
+- Não faça promessas de prazo, preço ou resultados sem validação.
+- Não execute ações fora do escopo configurado.
+
+# 8. Encerramento
+Sempre finalize de forma cordial, agradeça o contato e indique o próximo passo claro (ex: "vou agendar sua reunião", "um especialista entrará em contato").`;
 
 export interface ApiConfig {
   temperature: number;
@@ -302,8 +337,8 @@ const AgentRightPanel = ({
   const [agentName,           setAgentName]           = useState(() => resolveInitial("name",           savedConfig?.name,           presetData?.name)           || agent.name || "");
   const [agentDesc,           setAgentDesc]           = useState(() => resolveInitial("desc",           savedConfig?.description,    presetData?.description));
   const [agentObjective,      setAgentObjective]      = useState(() => resolveInitial("objective",      savedConfig?.objective,      presetData?.objective));
-  const [agentInstructions,   setAgentInstructions]   = useState(() => resolveInitial("instructions",   savedConfig?.instructions,   presetData?.instructions));
-  const [agentToneOfVoice,    setAgentToneOfVoice]    = useState(() => resolveInitial("toneOfVoice",    savedConfig?.toneOfVoice,    presetData?.toneOfVoice));
+  const [agentInstructions,   setAgentInstructions]   = useState(() => resolveInitial("instructions",   savedConfig?.instructions,   presetData?.instructions) || DEFAULT_INSTRUCTIONS_TEMPLATE);
+  const [agentToneOfVoice,    setAgentToneOfVoice]    = useState(() => resolveInitial("toneOfVoice",    savedConfig?.toneOfVoice,    presetData?.toneOfVoice) || "Profissional e Amigável");
   const [agentGreetingMessage,setAgentGreetingMessage]= useState(() => resolveInitial("greetingMessage",savedConfig?.greetingMessage,presetData?.greetingMessage));
 
   const [knowledgeFiles,    setKnowledgeFiles]    = useState<KnowledgeFileLocal[]>(() => {
@@ -539,27 +574,40 @@ const AgentRightPanel = ({
                   </>
                 )}
 
-                {/* Objetivo */}
-                {settingsNav === "objective" && (
-                  <div className="space-y-6">
-                    <div>
-                      <h2 className="text-lg font-bold text-foreground">Objetivo</h2>
-                      <p className="text-sm text-muted-foreground mt-1">Defina a missão principal do agente.</p>
-                    </div>
-                    <Textarea value={agentObjective} onChange={(e) => setAgentObjective(e.target.value)}
-                      placeholder="Ex: Qualificar leads e agendar reuniões." className="text-sm min-h-[100px]" />
-                  </div>
-                )}
-
-                {/* Instruções */}
+                {/* Instruções (objetivo + comportamento unificados, estruturados em tópicos) */}
                 {settingsNav === "instructions" && (
-                  <div className="space-y-6">
-                    <div>
-                      <h2 className="text-lg font-bold text-foreground">Instruções</h2>
-                      <p className="text-sm text-muted-foreground mt-1">Regras e comportamento do agente.</p>
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h2 className="text-lg font-bold text-foreground">Instruções</h2>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Prompt completo do agente: objetivo, público, tom, fluxo, regras e restrições — organizado em tópicos.
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs shrink-0"
+                        onClick={() => {
+                          const merged = agentObjective?.trim()
+                            ? `# 2. Objetivo Principal\n${agentObjective.trim()}\n\n${DEFAULT_INSTRUCTIONS_TEMPLATE.replace(/# 2\. Objetivo Principal[\s\S]*?(?=\n# 3\.)/, "")}`
+                            : DEFAULT_INSTRUCTIONS_TEMPLATE;
+                          setAgentInstructions(merged);
+                          if (agentObjective?.trim()) setAgentObjective("");
+                        }}
+                      >
+                        Carregar template
+                      </Button>
                     </div>
-                    <Textarea value={agentInstructions} onChange={(e) => setAgentInstructions(e.target.value)}
-                      placeholder="Ex: Sempre pergunte o nome antes de agendar." className="text-sm min-h-[140px]" />
+                    <Textarea
+                      value={agentInstructions}
+                      onChange={(e) => setAgentInstructions(e.target.value)}
+                      placeholder={DEFAULT_INSTRUCTIONS_TEMPLATE}
+                      className="text-sm min-h-[480px] font-mono leading-relaxed"
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      Dica: use <code className="px-1 rounded bg-muted">#</code> para títulos e <code className="px-1 rounded bg-muted">-</code> para listas. Quanto mais específico, melhor o desempenho do agente.
+                    </p>
                   </div>
                 )}
 
