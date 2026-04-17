@@ -120,6 +120,7 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
   const [rightTab, setRightTab] = useState<RightTab>("editor");
   const [showRightPanel, setShowRightPanel] = useState(true);
+  const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRunModal, setShowRunModal] = useState(false);
   const [runTestMessage, setRunTestMessage] = useState("");
   const [runContactId, setRunContactId] = useState("");
