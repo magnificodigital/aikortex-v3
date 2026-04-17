@@ -265,7 +265,7 @@ const AgentChatPanel = ({
   const isSelectedModelFree = selectedModelInfo?.badge === "free";
   const isSelectedModelLocked = selectedModelInfo?.locked === true;
   const canSendTest = chatMode === "test" ? (isSelectedModelFree || !isSelectedModelLocked) : true;
-  const isDiscoverEmpty = wizardStep === "discover" && wizardMessages.length === 0;
+  const isDiscoverEmpty = wizardStep === "discover" && (wizardChatMessages?.length ?? 0) === 0 && !wizardIsStreaming;
   const suggestions = AGENT_SUGGESTIONS[agentType] || AGENT_SUGGESTIONS.Custom;
 
   /* ── Discover → Structure ── */
