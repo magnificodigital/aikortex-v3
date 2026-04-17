@@ -801,26 +801,21 @@ const AgentChatPanel = ({
                 {isRecording ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
               </button>
             </div>
-            {wizardStep === "discover" && input.trim().length >= 10 ? (
-              <Button
-                size="sm"
-                onClick={() => handleDiscover(input.trim())}
-                disabled={isStructuring}
-                className="h-8 rounded-full bg-primary hover:bg-primary/90 gap-1.5 text-xs px-4"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                Estruturar com IA
-              </Button>
-            ) : (
-              <Button
-                size="icon"
-                onClick={handleSend}
-                disabled={!input.trim() || isStreaming || (wizardStep === "done" && chatMode === "test" && !canSendTest) || (wizardStep !== "done")}
-                className="h-8 w-8 rounded-full bg-primary hover:bg-primary/90"
-              >
-                <ArrowUp className="w-3.5 h-3.5" />
-              </Button>
-            )}
+            <Button
+              size="icon"
+              onClick={wizardStep === "discover" ? handleWizardSend : handleSend}
+              disabled={
+                !input.trim() ||
+                isStructuring || isBuilding ||
+                (wizardStep === "discover" && !!wizardIsStreaming) ||
+                (wizardStep === "done" && isStreaming) ||
+                (wizardStep === "done" && chatMode === "test" && !canSendTest) ||
+                (wizardStep !== "done" && wizardStep !== "discover")
+              }
+              className="h-8 w-8 rounded-full bg-primary hover:bg-primary/90"
+            >
+              <ArrowUp className="w-3.5 h-3.5" />
+            </Button>
           </div>
         </div>
       </div>
