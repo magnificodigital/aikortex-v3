@@ -276,17 +276,17 @@ RETORNE SOMENTE O JSON.`;
       }],
     };
 
+    const leadsTable = ctx.supabase.from("leads") as any;
     if (leadData.email) {
-      await ctx.supabase.from("leads")
-        .upsert(leadData, { onConflict: "user_id,email" });
+      await leadsTable.upsert(leadData, { onConflict: "user_id,email" });
     } else {
-      const { data: existing } = await ctx.supabase.from("leads")
+      const { data: existing } = await leadsTable
         .select("id").eq("user_id", ctx.userId).ilike("name", leadData.name).maybeSingle();
       if (!existing) {
-        await ctx.supabase.from("leads").insert(leadData);
+        await leadsTable.insert(leadData);
       } else {
         // Update existing lead with latest qualification data
-        await ctx.supabase.from("leads")
+        await leadsTable
           .update({
             notes: leadData.notes,
             temperature: leadData.temperature,
@@ -360,7 +360,7 @@ Deno.serve(async (req) => {
     }
 
     if (userId !== "anonymous" && mode !== "wizard-setup") {
-      const ctx = { supabase, userId, agentId };
+      const ctx = { supabase: supabase as any, userId, agentId };
       Promise.all([
         extractAndSaveLead(messages, finalContent, agentConfig, ctx),
         agentId ? supabase.from("conversations").upsert({
