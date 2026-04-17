@@ -108,8 +108,8 @@ export function buildDefaultFlowForAgent(agent: UserAgent): {
     "trigger",
     "💬",
     "#22c55e",
-    100,
     50,
+    200,
     { channel: "any" },
     "Inicia quando o agente recebe uma mensagem"
   );
@@ -121,8 +121,8 @@ export function buildDefaultFlowForAgent(agent: UserAgent): {
     "processing",
     "🧠",
     "#6366f1",
-    100,
-    190,
+    330,
+    200,
     {
       agentId: agent.id,
       agentType: agent.agent_type,
@@ -132,7 +132,7 @@ export function buildDefaultFlowForAgent(agent: UserAgent): {
     "Processa a mensagem com o agente IA"
   );
 
-  const extras = extraStepsByType(agent.agent_type, agentNode.id, 190);
+  const extras = extraStepsByType(agent.agent_type, agentNode.id, 330);
 
   const responseNode = NODE(
     "response",
@@ -141,8 +141,8 @@ export function buildDefaultFlowForAgent(agent: UserAgent): {
     "output",
     "💬",
     "#06b6d4",
-    100,
-    extras.lastY + 140,
+    extras.lastX + 280,
+    200,
     { message: "{{agent_response}}" },
     "Envia a resposta do agente ao usuário"
   );
