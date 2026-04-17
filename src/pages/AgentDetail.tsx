@@ -12,6 +12,7 @@ import BrowserCallWidget from "@/components/aikortex/BrowserCallWidget";
 import { useAgentChat } from "@/hooks/use-agent-chat";
 import { useApiKeys } from "@/hooks/use-api-keys";
 import { useUserAgents } from "@/hooks/use-user-agents";
+import { useFlows } from "@/hooks/use-flows";
 import { toast } from "sonner";
 import type { AgentType } from "@/types/agent-builder";
 import { supabase } from "@/integrations/supabase/client";
