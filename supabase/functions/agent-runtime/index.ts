@@ -260,20 +260,13 @@ Retorne APENAS JSON:
 {"found": true/false, "name": "", "email": "", "phone": "", "company": "", "notes": "", "temperature": "frio|morno|quente"}
 RETORNE SOMENTE O JSON.`;
 
-    const resp = await fetch(GATEWAY_URL, {
-      method: "POST",
-      headers: gatewayHeaders(),
-      body: JSON.stringify({
-        messages: [{ role: "user", content: extractPrompt }],
-        module: "structure",
-        mode: "structure",
-      }),
-    });
+    const rawContent = await callOpenRouter(
+      [{ role: "user", content: extractPrompt }],
+      "Você é um extrator de dados estruturados. Retorne SEMPRE JSON válido, sem texto extra."
+    );
+    if (!rawContent) return;
 
-    if (!resp.ok) return;
-
-    const data = await resp.json();
-    const raw = (data.content || "")
+    const raw = rawContent
       .replace(/^```json\s*/gm, "").replace(/^```\s*/gm, "").replace(/```\s*$/gm, "").trim();
 
     let extracted: Record<string, unknown>;
