@@ -17,6 +17,7 @@ import type { AgentType } from "@/types/agent-builder";
 import { supabase } from "@/integrations/supabase/client";
 import { AGENT_PRESETS } from "@/types/agent-presets";
 import { getOperationalInstructions } from "@/lib/agent-operational-prompts";
+import { ensureStructuredInstructions } from "@/lib/agent-instructions";
 import { DEFAULT_FREE_SETUP_MODEL, GATEWAY_MODELS, normalizeFreeSetupModel } from "@/lib/free-setup-models";
 import { LLM_MODELS as ALL_LLM_MODELS, getGroupedModels, getProviderForModel, DEFAULT_FREE_MODEL } from "@/lib/llm-models";
 import AgentMemoryTab from "@/components/aikortex/AgentMemoryTab";
@@ -326,7 +327,14 @@ const AgentDetail = () => {
       objective:       config.objective,
       toneOfVoice:     config.tone,
       greetingMessage: config.greeting_message,
-      instructions:    config.instructions,
+      instructions:    ensureStructuredInstructions(config.instructions, {
+        agentType: (config.agent_type as AgentType) || "Custom",
+        agentName: config.agent_name,
+        description: config.description,
+        objective: config.objective,
+        toneOfVoice: config.tone,
+        greetingMessage: config.greeting_message,
+      }),
     });
   }, []);
 
@@ -449,16 +457,20 @@ const AgentDetail = () => {
 
     const preset = AGENT_PRESETS[templateAgent.agentType];
     const presetContext = preset?.context || {};
-    const operationalInstructions = getOperationalInstructions(templateAgent.agentType);
-    const fallbackInstructions = `1. Sempre se apresentar como assistente\n2. Focar em entender as necessidades\n3. Ser ${presetContext.toneOfVoice || "profissional"}\n4. Nunca prometer o que não pode cumprir\n5. Direcionar para próximo passo claro`;
-
     setPresetData({
       name: templateAgent.name,
       description: presetContext.targetAudienceDescription || templateAgent.autoPrompt.slice(0, 150),
       objective: presetContext.painPoints || "",
       toneOfVoice: presetContext.toneOfVoice || "Profissional e amigável",
       greetingMessage: presetContext.greetingMessage || "",
-      instructions: operationalInstructions || fallbackInstructions,
+      instructions: ensureStructuredInstructions(getOperationalInstructions(templateAgent.agentType), {
+        agentType: templateAgent.agentType,
+        agentName: templateAgent.name,
+        description: presetContext.targetAudienceDescription || templateAgent.autoPrompt.slice(0, 150),
+        objective: presetContext.painPoints || "",
+        toneOfVoice: presetContext.toneOfVoice || "Profissional e amigável",
+        greetingMessage: presetContext.greetingMessage || "",
+      }),
     });
   }, [isTemplate, templateAgent]);
 
