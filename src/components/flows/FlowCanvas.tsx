@@ -103,9 +103,10 @@ interface FlowCanvasProps {
   onOpenFlow?: (flow: SavedFlow) => void;
   onNewFlow?: () => void;
   initialPrompt?: string;
+  headerLeft?: React.ReactNode;
 }
 
-function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave, flows = [], onOpenFlow, onNewFlow, initialPrompt }: FlowCanvasProps) {
+function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave, flows = [], onOpenFlow, onNewFlow, initialPrompt, headerLeft }: FlowCanvasProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const startNodes = initialNodes && (initialNodes as Node[]).length > 0
     ? (initialNodes as Node[])
