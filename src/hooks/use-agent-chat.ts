@@ -112,6 +112,12 @@ interface UseAgentChatOptions {
   persistKey?: string;
   apiConfig?: ApiConfigParams;
   agentContext?: AgentChatContext;
+  /** When set to "wizard-setup", routes to the backend setup wizard prompt builder. */
+  mode?: "agent-chat" | "wizard-setup";
+  /** Agent type (sdr/sac/...) — required by the wizard-setup prompt builder. */
+  agentType?: string;
+  /** Disable CRM lead extraction post-processing (e.g. during wizard). */
+  disableCrmExtraction?: boolean;
 }
 
 function deriveProvider(model?: string): string | undefined {
@@ -230,10 +236,14 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
       const maxRetries = 2;
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
         const payload: Record<string, any> = {
-          mode: "agent-chat",
+          mode: options.mode || "agent-chat",
           messages: apiMessages,
           useGateway: options.useGateway ?? false,
         };
+
+        if (options.mode === "wizard-setup") {
+          payload.agentType = options.agentType || "custom";
+        }
 
         if (options.useGateway) {
           payload.model = options.gatewayModel || "google/gemini-2.5-flash";
@@ -320,7 +330,7 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
 
       // After full stream completes, check for CRM_LEAD block and persist it.
       const finalText = pendingTextRef.current;
-      if (finalText && CRM_LEAD_REGEX.test(finalText)) {
+      if (!options.disableCrmExtraction && finalText && CRM_LEAD_REGEX.test(finalText)) {
         const cleanText = await processCrmLeadBlock(finalText);
         if (mountedRef.current) {
           setMessages((prev) => {
@@ -346,7 +356,7 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
         setIsStreaming(false);
       }
     }
-  }, [isStreaming, options.provider, options.model, options.useGateway, options.gatewayModel, options.systemPrompt, options.apiConfig, options.agentContext, flushPendingText]);
+  }, [isStreaming, options.provider, options.model, options.useGateway, options.gatewayModel, options.systemPrompt, options.apiConfig, options.agentContext, options.mode, options.agentType, options.disableCrmExtraction, flushPendingText]);
 
   return { messages, setMessages, sendMessage, isStreaming };
 }

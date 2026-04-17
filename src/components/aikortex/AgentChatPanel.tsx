@@ -63,6 +63,10 @@ interface AgentChatPanelProps {
   initialWizardMessages?: Array<{ role: "user" | "assistant"; content: string }>;
   onWizardMessagesChange?: (messages: Array<{ role: "user" | "assistant"; content: string }>) => void;
   hasMemoryActive?: boolean;
+  /** Wizard chat (Q&A flow with backend wizard prompt) — used during the discover step. */
+  wizardMessages?: ChatMessage[];
+  wizardSendMessage?: (text: string) => void;
+  wizardIsStreaming?: boolean;
 }
 
 const AGENT_SUGGESTIONS: Record<string, string[]> = {
@@ -153,6 +157,9 @@ const AgentChatPanel = ({
   initialWizardMessages,
   onWizardMessagesChange,
   hasMemoryActive,
+  wizardMessages: wizardChatMessages,
+  wizardSendMessage,
+  wizardIsStreaming,
 }: AgentChatPanelProps) => {
   const [input, setInput] = useState("");
   const [editingConfig, setEditingConfig] = useState(false);
@@ -258,7 +265,7 @@ const AgentChatPanel = ({
   const isSelectedModelFree = selectedModelInfo?.badge === "free";
   const isSelectedModelLocked = selectedModelInfo?.locked === true;
   const canSendTest = chatMode === "test" ? (isSelectedModelFree || !isSelectedModelLocked) : true;
-  const isDiscoverEmpty = wizardStep === "discover" && wizardMessages.length === 0;
+  const isDiscoverEmpty = wizardStep === "discover" && (wizardChatMessages?.length ?? 0) === 0 && !wizardIsStreaming;
   const suggestions = AGENT_SUGGESTIONS[agentType] || AGENT_SUGGESTIONS.Custom;
 
   /* ── Discover → Structure ── */
@@ -340,11 +347,19 @@ const AgentChatPanel = ({
     setInput("");
   }, [input, isStreaming, sendMessage]);
 
+  /* ── Send (during wizard discover — Q&A with backend) ── */
+  const handleWizardSend = useCallback(() => {
+    const text = input.trim();
+    if (!text || wizardIsStreaming || !wizardSendMessage) return;
+    wizardSendMessage(text);
+    setInput("");
+  }, [input, wizardIsStreaming, wizardSendMessage]);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       if (wizardStep === "discover") {
-        if (input.trim().length >= 10) handleDiscover(input.trim());
+        handleWizardSend();
       } else if (wizardStep === "done") {
         handleSend();
       }
@@ -352,7 +367,13 @@ const AgentChatPanel = ({
   };
 
   // Which messages to show based on wizard state
-  const displayMessages = wizardStep === "done" ? messages : wizardMessages;
+  // During discover, show the wizard Q&A chat (backed by useAgentChat in wizard-setup mode).
+  const displayMessages: any[] = wizardStep === "done"
+    ? messages
+    : wizardStep === "discover"
+      ? (wizardChatMessages || [])
+      : wizardMessages;
+
 
   return (
     <div className="w-[420px] min-w-[360px] border-r border-border flex flex-col bg-background">
@@ -440,30 +461,17 @@ const AgentChatPanel = ({
       {/* Messages area */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
 
-        {/* ══ Step 1: Discover — empty state ══ */}
+        {/* ══ Step 1: Discover — empty state (waiting for backend first question) ══ */}
         {isDiscoverEmpty && (
           <div className="flex flex-col items-center justify-center h-full pt-12">
             <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
               <Sparkles className="w-6 h-6 text-primary" />
             </div>
-            <h2 className="text-base font-semibold text-foreground mb-1">Descreva seu agente</h2>
-            <p className="text-xs text-muted-foreground text-center max-w-[280px] mb-6">
-              Conte o que seu agente {typeLabel[agentType] || ""} deve fazer. Vamos estruturar tudo automaticamente.
+            <h2 className="text-base font-semibold text-foreground mb-1">Configurando seu agente</h2>
+            <p className="text-xs text-muted-foreground text-center max-w-[280px]">
+              Vou te fazer algumas perguntas para criar o seu agente {typeLabel[agentType] || ""} sob medida.
             </p>
-            <div className="w-full max-w-[340px]">
-              <p className="text-[10px] text-muted-foreground mb-2 text-center">ou comece com uma ideia:</p>
-              <div className="space-y-1.5">
-                {suggestions.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setInput(s)}
-                    className="w-full text-left text-[11px] px-3 py-2 rounded-lg border border-border hover:border-primary/30 hover:bg-accent/20 text-muted-foreground hover:text-foreground transition-all"
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <Loader2 className="w-4 h-4 text-primary animate-spin mt-4" />
           </div>
         )}
 
@@ -680,8 +688,9 @@ const AgentChatPanel = ({
           </div>
         )}
 
-        {/* Streaming indicator (post-wizard) */}
-        {wizardStep === "done" && isStreaming && messages[messages.length - 1]?.role !== "agent" && (
+        {/* Streaming indicator (post-wizard or during wizard Q&A) */}
+        {((wizardStep === "done" && isStreaming && messages[messages.length - 1]?.role !== "agent") ||
+          (wizardStep === "discover" && wizardIsStreaming && (wizardChatMessages?.[wizardChatMessages.length - 1]?.role !== "agent"))) && (
           <div className="flex gap-2.5">
             <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
               <Bot className="w-3.5 h-3.5 text-primary animate-pulse" />
@@ -762,14 +771,16 @@ const AgentChatPanel = ({
             onKeyDown={handleKeyDown}
             placeholder={
               wizardStep === "discover"
-                ? "Descreva o agente que quer criar..."
+                ? "Digite sua resposta..."
                 : wizardStep === "done"
                 ? (chatMode === "setup" ? "Descreva o que quer ajustar..." : "Envie uma mensagem de teste...")
                 : "Complete as etapas acima para começar..."
             }
             rows={2}
             disabled={
-              isStreaming || isStructuring || isBuilding ||
+              isStructuring || isBuilding ||
+              (wizardStep === "done" && isStreaming) ||
+              (wizardStep === "discover" && !!wizardIsStreaming) ||
               (wizardStep !== "done" && wizardStep !== "discover") ||
               (wizardStep === "done" && chatMode === "test" && !canSendTest)
             }
@@ -790,26 +801,21 @@ const AgentChatPanel = ({
                 {isRecording ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
               </button>
             </div>
-            {wizardStep === "discover" && input.trim().length >= 10 ? (
-              <Button
-                size="sm"
-                onClick={() => handleDiscover(input.trim())}
-                disabled={isStructuring}
-                className="h-8 rounded-full bg-primary hover:bg-primary/90 gap-1.5 text-xs px-4"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                Estruturar com IA
-              </Button>
-            ) : (
-              <Button
-                size="icon"
-                onClick={handleSend}
-                disabled={!input.trim() || isStreaming || (wizardStep === "done" && chatMode === "test" && !canSendTest) || (wizardStep !== "done")}
-                className="h-8 w-8 rounded-full bg-primary hover:bg-primary/90"
-              >
-                <ArrowUp className="w-3.5 h-3.5" />
-              </Button>
-            )}
+            <Button
+              size="icon"
+              onClick={wizardStep === "discover" ? handleWizardSend : handleSend}
+              disabled={
+                !input.trim() ||
+                isStructuring || isBuilding ||
+                (wizardStep === "discover" && !!wizardIsStreaming) ||
+                (wizardStep === "done" && isStreaming) ||
+                (wizardStep === "done" && chatMode === "test" && !canSendTest) ||
+                (wizardStep !== "done" && wizardStep !== "discover")
+              }
+              className="h-8 w-8 rounded-full bg-primary hover:bg-primary/90"
+            >
+              <ArrowUp className="w-3.5 h-3.5" />
+            </Button>
           </div>
         </div>
       </div>
