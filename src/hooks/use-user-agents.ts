@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { buildDefaultFlowForAgent } from "@/lib/agent-flow-builder";
 
 export interface UserAgent {
   id: string;
@@ -90,8 +91,29 @@ export function useUserAgents() {
         .single();
 
       if (error) { toast.error("Erro ao criar agente."); return null; }
-      setAgents(prev => [(data as any), ...prev]);
-      return data as any as UserAgent;
+      const created = data as any as UserAgent;
+      setAgents(prev => [created, ...prev]);
+
+      // Auto-create a default automation flow for this new agent
+      try {
+        const flow = buildDefaultFlowForAgent(created);
+        await (supabase.from("user_flows" as any).insert({
+          user_id: user.id,
+          name: flow.name,
+          description: flow.description,
+          nodes: flow.nodes,
+          edges: flow.edges,
+          is_active: false,
+          trigger_type: "trigger_chat",
+          trigger_config: { agent_id: created.id },
+        }) as any);
+        toast.success("Agente criado — fluxo de automação gerado!");
+      } catch (e) {
+        console.error("Failed to auto-create flow for agent:", e);
+        // Don't fail agent creation if flow creation fails
+      }
+
+      return created;
     }
   }, []);
 
