@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import VoiceConfigPanel, { type VoiceConfig, DEFAULT_VOICE_CONFIG } from "./VoiceConfigPanel";
 import InstructionsEditor from "./InstructionsEditor";
+import { ensureStructuredInstructions } from "@/lib/agent-instructions";
 
 // LLM model data is defined inline in LLM_PROVIDER_MODELS above
 
@@ -379,7 +380,14 @@ const AgentRightPanel = ({
     if (presetData.name)            setAgentName(presetData.name);
     if (presetData.description)     setAgentDesc(presetData.description);
     if (presetData.objective)       setAgentObjective(presetData.objective);
-    if (presetData.instructions)    setAgentInstructions(presetData.instructions);
+    if (presetData.instructions)    setAgentInstructions(ensureStructuredInstructions(presetData.instructions, {
+      agentType,
+      agentName: presetData.name || agentName,
+      description: presetData.description || agentDesc,
+      objective: presetData.objective || agentObjective,
+      toneOfVoice: presetData.toneOfVoice || agentToneOfVoice,
+      greetingMessage: presetData.greetingMessage || agentGreetingMessage,
+    }));
     if (presetData.toneOfVoice)     setAgentToneOfVoice(presetData.toneOfVoice);
     if (presetData.greetingMessage) setAgentGreetingMessage(presetData.greetingMessage);
   }, [presetData]);
