@@ -543,7 +543,13 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
           try {
             const enriched = await handleStructureRequest(baseConfig.description);
             if (enriched) {
-              finalConfig = { ...enriched, agent_name: baseConfig.agent_name, agent_type: baseConfig.agent_type };
+              finalConfig = {
+                ...enriched,
+                agent_name: baseConfig.agent_name,
+                agent_type: baseConfig.agent_type,
+                tone: baseConfig.tone, // preserva o tom dito pelo usuário no wizard
+                greeting_message: baseConfig.greeting_message || enriched.greeting_message,
+              };
             }
           } catch (e) {
             console.warn("Structure enrichment failed, using base config:", e);
