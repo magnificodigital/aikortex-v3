@@ -355,7 +355,7 @@ Deno.serve(async (req) => {
       finalContent = data.content || "Desculpe, o serviço de IA está temporariamente indisponível. Tente novamente em instantes.";
     }
 
-    if (userId !== "anonymous") {
+    if (userId !== "anonymous" && mode !== "wizard-setup") {
       const ctx = { supabase, userId, agentId };
       Promise.all([
         extractAndSaveLead(messages, finalContent, agentConfig, ctx),
