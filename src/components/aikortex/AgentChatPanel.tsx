@@ -347,16 +347,32 @@ const AgentChatPanel = ({
     setInput("");
   }, [input, isStreaming, sendMessage]);
 
+  /* ── Send (during wizard discover — Q&A with backend) ── */
+  const handleWizardSend = useCallback(() => {
+    const text = input.trim();
+    if (!text || wizardIsStreaming || !wizardSendMessage) return;
+    wizardSendMessage(text);
+    setInput("");
+  }, [input, wizardIsStreaming, wizardSendMessage]);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       if (wizardStep === "discover") {
-        if (input.trim().length >= 10) handleDiscover(input.trim());
+        handleWizardSend();
       } else if (wizardStep === "done") {
         handleSend();
       }
     }
   };
+
+  // Which messages to show based on wizard state
+  // During discover, show the wizard Q&A chat (backed by useAgentChat in wizard-setup mode).
+  const displayMessages: any[] = wizardStep === "done"
+    ? messages
+    : wizardStep === "discover"
+      ? (wizardChatMessages || [])
+      : wizardMessages;
 
   // Which messages to show based on wizard state
   const displayMessages = wizardStep === "done" ? messages : wizardMessages;
