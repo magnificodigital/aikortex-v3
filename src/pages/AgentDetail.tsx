@@ -505,7 +505,7 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
     if (wizardStep !== "discover") return;
     if (wizardChat.messages.length > 0) { wizardStartedRef.current = true; return; }
     wizardStartedRef.current = true;
-    void wizardChat.sendMessage("start");
+    void wizardChat.sendMessage("Vamos criar seu agente inteligente");
   }, [agentLoading, wizardStep, wizardChat]);
 
   // Detect ```agent-config {...}``` block in wizard reply → structure + build agent
