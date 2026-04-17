@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import type { AgentType } from "@/types/agent-builder";
 import { supabase } from "@/integrations/supabase/client";
 import { AGENT_PRESETS } from "@/types/agent-presets";
+import { getOperationalInstructions } from "@/lib/agent-operational-prompts";
 import { DEFAULT_FREE_SETUP_MODEL, GATEWAY_MODELS, normalizeFreeSetupModel } from "@/lib/free-setup-models";
 import { LLM_MODELS as ALL_LLM_MODELS, getGroupedModels, getProviderForModel, DEFAULT_FREE_MODEL } from "@/lib/llm-models";
 import AgentMemoryTab from "@/components/aikortex/AgentMemoryTab";
