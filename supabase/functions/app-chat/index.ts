@@ -491,6 +491,30 @@ serve(async (req) => {
       return await proxyAgentChat(body, authHeader);
     }
 
+    /* ── Mode: wizard-setup (streaming, guided Q&A via agent-runtime) ── */
+    if (mode === "wizard-setup") {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+      const serviceKey  = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+      const resp = await fetch(`${supabaseUrl}/functions/v1/agent-runtime`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${serviceKey}`,
+        },
+        body: JSON.stringify(body),
+      });
+      if (!resp.ok) {
+        const t = await resp.text().catch(() => "");
+        return new Response(JSON.stringify({ error: "Erro no wizard de configuração" }), {
+          status: resp.status,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(resp.body, {
+        headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+      });
+    }
+
     /* ── Mode: structure (non-streaming JSON) ── */
     const isStructureMode = mode === "structure";
 
