@@ -103,9 +103,10 @@ interface FlowCanvasProps {
   onOpenFlow?: (flow: SavedFlow) => void;
   onNewFlow?: () => void;
   initialPrompt?: string;
+  headerLeft?: React.ReactNode;
 }
 
-function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave, flows = [], onOpenFlow, onNewFlow, initialPrompt }: FlowCanvasProps) {
+function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave, flows = [], onOpenFlow, onNewFlow, initialPrompt, headerLeft }: FlowCanvasProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const startNodes = initialNodes && (initialNodes as Node[]).length > 0
     ? (initialNodes as Node[])
@@ -451,7 +452,7 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
       <div className="flex-1 relative flex flex-col min-w-0">
         {/* Top bar */}
         <div className="flex items-center justify-between px-3 py-1.5 border-b border-border bg-card/80 backdrop-blur-sm flex-shrink-0">
-          <div className="flex items-center gap-1" />
+          <div className="flex items-center gap-1 min-w-0">{headerLeft}</div>
 
           <div className="flex items-center gap-1.5">
             <Button
