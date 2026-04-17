@@ -404,17 +404,6 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
     toast.success("Fluxo duplicado");
   };
 
-  const handleExport = () => {
-    const data = JSON.stringify({ nodes, edges, name: flowName }, null, 2);
-    const blob = new Blob([data], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${flowName || "flow"}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Fluxo exportado");
-  };
 
   const handleDrop = useCallback(
     (event: React.DragEvent) => {
