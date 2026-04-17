@@ -604,6 +604,7 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
       systemPrompt: testSystemPrompt,
       persistKey:   `${storagePrefix}-test-messages`,
       agentContext: testAgentContext,
+      agentId:      agentId,
     }
   );
 
