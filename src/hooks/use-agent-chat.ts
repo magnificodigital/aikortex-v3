@@ -330,7 +330,7 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
 
       // After full stream completes, check for CRM_LEAD block and persist it.
       const finalText = pendingTextRef.current;
-      if (finalText && CRM_LEAD_REGEX.test(finalText)) {
+      if (!options.disableCrmExtraction && finalText && CRM_LEAD_REGEX.test(finalText)) {
         const cleanText = await processCrmLeadBlock(finalText);
         if (mountedRef.current) {
           setMessages((prev) => {
