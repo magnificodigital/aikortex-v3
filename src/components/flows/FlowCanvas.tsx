@@ -90,10 +90,9 @@ const defaultStartNode: Node = {
 
 let nodeIdCounter = 1;
 
-type RightTab = "toolbar" | "editor" | "database" | "tasks" | "logs";
+type RightTab = "editor" | "database" | "tasks" | "logs";
 
 const RIGHT_TABS: { id: RightTab; label: string; icon: React.ElementType }[] = [
-  { id: "toolbar", label: "Blocos", icon: Wrench },
   { id: "editor", label: "Editor", icon: Settings2 },
   { id: "database", label: "Database", icon: Database },
   { id: "tasks", label: "Tarefas", icon: ListChecks },
