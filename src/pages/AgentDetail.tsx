@@ -527,7 +527,7 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
         agent_type: parsed.role || loadedAgent.agentType,
         description: parsed.description || "",
         objective: parsed.objective || "",
-        tone: parsed.toneOfVoice || "professional_friendly",
+        tone: parsed.toneOfVoice || parsed.tone || "Profissional e Amigável",
         language: "pt-BR",
         greeting_message: parsed.greetingMessage || `Olá! Sou ${parsed.name || loadedAgent.name}. Como posso ajudar?`,
         instructions: parsed.instructions || "",
