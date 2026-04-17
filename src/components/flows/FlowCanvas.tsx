@@ -24,6 +24,7 @@ import FlowNode from "./FlowNode";
 import FlowEdge from "./FlowEdge";
 import FlowNodeConfig from "./FlowNodeConfig";
 import FlowBottomToolbar from "./FlowBottomToolbar";
+import FlowCopilotPanel from "./FlowCopilotPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,6 +43,8 @@ import {
   Trash2,
   Copy,
   PanelRight,
+  PanelLeft,
+  MessageSquare,
   Settings2,
   Database,
   ListChecks,
