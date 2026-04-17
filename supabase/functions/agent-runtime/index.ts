@@ -11,6 +11,42 @@ const gatewayHeaders = () => ({
   "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""}`,
 });
 
+// Lovable AI Gateway — primary AI source (key auto-provisioned)
+const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const LOVABLE_AI_KEY = () => Deno.env.get("LOVABLE_API_KEY") ?? "";
+
+async function callLovableAI(
+  messages: Array<{ role: string; content: string }>,
+  system: string,
+  model = "google/gemini-2.5-flash",
+): Promise<string> {
+  const apiKey = LOVABLE_AI_KEY();
+  if (!apiKey) return "";
+  try {
+    const fullMessages = system
+      ? [{ role: "system", content: system }, ...messages]
+      : messages;
+    const resp = await fetch(LOVABLE_AI_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({ model, messages: fullMessages, stream: false }),
+    });
+    if (!resp.ok) {
+      const t = await resp.text();
+      console.error("Lovable AI error:", resp.status, t.slice(0, 200));
+      return "";
+    }
+    const data = await resp.json();
+    return data?.choices?.[0]?.message?.content || "";
+  } catch (e) {
+    console.error("callLovableAI exception:", e);
+    return "";
+  }
+}
+
 // ── SSE helpers ───────────────────────────────────────────────────────────
 function streamText(text: string): ReadableStream {
   const encoder = new TextEncoder();
