@@ -71,7 +71,7 @@ const partnersItems: NavItem[] = [
   { label: "Perfil", icon: User, path: "/partners?tab=profile" },
   { label: "Evolução", icon: TrendingUp, path: "/partners?tab=tiers" },
   { label: "Treinamentos", icon: BookOpen, path: "/partners?tab=training" },
-  { label: "Store", icon: Package, path: "/partners?tab=marketplace" },
+  { label: "Templates", icon: LayoutTemplate, path: "/partners?tab=marketplace" },
   { label: "Eventos", icon: Calendar, path: "/partners?tab=events" },
   { label: "Comunidade", icon: MessageCircle, path: "/partners?tab=community" },
 ];
@@ -81,7 +81,6 @@ const aikortexItems: NavItem[] = [
   { label: "Ligações", icon: PhoneIcon, path: "/calls" },
   { label: "Flows", icon: Workflow, path: "/aikortex/automations" },
   { label: "Apps", icon: AppWindow, path: "/apps" },
-  { label: "Templates", icon: LayoutTemplate, path: "/templates" },
   { label: "Mensagens", icon: MessageSquare, path: "/aikortex/messages" },
   { label: "Disparos", icon: Send, path: "/aikortex/broadcasts" },
 ];
