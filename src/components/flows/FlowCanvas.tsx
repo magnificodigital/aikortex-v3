@@ -120,7 +120,7 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
   const [edges, setEdges, onEdgesChange] = useEdgesState((initialEdges as Edge[]) || []);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
-  const [rightTab, setRightTab] = useState<RightTab>("toolbar");
+  const [rightTab, setRightTab] = useState<RightTab>("editor");
   const [showRightPanel, setShowRightPanel] = useState(true);
   const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRunModal, setShowRunModal] = useState(false);
@@ -622,9 +622,6 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
 
           {/* Tab content */}
           <div className="flex-1 overflow-hidden">
-            {rightTab === "toolbar" && (
-              <FlowNodePalette />
-            )}
             {rightTab === "editor" && selectedNode && (
               <FlowNodeConfig
                 node={selectedNode}
