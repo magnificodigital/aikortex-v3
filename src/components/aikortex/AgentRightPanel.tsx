@@ -94,12 +94,47 @@ const CHANNELS = [
 const SETTINGS_NAV = [
   { section: "AGENTE", items: [
     { key: "general",      icon: User,      label: "Identidade" },
-    { key: "objective",    icon: Zap,       label: "Objetivo" },
     { key: "instructions", icon: Settings2, label: "Instruções" },
     { key: "files_nav",    icon: FileText,  label: "Conhecimento" },
     { key: "voice_nav",    icon: Mic,       label: "Voz" },
   ]},
 ];
+
+const DEFAULT_INSTRUCTIONS_TEMPLATE = `# 1. Identidade
+Você é um assistente de IA profissional. Apresente-se sempre pelo nome configurado e mantenha consistência de personalidade em todas as interações.
+
+# 2. Objetivo Principal
+Descreva aqui a missão principal do agente. Exemplo: qualificar leads, agendar reuniões, prestar suporte ao cliente ou tirar dúvidas sobre produtos.
+
+# 3. Público-Alvo
+Defina com quem o agente irá conversar (ex: leads inbound, clientes ativos, prospects B2B). Adapte a linguagem ao perfil do interlocutor.
+
+# 4. Tom e Estilo de Comunicação
+- Mantenha tom profissional, amigável e empático.
+- Use frases curtas e objetivas (máximo 2-3 linhas por mensagem).
+- Evite jargões técnicos desnecessários.
+- Responda sempre no idioma do usuário.
+
+# 5. Fluxo de Conversa
+1. Saudação inicial e apresentação.
+2. Descoberta da necessidade (faça uma pergunta por vez).
+3. Qualificação ou aprofundamento do contexto.
+4. Apresentação da solução ou próximo passo.
+5. Confirmação e encerramento cordial.
+
+# 6. Regras de Comportamento
+- NUNCA invente informações que não estejam na base de conhecimento.
+- Sempre confirme dados sensíveis antes de prosseguir.
+- Se não souber a resposta, ofereça encaminhar para um humano.
+- Não compartilhe informações confidenciais ou de outros clientes.
+
+# 7. Restrições
+- Não emita opiniões pessoais sobre temas polêmicos (política, religião).
+- Não faça promessas de prazo, preço ou resultados sem validação.
+- Não execute ações fora do escopo configurado.
+
+# 8. Encerramento
+Sempre finalize de forma cordial, agradeça o contato e indique o próximo passo claro (ex: "vou agendar sua reunião", "um especialista entrará em contato").`;
 
 export interface ApiConfig {
   temperature: number;
@@ -303,7 +338,7 @@ const AgentRightPanel = ({
   const [agentDesc,           setAgentDesc]           = useState(() => resolveInitial("desc",           savedConfig?.description,    presetData?.description));
   const [agentObjective,      setAgentObjective]      = useState(() => resolveInitial("objective",      savedConfig?.objective,      presetData?.objective));
   const [agentInstructions,   setAgentInstructions]   = useState(() => resolveInitial("instructions",   savedConfig?.instructions,   presetData?.instructions));
-  const [agentToneOfVoice,    setAgentToneOfVoice]    = useState(() => resolveInitial("toneOfVoice",    savedConfig?.toneOfVoice,    presetData?.toneOfVoice));
+  const [agentToneOfVoice,    setAgentToneOfVoice]    = useState(() => resolveInitial("toneOfVoice",    savedConfig?.toneOfVoice,    presetData?.toneOfVoice) || "Profissional e Amigável");
   const [agentGreetingMessage,setAgentGreetingMessage]= useState(() => resolveInitial("greetingMessage",savedConfig?.greetingMessage,presetData?.greetingMessage));
 
   const [knowledgeFiles,    setKnowledgeFiles]    = useState<KnowledgeFileLocal[]>(() => {
