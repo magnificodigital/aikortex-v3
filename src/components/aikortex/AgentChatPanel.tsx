@@ -461,30 +461,17 @@ const AgentChatPanel = ({
       {/* Messages area */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
 
-        {/* ══ Step 1: Discover — empty state ══ */}
+        {/* ══ Step 1: Discover — empty state (waiting for backend first question) ══ */}
         {isDiscoverEmpty && (
           <div className="flex flex-col items-center justify-center h-full pt-12">
             <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
               <Sparkles className="w-6 h-6 text-primary" />
             </div>
-            <h2 className="text-base font-semibold text-foreground mb-1">Descreva seu agente</h2>
-            <p className="text-xs text-muted-foreground text-center max-w-[280px] mb-6">
-              Conte o que seu agente {typeLabel[agentType] || ""} deve fazer. Vamos estruturar tudo automaticamente.
+            <h2 className="text-base font-semibold text-foreground mb-1">Configurando seu agente</h2>
+            <p className="text-xs text-muted-foreground text-center max-w-[280px]">
+              Vou te fazer algumas perguntas para criar o seu agente {typeLabel[agentType] || ""} sob medida.
             </p>
-            <div className="w-full max-w-[340px]">
-              <p className="text-[10px] text-muted-foreground mb-2 text-center">ou comece com uma ideia:</p>
-              <div className="space-y-1.5">
-                {suggestions.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setInput(s)}
-                    className="w-full text-left text-[11px] px-3 py-2 rounded-lg border border-border hover:border-primary/30 hover:bg-accent/20 text-muted-foreground hover:text-foreground transition-all"
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <Loader2 className="w-4 h-4 text-primary animate-spin mt-4" />
           </div>
         )}
 
