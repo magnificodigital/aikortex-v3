@@ -90,10 +90,9 @@ const defaultStartNode: Node = {
 
 let nodeIdCounter = 1;
 
-type RightTab = "toolbar" | "editor" | "database" | "tasks" | "logs";
+type RightTab = "editor" | "database" | "tasks" | "logs";
 
 const RIGHT_TABS: { id: RightTab; label: string; icon: React.ElementType }[] = [
-  { id: "toolbar", label: "Blocos", icon: Wrench },
   { id: "editor", label: "Editor", icon: Settings2 },
   { id: "database", label: "Database", icon: Database },
   { id: "tasks", label: "Tarefas", icon: ListChecks },
@@ -121,7 +120,7 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
   const [edges, setEdges, onEdgesChange] = useEdgesState((initialEdges as Edge[]) || []);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
-  const [rightTab, setRightTab] = useState<RightTab>("toolbar");
+  const [rightTab, setRightTab] = useState<RightTab>("editor");
   const [showRightPanel, setShowRightPanel] = useState(true);
   const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRunModal, setShowRunModal] = useState(false);
@@ -623,9 +622,6 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
 
           {/* Tab content */}
           <div className="flex-1 overflow-hidden">
-            {rightTab === "toolbar" && (
-              <FlowNodePalette />
-            )}
             {rightTab === "editor" && selectedNode && (
               <FlowNodeConfig
                 node={selectedNode}
