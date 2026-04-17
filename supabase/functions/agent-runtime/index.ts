@@ -24,6 +24,80 @@ function streamText(text: string): ReadableStream {
   });
 }
 
+// ── Wizard setup prompt builder ───────────────────────────────────────────
+function buildWizardPrompt(agentType: string): string {
+  const typeLabel: Record<string, string> = {
+    sdr: "SDR (Sales Development Representative)",
+    sac: "SAC / Atendimento ao Cliente",
+    custom: "Personalizado",
+    support: "Suporte Técnico",
+    marketing: "Marketing / Conteúdo",
+  };
+
+  const label = typeLabel[agentType?.toLowerCase()] || agentType || "IA";
+
+  const questions: Record<string, string[]> = {
+    sdr: [
+      "o nome do agente",
+      "a empresa ou negócio que ele vai representar",
+      "os produtos ou serviços que ele deve conhecer e apresentar",
+      "quem é o cliente ideal (perfil ICP: segmento, porte, cargo do decisor)",
+      "o tom de comunicação (ex: formal, consultivo, descontraído)",
+      "alguma regra ou restrição importante (o que ele NUNCA deve dizer ou fazer)",
+    ],
+    sac: [
+      "o nome do agente",
+      "a empresa ou negócio que ele vai representar",
+      "os principais produtos ou serviços sobre os quais vai dar suporte",
+      "os tipos de dúvidas ou problemas mais comuns que ele vai resolver",
+      "o tom de comunicação (ex: empático, direto, técnico)",
+      "alguma regra importante (ex: nunca prometer prazos sem confirmar)",
+    ],
+  };
+
+  const qs = questions[agentType?.toLowerCase()] || [
+    "o nome do agente",
+    "a empresa ou negócio que ele vai representar",
+    "o objetivo principal do agente",
+    "o público-alvo que ele vai atender",
+    "o tom de comunicação desejado",
+    "alguma regra ou restrição importante",
+  ];
+
+  return `Você é um assistente de configuração da plataforma Aikortex. Sua missão é ajudar o usuário a configurar um agente de ${label} fazendo perguntas simples e objetivas.
+
+## Regras do wizard
+- Faça UMA pergunta por vez, na ordem abaixo
+- Seja amigável e dê exemplos quando útil
+- Após receber todas as respostas, gere o JSON de configuração
+- Nunca pule perguntas — todas são necessárias
+
+## Perguntas (em ordem)
+${qs.map((q, i) => `${i + 1}. Pergunte sobre ${q}`).join("\n")}
+
+## Início
+Apresente-se brevemente e faça a primeira pergunta.
+
+## Ao finalizar todas as perguntas
+Gere um resumo amigável do agente configurado e então exiba o bloco JSON abaixo com a configuração completa:
+
+\`\`\`agent-config
+{
+  "name": "...",
+  "role": "${agentType || "custom"}",
+  "companyName": "...",
+  "objective": "...",
+  "instructions": "...",
+  "toneOfVoice": "...",
+  "description": "..."
+}
+\`\`\`
+
+O campo "instructions" deve ser DETALHADO — inclua: contexto do negócio, fluxo de conversa, regras, restrições e comportamentos específicos do agente. Mínimo 5 parágrafos.
+
+Responda SEMPRE em português do Brasil.`;
+}
+
 // ── System prompt builder ─────────────────────────────────────────────────
 function buildSystemPrompt(agentConfig: Record<string, any>): string {
   const name        = agentConfig?.name         || "Assistente";
@@ -244,7 +318,10 @@ Deno.serve(async (req) => {
     const supabase       = createClient(supabaseUrl, serviceRoleKey);
 
     const userId  = body.userId || "anonymous";
-    const system  = buildSystemPrompt(agentConfig);
+    const mode    = body.mode || "chat"; // "chat" | "wizard-setup"
+    const system  = mode === "wizard-setup"
+      ? buildWizardPrompt(body.agentType || agentConfig?.role || "custom")
+      : buildSystemPrompt(agentConfig);
     const byokKey = body.byok_key || "";
     const byokProvider = body.provider || "";
 
