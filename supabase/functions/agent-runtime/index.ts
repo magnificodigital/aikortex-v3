@@ -386,13 +386,27 @@ Deno.serve(async (req) => {
     }
 
     if (!finalContent) {
-      const resp = await fetch(GATEWAY_URL, {
-        method: "POST",
-        headers: gatewayHeaders(),
-        body: JSON.stringify({ messages, system, module: "agent", mode: "chat" }),
-      });
-      const data = await resp.json();
-      finalContent = data.content || "Desculpe, o serviço de IA está temporariamente indisponível. Tente novamente em instantes.";
+      // Primary: Lovable AI Gateway (always available)
+      finalContent = await callLovableAI(messages, system);
+    }
+
+    if (!finalContent) {
+      // Fallback: legacy ai-gateway (OpenRouter)
+      try {
+        const resp = await fetch(GATEWAY_URL, {
+          method: "POST",
+          headers: gatewayHeaders(),
+          body: JSON.stringify({ messages, system, module: "agent", mode: "chat" }),
+        });
+        const data = await resp.json();
+        finalContent = data.content || "";
+      } catch (e) {
+        console.error("legacy gateway fallback failed:", e);
+      }
+    }
+
+    if (!finalContent) {
+      finalContent = "Desculpe, o serviço de IA está temporariamente indisponível. Tente novamente em instantes.";
     }
 
     if (userId !== "anonymous" && mode !== "wizard-setup") {
