@@ -23,8 +23,6 @@ import { NODE_TEMPLATES, type FlowNodeData, type FlowExecution, type FlowNodeLog
 import FlowNode from "./FlowNode";
 import FlowEdge from "./FlowEdge";
 import FlowNodeConfig from "./FlowNodeConfig";
-import FlowCopilotPanel from "./FlowCopilotPanel";
-import FlowNodePalette from "./FlowNodePalette";
 import FlowBottomToolbar from "./FlowBottomToolbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,11 +41,7 @@ import {
   Rocket,
   Trash2,
   Copy,
-  Download,
-  PanelLeft,
   PanelRight,
-  MessageSquare,
-  Wrench,
   Settings2,
   Database,
   ListChecks,
@@ -122,7 +116,6 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
   const [rightTab, setRightTab] = useState<RightTab>("editor");
   const [showRightPanel, setShowRightPanel] = useState(true);
-  const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRunModal, setShowRunModal] = useState(false);
   const [runTestMessage, setRunTestMessage] = useState("");
   const [runContactId, setRunContactId] = useState("");
@@ -411,17 +404,6 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
     toast.success("Fluxo duplicado");
   };
 
-  const handleExport = () => {
-    const data = JSON.stringify({ nodes, edges, name: flowName }, null, 2);
-    const blob = new Blob([data], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${flowName || "flow"}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Fluxo exportado");
-  };
 
   const handleDrop = useCallback(
     (event: React.DragEvent) => {
@@ -465,40 +447,11 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
 
   return (
     <div className="flex h-full">
-      {/* LEFT — Copilot */}
-      {showLeftPanel && (
-        <div className="w-[300px] border-r border-border flex-shrink-0 flex flex-col bg-card h-full overflow-hidden">
-          <div className="flex items-center justify-between px-3 py-2 border-b border-border">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-primary" />
-              <span className="text-xs font-semibold text-foreground">Copilot</span>
-            </div>
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShowLeftPanel(false)}>
-              <PanelLeft className="w-3.5 h-3.5" />
-            </Button>
-          </div>
-          <div className="flex-1 overflow-hidden">
-            <FlowCopilotPanel
-              onClose={() => setShowLeftPanel(false)}
-              onAddNode={handleAddNode}
-              onBuildFlow={handleBuildFlow}
-              initialPrompt={initialPrompt}
-            />
-          </div>
-        </div>
-      )}
-
       {/* CENTER — Canvas */}
       <div className="flex-1 relative flex flex-col min-w-0">
         {/* Top bar */}
         <div className="flex items-center justify-between px-3 py-1.5 border-b border-border bg-card/80 backdrop-blur-sm flex-shrink-0">
-          <div className="flex items-center gap-1">
-            {!showLeftPanel && (
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowLeftPanel(true)} title="Copilot">
-                <PanelLeft className="w-3.5 h-3.5" />
-              </Button>
-            )}
-          </div>
+          <div className="flex items-center gap-1" />
 
           <div className="flex items-center gap-1.5">
             <Button
@@ -516,21 +469,18 @@ function FlowCanvasInner({ initialNodes, initialEdges, flowName, flowId, onSave,
               onClick={handleRun}
               disabled={isExecuting}
             >
-              {isExecuting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3 fill-current" />} Run
+              {isExecuting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3 fill-current" />} Executar
             </Button>
             <Button
               size="sm"
               className="h-7 gap-1.5 text-[11px] bg-primary hover:bg-primary/90"
               onClick={handleDeploy}
             >
-              <Rocket className="w-3 h-3" /> Deploy
+              <Rocket className="w-3 h-3" /> Publicar
             </Button>
             <div className="w-px h-5 bg-border mx-0.5" />
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleDuplicate} title="Duplicar">
               <Copy className="w-3.5 h-3.5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleExport} title="Exportar">
-              <Download className="w-3.5 h-3.5" />
             </Button>
             <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={handleDeleteFlow} title="Excluir">
               <Trash2 className="w-3.5 h-3.5" />
