@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import type { Node, Edge } from "@xyflow/react";
-import { Zap, Boxes, Workflow, Plug, ListOrdered, Settings2 } from "lucide-react";
-import { NODE_TEMPLATES, type FlowNodeData } from "@/types/flow-builder";
+import { Zap, Boxes, Workflow, Plug, ListOrdered } from "lucide-react";
+import type { FlowNodeData } from "@/types/flow-builder";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -14,29 +14,34 @@ interface Props {
 
 const CATEGORY_LABEL: Record<string, string> = {
   trigger: "Gatilho",
-  action: "Ação",
+  processing: "Processo",
   logic: "Lógica",
+  control: "Controle",
+  output: "Saída",
   integration: "Integração",
-  ai: "IA",
-  data: "Dados",
+  data_capture: "Captura",
+  crm_actions: "CRM",
+  knowledge: "IA",
+  database: "DB",
+  dev_advanced: "Avançado",
 };
+
+const asData = (n: Node): FlowNodeData => n.data as unknown as FlowNodeData;
 
 export default function FlowInfoPanel({ flowName, nodes, edges, isActive, onSelectNode }: Props) {
   const stats = useMemo(() => {
     const triggers = nodes.filter((n) => {
-      const d = n.data as FlowNodeData | undefined;
+      const d = asData(n);
       return d?.category === "trigger" || d?.nodeType?.startsWith("trigger_");
     });
-    const integrations = nodes.filter((n) => (n.data as FlowNodeData)?.category === "integration");
-    const aiBlocks = nodes.filter((n) => (n.data as FlowNodeData)?.category === "ai");
-    const logicBlocks = nodes.filter((n) => (n.data as FlowNodeData)?.category === "logic");
-    return { triggers, integrations, aiBlocks, logicBlocks };
+    const integrations = nodes.filter((n) => asData(n)?.category === "integration");
+    return { triggers, integrations };
   }, [nodes]);
 
-  // Order nodes by position to build a "journey"
-  const journey = useMemo(() => {
-    return [...nodes].sort((a, b) => a.position.x - b.position.x).slice(0, 8);
-  }, [nodes]);
+  const journey = useMemo(
+    () => [...nodes].sort((a, b) => a.position.x - b.position.x).slice(0, 8),
+    [nodes]
+  );
 
   return (
     <div className="h-full overflow-y-auto px-3 py-3 space-y-3">
@@ -54,7 +59,7 @@ export default function FlowInfoPanel({ flowName, nodes, edges, isActive, onSele
             {isActive ? "Fluxo Ativo" : "Fluxo Criado"}
           </span>
         </div>
-        <div className="space-y-1.5 text-xs">
+        <div className="space-y-1.5">
           <Row label="Nome" value={flowName || "Sem nome"} />
           <Row label="Blocos" value={String(nodes.length)} />
           <Row label="Conexões" value={String(edges.length)} />
@@ -62,7 +67,7 @@ export default function FlowInfoPanel({ flowName, nodes, edges, isActive, onSele
         </div>
       </section>
 
-      {/* TRIGGERS */}
+      {/* GATILHOS */}
       <section className="rounded-xl border border-border bg-card/40 p-3">
         <div className="flex items-center gap-1.5 mb-2">
           <Workflow className="w-3.5 h-3.5 text-muted-foreground" />
@@ -73,7 +78,7 @@ export default function FlowInfoPanel({ flowName, nodes, edges, isActive, onSele
         ) : (
           <div className="space-y-1">
             {stats.triggers.map((n) => {
-              const d = n.data as FlowNodeData;
+              const d = asData(n);
               return (
                 <button
                   key={n.id}
@@ -100,7 +105,7 @@ export default function FlowInfoPanel({ flowName, nodes, edges, isActive, onSele
         ) : (
           <div className="space-y-1">
             {nodes.slice(0, 12).map((n) => {
-              const d = n.data as FlowNodeData;
+              const d = asData(n);
               const cat = CATEGORY_LABEL[d.category] || d.category;
               return (
                 <button
@@ -134,7 +139,7 @@ export default function FlowInfoPanel({ flowName, nodes, edges, isActive, onSele
           </div>
           <div className="space-y-1">
             {stats.integrations.map((n) => {
-              const d = n.data as FlowNodeData;
+              const d = asData(n);
               return (
                 <button
                   key={n.id}
@@ -159,7 +164,7 @@ export default function FlowInfoPanel({ flowName, nodes, edges, isActive, onSele
           </div>
           <div className="space-y-1.5">
             {journey.map((n, i) => {
-              const d = n.data as FlowNodeData;
+              const d = asData(n);
               return (
                 <button
                   key={n.id}
