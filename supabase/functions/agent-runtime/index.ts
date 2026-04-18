@@ -5,50 +5,38 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const FREE_MODELS = [
-  "qwen/qwen3-30b-a3b:free",
-  "google/gemma-3-27b-it:free",
-  "google/gemma-3-12b-it:free",
-  "deepseek/deepseek-chat-v3-0324:free",
-  "deepseek/deepseek-r1:free",
-  "qwen/qwen3-14b:free",
-];
+const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+const GATEWAY_URL = supabaseUrl ? `${supabaseUrl}/functions/v1/ai-gateway` : "";
+const LOVABLE_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+const DEFAULT_OPENROUTER_MODEL = "google/gemini-2.0-flash-exp:free";
 
-// Stream directly from OpenRouter to client (avoids timeout)
-async function streamFromOpenRouter(
-  messages: Array<{ role: string; content: string }>,
-  system: string,
-): Promise<Response | null> {
-  const apiKey = Deno.env.get("OPENROUTER_API_KEY") ?? "";
-  if (!apiKey) { console.error("OPENROUTER_API_KEY not set"); return null; }
-  const fullMessages = system ? [{ role: "system", content: system }, ...messages] : messages;
-  for (const model of FREE_MODELS) {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 10000);
-      const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        signal: controller.signal,
-        headers: {
-          "Authorization": `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": "https://aikortex.com",
-          "X-Title": "Aikortex",
-        },
-        body: JSON.stringify({ model, messages: fullMessages, stream: true, max_tokens: 2048 }),
-      });
-      clearTimeout(timeout);
-      if ([400, 404, 429, 500, 502, 503].includes(resp.status)) {
-        console.warn(`Model ${model} failed: ${resp.status}`); continue;
-      }
-      if (!resp.ok) { console.warn(`Model ${model} not ok: ${resp.status}`); continue; }
-      console.log(`Streaming from ${model}`);
-      return resp;
-    } catch (e) {
-      console.warn(`Model ${model} error: ${e}`); continue;
-    }
+async function buildOpenRouterResponse(messages: Array<{ role: string; content: string }>, requestedModel?: string) {
+  const apiKey = Deno.env.get("OPENROUTER_API_KEY");
+  if (!apiKey) throw new Error("OPENROUTER_API_KEY não configurada");
+
+  const response = await fetch(OPENROUTER_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": "https://aikortex.lovable.app",
+      "X-Title": "Aikortex",
+    },
+    body: JSON.stringify({
+      model: requestedModel || DEFAULT_OPENROUTER_MODEL,
+      messages,
+      stream: false,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "");
+    throw new Error(errorText || `OpenRouter error ${response.status}`);
   }
-  return null;
+
+  const data = await response.json();
+  return data?.choices?.[0]?.message?.content || "";
 }
 
 // Buffered (non-streaming) OpenRouter call for internal tasks like lead extraction
@@ -99,37 +87,26 @@ async function callByok(
     let headers: Record<string, string> = { "Content-Type": "application/json" };
     let body: Record<string, unknown> = { model, messages: fullMessages, max_tokens: 4096 };
 
-    if (provider === "anthropic") {
-      url = "https://api.anthropic.com/v1/messages";
-      headers = { ...headers, "x-api-key": apiKey, "anthropic-version": "2023-06-01" };
-      body = {
-        model,
-        max_tokens: 4096,
-        system,
-        messages: messages.filter(m => m.role !== "system"),
-      };
-      const resp = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
-      if (!resp.ok) return "";
-      const data = await resp.json();
-      return data?.content?.[0]?.text || "";
-    }
+  const response = await fetch(LOVABLE_GATEWAY_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${lovableApiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: requestedModel || "google/gemini-3-flash-preview",
+      messages,
+      stream: false,
+    }),
+  });
 
-    if (provider === "openai") {
-      url = "https://api.openai.com/v1/chat/completions";
-      headers = { ...headers, "Authorization": `Bearer ${apiKey}` };
-    }
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "");
+    throw new Error(errorText || `Lovable AI Gateway error ${response.status}`);
+  }
 
-    if (provider === "gemini") {
-      url = `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`;
-      headers = { ...headers, "Authorization": `Bearer ${apiKey}` };
-    }
-
-    if (!url) return "";
-    const resp = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
-    if (!resp.ok) return "";
-    const data = await resp.json();
-    return data?.choices?.[0]?.message?.content || "";
-  } catch { return ""; }
+  const data = await response.json();
+  return data?.choices?.[0]?.message?.content || "";
 }
 
 // ── SSE helpers ───────────────────────────────────────────────────────────
@@ -165,10 +142,12 @@ function buildWizardPrompt(agentType: string): string {
     sdr: [
       "o nome do agente",
       "a empresa ou negócio que ele vai representar",
-      "os produtos ou serviços que ele deve conhecer e apresentar",
-      "quem é o cliente ideal (perfil ICP: segmento, porte, cargo do decisor)",
-      "o tom de comunicação (ex: formal, consultivo, descontraído)",
-      "alguma regra ou restrição importante (o que ele NUNCA deve dizer ou fazer)",
+      "os produtos ou serviços que ele deve apresentar e qual problema eles resolvem",
+      "quem é o cliente ideal (ICP: segmento, porte, cargo do decisor e dor principal)",
+      "quais dados ele deve obrigatoriamente coletar do lead antes de encerrar",
+      "como a qualificação deve acontecer (ex: BANT, critérios de desqualificação e sinais de oportunidade)",
+      "como o agendamento deve funcionar (duração, fuso, janelas de horário e quem conduz a reunião)",
+      "o tom de comunicação e as regras críticas do que ele nunca pode dizer ou fazer",
     ],
     sac: [
       "o nome do agente",
@@ -194,7 +173,9 @@ function buildWizardPrompt(agentType: string): string {
 ## Regras do wizard
 - Faça UMA pergunta por vez, na ordem abaixo
 - Seja amigável e dê exemplos quando útil
-- Após receber todas as respostas, gere o JSON de configuração
+- Nunca gere o bloco agent-config antes de coletar TODAS as respostas necessárias
+- Se a mensagem do usuário for "start", apenas se apresente e faça a primeira pergunta
+- Para SDR, conduza o diagnóstico pensando em um agente comercial humano que qualifica, coleta dados, agenda e registra tudo no CRM
 - Nunca pule perguntas — todas são necessárias
 
 ## Perguntas (em ordem)
@@ -212,6 +193,7 @@ Gere um resumo amigável do agente configurado e então exiba o bloco JSON abaix
   "role": "${agentType || "custom"}",
   "companyName": "...",
   "objective": "...",
+  "greetingMessage": "...",
   "instructions": "...",
   "toneOfVoice": "...",
   "description": "..."
@@ -219,6 +201,7 @@ Gere um resumo amigável do agente configurado e então exiba o bloco JSON abaix
 \`\`\`
 
 O campo "instructions" deve ser DETALHADO — inclua: contexto do negócio, fluxo de conversa, regras, restrições e comportamentos específicos do agente. Mínimo 5 parágrafos.
+Para SDR, as instructions DEVEM incluir obrigatoriamente: saudação, identificação, descoberta, qualificação BANT, proposta de valor, pedido de horários, confirmação do agendamento, coleta de nome/email/telefone/empresa/cargo e encerramento com bloco <<<CRM_LEAD>>>{...}<<<END>>>.
 
 Responda SEMPRE em português do Brasil.`;
 }
@@ -243,21 +226,14 @@ function buildSystemPrompt(agentConfig: Record<string, any>): string {
 ## Seu objetivo
 ${objective || "Qualificar leads, coletar dados de contato e agendar reuniões com leads qualificados."}
 
-## Método de qualificação: BANT
-Conduza a conversa de forma natural para descobrir:
-- **Budget (Orçamento):** O lead tem budget disponível? Qual o porte da empresa?
-- **Authority (Autoridade):** É o tomador de decisão? Quem mais está envolvido?
-- **Need (Necessidade):** Qual problema quer resolver? Qual a dor principal?
-- **Timeline (Prazo):** Quando pretende implementar? Há urgência?
-
-## Fluxo da conversa
-1. Apresente-se brevemente e pergunte o nome do lead
-2. Entenda o contexto e a dor principal (Need)
-3. Explore o porte/budget de forma natural ("qual o tamanho da sua equipe?")
-4. Confirme se é o decisor ou se há outros envolvidos (Authority)
-5. Entenda o prazo e urgência (Timeline)
-6. Se qualificado (pelo menos 3 de 4 critérios BANT), proponha uma reunião
-7. Colete email/WhatsApp para confirmar o agendamento
+## Fluxo obrigatório
+1. Apresente-se com nome do agente e da empresa.
+2. Colete obrigatoriamente nome, email, telefone/WhatsApp, empresa e cargo.
+3. Descubra a dor principal com perguntas abertas.
+4. Qualifique com BANT (Budget, Authority, Need, Timeline), uma pergunta por vez.
+5. Conecte a dor do lead ao valor da solução em 2-3 frases.
+6. Avance para o agendamento propondo janelas objetivas de horário, confirmando fuso e duração.
+7. Recapitule os dados do lead e o próximo passo.
 
 ## Instruções específicas
 ${instructions}
@@ -269,10 +245,34 @@ ${tone}
 - Seja natural e conversacional — NUNCA pareça um formulário
 - Faça UMA pergunta por vez, nunca várias ao mesmo tempo
 - Ouça ativamente e faça perguntas de aprofundamento
-- Quando o lead demonstrar interesse em agendar, peça email e telefone
-- Registre mentalmente os dados BANT ao longo da conversa
+- Quando o lead demonstrar interesse em agendar, confirme nome, email, telefone, empresa e cargo antes de encerrar
+- Se o lead não tiver fit, registre como perdido com o motivo
+- Não invente preços, prazos ou funcionalidades
 - Responda SEMPRE em português do Brasil
-- Nunca invente horários de agenda — apenas manifeste interesse em agendar e colete os dados`;
+- Ao concluir a conversa, encerre a última mensagem com um bloco técnico exatamente neste formato:
+
+<<<CRM_LEAD>>>
+{
+  "name": "Nome completo do lead",
+  "email": "email@dominio.com",
+  "phone": "+55 11 99999-9999",
+  "company": "Nome da empresa",
+  "position": "Cargo",
+  "stage": "agendado",
+  "temperature": "quente",
+  "value": 0,
+  "source": "whatsapp",
+  "notes": "Resumo da dor, contexto BANT e próximos passos",
+  "meeting": {
+    "scheduled_at": "2026-04-20T15:00:00-03:00",
+    "duration_minutes": 15,
+    "topic": "Reunião de descoberta"
+  },
+  "lost_reason": null
+}
+<<<END>>>
+
+- Use stage="agendado" quando a reunião estiver confirmada, stage="qualificado" quando o lead pedir retorno posterior e stage="perdido" quando não houver fit.`;
   }
 
   // Generic / SAC / Custom prompt
@@ -352,7 +352,10 @@ RETORNE SOMENTE O JSON.`;
     );
     if (!rawContent) return;
 
-    const raw = rawContent
+    if (!resp.ok) return;
+
+    const data = await resp.json();
+    const raw = (data.content || "")
       .replace(/^```json\s*/gm, "").replace(/^```\s*/gm, "").replace(/```\s*$/gm, "").trim();
 
     let extracted: Record<string, unknown>;
@@ -390,17 +393,17 @@ RETORNE SOMENTE O JSON.`;
       }],
     };
 
-    const leadsTable = ctx.supabase.from("leads") as any;
     if (leadData.email) {
-      await leadsTable.upsert(leadData, { onConflict: "user_id,email" });
+      await ctx.supabase.from("leads")
+        .upsert(leadData, { onConflict: "user_id,email" });
     } else {
-      const { data: existing } = await leadsTable
+      const { data: existing } = await ctx.supabase.from("leads")
         .select("id").eq("user_id", ctx.userId).ilike("name", leadData.name).maybeSingle();
       if (!existing) {
-        await leadsTable.insert(leadData);
+        await ctx.supabase.from("leads").insert(leadData);
       } else {
         // Update existing lead with latest qualification data
-        await leadsTable
+        await ctx.supabase.from("leads")
           .update({
             notes: leadData.notes,
             temperature: leadData.temperature,
@@ -422,6 +425,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    if (!GATEWAY_URL) {
+      throw new Error("SUPABASE_URL não configurado para o runtime do agente");
+    }
+
     const body = await req.json();
     const {
       messages = [],
@@ -443,24 +450,61 @@ Deno.serve(async (req) => {
     const byokKey = body.byok_key || "";
     const byokProvider = body.provider || "";
 
-    // BYOK: buffer response (needed for lead extraction)
+    let finalContent = "";
+
     if (byokKey && byokProvider) {
-      const finalContent = await callByok(messages, system, byokProvider, body.model as string || "", byokKey);
-      const content = finalContent || "Desculpe, o serviço de IA está temporariamente indisponível. Tente novamente em instantes.";
-      return new Response(streamText(content), {
-        headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+      const resp = await fetch(GATEWAY_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages,
+          system,
+          module: "agent",
+          mode: "chat",
+          byok_key: byokKey,
+          provider: byokProvider,
+          quality: "fast",
+        }),
       });
+      const data = await resp.json();
+      finalContent = data.content || "";
     }
 
-    // Free models: stream directly from OpenRouter → client
-    const orResp = await streamFromOpenRouter(messages, system);
-    if (orResp?.body) {
-      return new Response(orResp.body, {
-        headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-      });
+    if (!finalContent) {
+      try {
+        finalContent = await buildOpenRouterResponse(
+          [{ role: "system", content: system }, ...messages],
+          body.openrouterModel || body.gatewayModel || DEFAULT_OPENROUTER_MODEL,
+        );
+      } catch (openrouterError) {
+        console.error("agent-runtime openrouter error:", openrouterError);
+        try {
+          finalContent = await buildLovableGatewayResponse(
+            [{ role: "system", content: system }, ...messages],
+            "google/gemini-3-flash-preview",
+          );
+        } catch (gatewayError) {
+          console.error("agent-runtime lovable gateway fallback error:", gatewayError);
+          finalContent = "Desculpe, o serviço de IA está temporariamente indisponível. Tente novamente em instantes.";
+        }
+      }
     }
 
-    return new Response(streamText("Desculpe, o serviço de IA está temporariamente indisponível. Tente novamente em instantes."), {
+    if (userId !== "anonymous" && mode !== "wizard-setup") {
+      const ctx = { supabase, userId, agentId };
+      Promise.all([
+        extractAndSaveLead(messages, finalContent, agentConfig, ctx),
+        agentId ? supabase.from("conversations").upsert({
+          user_id:    userId,
+          agent_id:   agentId,
+          contact_id: contactId,
+          channel,
+          messages:   [...messages, { role: "assistant", content: finalContent }],
+        }, { onConflict: "agent_id,contact_id,channel" }) : Promise.resolve(),
+      ]).catch(e => console.error("background tasks error:", e));
+    }
+
+    return new Response(streamText(finalContent), {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
 

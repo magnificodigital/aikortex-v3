@@ -49,18 +49,6 @@ const AikortexAutomations = () => {
     }
   }, [location.state]);
 
-  // Auto-open a flow when navigated with { openFlowId } in location state
-  useEffect(() => {
-    const state = location.state as any;
-    if (state?.openFlowId && flows.length > 0 && !buildingFlow) {
-      const flow = flows.find((f) => f.id === state.openFlowId);
-      if (flow) {
-        setBuildingFlow({ name: flow.name, nodes: flow.nodes, edges: flow.edges, flowId: flow.id });
-        window.history.replaceState({}, document.title);
-      }
-    }
-  }, [location.state, flows, buildingFlow]);
-
   const persistFolders = useCallback((next: FlowFolder[]) => {
     setFolders(next);
     localStorage.setItem("aikortex_folders", JSON.stringify(next));
