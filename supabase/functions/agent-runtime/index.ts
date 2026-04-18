@@ -5,38 +5,50 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-const GATEWAY_URL = supabaseUrl ? `${supabaseUrl}/functions/v1/ai-gateway` : "";
-const LOVABLE_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-const DEFAULT_OPENROUTER_MODEL = "google/gemini-2.0-flash-exp:free";
+const FREE_MODELS = [
+  "qwen/qwen3-30b-a3b:free",
+  "google/gemma-3-27b-it:free",
+  "google/gemma-3-12b-it:free",
+  "deepseek/deepseek-chat-v3-0324:free",
+  "deepseek/deepseek-r1:free",
+  "qwen/qwen3-14b:free",
+];
 
-async function buildOpenRouterResponse(messages: Array<{ role: string; content: string }>, requestedModel?: string) {
-  const apiKey = Deno.env.get("OPENROUTER_API_KEY");
-  if (!apiKey) throw new Error("OPENROUTER_API_KEY não configurada");
-
-  const response = await fetch(OPENROUTER_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-      "HTTP-Referer": "https://aikortex.lovable.app",
-      "X-Title": "Aikortex",
-    },
-    body: JSON.stringify({
-      model: requestedModel || DEFAULT_OPENROUTER_MODEL,
-      messages,
-      stream: false,
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => "");
-    throw new Error(errorText || `OpenRouter error ${response.status}`);
+// Stream directly from OpenRouter to client (avoids 30s timeout on Supabase edge functions)
+async function streamFromOpenRouter(
+  messages: Array<{ role: string; content: string }>,
+  system: string,
+): Promise<Response | null> {
+  const apiKey = Deno.env.get("OPENROUTER_API_KEY") ?? "";
+  if (!apiKey) { console.error("OPENROUTER_API_KEY not set"); return null; }
+  const fullMessages = system ? [{ role: "system", content: system }, ...messages] : messages;
+  for (const model of FREE_MODELS) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+      const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        signal: controller.signal,
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "https://aikortex.com",
+          "X-Title": "Aikortex",
+        },
+        body: JSON.stringify({ model, messages: fullMessages, stream: true, max_tokens: 2048 }),
+      });
+      clearTimeout(timeout);
+      if ([400, 404, 429, 500, 502, 503].includes(resp.status)) {
+        console.warn(`Model ${model} failed: ${resp.status}`); continue;
+      }
+      if (!resp.ok) { console.warn(`Model ${model} not ok: ${resp.status}`); continue; }
+      console.log(`Streaming from ${model}`);
+      return resp;
+    } catch (e) {
+      console.warn(`Model ${model} error: ${e}`); continue;
+    }
   }
-
-  const data = await response.json();
-  return data?.choices?.[0]?.message?.content || "";
+  return null;
 }
 
 // Buffered (non-streaming) OpenRouter call for internal tasks like lead extraction
@@ -73,7 +85,7 @@ async function callOpenRouterBuffered(
   return "";
 }
 
-// BYOK: call provider API directly with user's own key
+// BYOK: call provider API directly with user's own key (buffered, returns string)
 async function callByok(
   messages: Array<{ role: string; content: string }>,
   system: string,
@@ -83,30 +95,66 @@ async function callByok(
 ): Promise<string> {
   const fullMessages = system ? [{ role: "system", content: system }, ...messages] : messages;
   try {
-    let url = "";
-    let headers: Record<string, string> = { "Content-Type": "application/json" };
-    let body: Record<string, unknown> = { model, messages: fullMessages, max_tokens: 4096 };
+    if (provider === "anthropic") {
+      const resp = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: 4096,
+          system,
+          messages: messages.filter(m => m.role !== "system"),
+        }),
+      });
+      if (!resp.ok) return "";
+      const data = await resp.json();
+      return data?.content?.[0]?.text || "";
+    }
 
-  const response = await fetch(LOVABLE_GATEWAY_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${lovableApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: requestedModel || "google/gemini-3-flash-preview",
-      messages,
-      stream: false,
-    }),
-  });
+    if (provider === "gemini") {
+      const geminiModel = model.replace("google/", "");
+      const resp = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: fullMessages.filter(m => m.role !== "system").map(m => ({
+              role: m.role === "assistant" ? "model" : "user",
+              parts: [{ text: m.content }],
+            })),
+            systemInstruction: system ? { parts: [{ text: system }] } : undefined,
+          }),
+        }
+      );
+      if (!resp.ok) return "";
+      const data = await resp.json();
+      return data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    }
 
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => "");
-    throw new Error(errorText || `Lovable AI Gateway error ${response.status}`);
+    // OpenAI (and openai-compatible)
+    const orModel = model.startsWith("openai/") ? model : `openai/${model}`;
+    const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://aikortex.com",
+        "X-Title": "Aikortex",
+      },
+      body: JSON.stringify({ model: orModel, messages: fullMessages, max_tokens: 4096 }),
+    });
+    if (!resp.ok) return "";
+    const data = await resp.json();
+    return data?.choices?.[0]?.message?.content || "";
+  } catch (e) {
+    console.error("callByok error:", e);
+    return "";
   }
-
-  const data = await response.json();
-  return data?.choices?.[0]?.message?.content || "";
 }
 
 // ── SSE helpers ───────────────────────────────────────────────────────────
@@ -174,7 +222,7 @@ function buildWizardPrompt(agentType: string): string {
 - Faça UMA pergunta por vez, na ordem abaixo
 - Seja amigável e dê exemplos quando útil
 - Nunca gere o bloco agent-config antes de coletar TODAS as respostas necessárias
-- Se a mensagem do usuário for "start", apenas se apresente e faça a primeira pergunta
+- Se a mensagem do usuário for "start" ou "Vamos criar seu agente inteligente", apenas se apresente e faça a primeira pergunta
 - Para SDR, conduza o diagnóstico pensando em um agente comercial humano que qualifica, coleta dados, agenda e registra tudo no CRM
 - Nunca pule perguntas — todas são necessárias
 
@@ -207,13 +255,13 @@ Responda SEMPRE em português do Brasil.`;
 }
 
 // ── System prompt builder ─────────────────────────────────────────────────
-function buildSystemPrompt(agentConfig: Record<string, any>): string {
-  const name        = agentConfig?.name         || "Assistente";
-  const role        = (agentConfig?.role        || "").toLowerCase();
-  const objective   = agentConfig?.objective    || "";
-  const instructions = agentConfig?.instructions || "";
-  const tone        = agentConfig?.toneOfVoice  || "Profissional e Amigável";
-  const company     = agentConfig?.companyName  || "";
+function buildSystemPrompt(agentConfig: Record<string, unknown>): string {
+  const name        = String(agentConfig?.name         || "Assistente");
+  const role        = String(agentConfig?.role        || "").toLowerCase();
+  const objective   = String(agentConfig?.objective    || "");
+  const instructions = String(agentConfig?.instructions || "");
+  const tone        = String(agentConfig?.toneOfVoice  || "Profissional e Amigável");
+  const company     = String(agentConfig?.companyName  || "");
 
   const isSdr = role.includes("sdr") || role.includes("vendas") || role.includes("sales") ||
                 objective.toLowerCase().includes("qualific") ||
@@ -275,7 +323,6 @@ ${tone}
 - Use stage="agendado" quando a reunião estiver confirmada, stage="qualificado" quando o lead pedir retorno posterior e stage="perdido" quando não houver fit.`;
   }
 
-  // Generic / SAC / Custom prompt
   return `Você é ${name}${company ? `, agente de IA da ${company}` : ", um agente de IA"}.
 
 ## Objetivo
@@ -297,11 +344,11 @@ ${tone}
 async function extractAndSaveLead(
   messages: Array<{ role: string; content: string }>,
   agentResponse: string,
-  agentConfig: Record<string, any>,
+  agentConfig: Record<string, unknown>,
   ctx: { supabase: ReturnType<typeof createClient>; userId: string; agentId?: string }
 ): Promise<void> {
   try {
-    const role = (agentConfig?.role || "").toLowerCase();
+    const role = String(agentConfig?.role || "").toLowerCase();
     const isSdr = role.includes("sdr") || role.includes("vendas") || role.includes("sales");
 
     const fullConvo = messages
@@ -352,10 +399,7 @@ RETORNE SOMENTE O JSON.`;
     );
     if (!rawContent) return;
 
-    if (!resp.ok) return;
-
-    const data = await resp.json();
-    const raw = (data.content || "")
+    const raw = rawContent
       .replace(/^```json\s*/gm, "").replace(/^```\s*/gm, "").replace(/```\s*$/gm, "").trim();
 
     let extracted: Record<string, unknown>;
@@ -389,7 +433,7 @@ RETORNE SOMENTE O JSON.`;
         type: "note",
         description: `Lead qualificado pelo agente SDR. Score BANT: ${extracted.bant_score ?? 0}/4.${extracted.wants_meeting ? " Lead quer agendar reunião." : ""}`,
         createdAt: new Date().toISOString(),
-        createdBy: agentConfig?.name || "Agente IA",
+        createdBy: String(agentConfig?.name || "Agente IA"),
       }],
     };
 
@@ -402,7 +446,6 @@ RETORNE SOMENTE O JSON.`;
       if (!existing) {
         await ctx.supabase.from("leads").insert(leadData);
       } else {
-        // Update existing lead with latest qualification data
         await ctx.supabase.from("leads")
           .update({
             notes: leadData.notes,
@@ -425,10 +468,6 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    if (!GATEWAY_URL) {
-      throw new Error("SUPABASE_URL não configurado para o runtime do agente");
-    }
-
     const body = await req.json();
     const {
       messages = [],
@@ -442,77 +481,97 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     const supabase       = createClient(supabaseUrl, serviceRoleKey);
 
-    const userId  = body.userId || "anonymous";
-    const mode    = body.mode || "chat"; // "chat" | "wizard-setup"
-    const system  = mode === "wizard-setup"
-      ? buildWizardPrompt(body.agentType || agentConfig?.role || "custom")
+    const userId   = String(body.userId || "anonymous");
+    const mode     = String(body.mode || "chat");
+    const system   = mode === "wizard-setup"
+      ? buildWizardPrompt(String(body.agentType || agentConfig?.role || "custom"))
       : buildSystemPrompt(agentConfig);
-    const byokKey = body.byok_key || "";
-    const byokProvider = body.provider || "";
 
-    let finalContent = "";
+    const byokKey      = String(body.byok_key || "");
+    const byokProvider = String(body.provider || "");
+    const byokModel    = String(body.model_override || "");
 
-    if (byokKey && byokProvider) {
-      const resp = await fetch(GATEWAY_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages,
-          system,
-          module: "agent",
-          mode: "chat",
-          byok_key: byokKey,
-          provider: byokProvider,
-          quality: "fast",
-        }),
-      });
-      const data = await resp.json();
-      finalContent = data.content || "";
-    }
+    const sseHeaders = { ...corsHeaders, "Content-Type": "text/event-stream" };
 
-    if (!finalContent) {
-      try {
-        finalContent = await buildOpenRouterResponse(
-          [{ role: "system", content: system }, ...messages],
-          body.openrouterModel || body.gatewayModel || DEFAULT_OPENROUTER_MODEL,
+    // ── BYOK path (buffered, then stream via streamText) ──
+    if (byokKey && byokProvider && byokModel) {
+      const content = await callByok(messages, system, byokProvider, byokModel, byokKey);
+      if (!content) {
+        return new Response(
+          streamText("⚠️ Chave de API inválida ou modelo indisponível. Verifique suas configurações."),
+          { headers: sseHeaders }
         );
-      } catch (openrouterError) {
-        console.error("agent-runtime openrouter error:", openrouterError);
-        try {
-          finalContent = await buildLovableGatewayResponse(
-            [{ role: "system", content: system }, ...messages],
-            "google/gemini-3-flash-preview",
-          );
-        } catch (gatewayError) {
-          console.error("agent-runtime lovable gateway fallback error:", gatewayError);
-          finalContent = "Desculpe, o serviço de IA está temporariamente indisponível. Tente novamente em instantes.";
-        }
       }
+      if (userId !== "anonymous" && mode !== "wizard-setup") {
+        const ctx = { supabase, userId, agentId };
+        Promise.all([
+          extractAndSaveLead(messages, content, agentConfig, ctx),
+          agentId ? supabase.from("conversations").upsert({
+            user_id: userId, agent_id: agentId, contact_id: contactId, channel,
+            messages: [...messages, { role: "assistant", content }],
+          }, { onConflict: "agent_id,contact_id,channel" }) : Promise.resolve(),
+        ]).catch(e => console.error("background tasks error:", e));
+      }
+      return new Response(streamText(content), { headers: sseHeaders });
     }
 
+    // ── Free path: stream SSE directly from OpenRouter ──
+    const orResp = await streamFromOpenRouter(messages, system);
+
+    if (!orResp || !orResp.body) {
+      return new Response(
+        streamText("⚠️ Serviço de IA temporariamente indisponível. Tente novamente em instantes."),
+        { headers: sseHeaders }
+      );
+    }
+
+    // Tee the stream: one branch pipes to client, other buffers for lead extraction
     if (userId !== "anonymous" && mode !== "wizard-setup") {
-      const ctx = { supabase, userId, agentId };
-      Promise.all([
-        extractAndSaveLead(messages, finalContent, agentConfig, ctx),
-        agentId ? supabase.from("conversations").upsert({
-          user_id:    userId,
-          agent_id:   agentId,
-          contact_id: contactId,
-          channel,
-          messages:   [...messages, { role: "assistant", content: finalContent }],
-        }, { onConflict: "agent_id,contact_id,channel" }) : Promise.resolve(),
-      ]).catch(e => console.error("background tasks error:", e));
+      const [forClient, forBuffer] = orResp.body.tee();
+
+      // Buffer for lead extraction in background
+      (async () => {
+        try {
+          const reader = forBuffer.getReader();
+          const decoder = new TextDecoder();
+          let fullContent = "";
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const chunk = decoder.decode(value, { stream: true });
+            for (const line of chunk.split("\n")) {
+              if (!line.startsWith("data: ") || line === "data: [DONE]") continue;
+              try {
+                const parsed = JSON.parse(line.slice(6));
+                fullContent += parsed?.choices?.[0]?.delta?.content || "";
+              } catch { /* skip malformed */ }
+            }
+          }
+          if (fullContent) {
+            const ctx = { supabase, userId, agentId };
+            await Promise.all([
+              extractAndSaveLead(messages, fullContent, agentConfig, ctx),
+              agentId ? supabase.from("conversations").upsert({
+                user_id: userId, agent_id: agentId, contact_id: contactId, channel,
+                messages: [...messages, { role: "assistant", content: fullContent }],
+              }, { onConflict: "agent_id,contact_id,channel" }) : Promise.resolve(),
+            ]);
+          }
+        } catch (e) { console.error("buffer/lead extraction error:", e); }
+      })();
+
+      return new Response(forClient, { headers: sseHeaders });
     }
 
-    return new Response(streamText(finalContent), {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-    });
+    // Anonymous or wizard: just pipe stream directly
+    return new Response(orResp.body, { headers: sseHeaders });
 
   } catch (e) {
     console.error("agent-runtime error:", e);
     const msg = e instanceof Error ? e.message : "Erro desconhecido";
-    return new Response(streamText(`⚠️ ${msg}`), {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-    });
+    return new Response(
+      streamText(`⚠️ ${msg}`),
+      { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } }
+    );
   }
 });
