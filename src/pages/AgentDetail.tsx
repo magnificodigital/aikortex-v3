@@ -148,32 +148,38 @@ const AgentDetail = () => {
   /* ── Chat mode ── */
 
   const storagePrefix = `agent-detail-${agentId || "new"}`;
+  const shouldPersistTemplateDraft = !isTemplate;
 
   const [chatMode, setChatMode] = useState<"setup" | "test">(() => {
     if (navState?.chatMode === "test") return "test";
+    if (!shouldPersistTemplateDraft) return "setup";
     try { return (localStorage.getItem(`${storagePrefix}-chatMode`) as "setup" | "test") || "setup"; } catch { return "setup"; }
   });
 
   const [showConfig, setShowConfig] = useState(false);
 
   useEffect(() => {
+    if (!shouldPersistTemplateDraft) return;
     try { localStorage.setItem(`${storagePrefix}-chatMode`, chatMode); } catch {}
-  }, [chatMode, storagePrefix]);
+  }, [chatMode, storagePrefix, shouldPersistTemplateDraft]);
 
   /* ── Model state ── */
 
   const [agentModel, setAgentModel] = useState(() => {
+    if (!shouldPersistTemplateDraft) return loadedAgent.model;
     try { return localStorage.getItem(`${storagePrefix}-model`) || loadedAgent.model; } catch { return loadedAgent.model; }
   });
   const [setupModel, setSetupModel] = useState<string>(() => {
+    if (!shouldPersistTemplateDraft) return DEFAULT_FREE_SETUP_MODEL;
     try { return normalizeFreeSetupModel(localStorage.getItem(`${storagePrefix}-setupModel`)); } catch { return DEFAULT_FREE_SETUP_MODEL; }
   });
 
   useEffect(() => {
+    if (!shouldPersistTemplateDraft) return;
     try { localStorage.setItem(`${storagePrefix}-model`, agentModel); } catch {}
-  }, [agentModel, storagePrefix]);
+  }, [agentModel, storagePrefix, shouldPersistTemplateDraft]);
   useEffect(() => {
-    if (!loadedAgent.model) return;
+    if (!loadedAgent.model || !shouldPersistTemplateDraft) return;
     setAgentModel((currentModel) => {
       try {
         const storedModel = localStorage.getItem(`${storagePrefix}-model`);
@@ -182,10 +188,11 @@ const AgentDetail = () => {
         return loadedAgent.model || currentModel;
       }
     });
-  }, [loadedAgent.model, storagePrefix]);
+  }, [loadedAgent.model, storagePrefix, shouldPersistTemplateDraft]);
   useEffect(() => {
+    if (!shouldPersistTemplateDraft) return;
     try { localStorage.setItem(`${storagePrefix}-setupModel`, setupModel); } catch {}
-  }, [setupModel, storagePrefix]);
+  }, [setupModel, storagePrefix, shouldPersistTemplateDraft]);
 
   /* ── API keys ── */
 
