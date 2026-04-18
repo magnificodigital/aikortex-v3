@@ -491,7 +491,7 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
       gatewayModel: setupModel,
       mode: "wizard-setup",
       agentType: wizardAgentTypeKey,
-      persistKey: `${storagePrefix}-wizard-messages`,
+      persistKey: shouldPersistTemplateDraft ? `${storagePrefix}-wizard-messages` : undefined,
       disableCrmExtraction: true,
     }
   );
