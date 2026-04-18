@@ -51,6 +51,40 @@ async function streamFromOpenRouter(
   return null;
 }
 
+// Buffered (non-streaming) OpenRouter call for internal tasks like lead extraction
+async function callOpenRouterBuffered(
+  messages: Array<{ role: string; content: string }>,
+  system: string,
+): Promise<string> {
+  const apiKey = Deno.env.get("OPENROUTER_API_KEY") ?? "";
+  if (!apiKey) return "";
+  const fullMessages = system ? [{ role: "system", content: system }, ...messages] : messages;
+  for (const model of FREE_MODELS) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 20000);
+      const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        signal: controller.signal,
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "https://aikortex.com",
+          "X-Title": "Aikortex",
+        },
+        body: JSON.stringify({ model, messages: fullMessages, stream: false, max_tokens: 512 }),
+      });
+      clearTimeout(timeout);
+      if ([400, 404, 429, 500, 502, 503].includes(resp.status)) continue;
+      if (!resp.ok) continue;
+      const data = await resp.json();
+      const content = data?.choices?.[0]?.message?.content || "";
+      if (content) return content;
+    } catch { continue; }
+  }
+  return "";
+}
+
 // BYOK: call provider API directly with user's own key
 async function callByok(
   messages: Array<{ role: string; content: string }>,
@@ -312,7 +346,7 @@ Retorne APENAS JSON:
 {"found": true/false, "name": "", "email": "", "phone": "", "company": "", "notes": "", "temperature": "frio|morno|quente"}
 RETORNE SOMENTE O JSON.`;
 
-    const rawContent = await callOpenRouter(
+    const rawContent = await callOpenRouterBuffered(
       [{ role: "user", content: extractPrompt }],
       "Você é um extrator de dados estruturados. Retorne SEMPRE JSON válido, sem texto extra."
     );
