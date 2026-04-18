@@ -32,11 +32,28 @@ const MODULE_MODELS: Record<string, string[]> = {
   default:    FREE_MODELS,
 }
 
-const BYOK_MODELS: Record<string, Record<string, string>> = {
-  openai:     { fast: 'openai/gpt-4o-mini',             smart: 'openai/gpt-4o' },
-  gemini:     { fast: 'google/gemini-2.0-flash-exp',    smart: 'google/gemini-2.5-pro' },
-  anthropic:  { fast: 'anthropic/claude-3-5-haiku',     smart: 'anthropic/claude-sonnet-4-6' },
-  deepseek:   { fast: 'deepseek/deepseek-chat',         smart: 'deepseek/deepseek-r1' },
+const BYOK_MODELS: Record<string, string[]> = {
+  anthropic: [
+    'anthropic/claude-opus-4-7',
+    'anthropic/claude-opus-4-6',
+    'anthropic/claude-sonnet-4-6',
+    'anthropic/claude-haiku-4-5-20251001',
+    'anthropic/claude-3-5-sonnet-20241022',
+  ],
+  openai: [
+    'openai/gpt-4.1',
+    'openai/gpt-4.1-mini',
+    'openai/gpt-4.1-nano',
+    'openai/gpt-4o',
+    'openai/gpt-4o-mini',
+  ],
+  gemini: [
+    'google/gemini-2.5-pro-preview-05-06',
+    'google/gemini-2.5-flash-preview-04-17',
+    'google/gemini-2.0-flash-001',
+    'google/gemini-2.0-flash-lite-001',
+    'google/gemini-1.5-pro',
+  ],
 }
 
 // ── Try models with automatic fallback ────────────────────────────────────
@@ -139,7 +156,8 @@ Deno.serve(async (req) => {
 
     // BYOK path
     if (byok_key && provider && BYOK_MODELS[provider]) {
-      const model    = model_override || BYOK_MODELS[provider][quality] || BYOK_MODELS[provider].fast
+      const models   = BYOK_MODELS[provider]
+      const model    = model_override || (quality === 'smart' ? models[0] : models[models.length - 1])
       const response = await callWithFallback(finalMessages, [model], byok_key, {
         stream: isStream, jsonMode: isJsonMode, maxTokens: isJsonMode ? 8192 : 4096,
       })

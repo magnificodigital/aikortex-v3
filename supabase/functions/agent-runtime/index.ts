@@ -5,7 +5,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const OR_KEY = () => Deno.env.get("OPENROUTER_API_KEY") ?? "";
 const FREE_MODELS = [
   "qwen/qwen3-30b-a3b:free",
   "google/gemma-3-27b-it:free",
@@ -15,15 +14,14 @@ const FREE_MODELS = [
   "qwen/qwen3-14b:free",
 ];
 
+// Free models via OpenRouter (system key)
 async function callOpenRouter(
   messages: Array<{ role: string; content: string }>,
   system: string,
 ): Promise<string> {
-  const apiKey = OR_KEY();
+  const apiKey = Deno.env.get("OPENROUTER_API_KEY") ?? "";
   if (!apiKey) return "";
-  const fullMessages = system
-    ? [{ role: "system", content: system }, ...messages]
-    : messages;
+  const fullMessages = system ? [{ role: "system", content: system }, ...messages] : messages;
   for (const model of FREE_MODELS) {
     try {
       const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -44,6 +42,53 @@ async function callOpenRouter(
     } catch { continue; }
   }
   return "";
+}
+
+// BYOK: call provider API directly with user's own key
+async function callByok(
+  messages: Array<{ role: string; content: string }>,
+  system: string,
+  provider: string,
+  model: string,
+  apiKey: string,
+): Promise<string> {
+  const fullMessages = system ? [{ role: "system", content: system }, ...messages] : messages;
+  try {
+    let url = "";
+    let headers: Record<string, string> = { "Content-Type": "application/json" };
+    let body: Record<string, unknown> = { model, messages: fullMessages, max_tokens: 4096 };
+
+    if (provider === "anthropic") {
+      url = "https://api.anthropic.com/v1/messages";
+      headers = { ...headers, "x-api-key": apiKey, "anthropic-version": "2023-06-01" };
+      body = {
+        model,
+        max_tokens: 4096,
+        system,
+        messages: messages.filter(m => m.role !== "system"),
+      };
+      const resp = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
+      if (!resp.ok) return "";
+      const data = await resp.json();
+      return data?.content?.[0]?.text || "";
+    }
+
+    if (provider === "openai") {
+      url = "https://api.openai.com/v1/chat/completions";
+      headers = { ...headers, "Authorization": `Bearer ${apiKey}` };
+    }
+
+    if (provider === "gemini") {
+      url = `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`;
+      headers = { ...headers, "Authorization": `Bearer ${apiKey}` };
+    }
+
+    if (!url) return "";
+    const resp = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
+    if (!resp.ok) return "";
+    const data = await resp.json();
+    return data?.choices?.[0]?.message?.content || "";
+  } catch { return ""; }
 }
 
 // ── SSE helpers ───────────────────────────────────────────────────────────
@@ -360,8 +405,7 @@ Deno.serve(async (req) => {
     let finalContent = "";
 
     if (byokKey && byokProvider) {
-      // BYOK: use user's own key via OpenRouter
-      finalContent = await callOpenRouter(messages, system);
+      finalContent = await callByok(messages, system, byokProvider, body.model as string || "", byokKey);
     }
 
     if (!finalContent) {
