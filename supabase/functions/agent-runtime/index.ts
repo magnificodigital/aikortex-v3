@@ -378,13 +378,22 @@ Deno.serve(async (req) => {
     }
 
     if (!finalContent) {
-      const resp = await fetch(GATEWAY_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages, system, module: "agent", mode: "chat" }),
-      });
-      const data = await resp.json();
-      finalContent = data.content || "Desculpe, o serviço de IA está temporariamente indisponível. Tente novamente em instantes.";
+      try {
+        finalContent = await buildLovableGatewayResponse(
+          [{ role: "system", content: system }, ...messages],
+          body.gatewayModel || "google/gemini-3-flash-preview",
+        );
+      } catch (gatewayError) {
+        console.error("agent-runtime lovable gateway error:", gatewayError);
+
+        const resp = await fetch(GATEWAY_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages, system, module: "agent", mode: "chat" }),
+        });
+        const data = await resp.json().catch(() => ({}));
+        finalContent = data.content || "Desculpe, o serviço de IA está temporariamente indisponível. Tente novamente em instantes.";
+      }
     }
 
     if (userId !== "anonymous" && mode !== "wizard-setup") {
