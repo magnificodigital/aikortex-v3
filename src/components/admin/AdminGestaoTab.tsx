@@ -553,7 +553,15 @@ const Level1 = ({ onSelectAgency, initialTier, initialAgencyId }: { onSelectAgen
     setLoading(true);
     try {
       const [agenciesRes, subsRes, usersData, clientsRes] = await Promise.all([
-        supabase.from("agency_profiles").select("id, user_id, agency_name, logo_url, tier, active_clients_count, asaas_api_key, asaas_wallet_id, created_at, custom_pricing, tier_manually_overridden"),
+        supabase.from("agency_profiles").select("id, user_id, agency_name, logo_url, tier, active_clients_count, asaas_api_key, asaas_wallet_id, created_at, custom_pricing, tier_manually_overridden").then((res: any) => {
+          if (res.data) {
+            res.data = res.data.map((row: any) => ({
+              ...row,
+              asaas_api_key: row.asaas_api_key ? "connected" : null,
+            }));
+          }
+          return res;
+        }),
         supabase.from("client_template_subscriptions").select("agency_id, agency_price_monthly, platform_price_monthly, status").in("status", ["active", "trial"]),
         supabase.functions.invoke("admin-users", { body: { action: "list" } }),
         supabase.from("agency_clients").select("id, status, agency_id"),

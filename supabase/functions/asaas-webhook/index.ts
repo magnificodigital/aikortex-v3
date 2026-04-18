@@ -15,6 +15,19 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  // ── Verify Asaas webhook signature ──────────────────────────────────────
+  const expectedToken = Deno.env.get('ASAAS_WEBHOOK_TOKEN')
+  if (expectedToken) {
+    const receivedToken = req.headers.get('asaas-access-token') ?? req.headers.get('Asaas-Access-Token')
+    if (receivedToken !== expectedToken) {
+      console.warn('asaas-webhook: invalid or missing access token')
+      return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: corsHeaders })
+    }
+  } else {
+    console.error('asaas-webhook: ASAAS_WEBHOOK_TOKEN not configured — rejecting all requests')
+    return new Response(JSON.stringify({ error: 'Webhook not configured' }), { status: 503, headers: corsHeaders })
+  }
+
   let body: any
   try {
     body = await req.json()

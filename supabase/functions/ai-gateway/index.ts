@@ -1,3 +1,5 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -5,6 +7,10 @@ const corsHeaders = {
 
 const OPENROUTER_KEY = () => Deno.env.get('OPENROUTER_API_KEY') ?? ''
 const GROQ_KEY       = () => Deno.env.get('GROQ_API_KEY') ?? ''
+
+const SUPABASE_URL  = Deno.env.get('SUPABASE_URL') ?? ''
+const SERVICE_KEY   = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+const adminClient   = createClient(SUPABASE_URL, SERVICE_KEY)
 
 // ── Confirmed-working free models on OpenRouter (April 2026) ──────────────
 const FREE_MODELS = [
@@ -109,6 +115,26 @@ async function callWithFallback(
 // ── Main handler ──────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+
+  // ── Auth: require valid JWT (user) or service role key ──────────────────
+  const authHeader = req.headers.get('Authorization') ?? ''
+  const token = authHeader.replace('Bearer ', '').trim()
+  if (!token) {
+    return new Response(JSON.stringify({ error: 'Não autorizado' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+  // Allow internal service-role calls
+  if (token !== SERVICE_KEY) {
+    const { data: { user }, error } = await adminClient.auth.getUser(token)
+    if (error || !user) {
+      return new Response(JSON.stringify({ error: 'Token inválido' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+  }
 
   try {
     const body = await req.json()

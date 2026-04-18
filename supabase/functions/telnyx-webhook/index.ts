@@ -5,6 +5,34 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
 );
 
+// Reject internal/private hostnames and non-https URLs to prevent SSRF.
+function isSafeWebhookUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:") return false;
+    const hostname = parsed.hostname.toLowerCase();
+    if (
+      hostname === "localhost" ||
+      hostname === "0.0.0.0" ||
+      hostname === "169.254.169.254" ||
+      hostname.endsWith(".local") ||
+      hostname.endsWith(".internal") ||
+      /^127\./.test(hostname) ||
+      /^10\./.test(hostname) ||
+      /^192\.168\./.test(hostname) ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(hostname) ||
+      /^::1$/.test(hostname) ||
+      /^fc[0-9a-f]{2}:/i.test(hostname) ||
+      /^fe80:/i.test(hostname)
+    ) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", {
@@ -245,8 +273,8 @@ Deno.serve(async (req) => {
             );
           }
 
-          // Call post-call webhook
-          if (agentConfig.action_webhook_url) {
+          // Call post-call webhook (with SSRF protection)
+          if (agentConfig.action_webhook_url && isSafeWebhookUrl(agentConfig.action_webhook_url)) {
             try {
               await fetch(agentConfig.action_webhook_url, {
                 method: "POST",
@@ -261,6 +289,8 @@ Deno.serve(async (req) => {
             } catch (e) {
               console.error("Post-call webhook error:", e);
             }
+          } else if (agentConfig.action_webhook_url) {
+            console.warn("Post-call webhook rejected (unsafe URL):", agentConfig.action_webhook_url);
           }
         }
 

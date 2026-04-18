@@ -84,7 +84,16 @@ const AdminAgenciesTab = ({ initialTierFilter, initialAgencyId, onOpenClient }: 
     setLoading(true);
     try {
       const [agenciesRes, subsRes, usersData] = await Promise.all([
-        supabase.from("agency_profiles").select("id, user_id, agency_name, logo_url, tier, active_clients_count, asaas_api_key, asaas_wallet_id, created_at, custom_pricing"),
+        supabase.from("agency_profiles").select("id, user_id, agency_name, logo_url, tier, active_clients_count, asaas_api_key, asaas_wallet_id, created_at, custom_pricing").then((res: any) => {
+          // Convert sensitive payment key into boolean indicator before exposing to UI
+          if (res.data) {
+            res.data = res.data.map((row: any) => ({
+              ...row,
+              asaas_api_key: row.asaas_api_key ? "connected" : null,
+            }));
+          }
+          return res;
+        }),
         supabase.from("client_template_subscriptions").select("agency_id, agency_price_monthly, platform_price_monthly, status").in("status", ["active", "trial"]),
         supabase.functions.invoke("admin-get-users"),
       ]);
