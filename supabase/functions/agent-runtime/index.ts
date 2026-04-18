@@ -14,18 +14,18 @@ const FREE_MODELS = [
   "qwen/qwen3-14b:free",
 ];
 
-// Free models via OpenRouter (system key)
-async function callOpenRouter(
+// Stream directly from OpenRouter to client (avoids timeout)
+async function streamFromOpenRouter(
   messages: Array<{ role: string; content: string }>,
   system: string,
-): Promise<string> {
+): Promise<Response | null> {
   const apiKey = Deno.env.get("OPENROUTER_API_KEY") ?? "";
-  if (!apiKey) { console.error("OPENROUTER_API_KEY not set"); return ""; }
+  if (!apiKey) { console.error("OPENROUTER_API_KEY not set"); return null; }
   const fullMessages = system ? [{ role: "system", content: system }, ...messages] : messages;
   for (const model of FREE_MODELS) {
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 25000);
+      const timeout = setTimeout(() => controller.abort(), 10000);
       const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         signal: controller.signal,
@@ -35,23 +35,20 @@ async function callOpenRouter(
           "HTTP-Referer": "https://aikortex.com",
           "X-Title": "Aikortex",
         },
-        body: JSON.stringify({ model, messages: fullMessages, stream: false, max_tokens: 2048 }),
+        body: JSON.stringify({ model, messages: fullMessages, stream: true, max_tokens: 2048 }),
       });
       clearTimeout(timeout);
       if ([400, 404, 429, 500, 502, 503].includes(resp.status)) {
-        console.warn(`Model ${model} failed: ${resp.status}`);
-        continue;
+        console.warn(`Model ${model} failed: ${resp.status}`); continue;
       }
       if (!resp.ok) { console.warn(`Model ${model} not ok: ${resp.status}`); continue; }
-      const data = await resp.json();
-      const content = data?.choices?.[0]?.message?.content || "";
-      if (content) { console.log(`Success with ${model}`); return content; }
+      console.log(`Streaming from ${model}`);
+      return resp;
     } catch (e) {
-      console.warn(`Model ${model} error: ${e}`);
-      continue;
+      console.warn(`Model ${model} error: ${e}`); continue;
     }
   }
-  return "";
+  return null;
 }
 
 // BYOK: call provider API directly with user's own key
@@ -412,35 +409,24 @@ Deno.serve(async (req) => {
     const byokKey = body.byok_key || "";
     const byokProvider = body.provider || "";
 
-    let finalContent = "";
-
+    // BYOK: buffer response (needed for lead extraction)
     if (byokKey && byokProvider) {
-      finalContent = await callByok(messages, system, byokProvider, body.model as string || "", byokKey);
+      const finalContent = await callByok(messages, system, byokProvider, body.model as string || "", byokKey);
+      const content = finalContent || "Desculpe, o serviço de IA está temporariamente indisponível. Tente novamente em instantes.";
+      return new Response(streamText(content), {
+        headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+      });
     }
 
-    if (!finalContent) {
-      finalContent = await callOpenRouter(messages, system);
+    // Free models: stream directly from OpenRouter → client
+    const orResp = await streamFromOpenRouter(messages, system);
+    if (orResp?.body) {
+      return new Response(orResp.body, {
+        headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+      });
     }
 
-    if (!finalContent) {
-      finalContent = "Desculpe, o serviço de IA está temporariamente indisponível. Tente novamente em instantes.";
-    }
-
-    if (userId !== "anonymous" && mode !== "wizard-setup") {
-      const ctx = { supabase: supabase as any, userId, agentId };
-      Promise.all([
-        extractAndSaveLead(messages, finalContent, agentConfig, ctx),
-        agentId ? supabase.from("conversations").upsert({
-          user_id:    userId,
-          agent_id:   agentId,
-          contact_id: contactId,
-          channel,
-          messages:   [...messages, { role: "assistant", content: finalContent }],
-        }, { onConflict: "agent_id,contact_id,channel" }) : Promise.resolve(),
-      ]).catch(e => console.error("background tasks error:", e));
-    }
-
-    return new Response(streamText(finalContent), {
+    return new Response(streamText("Desculpe, o serviço de IA está temporariamente indisponível. Tente novamente em instantes."), {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
 
