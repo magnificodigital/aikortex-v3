@@ -98,10 +98,12 @@ function buildWizardPrompt(agentType: string): string {
     sdr: [
       "o nome do agente",
       "a empresa ou negócio que ele vai representar",
-      "os produtos ou serviços que ele deve conhecer e apresentar",
-      "quem é o cliente ideal (perfil ICP: segmento, porte, cargo do decisor)",
-      "o tom de comunicação (ex: formal, consultivo, descontraído)",
-      "alguma regra ou restrição importante (o que ele NUNCA deve dizer ou fazer)",
+      "os produtos ou serviços que ele deve apresentar e qual problema eles resolvem",
+      "quem é o cliente ideal (ICP: segmento, porte, cargo do decisor e dor principal)",
+      "quais dados ele deve obrigatoriamente coletar do lead antes de encerrar",
+      "como a qualificação deve acontecer (ex: BANT, critérios de desqualificação e sinais de oportunidade)",
+      "como o agendamento deve funcionar (duração, fuso, janelas de horário e quem conduz a reunião)",
+      "o tom de comunicação e as regras críticas do que ele nunca pode dizer ou fazer",
     ],
     sac: [
       "o nome do agente",
@@ -127,7 +129,9 @@ function buildWizardPrompt(agentType: string): string {
 ## Regras do wizard
 - Faça UMA pergunta por vez, na ordem abaixo
 - Seja amigável e dê exemplos quando útil
-- Após receber todas as respostas, gere o JSON de configuração
+- Nunca gere o bloco agent-config antes de coletar TODAS as respostas necessárias
+- Se a mensagem do usuário for "start", apenas se apresente e faça a primeira pergunta
+- Para SDR, conduza o diagnóstico pensando em um agente comercial humano que qualifica, coleta dados, agenda e registra tudo no CRM
 - Nunca pule perguntas — todas são necessárias
 
 ## Perguntas (em ordem)
@@ -145,6 +149,7 @@ Gere um resumo amigável do agente configurado e então exiba o bloco JSON abaix
   "role": "${agentType || "custom"}",
   "companyName": "...",
   "objective": "...",
+  "greetingMessage": "...",
   "instructions": "...",
   "toneOfVoice": "...",
   "description": "..."
@@ -152,6 +157,7 @@ Gere um resumo amigável do agente configurado e então exiba o bloco JSON abaix
 \`\`\`
 
 O campo "instructions" deve ser DETALHADO — inclua: contexto do negócio, fluxo de conversa, regras, restrições e comportamentos específicos do agente. Mínimo 5 parágrafos.
+Para SDR, as instructions DEVEM incluir obrigatoriamente: saudação, identificação, descoberta, qualificação BANT, proposta de valor, pedido de horários, confirmação do agendamento, coleta de nome/email/telefone/empresa/cargo e encerramento com bloco <<<CRM_LEAD>>>{...}<<<END>>>.
 
 Responda SEMPRE em português do Brasil.`;
 }
@@ -176,21 +182,14 @@ function buildSystemPrompt(agentConfig: Record<string, any>): string {
 ## Seu objetivo
 ${objective || "Qualificar leads, coletar dados de contato e agendar reuniões com leads qualificados."}
 
-## Método de qualificação: BANT
-Conduza a conversa de forma natural para descobrir:
-- **Budget (Orçamento):** O lead tem budget disponível? Qual o porte da empresa?
-- **Authority (Autoridade):** É o tomador de decisão? Quem mais está envolvido?
-- **Need (Necessidade):** Qual problema quer resolver? Qual a dor principal?
-- **Timeline (Prazo):** Quando pretende implementar? Há urgência?
-
-## Fluxo da conversa
-1. Apresente-se brevemente e pergunte o nome do lead
-2. Entenda o contexto e a dor principal (Need)
-3. Explore o porte/budget de forma natural ("qual o tamanho da sua equipe?")
-4. Confirme se é o decisor ou se há outros envolvidos (Authority)
-5. Entenda o prazo e urgência (Timeline)
-6. Se qualificado (pelo menos 3 de 4 critérios BANT), proponha uma reunião
-7. Colete email/WhatsApp para confirmar o agendamento
+## Fluxo obrigatório
+1. Apresente-se com nome do agente e da empresa.
+2. Colete obrigatoriamente nome, email, telefone/WhatsApp, empresa e cargo.
+3. Descubra a dor principal com perguntas abertas.
+4. Qualifique com BANT (Budget, Authority, Need, Timeline), uma pergunta por vez.
+5. Conecte a dor do lead ao valor da solução em 2-3 frases.
+6. Avance para o agendamento propondo janelas objetivas de horário, confirmando fuso e duração.
+7. Recapitule os dados do lead e o próximo passo.
 
 ## Instruções específicas
 ${instructions}
@@ -202,10 +201,34 @@ ${tone}
 - Seja natural e conversacional — NUNCA pareça um formulário
 - Faça UMA pergunta por vez, nunca várias ao mesmo tempo
 - Ouça ativamente e faça perguntas de aprofundamento
-- Quando o lead demonstrar interesse em agendar, peça email e telefone
-- Registre mentalmente os dados BANT ao longo da conversa
+- Quando o lead demonstrar interesse em agendar, confirme nome, email, telefone, empresa e cargo antes de encerrar
+- Se o lead não tiver fit, registre como perdido com o motivo
+- Não invente preços, prazos ou funcionalidades
 - Responda SEMPRE em português do Brasil
-- Nunca invente horários de agenda — apenas manifeste interesse em agendar e colete os dados`;
+- Ao concluir a conversa, encerre a última mensagem com um bloco técnico exatamente neste formato:
+
+<<<CRM_LEAD>>>
+{
+  "name": "Nome completo do lead",
+  "email": "email@dominio.com",
+  "phone": "+55 11 99999-9999",
+  "company": "Nome da empresa",
+  "position": "Cargo",
+  "stage": "agendado",
+  "temperature": "quente",
+  "value": 0,
+  "source": "whatsapp",
+  "notes": "Resumo da dor, contexto BANT e próximos passos",
+  "meeting": {
+    "scheduled_at": "2026-04-20T15:00:00-03:00",
+    "duration_minutes": 15,
+    "topic": "Reunião de descoberta"
+  },
+  "lost_reason": null
+}
+<<<END>>>
+
+- Use stage="agendado" quando a reunião estiver confirmada, stage="qualificado" quando o lead pedir retorno posterior e stage="perdido" quando não houver fit.`;
   }
 
   // Generic / SAC / Custom prompt
