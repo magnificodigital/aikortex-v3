@@ -75,6 +75,15 @@ const buildSavedConfig = (config: AgentConfig, agentType: string) => ({
   agentType,
 });
 
+const mergeAgentInstructions = (agentType: AgentType, ...parts: Array<string | undefined>) => {
+  const merged = [getOperationalInstructions(agentType), ...parts]
+    .map((part) => part?.trim())
+    .filter((part): part is string => !!part)
+    .filter((part, index, all) => all.indexOf(part) === index);
+
+  return merged.join("\n\n");
+};
+
 /* ── Component ── */
 
 const AgentDetail = () => {
@@ -526,6 +535,15 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
       const parsed = JSON.parse(cleanedConfig);
       wizardCompletedRef.current = true;
 
+      const wizardBrief = [
+        parsed.companyName ? `Empresa: ${parsed.companyName}` : "",
+        parsed.description ? `Descrição: ${parsed.description}` : "",
+        parsed.objective ? `Objetivo: ${parsed.objective}` : "",
+        parsed.toneOfVoice ? `Tom de voz: ${parsed.toneOfVoice}` : "",
+        parsed.greetingMessage ? `Saudação inicial: ${parsed.greetingMessage}` : "",
+        parsed.instructions ? `Regras coletadas no wizard:\n${parsed.instructions}` : "",
+      ].filter(Boolean).join("\n\n");
+
       const baseConfig: StructuredAgentConfig = {
         agent_name: parsed.name || loadedAgent.name,
         agent_type: parsed.role || loadedAgent.agentType,
@@ -534,25 +552,40 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
         tone: parsed.toneOfVoice || "professional_friendly",
         language: "pt-BR",
         greeting_message: parsed.greetingMessage || `Olá! Sou ${parsed.name || loadedAgent.name}. Como posso ajudar?`,
-        instructions: parsed.instructions || "",
+        instructions: mergeAgentInstructions(loadedAgent.agentType, parsed.instructions),
         channels: ["whatsapp", "website"],
         selected_features: [],
         onboarding_level: "soft",
       };
 
-      // Enrich the config via the structure endpoint using the description from the chat
+      // Enrich the config via the structure endpoint using the full wizard briefing
       (async () => {
         let finalConfig = baseConfig;
-        if (baseConfig.description) {
+        if (wizardBrief) {
           try {
-            const enriched = await handleStructureRequest(baseConfig.description);
+            const enriched = await handleStructureRequest(wizardBrief);
             if (enriched) {
-              finalConfig = { ...enriched, agent_name: baseConfig.agent_name, agent_type: baseConfig.agent_type };
+              finalConfig = {
+                ...enriched,
+                agent_name: parsed.name || enriched.agent_name || baseConfig.agent_name,
+                agent_type: baseConfig.agent_type,
+                description: parsed.description || enriched.description || baseConfig.description,
+                objective: parsed.objective || enriched.objective || baseConfig.objective,
+                tone: parsed.toneOfVoice || enriched.tone || baseConfig.tone,
+                greeting_message: parsed.greetingMessage || enriched.greeting_message || baseConfig.greeting_message,
+                instructions: mergeAgentInstructions(
+                  loadedAgent.agentType,
+                  parsed.instructions,
+                  enriched.instructions,
+                ),
+                channels: enriched.channels?.length ? enriched.channels : baseConfig.channels,
+              };
             }
           } catch (e) {
             console.warn("Structure enrichment failed, using base config:", e);
           }
         }
+        setStructuredConfig(finalConfig);
         handleConfigStructured(finalConfig);
         await handleBuildAgent(finalConfig);
       })();
