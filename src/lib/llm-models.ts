@@ -96,6 +96,8 @@ export function getGroupedModels() {
 export const DEFAULT_FREE_MODEL = "google/gemini-2.5-flash-preview-04-17";
 
 export function getProviderForModel(modelId: string): string {
+  if (!modelId) return "google";
+  if (modelId.includes("/")) return "openrouter";
   return LLM_MODELS.find(m => m.id === modelId)?.provider || "google";
 }
 
