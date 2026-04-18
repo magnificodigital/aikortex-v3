@@ -14,6 +14,39 @@ const FREE_MODELS = [
   "qwen/qwen3-14b:free",
 ];
 
+// Non-streaming call (used by lead extractor which needs full text)
+async function callOpenRouter(
+  messages: Array<{ role: string; content: string }>,
+  system: string,
+): Promise<string> {
+  const apiKey = Deno.env.get("OPENROUTER_API_KEY") ?? "";
+  if (!apiKey) return "";
+  const fullMessages = system ? [{ role: "system", content: system }, ...messages] : messages;
+  for (const model of FREE_MODELS) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+      const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        signal: controller.signal,
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "https://aikortex.com",
+          "X-Title": "Aikortex",
+        },
+        body: JSON.stringify({ model, messages: fullMessages, stream: false, max_tokens: 1024 }),
+      });
+      clearTimeout(timeout);
+      if (!resp.ok) continue;
+      const data = await resp.json();
+      const content = data?.choices?.[0]?.message?.content || "";
+      if (content) return content;
+    } catch { continue; }
+  }
+  return "";
+}
+
 // Stream directly from OpenRouter to client (avoids timeout)
 async function streamFromOpenRouter(
   messages: Array<{ role: string; content: string }>,
