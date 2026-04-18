@@ -8,12 +8,13 @@ const GROQ_KEY       = () => Deno.env.get('GROQ_API_KEY') ?? ''
 
 // ── Confirmed-working free models on OpenRouter (April 2026) ──────────────
 const FREE_MODELS = [
-  'qwen/qwen3-30b-a3b:free',
+  'meta-llama/llama-3.3-70b-instruct:free',
   'google/gemma-3-27b-it:free',
-  'google/gemma-3-12b-it:free',
-  'deepseek/deepseek-chat-v3-0324:free',
   'deepseek/deepseek-r1:free',
-  'qwen/qwen3-14b:free',
+  'deepseek/deepseek-chat-v3-0324:free',
+  'qwen/qwen3-30b-a3b:free',
+  'meta-llama/llama-4-scout:free',
+  'google/gemma-3-12b-it:free',
 ]
 
 // ── Groq models (free, fast, reliable) ────────────────────────────────────
@@ -32,28 +33,11 @@ const MODULE_MODELS: Record<string, string[]> = {
   default:    FREE_MODELS,
 }
 
-const BYOK_MODELS: Record<string, string[]> = {
-  anthropic: [
-    'anthropic/claude-opus-4-7',
-    'anthropic/claude-opus-4-6',
-    'anthropic/claude-sonnet-4-6',
-    'anthropic/claude-haiku-4-5-20251001',
-    'anthropic/claude-3-5-sonnet-20241022',
-  ],
-  openai: [
-    'openai/gpt-4.1',
-    'openai/gpt-4.1-mini',
-    'openai/gpt-4.1-nano',
-    'openai/gpt-4o',
-    'openai/gpt-4o-mini',
-  ],
-  gemini: [
-    'google/gemini-2.5-pro-preview-05-06',
-    'google/gemini-2.5-flash-preview-04-17',
-    'google/gemini-2.0-flash-001',
-    'google/gemini-2.0-flash-lite-001',
-    'google/gemini-1.5-pro',
-  ],
+const BYOK_MODELS: Record<string, Record<string, string>> = {
+  openai:     { fast: 'openai/gpt-4o-mini',             smart: 'openai/gpt-4o' },
+  gemini:     { fast: 'google/gemini-2.0-flash-exp',    smart: 'google/gemini-2.5-pro' },
+  anthropic:  { fast: 'anthropic/claude-3-5-haiku',     smart: 'anthropic/claude-sonnet-4-6' },
+  deepseek:   { fast: 'deepseek/deepseek-chat',         smart: 'deepseek/deepseek-r1' },
 }
 
 // ── Try models with automatic fallback ────────────────────────────────────
@@ -156,8 +140,7 @@ Deno.serve(async (req) => {
 
     // BYOK path
     if (byok_key && provider && BYOK_MODELS[provider]) {
-      const models   = BYOK_MODELS[provider]
-      const model    = model_override || (quality === 'smart' ? models[0] : models[models.length - 1])
+      const model    = model_override || BYOK_MODELS[provider][quality] || BYOK_MODELS[provider].fast
       const response = await callWithFallback(finalMessages, [model], byok_key, {
         stream: isStream, jsonMode: isJsonMode, maxTokens: isJsonMode ? 8192 : 4096,
       })

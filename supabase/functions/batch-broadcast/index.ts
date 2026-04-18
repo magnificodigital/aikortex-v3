@@ -259,7 +259,7 @@ serve(async (req) => {
     const logId = logRow?.id;
 
     // Process async
-    (globalThis as any).EdgeRuntime?.waitUntil(
+    EdgeRuntime.waitUntil(
       processBroadcast(supabase, logId, user.id, contacts, message_template, use_ai, agent_db_id, waToken, waPhoneId)
     );
 

@@ -118,8 +118,6 @@ interface UseAgentChatOptions {
   agentType?: string;
   /** Disable CRM lead extraction post-processing (e.g. during wizard). */
   disableCrmExtraction?: boolean;
-  /** Agent ID — used to attach lead/conversation rows to the right agent. */
-  agentId?: string;
 }
 
 function deriveProvider(model?: string): string | undefined {
@@ -241,9 +239,6 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
           mode: options.mode || "agent-chat",
           messages: apiMessages,
           useGateway: options.useGateway ?? false,
-          userId: session?.user?.id || "anonymous",
-          agentId: options.agentId,
-          agentConfig: options.agentContext,
         };
 
         if (options.mode === "wizard-setup") {

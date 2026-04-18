@@ -21,8 +21,6 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import VoiceConfigPanel, { type VoiceConfig, DEFAULT_VOICE_CONFIG } from "./VoiceConfigPanel";
-import InstructionsEditor from "./InstructionsEditor";
-import { ensureStructuredInstructions } from "@/lib/agent-instructions";
 
 // LLM model data is defined inline in LLM_PROVIDER_MODELS above
 
@@ -380,14 +378,7 @@ const AgentRightPanel = ({
     if (presetData.name)            setAgentName(presetData.name);
     if (presetData.description)     setAgentDesc(presetData.description);
     if (presetData.objective)       setAgentObjective(presetData.objective);
-    if (presetData.instructions)    setAgentInstructions(ensureStructuredInstructions(presetData.instructions, {
-      agentType,
-      agentName: presetData.name || agentName,
-      description: presetData.description || agentDesc,
-      objective: presetData.objective || agentObjective,
-      toneOfVoice: presetData.toneOfVoice || agentToneOfVoice,
-      greetingMessage: presetData.greetingMessage || agentGreetingMessage,
-    }));
+    if (presetData.instructions)    setAgentInstructions(presetData.instructions);
     if (presetData.toneOfVoice)     setAgentToneOfVoice(presetData.toneOfVoice);
     if (presetData.greetingMessage) setAgentGreetingMessage(presetData.greetingMessage);
   }, [presetData]);
@@ -564,22 +555,16 @@ const AgentRightPanel = ({
                     </div>
                     <div className="space-y-2">
                       <h3 className="text-sm font-semibold text-foreground">Tom de voz</h3>
-                      <Input
-                        list="tone-of-voice-suggestions"
-                        value={agentToneOfVoice}
-                        onChange={(e) => setAgentToneOfVoice(e.target.value)}
-                        placeholder="Ex: Profissional e Amigável"
-                        className="text-sm"
-                      />
-                      <datalist id="tone-of-voice-suggestions">
-                        <option value="Profissional e Amigável" />
-                        <option value="Formal" />
-                        <option value="Casual e Descontraído" />
-                        <option value="Empático e Acolhedor" />
-                        <option value="Direto e Objetivo" />
-                        <option value="Consultivo e Especialista" />
-                      </datalist>
-                      <p className="text-[11px] text-muted-foreground">Aceita texto livre — use uma das sugestões ou descreva o tom desejado.</p>
+                      <Select value={agentToneOfVoice} onValueChange={setAgentToneOfVoice}>
+                        <SelectTrigger className="text-sm"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Profissional e Amigável">Profissional e Amigável</SelectItem>
+                          <SelectItem value="Formal">Formal</SelectItem>
+                          <SelectItem value="Casual e Descontraído">Casual e Descontraído</SelectItem>
+                          <SelectItem value="Empático e Acolhedor">Empático e Acolhedor</SelectItem>
+                          <SelectItem value="Direto e Objetivo">Direto e Objetivo</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-2">
                       <h3 className="text-sm font-semibold text-foreground">Mensagem de saudação</h3>
@@ -589,12 +574,41 @@ const AgentRightPanel = ({
                   </>
                 )}
 
-                {/* Instruções — diagramadas em seções editáveis (best-practice prompt structure) */}
+                {/* Instruções (objetivo + comportamento unificados, estruturados em tópicos) */}
                 {settingsNav === "instructions" && (
-                  <InstructionsEditor
-                    value={agentInstructions || DEFAULT_INSTRUCTIONS_TEMPLATE}
-                    onChange={setAgentInstructions}
-                  />
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h2 className="text-lg font-bold text-foreground">Instruções</h2>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Prompt completo do agente: objetivo, público, tom, fluxo, regras e restrições — organizado em tópicos.
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs shrink-0"
+                        onClick={() => {
+                          const merged = agentObjective?.trim()
+                            ? `# 2. Objetivo Principal\n${agentObjective.trim()}\n\n${DEFAULT_INSTRUCTIONS_TEMPLATE.replace(/# 2\. Objetivo Principal[\s\S]*?(?=\n# 3\.)/, "")}`
+                            : DEFAULT_INSTRUCTIONS_TEMPLATE;
+                          setAgentInstructions(merged);
+                          if (agentObjective?.trim()) setAgentObjective("");
+                        }}
+                      >
+                        Carregar template
+                      </Button>
+                    </div>
+                    <Textarea
+                      value={agentInstructions}
+                      onChange={(e) => setAgentInstructions(e.target.value)}
+                      placeholder={DEFAULT_INSTRUCTIONS_TEMPLATE}
+                      className="text-sm min-h-[480px] font-mono leading-relaxed"
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      Dica: use <code className="px-1 rounded bg-muted">#</code> para títulos e <code className="px-1 rounded bg-muted">-</code> para listas. Quanto mais específico, melhor o desempenho do agente.
+                    </p>
+                  </div>
                 )}
 
                 {/* Arquivos */}

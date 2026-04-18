@@ -5,7 +5,6 @@ import { useUserAgents } from "@/hooks/use-user-agents";
 import { useApiKeys } from "@/hooks/use-api-keys";
 import { AGENT_PRESETS } from "@/types/agent-presets";
 import { DEFAULT_ADVANCED_CONFIG, MANDATORY_INTENTS } from "@/types/agent-builder";
-import { ensureStructuredInstructions } from "@/lib/agent-instructions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -124,14 +123,7 @@ const AgentBuilderStudio = () => {
           : agentType === "SAC" ? ["Preciso de ajuda", "Consultar status", "Falar com humano"]
           : agentType === "CS" ? ["Dúvida sobre produto", "Agendar check-in"]
           : [],
-        instructions: ensureStructuredInstructions(preset.context.targetAudienceDescription || "", {
-          agentType,
-          agentName: preset.context.mainProduct ? `Agente ${preset.context.mainProduct}` : `Agente ${agentType}`,
-          description: prompt.trim(),
-          objective: preset.context.painPoints || "Atender e resolver necessidades do usuário.",
-          toneOfVoice: preset.context.toneOfVoice || "Profissional e amigável",
-          greetingMessage: preset.context.greetingMessage || "Olá! Como posso te ajudar?",
-        }),
+        instructions: preset.context.targetAudienceDescription || "",
         provider: "auto",
         model: "google/gemini-2.0-flash",
         stages: preset.stages.map(s => ({ id: s.id, name: s.name, description: s.description, example: s.example })),

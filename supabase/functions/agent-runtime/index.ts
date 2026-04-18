@@ -5,131 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const FREE_MODELS = [
-  "qwen/qwen3-30b-a3b:free",
-  "google/gemma-3-27b-it:free",
-  "google/gemma-3-12b-it:free",
-  "deepseek/deepseek-chat-v3-0324:free",
-  "deepseek/deepseek-r1:free",
-  "qwen/qwen3-14b:free",
-];
-
-// Non-streaming call (used by lead extractor which needs full text)
-async function callOpenRouter(
-  messages: Array<{ role: string; content: string }>,
-  system: string,
-): Promise<string> {
-  const apiKey = Deno.env.get("OPENROUTER_API_KEY") ?? "";
-  if (!apiKey) return "";
-  const fullMessages = system ? [{ role: "system", content: system }, ...messages] : messages;
-  for (const model of FREE_MODELS) {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000);
-      const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        signal: controller.signal,
-        headers: {
-          "Authorization": `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": "https://aikortex.com",
-          "X-Title": "Aikortex",
-        },
-        body: JSON.stringify({ model, messages: fullMessages, stream: false, max_tokens: 1024 }),
-      });
-      clearTimeout(timeout);
-      if (!resp.ok) continue;
-      const data = await resp.json();
-      const content = data?.choices?.[0]?.message?.content || "";
-      if (content) return content;
-    } catch { continue; }
-  }
-  return "";
-}
-
-// Stream directly from OpenRouter to client (avoids timeout)
-async function streamFromOpenRouter(
-  messages: Array<{ role: string; content: string }>,
-  system: string,
-): Promise<Response | null> {
-  const apiKey = Deno.env.get("OPENROUTER_API_KEY") ?? "";
-  if (!apiKey) { console.error("OPENROUTER_API_KEY not set"); return null; }
-  const fullMessages = system ? [{ role: "system", content: system }, ...messages] : messages;
-  for (const model of FREE_MODELS) {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 10000);
-      const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        signal: controller.signal,
-        headers: {
-          "Authorization": `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": "https://aikortex.com",
-          "X-Title": "Aikortex",
-        },
-        body: JSON.stringify({ model, messages: fullMessages, stream: true, max_tokens: 2048 }),
-      });
-      clearTimeout(timeout);
-      if ([400, 404, 429, 500, 502, 503].includes(resp.status)) {
-        console.warn(`Model ${model} failed: ${resp.status}`); continue;
-      }
-      if (!resp.ok) { console.warn(`Model ${model} not ok: ${resp.status}`); continue; }
-      console.log(`Streaming from ${model}`);
-      return resp;
-    } catch (e) {
-      console.warn(`Model ${model} error: ${e}`); continue;
-    }
-  }
-  return null;
-}
-
-// BYOK: call provider API directly with user's own key
-async function callByok(
-  messages: Array<{ role: string; content: string }>,
-  system: string,
-  provider: string,
-  model: string,
-  apiKey: string,
-): Promise<string> {
-  const fullMessages = system ? [{ role: "system", content: system }, ...messages] : messages;
-  try {
-    let url = "";
-    let headers: Record<string, string> = { "Content-Type": "application/json" };
-    let body: Record<string, unknown> = { model, messages: fullMessages, max_tokens: 4096 };
-
-    if (provider === "anthropic") {
-      url = "https://api.anthropic.com/v1/messages";
-      headers = { ...headers, "x-api-key": apiKey, "anthropic-version": "2023-06-01" };
-      body = {
-        model,
-        max_tokens: 4096,
-        system,
-        messages: messages.filter(m => m.role !== "system"),
-      };
-      const resp = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
-      if (!resp.ok) return "";
-      const data = await resp.json();
-      return data?.content?.[0]?.text || "";
-    }
-
-    if (provider === "openai") {
-      url = "https://api.openai.com/v1/chat/completions";
-      headers = { ...headers, "Authorization": `Bearer ${apiKey}` };
-    }
-
-    if (provider === "gemini") {
-      url = `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`;
-      headers = { ...headers, "Authorization": `Bearer ${apiKey}` };
-    }
-
-    if (!url) return "";
-    const resp = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
-    if (!resp.ok) return "";
-    const data = await resp.json();
-    return data?.choices?.[0]?.message?.content || "";
-  } catch { return ""; }
-}
+const GATEWAY_URL = "https://kbknehyfksugykrovfxs.supabase.co/functions/v1/ai-gateway";
 
 // ── SSE helpers ───────────────────────────────────────────────────────────
 function streamText(text: string): ReadableStream {
@@ -345,13 +221,20 @@ Retorne APENAS JSON:
 {"found": true/false, "name": "", "email": "", "phone": "", "company": "", "notes": "", "temperature": "frio|morno|quente"}
 RETORNE SOMENTE O JSON.`;
 
-    const rawContent = await callOpenRouter(
-      [{ role: "user", content: extractPrompt }],
-      "Você é um extrator de dados estruturados. Retorne SEMPRE JSON válido, sem texto extra."
-    );
-    if (!rawContent) return;
+    const resp = await fetch(GATEWAY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages: [{ role: "user", content: extractPrompt }],
+        module: "structure",
+        mode: "structure",
+      }),
+    });
 
-    const raw = rawContent
+    if (!resp.ok) return;
+
+    const data = await resp.json();
+    const raw = (data.content || "")
       .replace(/^```json\s*/gm, "").replace(/^```\s*/gm, "").replace(/```\s*$/gm, "").trim();
 
     let extracted: Record<string, unknown>;
@@ -389,17 +272,17 @@ RETORNE SOMENTE O JSON.`;
       }],
     };
 
-    const leadsTable = ctx.supabase.from("leads") as any;
     if (leadData.email) {
-      await leadsTable.upsert(leadData, { onConflict: "user_id,email" });
+      await ctx.supabase.from("leads")
+        .upsert(leadData, { onConflict: "user_id,email" });
     } else {
-      const { data: existing } = await leadsTable
+      const { data: existing } = await ctx.supabase.from("leads")
         .select("id").eq("user_id", ctx.userId).ilike("name", leadData.name).maybeSingle();
       if (!existing) {
-        await leadsTable.insert(leadData);
+        await ctx.supabase.from("leads").insert(leadData);
       } else {
         // Update existing lead with latest qualification data
-        await leadsTable
+        await ctx.supabase.from("leads")
           .update({
             notes: leadData.notes,
             temperature: leadData.temperature,
@@ -442,24 +325,51 @@ Deno.serve(async (req) => {
     const byokKey = body.byok_key || "";
     const byokProvider = body.provider || "";
 
-    // BYOK: buffer response (needed for lead extraction)
+    let finalContent = "";
+
     if (byokKey && byokProvider) {
-      const finalContent = await callByok(messages, system, byokProvider, body.model as string || "", byokKey);
-      const content = finalContent || "Desculpe, o serviço de IA está temporariamente indisponível. Tente novamente em instantes.";
-      return new Response(streamText(content), {
-        headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+      const resp = await fetch(GATEWAY_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages,
+          system,
+          module: "agent",
+          mode: "chat",
+          byok_key: byokKey,
+          provider: byokProvider,
+          quality: "fast",
+        }),
       });
+      const data = await resp.json();
+      finalContent = data.content || "";
     }
 
-    // Free models: stream directly from OpenRouter → client
-    const orResp = await streamFromOpenRouter(messages, system);
-    if (orResp?.body) {
-      return new Response(orResp.body, {
-        headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+    if (!finalContent) {
+      const resp = await fetch(GATEWAY_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages, system, module: "agent", mode: "chat" }),
       });
+      const data = await resp.json();
+      finalContent = data.content || "Desculpe, o serviço de IA está temporariamente indisponível. Tente novamente em instantes.";
     }
 
-    return new Response(streamText("Desculpe, o serviço de IA está temporariamente indisponível. Tente novamente em instantes."), {
+    if (userId !== "anonymous" && mode !== "wizard-setup") {
+      const ctx = { supabase, userId, agentId };
+      Promise.all([
+        extractAndSaveLead(messages, finalContent, agentConfig, ctx),
+        agentId ? supabase.from("conversations").upsert({
+          user_id:    userId,
+          agent_id:   agentId,
+          contact_id: contactId,
+          channel,
+          messages:   [...messages, { role: "assistant", content: finalContent }],
+        }, { onConflict: "agent_id,contact_id,channel" }) : Promise.resolve(),
+      ]).catch(e => console.error("background tasks error:", e));
+    }
+
+    return new Response(streamText(finalContent), {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
 

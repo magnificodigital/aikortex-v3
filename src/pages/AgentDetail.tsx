@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { Loader2, ArrowLeft, Sparkles, Bot, Settings, Plug, Share2, Rocket, Phone, Brain, Monitor, Workflow } from "lucide-react";
+import { Loader2, ArrowLeft, Sparkles, Bot, Settings, Plug, Share2, Rocket, Phone, Brain, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ConversationProvider } from "@elevenlabs/react";
@@ -17,7 +17,6 @@ import type { AgentType } from "@/types/agent-builder";
 import { supabase } from "@/integrations/supabase/client";
 import { AGENT_PRESETS } from "@/types/agent-presets";
 import { getOperationalInstructions } from "@/lib/agent-operational-prompts";
-import { ensureStructuredInstructions } from "@/lib/agent-instructions";
 import { DEFAULT_FREE_SETUP_MODEL, GATEWAY_MODELS, normalizeFreeSetupModel } from "@/lib/free-setup-models";
 import { LLM_MODELS as ALL_LLM_MODELS, getGroupedModels, getProviderForModel, DEFAULT_FREE_MODEL } from "@/lib/llm-models";
 import AgentMemoryTab from "@/components/aikortex/AgentMemoryTab";
@@ -83,25 +82,6 @@ const AgentDetail = () => {
   const location    = useLocation();
   const { agentId } = useParams();
   const navState    = location.state as any;
-
-  const [agentFlowId, setAgentFlowId] = useState<string | null>(null);
-  useEffect(() => {
-    setAgentFlowId(null);
-    if (!agentId || agentId === "new" || agentId.startsWith("new-") || TEMPLATE_MAP[agentId]) return;
-    (async () => {
-      const { data } = await (supabase
-        .from("user_flows" as any)
-        .select("id, trigger_config")
-        .order("created_at", { ascending: false }) as any);
-      const match = (data ?? []).find((f: any) => f?.trigger_config?.agent_id === agentId);
-      if (match) setAgentFlowId(match.id);
-    })();
-  }, [agentId]);
-
-  const handleOpenAgentFlow = () => {
-    if (!agentFlowId) return;
-    navigate("/aikortex/automations", { state: { openFlowId: agentFlowId } });
-  };
 
   const isTemplate    = !!agentId && !!TEMPLATE_MAP[agentId];
   const isNewCustomFromHome = navState?.fromTemplate === false && !!navState?.initialPrompt;
@@ -327,14 +307,7 @@ const AgentDetail = () => {
       objective:       config.objective,
       toneOfVoice:     config.tone,
       greetingMessage: config.greeting_message,
-      instructions:    ensureStructuredInstructions(config.instructions, {
-        agentType: (config.agent_type as AgentType) || "Custom",
-        agentName: config.agent_name,
-        description: config.description,
-        objective: config.objective,
-        toneOfVoice: config.tone,
-        greetingMessage: config.greeting_message,
-      }),
+      instructions:    config.instructions,
     });
   }, []);
 
@@ -378,9 +351,6 @@ const AgentDetail = () => {
   const handleBuildAgent = useCallback(async (config: StructuredAgentConfig) => {
     setIsBuilding(true);
     const resolvedType = loadedAgent.agentType || "Custom";
-    // Após a montagem pelo assistente, o modelo do agente fica fixado em Qwen3 30B
-    const builtModel = DEFAULT_FREE_MODEL;
-    setAgentModel(builtModel);
     try {
       const result = await saveAgent({
         id:          agentId && !TEMPLATE_MAP[agentId] && agentId !== "new" && !agentId.startsWith("new-") ? agentId : undefined,
@@ -388,7 +358,7 @@ const AgentDetail = () => {
         agent_type:  resolvedType,
         description: config.description,
         avatar_url:  AVATAR_BY_TYPE[resolvedType] || avatar1,
-        model:       builtModel,
+        model:       agentModel,
         status:      "configuring",
         config: {
           objective:       config.objective,
@@ -408,7 +378,7 @@ const AgentDetail = () => {
         setLoadedAgent({
           name: config.agent_name,
           avatar: AVATAR_BY_TYPE[resolvedType] || avatar1,
-          model: builtModel,
+          model: agentModel,
           agentType: resolvedType,
           savedConfig: {
             name: config.agent_name,
@@ -457,20 +427,16 @@ const AgentDetail = () => {
 
     const preset = AGENT_PRESETS[templateAgent.agentType];
     const presetContext = preset?.context || {};
+    const operationalInstructions = getOperationalInstructions(templateAgent.agentType);
+    const fallbackInstructions = `1. Sempre se apresentar como assistente\n2. Focar em entender as necessidades\n3. Ser ${presetContext.toneOfVoice || "profissional"}\n4. Nunca prometer o que não pode cumprir\n5. Direcionar para próximo passo claro`;
+
     setPresetData({
       name: templateAgent.name,
       description: presetContext.targetAudienceDescription || templateAgent.autoPrompt.slice(0, 150),
       objective: presetContext.painPoints || "",
       toneOfVoice: presetContext.toneOfVoice || "Profissional e amigável",
       greetingMessage: presetContext.greetingMessage || "",
-      instructions: ensureStructuredInstructions(getOperationalInstructions(templateAgent.agentType), {
-        agentType: templateAgent.agentType,
-        agentName: templateAgent.name,
-        description: presetContext.targetAudienceDescription || templateAgent.autoPrompt.slice(0, 150),
-        objective: presetContext.painPoints || "",
-        toneOfVoice: presetContext.toneOfVoice || "Profissional e amigável",
-        greetingMessage: presetContext.greetingMessage || "",
-      }),
+      instructions: operationalInstructions || fallbackInstructions,
     });
   }, [isTemplate, templateAgent]);
 
@@ -519,20 +485,8 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
   /* ── Chat (wizard-setup mode — guided Q&A to fill agent config) ── */
 
   const wizardAgentTypeKey = (loadedAgent.agentType || "Custom").toLowerCase();
-
-  const wizardWelcomeMessage = useMemo(() => {
-    const greetings: Record<string, string> = {
-      sdr: `Olá! 👋 Vou te ajudar a configurar seu agente **SDR**. Vou fazer algumas perguntas rápidas para entender seu negócio e criar um agente sob medida.\n\nPara começar: **qual será o nome do seu agente?** (ex: "Lia", "Carlos da Aikortex")`,
-      sac: `Olá! 👋 Vou te ajudar a configurar seu agente de **Atendimento ao Cliente**. Vou fazer algumas perguntas rápidas para deixar tudo personalizado.\n\nPara começar: **qual será o nome do seu agente?**`,
-      bdr: `Olá! 👋 Vou te ajudar a configurar seu agente **BDR** de prospecção. Vou fazer algumas perguntas para entender o público-alvo e o tom da abordagem.\n\nPara começar: **qual será o nome do seu agente?**`,
-      cs: `Olá! 👋 Vou te ajudar a configurar seu agente de **Customer Success**. Vou te guiar passo a passo.\n\nPara começar: **qual será o nome do seu agente?**`,
-      custom: `Olá! 👋 Vou te ajudar a criar seu agente personalizado. Vou fazer algumas perguntas rápidas para entender o que você precisa.\n\nPara começar: **qual será o nome do seu agente?**`,
-    };
-    return greetings[wizardAgentTypeKey] || greetings.custom;
-  }, [wizardAgentTypeKey]);
-
   const wizardChat = useAgentChat(
-    [{ role: "agent", text: wizardWelcomeMessage }],
+    [],
     {
       useGateway: true,
       gatewayModel: setupModel,
@@ -542,6 +496,17 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
       disableCrmExtraction: true,
     }
   );
+
+  // Auto-send "start" once when wizard opens (templates AND new custom agents)
+  const wizardStartedRef = useRef(false);
+  useEffect(() => {
+    if (wizardStartedRef.current) return;
+    if (agentLoading) return;
+    if (wizardStep !== "discover") return;
+    if (wizardChat.messages.length > 0) { wizardStartedRef.current = true; return; }
+    wizardStartedRef.current = true;
+    void wizardChat.sendMessage("Vamos criar seu agente inteligente");
+  }, [agentLoading, wizardStep, wizardChat]);
 
   // Detect ```agent-config {...}``` block in wizard reply → structure + build agent
   const wizardCompletedRef = useRef(false);
@@ -556,73 +521,28 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
       const parsed = JSON.parse(match[1].trim());
       wizardCompletedRef.current = true;
 
-      const company = (parsed.companyName || "").trim();
-      const fillCompany = (txt: string) =>
-        company
-          ? txt
-              .replace(/\[Nome da Empresa\]/gi, company)
-              .replace(/\[empresa\]/gi, company)
-              .replace(/\{\{?\s*company(_?name)?\s*\}?\}/gi, company)
-          : txt;
-
       const baseConfig: StructuredAgentConfig = {
         agent_name: parsed.name || loadedAgent.name,
         agent_type: parsed.role || loadedAgent.agentType,
-        description: fillCompany(parsed.description || ""),
-        objective: fillCompany(parsed.objective || ""),
-        tone: parsed.toneOfVoice || parsed.tone || "Profissional e Amigável",
+        description: parsed.description || "",
+        objective: parsed.objective || "",
+        tone: parsed.toneOfVoice || "professional_friendly",
         language: "pt-BR",
-        greeting_message: fillCompany(
-          parsed.greetingMessage ||
-            (company
-              ? `Olá! Sou ${parsed.name || loadedAgent.name}, da ${company}. Como posso ajudar?`
-              : `Olá! Sou ${parsed.name || loadedAgent.name}. Como posso ajudar?`),
-        ),
-        instructions: fillCompany(
-          (parsed.instructions || "") +
-            (company ? `\n\nVocê representa a empresa "${company}". Sempre que mencionar a empresa, use exatamente esse nome — NUNCA escreva "[Nome da Empresa]" ou placeholders.` : ""),
-        ),
+        greeting_message: parsed.greetingMessage || `Olá! Sou ${parsed.name || loadedAgent.name}. Como posso ajudar?`,
+        instructions: parsed.instructions || "",
         channels: ["whatsapp", "website"],
         selected_features: [],
         onboarding_level: "soft",
       };
 
-      // Enrich the config via the structure endpoint, but ALWAYS prefer the wizard's
-      // collected answers over the LLM's generated content. The structure call only
-      // fills gaps — it must never override what the user explicitly told us.
+      // Enrich the config via the structure endpoint using the description from the chat
       (async () => {
-        // Build a rich description that carries ALL wizard answers to the structure endpoint.
-        const wizardSummary = [
-          parsed.name && `Nome do agente: ${parsed.name}`,
-          company && `Empresa: ${company}`,
-          parsed.description && `Descrição/contexto: ${parsed.description}`,
-          parsed.objective && `Objetivo: ${parsed.objective}`,
-          parsed.toneOfVoice && `Tom de voz: ${parsed.toneOfVoice}`,
-          parsed.greetingMessage && `Mensagem de saudação desejada: ${parsed.greetingMessage}`,
-          parsed.instructions && `Instruções/regras coletadas no wizard:\n${parsed.instructions}`,
-        ].filter(Boolean).join("\n");
-
         let finalConfig = baseConfig;
-        if (wizardSummary) {
+        if (baseConfig.description) {
           try {
-            const enriched = await handleStructureRequest(wizardSummary);
+            const enriched = await handleStructureRequest(baseConfig.description);
             if (enriched) {
-              // Wizard answers WIN. Enriched output only fills empty fields.
-              finalConfig = {
-                ...enriched,
-                agent_name:       baseConfig.agent_name,
-                agent_type:       baseConfig.agent_type,
-                description:      baseConfig.description      || enriched.description,
-                objective:        baseConfig.objective        || enriched.objective,
-                tone:             baseConfig.tone             || enriched.tone,
-                greeting_message: baseConfig.greeting_message || enriched.greeting_message,
-                // Merge instructions: wizard rules first (priority), then enriched details.
-                instructions: fillCompany(
-                  [baseConfig.instructions, enriched.instructions]
-                    .filter(Boolean)
-                    .join("\n\n"),
-                ),
-              };
+              finalConfig = { ...enriched, agent_name: baseConfig.agent_name, agent_type: baseConfig.agent_type };
             }
           } catch (e) {
             console.warn("Structure enrichment failed, using base config:", e);
@@ -652,8 +572,6 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
       "- Responda SEMPRE em português brasileiro.",
       "- NUNCA saia do personagem. Você É este agente, não um assistente genérico.",
       "- Mantenha o tom de voz configurado em TODAS as respostas.",
-      "- NUNCA use placeholders como [Nome da Empresa], [empresa] ou {{company}}. Se a empresa não estiver definida, simplesmente não a mencione.",
-      "- Use APENAS o nome do agente definido acima. Não invente outros nomes.",
       "- Se não souber algo específico do negócio, diga educadamente que pode encaminhar.",
       "- Seja conciso e direto (máximo 3 parágrafos por resposta).",
     ];
@@ -685,7 +603,6 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
       systemPrompt: testSystemPrompt,
       persistKey:   `${storagePrefix}-test-messages`,
       agentContext: testAgentContext,
-      agentId:      agentId,
     }
   );
 
@@ -714,8 +631,7 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
     const prefix = `agent-detail-${agentId}`;
     try {
       ["name","desc","objective","instructions","toneOfVoice","greetingMessage",
-       "files","urls","channels","apiConfig","avatar","setup-messages","test-messages",
-       "wizard-messages","chatMode","model","setupModel"].forEach(k =>
+       "files","urls","channels","apiConfig","avatar","setup-messages","test-messages","chatMode","model","setupModel"].forEach(k =>
         localStorage.removeItem(`${prefix}-${k}`)
       );
     } catch {}
@@ -806,18 +722,6 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
                 <span className="hidden lg:inline">{btn.label}</span>
               </Button>
             ))}
-            {agentFlowId && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 text-xs gap-1 px-2"
-                onClick={handleOpenAgentFlow}
-                title="Abrir fluxo de automação deste agente"
-              >
-                <Workflow className="w-3.5 h-3.5" />
-                <span className="hidden lg:inline">Fluxo</span>
-              </Button>
-            )}
             <div className="w-px h-5 bg-border mx-1" />
             {isSaving && (
               <span className="text-[10px] text-muted-foreground animate-pulse">Salvando...</span>

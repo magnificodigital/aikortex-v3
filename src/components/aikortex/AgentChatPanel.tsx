@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   ArrowLeft, ArrowUp, Send, AlertTriangle,
-  Sparkles, Bot, Mic, MicOff, Check, Loader2, Pencil, RotateCw, Brain, Lock, ChevronDown, BookOpen,
+  Sparkles, Bot, Mic, MicOff, Check, Loader2, Pencil, RotateCw, Brain, Lock, ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -678,12 +678,6 @@ const AgentChatPanel = ({
             <p className="text-xs text-muted-foreground leading-relaxed">
               Seu agente foi configurado com sucesso. Agora você pode testá-lo em tempo real para verificar se as respostas estão de acordo com o esperado.
             </p>
-            <div className="rounded-lg border border-warning/30 bg-warning/5 p-2.5 flex gap-2">
-              <BookOpen className="w-3.5 h-3.5 text-warning shrink-0 mt-0.5" />
-              <p className="text-[11px] text-foreground leading-relaxed">
-                <strong>Dica importante:</strong> alimente a aba <strong>Conhecimento</strong> com sites, PDFs ou textos da sua empresa. Sem essa base, o agente responderá apenas com informações genéricas.
-              </p>
-            </div>
             <Button
               size="sm"
               className="w-full h-8 text-xs rounded-lg gap-1.5"

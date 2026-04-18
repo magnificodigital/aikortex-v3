@@ -435,7 +435,7 @@ serve(async (req) => {
           apiKey = keyData.api_key;
           apiModel = modelMapping?.anthropic || model || "claude-3-haiku-20240307";
           headers = {
-            "x-api-key": apiKey ?? "",
+            "x-api-key": apiKey,
             "Content-Type": "application/json",
             "anthropic-version": "2023-06-01",
           };
@@ -743,12 +743,10 @@ serve(async (req) => {
       const yearMonth = new Date().toISOString().slice(0, 7);
       const adminClient = createClient(supabaseUrl, serviceKey);
 
-      Promise.resolve(
-        adminClient.rpc("increment_monthly_usage", {
-          p_user_id: user.id,
-          p_year_month: yearMonth,
-        })
-      ).catch((e: unknown) => console.error("Error tracking usage:", e));
+      adminClient.rpc("increment_monthly_usage", {
+        p_user_id: user.id,
+        p_year_month: yearMonth,
+      }).catch((e: unknown) => console.error("Error tracking usage:", e));
     }
 
     return new Response(response!.body, {
