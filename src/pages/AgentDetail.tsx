@@ -30,7 +30,7 @@ import avatar8 from "@/assets/avatars/avatar-8.png";
 /* ── Constants ── */
 
 const TEMPLATE_MAP: Record<string, { name: string; avatar: string; model: string; agentType: AgentType; autoPrompt: string }> = {
-  "sdr-1":    { name: "Agente SDR",           avatar: avatar1, model: "gemini-2.5-flash", agentType: "SDR",    autoPrompt: "Crie um agente SDR para qualificação de leads inbound. Ele deve coletar nome, email, empresa e interesse do lead, qualificar com base em critérios BANT e agendar reuniões com o time comercial." },
+  "sdr-1":    { name: "Agente SDR",           avatar: avatar1, model: "qwen/qwen3-30b-a3b", agentType: "SDR",    autoPrompt: "Crie um agente SDR para qualificação de leads inbound. Ele deve coletar nome, email, empresa e interesse do lead, qualificar com base em critérios BANT e agendar reuniões com o time comercial." },
   "sac-1":    { name: "Agente SAC",           avatar: avatar3, model: "gemini-2.5-flash", agentType: "SAC",    autoPrompt: "Crie um agente de atendimento ao cliente (SAC). Ele deve responder dúvidas frequentes, resolver problemas comuns, escalar casos complexos para humanos e manter um tom empático e profissional." },
 };
 
@@ -236,6 +236,7 @@ const AgentDetail = () => {
         description: config.description,
         avatar_url:  config.avatarUrl,
         model:       config.model,
+        provider:    getProviderForModel(config.model),
         status:      "configuring",
         config: {
           objective:       config.objective,
@@ -376,6 +377,7 @@ const AgentDetail = () => {
         description: config.description,
         avatar_url:  AVATAR_BY_TYPE[resolvedType] || avatar1,
         model:       agentModel,
+        provider:    getProviderForModel(agentModel),
         status:      "configuring",
         config: {
           objective:       config.objective,
