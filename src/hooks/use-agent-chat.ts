@@ -1,9 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { AGENT_RUNTIME_URL } from "@/lib/ai-endpoints";
+import { getAgentRuntimeUrl } from "@/lib/ai-endpoints";
 import { toast } from "sonner";
 
-const CHAT_URL = AGENT_RUNTIME_URL;
 const FLUSH_INTERVAL_MS = 60;
 const CRM_LEAD_REGEX = /<<<CRM_LEAD>>>([\s\S]*?)<<<END>>>/;
 
@@ -262,7 +261,7 @@ export function useAgentChat(initialMessages: ChatMessage[] = [], options: UseAg
           }
         }
 
-        resp = await fetch(CHAT_URL, {
+        resp = await fetch(getAgentRuntimeUrl(options.mode), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
