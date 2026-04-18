@@ -505,7 +505,7 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
     if (wizardStep !== "discover") return;
     if (wizardChat.messages.length > 0) { wizardStartedRef.current = true; return; }
     wizardStartedRef.current = true;
-    void wizardChat.sendMessage("Vamos criar seu agente inteligente");
+    void wizardChat.sendMessage("start");
   }, [agentLoading, wizardStep, wizardChat]);
 
   // Detect ```agent-config {...}``` block in wizard reply → structure + build agent
@@ -518,7 +518,12 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
     const match = lastAgentMsg.text.match(/```agent-config\s*([\s\S]*?)```/);
     if (!match) return;
     try {
-      const parsed = JSON.parse(match[1].trim());
+      const rawConfig = match[1].trim();
+      const cleanedConfig = rawConfig
+        .replace(/^```json\s*/i, "")
+        .replace(/```$/i, "")
+        .trim();
+      const parsed = JSON.parse(cleanedConfig);
       wizardCompletedRef.current = true;
 
       const baseConfig: StructuredAgentConfig = {
