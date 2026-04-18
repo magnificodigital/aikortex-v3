@@ -20,26 +20,36 @@ async function callOpenRouter(
   system: string,
 ): Promise<string> {
   const apiKey = Deno.env.get("OPENROUTER_API_KEY") ?? "";
-  if (!apiKey) return "";
+  if (!apiKey) { console.error("OPENROUTER_API_KEY not set"); return ""; }
   const fullMessages = system ? [{ role: "system", content: system }, ...messages] : messages;
   for (const model of FREE_MODELS) {
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 25000);
       const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
+        signal: controller.signal,
         headers: {
           "Authorization": `Bearer ${apiKey}`,
           "Content-Type": "application/json",
           "HTTP-Referer": "https://aikortex.com",
           "X-Title": "Aikortex",
         },
-        body: JSON.stringify({ model, messages: fullMessages, stream: false, max_tokens: 4096 }),
+        body: JSON.stringify({ model, messages: fullMessages, stream: false, max_tokens: 2048 }),
       });
-      if ([400, 404, 429, 500, 502, 503].includes(resp.status)) continue;
-      if (!resp.ok) continue;
+      clearTimeout(timeout);
+      if ([400, 404, 429, 500, 502, 503].includes(resp.status)) {
+        console.warn(`Model ${model} failed: ${resp.status}`);
+        continue;
+      }
+      if (!resp.ok) { console.warn(`Model ${model} not ok: ${resp.status}`); continue; }
       const data = await resp.json();
       const content = data?.choices?.[0]?.message?.content || "";
-      if (content) return content;
-    } catch { continue; }
+      if (content) { console.log(`Success with ${model}`); return content; }
+    } catch (e) {
+      console.warn(`Model ${model} error: ${e}`);
+      continue;
+    }
   }
   return "";
 }
