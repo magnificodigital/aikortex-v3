@@ -8,13 +8,12 @@ const GROQ_KEY       = () => Deno.env.get('GROQ_API_KEY') ?? ''
 
 // ── Confirmed-working free models on OpenRouter (April 2026) ──────────────
 const FREE_MODELS = [
-  'meta-llama/llama-3.3-70b-instruct:free',
   'google/gemma-3-27b-it:free',
-  'deepseek/deepseek-r1:free',
-  'deepseek/deepseek-chat-v3-0324:free',
-  'qwen/qwen3-30b-a3b:free',
-  'meta-llama/llama-4-scout:free',
   'google/gemma-3-12b-it:free',
+  'deepseek/deepseek-chat-v3-0324:free',
+  'deepseek/deepseek-r1:free',
+  'qwen/qwen3-30b-a3b:free',
+  'qwen/qwen3-14b:free',
 ]
 
 // ── Groq models (free, fast, reliable) ────────────────────────────────────
