@@ -101,7 +101,8 @@ const AgentDetail = () => {
 
   const [loadedAgent, setLoadedAgent] = useState<LoadedAgent>(() => {
     if (templateAgent) {
-      return { name: templateAgent.name, avatar: templateAgent.avatar, model: templateAgent.model, agentType: templateAgent.agentType, savedConfig: null };
+      // Templates start with neutral name — wizard chat will collect details first
+      return { name: "Novo Agente", avatar: templateAgent.avatar, model: templateAgent.model, agentType: templateAgent.agentType, savedConfig: null };
     }
     return { name: "Carregando...", avatar: avatar1, model: "gemini-2.5-flash", agentType: initialType, savedConfig: null };
   });
@@ -426,28 +427,10 @@ const AgentDetail = () => {
     }
   }, [agentId, saveAgent, navigate, agentModel, loadedAgent.agentType]);
 
-  /* ── Templates: preload preset data into the right panel.
-        The agent is NOT auto-built — the wizard chat collects answers first. ── */
-
-  const presetSeededRef = useRef(false);
-  useEffect(() => {
-    if (presetSeededRef.current || !isTemplate || !templateAgent) return;
-    presetSeededRef.current = true;
-
-    const preset = AGENT_PRESETS[templateAgent.agentType];
-    const presetContext = preset?.context || {};
-    const operationalInstructions = getOperationalInstructions(templateAgent.agentType);
-    const fallbackInstructions = `1. Sempre se apresentar como assistente\n2. Focar em entender as necessidades\n3. Ser ${presetContext.toneOfVoice || "profissional"}\n4. Nunca prometer o que não pode cumprir\n5. Direcionar para próximo passo claro`;
-
-    setPresetData({
-      name: templateAgent.name,
-      description: presetContext.targetAudienceDescription || templateAgent.autoPrompt.slice(0, 150),
-      objective: presetContext.painPoints || "",
-      toneOfVoice: presetContext.toneOfVoice || "Profissional e amigável",
-      greetingMessage: presetContext.greetingMessage || "",
-      instructions: operationalInstructions || fallbackInstructions,
-    });
-  }, [isTemplate, templateAgent]);
+  /* ── Templates: do NOT preload preset data.
+        The wizard chat must collect every detail from the user before the
+        agent is built. Right panel stays empty until the assistant produces
+        the ```agent-config``` block and the build flow runs. ── */
 
   /* ── Chat (setup mode — gratuito) ── */
 
