@@ -5,7 +5,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const GATEWAY_URL = "https://kbknehyfksugykrovfxs.supabase.co/functions/v1/ai-gateway";
+const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+const GATEWAY_URL = supabaseUrl ? `${supabaseUrl}/functions/v1/ai-gateway` : "";
 
 // ── SSE helpers ───────────────────────────────────────────────────────────
 function streamText(text: string): ReadableStream {
@@ -304,6 +305,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    if (!GATEWAY_URL) {
+      throw new Error("SUPABASE_URL não configurado para o runtime do agente");
+    }
+
     const body = await req.json();
     const {
       messages = [],
