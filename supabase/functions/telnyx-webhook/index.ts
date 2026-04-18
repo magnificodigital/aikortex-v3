@@ -245,8 +245,8 @@ Deno.serve(async (req) => {
             );
           }
 
-          // Call post-call webhook
-          if (agentConfig.action_webhook_url) {
+          // Call post-call webhook (with SSRF protection)
+          if (agentConfig.action_webhook_url && isSafeWebhookUrl(agentConfig.action_webhook_url)) {
             try {
               await fetch(agentConfig.action_webhook_url, {
                 method: "POST",
@@ -261,6 +261,8 @@ Deno.serve(async (req) => {
             } catch (e) {
               console.error("Post-call webhook error:", e);
             }
+          } else if (agentConfig.action_webhook_url) {
+            console.warn("Post-call webhook rejected (unsafe URL):", agentConfig.action_webhook_url);
           }
         }
 
