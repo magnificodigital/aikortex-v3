@@ -6,6 +6,7 @@ const corsHeaders = {
 };
 
 const FREE_MODELS = [
+  "google/gemini-2.5-flash-preview-04-17:free",
   "qwen/qwen3-30b-a3b:free",
   "google/gemma-3-27b-it:free",
   "google/gemma-3-12b-it:free",
