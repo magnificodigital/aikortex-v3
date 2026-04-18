@@ -8,6 +8,36 @@ const corsHeaders = {
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const GATEWAY_URL = supabaseUrl ? `${supabaseUrl}/functions/v1/ai-gateway` : "";
 const LOVABLE_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+const DEFAULT_OPENROUTER_MODEL = "google/gemini-2.0-flash-exp:free";
+
+async function buildOpenRouterResponse(messages: Array<{ role: string; content: string }>, requestedModel?: string) {
+  const apiKey = Deno.env.get("OPENROUTER_API_KEY");
+  if (!apiKey) throw new Error("OPENROUTER_API_KEY não configurada");
+
+  const response = await fetch(OPENROUTER_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": "https://aikortex.lovable.app",
+      "X-Title": "Aikortex",
+    },
+    body: JSON.stringify({
+      model: requestedModel || DEFAULT_OPENROUTER_MODEL,
+      messages,
+      stream: false,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "");
+    throw new Error(errorText || `OpenRouter error ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data?.choices?.[0]?.message?.content || "";
+}
 
 async function buildLovableGatewayResponse(messages: Array<{ role: string; content: string }>, requestedModel?: string) {
   const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
@@ -379,20 +409,21 @@ Deno.serve(async (req) => {
 
     if (!finalContent) {
       try {
-        finalContent = await buildLovableGatewayResponse(
+        finalContent = await buildOpenRouterResponse(
           [{ role: "system", content: system }, ...messages],
-          body.gatewayModel || "google/gemini-3-flash-preview",
+          body.openrouterModel || body.gatewayModel || DEFAULT_OPENROUTER_MODEL,
         );
-      } catch (gatewayError) {
-        console.error("agent-runtime lovable gateway error:", gatewayError);
-
-        const resp = await fetch(GATEWAY_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages, system, module: "agent", mode: "chat" }),
-        });
-        const data = await resp.json().catch(() => ({}));
-        finalContent = data.content || "Desculpe, o serviço de IA está temporariamente indisponível. Tente novamente em instantes.";
+      } catch (openrouterError) {
+        console.error("agent-runtime openrouter error:", openrouterError);
+        try {
+          finalContent = await buildLovableGatewayResponse(
+            [{ role: "system", content: system }, ...messages],
+            "google/gemini-3-flash-preview",
+          );
+        } catch (gatewayError) {
+          console.error("agent-runtime lovable gateway fallback error:", gatewayError);
+          finalContent = "Desculpe, o serviço de IA está temporariamente indisponível. Tente novamente em instantes.";
+        }
       }
     }
 
