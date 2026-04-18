@@ -8,11 +8,14 @@ const corsHeaders = {
 const OR_KEY = () => Deno.env.get("OPENROUTER_API_KEY") ?? "";
 const FREE_MODELS = [
   "meta-llama/llama-3.3-70b-instruct:free",
+  "meta-llama/llama-4-scout:free",
   "google/gemma-3-27b-it:free",
-  "deepseek/deepseek-r1:free",
+  "google/gemma-3-12b-it:free",
   "deepseek/deepseek-chat-v3-0324:free",
   "qwen/qwen3-30b-a3b:free",
-  "meta-llama/llama-4-scout:free",
+  "qwen/qwen3-14b:free",
+  "deepseek/deepseek-r1:free",
+  "mistralai/mistral-7b-instruct:free",
 ];
 
 async function callOpenRouter(
