@@ -470,7 +470,7 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
       useGateway:   true,
       gatewayModel: setupModel,
       systemPrompt: setupSystemPrompt,
-      persistKey:   `${storagePrefix}-setup-messages`,
+      persistKey:   shouldPersistTemplateDraft ? `${storagePrefix}-setup-messages` : undefined,
     }
   );
 
@@ -629,7 +629,7 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
       provider:     currentProvider,
       model:        agentModel,
       systemPrompt: testSystemPrompt,
-      persistKey:   `${storagePrefix}-test-messages`,
+      persistKey:   shouldPersistTemplateDraft ? `${storagePrefix}-test-messages` : undefined,
       agentContext: testAgentContext,
     }
   );
