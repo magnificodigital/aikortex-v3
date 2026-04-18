@@ -14,6 +14,34 @@ const FREE_MODELS = [
   "qwen/qwen3-14b:free",
 ];
 
+const GROQ_MODELS = [
+  "llama-3.3-70b-versatile",
+  "llama3-70b-8192",
+  "gemma2-9b-it",
+];
+
+// Groq fallback: buffered call that returns SSE-compatible Response
+async function streamFromGroq(
+  messages: Array<{ role: string; content: string }>,
+): Promise<Response | null> {
+  const apiKey = Deno.env.get("GROQ_API_KEY") ?? "";
+  if (!apiKey) return null;
+  for (const model of GROQ_MODELS) {
+    try {
+      const resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ model, messages, stream: true, max_tokens: 2048 }),
+      });
+      if (resp.ok) { console.log(`Groq fallback: streaming from ${model}`); return resp; }
+    } catch { continue; }
+  }
+  return null;
+}
+
 // Stream directly from OpenRouter to client (avoids 30s timeout on Supabase edge functions)
 async function streamFromOpenRouter(
   messages: Array<{ role: string; content: string }>,
@@ -25,7 +53,7 @@ async function streamFromOpenRouter(
   for (const model of FREE_MODELS) {
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 10000);
+      const timeout = setTimeout(() => controller.abort(), 15000);
       const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         signal: controller.signal,
@@ -48,7 +76,8 @@ async function streamFromOpenRouter(
       console.warn(`Model ${model} error: ${e}`); continue;
     }
   }
-  return null;
+  // Groq fallback
+  return streamFromGroq(fullMessages);
 }
 
 // Buffered (non-streaming) OpenRouter call for internal tasks like lead extraction
