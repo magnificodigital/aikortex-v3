@@ -7,6 +7,33 @@ const corsHeaders = {
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const GATEWAY_URL = supabaseUrl ? `${supabaseUrl}/functions/v1/ai-gateway` : "";
+const LOVABLE_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+
+async function buildLovableGatewayResponse(messages: Array<{ role: string; content: string }>, requestedModel?: string) {
+  const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+  if (!lovableApiKey) throw new Error("LOVABLE_API_KEY não configurado");
+
+  const response = await fetch(LOVABLE_GATEWAY_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${lovableApiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: requestedModel || "google/gemini-3-flash-preview",
+      messages,
+      stream: false,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "");
+    throw new Error(errorText || `Lovable AI Gateway error ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data?.choices?.[0]?.message?.content || "";
+}
 
 // ── SSE helpers ───────────────────────────────────────────────────────────
 function streamText(text: string): ReadableStream {
