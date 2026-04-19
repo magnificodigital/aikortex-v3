@@ -688,6 +688,29 @@ const AgentChatPanel = ({
           </div>
         )}
 
+        {/* ══ Finalizar button — shown after enough Q&A messages ══ */}
+        {wizardStep === "discover" && !wizardIsStreaming && (wizardChatMessages?.length ?? 0) >= 6 && (
+          <div className="bg-card/50 border border-primary/20 rounded-xl p-3 space-y-2">
+            <p className="text-[11px] text-muted-foreground">
+              Respondeu todas as perguntas? Clique para gerar a configuração do agente.
+            </p>
+            <Button
+              size="sm"
+              className="w-full h-8 text-xs rounded-lg gap-1.5"
+              onClick={() => {
+                if (!wizardChatMessages) return;
+                const userAnswers = wizardChatMessages
+                  .filter(m => ("text" in m ? m.role : m.role) === "user")
+                  .map(m => "text" in m ? m.text : m.content)
+                  .join("\n");
+                handleDiscoverRef.current(userAnswers.length > 10 ? userAnswers : "Agente configurado via wizard");
+              }}
+            >
+              <Sparkles className="w-3.5 h-3.5" /> Finalizar configuração
+            </Button>
+          </div>
+        )}
+
         {/* Streaming indicator (post-wizard or during wizard Q&A) */}
         {((wizardStep === "done" && isStreaming && messages[messages.length - 1]?.role !== "agent") ||
           (wizardStep === "discover" && wizardIsStreaming && (wizardChatMessages?.[wizardChatMessages.length - 1]?.role !== "agent"))) && (
