@@ -509,82 +509,77 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
     void wizardChat.sendMessage("start");
   }, [agentLoading, wizardStep, wizardChat]);
 
-  // Detect ```agent-config {...}``` block in wizard reply → structure + build agent
+  // Number of Q&A questions per agent type (first agent msg is intro, rest are questions)
+  const WIZARD_MIN_QUESTIONS: Record<string, number> = {
+    sdr: 8, sac: 6, support: 6, marketing: 6, custom: 6,
+  };
+
   const wizardCompletedRef = useRef(false);
+
+  const runWizardBuild = useCallback(async (conversationSummary: string) => {
+    if (wizardCompletedRef.current) return;
+    wizardCompletedRef.current = true;
+
+    setWizardStep("structure");
+    const enriched = await handleStructureRequest(conversationSummary);
+
+    if (!enriched) {
+      wizardCompletedRef.current = false;
+      setWizardStep("discover");
+      return;
+    }
+
+    setStructuredConfig(enriched);
+    handleConfigStructured(enriched);
+    setWizardStep("build");
+    await handleBuildAgent(enriched);
+  }, [handleStructureRequest, handleConfigStructured, handleBuildAgent, setWizardStep]);
+
+  // Auto-advance: trigger when user has answered all required questions
   useEffect(() => {
     if (wizardCompletedRef.current) return;
     if (wizardChat.isStreaming) return;
+    if (wizardStep !== "discover") return;
+
+    const minRequired = WIZARD_MIN_QUESTIONS[wizardAgentTypeKey] ?? 6;
+    const userMessages = wizardChat.messages.filter(m => m.role === "user");
+    if (userMessages.length < minRequired) return;
+
+    // Build a conversation summary from Q&A pairs
+    const summary = wizardChat.messages
+      .map(m => m.role === "user" ? `Usuário: ${m.text}` : `Assistente: ${m.text}`)
+      .join("\n");
+
+    void runWizardBuild(summary);
+  }, [wizardChat.messages, wizardChat.isStreaming, wizardStep, wizardAgentTypeKey, runWizardBuild]);
+
+  // Also detect explicit ```agent-config``` block if AI generates one before minRequired
+  useEffect(() => {
+    if (wizardCompletedRef.current) return;
+    if (wizardChat.isStreaming) return;
+    if (wizardStep !== "discover") return;
+
     const lastAgentMsg = [...wizardChat.messages].reverse().find(m => m.role === "agent");
     if (!lastAgentMsg) return;
     const match = lastAgentMsg.text.match(/```agent-config\s*([\s\S]*?)```/);
     if (!match) return;
-    try {
-      const rawConfig = match[1].trim();
-      const cleanedConfig = rawConfig
-        .replace(/^```json\s*/i, "")
-        .replace(/```$/i, "")
-        .trim();
-      const parsed = JSON.parse(cleanedConfig);
-      wizardCompletedRef.current = true;
 
-      const wizardBrief = [
-        parsed.companyName ? `Empresa: ${parsed.companyName}` : "",
-        parsed.description ? `Descrição: ${parsed.description}` : "",
-        parsed.objective ? `Objetivo: ${parsed.objective}` : "",
-        parsed.toneOfVoice ? `Tom de voz: ${parsed.toneOfVoice}` : "",
-        parsed.greetingMessage ? `Saudação inicial: ${parsed.greetingMessage}` : "",
-        parsed.instructions ? `Regras coletadas no wizard:\n${parsed.instructions}` : "",
+    try {
+      const parsed = JSON.parse(match[1].trim().replace(/^```json\s*/i, "").replace(/```$/i, "").trim());
+      const brief = [
+        parsed.companyName  ? `Empresa: ${parsed.companyName}` : "",
+        parsed.description  ? `Descrição: ${parsed.description}` : "",
+        parsed.objective    ? `Objetivo: ${parsed.objective}` : "",
+        parsed.toneOfVoice  ? `Tom de voz: ${parsed.toneOfVoice}` : "",
+        parsed.greetingMessage ? `Saudação: ${parsed.greetingMessage}` : "",
+        parsed.instructions ? `Instruções:\n${parsed.instructions}` : "",
       ].filter(Boolean).join("\n\n");
 
-      const baseConfig: StructuredAgentConfig = {
-        agent_name: parsed.name || loadedAgent.name,
-        agent_type: parsed.role || loadedAgent.agentType,
-        description: parsed.description || "",
-        objective: parsed.objective || "",
-        tone: parsed.toneOfVoice || "professional_friendly",
-        language: "pt-BR",
-        greeting_message: parsed.greetingMessage || `Olá! Sou ${parsed.name || loadedAgent.name}. Como posso ajudar?`,
-        instructions: mergeAgentInstructions(loadedAgent.agentType, parsed.instructions),
-        channels: ["whatsapp", "website"],
-        selected_features: [],
-        onboarding_level: "soft",
-      };
-
-      // Enrich the config via the structure endpoint using the full wizard briefing
-      (async () => {
-        let finalConfig = baseConfig;
-        if (wizardBrief) {
-          try {
-            const enriched = await handleStructureRequest(wizardBrief);
-            if (enriched) {
-              finalConfig = {
-                ...enriched,
-                agent_name: parsed.name || enriched.agent_name || baseConfig.agent_name,
-                agent_type: baseConfig.agent_type,
-                description: parsed.description || enriched.description || baseConfig.description,
-                objective: parsed.objective || enriched.objective || baseConfig.objective,
-                tone: parsed.toneOfVoice || enriched.tone || baseConfig.tone,
-                greeting_message: parsed.greetingMessage || enriched.greeting_message || baseConfig.greeting_message,
-                instructions: mergeAgentInstructions(
-                  loadedAgent.agentType,
-                  parsed.instructions,
-                  enriched.instructions,
-                ),
-                channels: enriched.channels?.length ? enriched.channels : baseConfig.channels,
-              };
-            }
-          } catch (e) {
-            console.warn("Structure enrichment failed, using base config:", e);
-          }
-        }
-        setStructuredConfig(finalConfig);
-        handleConfigStructured(finalConfig);
-        await handleBuildAgent(finalConfig);
-      })();
-    } catch (e) {
-      console.warn("Failed to parse agent-config block:", e);
+      void runWizardBuild(brief || "Agente configurado via wizard");
+    } catch {
+      // malformed block — wait for auto-advance by message count
     }
-  }, [wizardChat.messages, wizardChat.isStreaming, loadedAgent.name, loadedAgent.agentType, handleConfigStructured, handleBuildAgent, handleStructureRequest]);
+  }, [wizardChat.messages, wizardChat.isStreaming, wizardStep, runWizardBuild]);
 
 
   const testSystemPrompt = useMemo(() => {
