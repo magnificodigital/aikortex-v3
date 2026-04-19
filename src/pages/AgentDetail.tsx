@@ -378,7 +378,7 @@ const AgentDetail = () => {
         avatar_url:  AVATAR_BY_TYPE[resolvedType] || avatar1,
         model:       agentModel,
         provider:    getProviderForModel(agentModel),
-        status:      "configuring",
+        status:      "active",
         config: {
           objective:       config.objective,
           instructions:    config.instructions,
@@ -521,19 +521,37 @@ IMPORTANTE: Você NÃO é o agente final. Apenas configure.`;
     wizardCompletedRef.current = true;
 
     setWizardStep("structure");
+
+    // Try to enrich via agent-structure; fallback to basic config if it fails
+    let finalConfig: StructuredAgentConfig;
     const enriched = await handleStructureRequest(conversationSummary);
 
-    if (!enriched) {
-      wizardCompletedRef.current = false;
-      setWizardStep("discover");
-      return;
+    if (enriched) {
+      finalConfig = enriched;
+    } else {
+      // Fallback: build basic config from first user answer (agent name)
+      const firstUserMsg = wizardChat.messages.find(m => m.role === "user");
+      const agentName = firstUserMsg?.text?.trim() || loadedAgent.name || "Novo Agente";
+      finalConfig = {
+        agent_name: agentName,
+        agent_type: loadedAgent.agentType || "Custom",
+        description: `Agente ${agentName} configurado via wizard.`,
+        objective: conversationSummary.slice(0, 300),
+        tone: "professional_friendly",
+        language: "pt-BR",
+        greeting_message: `Olá! Sou ${agentName}. Como posso ajudar?`,
+        instructions: mergeAgentInstructions(loadedAgent.agentType, conversationSummary),
+        channels: ["whatsapp", "website"],
+        selected_features: [],
+        onboarding_level: "soft",
+      };
     }
 
-    setStructuredConfig(enriched);
-    handleConfigStructured(enriched);
+    setStructuredConfig(finalConfig);
+    handleConfigStructured(finalConfig);
     setWizardStep("build");
-    await handleBuildAgent(enriched);
-  }, [handleStructureRequest, handleConfigStructured, handleBuildAgent, setWizardStep]);
+    await handleBuildAgent(finalConfig);
+  }, [handleStructureRequest, handleConfigStructured, handleBuildAgent, setWizardStep, wizardChat.messages, loadedAgent]);
 
   // Auto-advance: trigger when user has answered all required questions
   useEffect(() => {
