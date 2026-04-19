@@ -206,82 +206,49 @@ function streamText(text: string): ReadableStream {
 
 // ── Wizard setup prompt builder ───────────────────────────────────────────
 function buildWizardPrompt(agentType: string): string {
-  const typeLabel: Record<string, string> = {
-    sdr: "SDR (Sales Development Representative)",
-    sac: "SAC / Atendimento ao Cliente",
-    custom: "Personalizado",
-    support: "Suporte Técnico",
-    marketing: "Marketing / Conteúdo",
-  };
-
-  const label = typeLabel[agentType?.toLowerCase()] || agentType || "IA";
-
   const questions: Record<string, string[]> = {
     sdr: [
-      "o nome do agente",
-      "a empresa ou negócio que ele vai representar",
-      "os produtos ou serviços que ele deve apresentar e qual problema eles resolvem",
-      "quem é o cliente ideal (ICP: segmento, porte, cargo do decisor e dor principal)",
-      "quais dados ele deve obrigatoriamente coletar do lead antes de encerrar",
-      "como a qualificação deve acontecer (ex: BANT, critérios de desqualificação e sinais de oportunidade)",
-      "como o agendamento deve funcionar (duração, fuso, janelas de horário e quem conduz a reunião)",
-      "o tom de comunicação e as regras críticas do que ele nunca pode dizer ou fazer",
+      "Qual o nome do agente?",
+      "Qual empresa ou negócio ele vai representar?",
+      "Quais produtos ou serviços ele vai apresentar? Qual problema resolvem?",
+      "Quem é o cliente ideal? (segmento, porte, cargo do decisor)",
+      "Quais dados ele deve coletar obrigatoriamente do lead?",
+      "Como deve qualificar? (ex: BANT, critérios de desqualificação)",
+      "Como funciona o agendamento? (duração, fuso, quem conduz)",
+      "Qual o tom de comunicação? Alguma regra crítica?",
     ],
     sac: [
-      "o nome do agente",
-      "a empresa ou negócio que ele vai representar",
-      "os principais produtos ou serviços sobre os quais vai dar suporte",
-      "os tipos de dúvidas ou problemas mais comuns que ele vai resolver",
-      "o tom de comunicação (ex: empático, direto, técnico)",
-      "alguma regra importante (ex: nunca prometer prazos sem confirmar)",
+      "Qual o nome do agente?",
+      "Qual empresa ou negócio ele vai representar?",
+      "Quais produtos ou serviços ele vai dar suporte?",
+      "Quais dúvidas ou problemas mais comuns ele vai resolver?",
+      "Qual o tom de comunicação? (empático, direto, técnico)",
+      "Alguma regra importante que ele deve seguir?",
     ],
   };
 
   const qs = questions[agentType?.toLowerCase()] || [
-    "o nome do agente",
-    "a empresa ou negócio que ele vai representar",
-    "o objetivo principal do agente",
-    "o público-alvo que ele vai atender",
-    "o tom de comunicação desejado",
-    "alguma regra ou restrição importante",
+    "Qual o nome do agente?",
+    "Qual empresa ou negócio ele vai representar?",
+    "Qual o objetivo principal do agente?",
+    "Quem é o público-alvo?",
+    "Qual o tom de comunicação?",
+    "Alguma regra ou restrição importante?",
   ];
 
-  return `Você é um assistente de configuração da plataforma Aikortex. Sua missão é ajudar o usuário a configurar um agente de ${label} fazendo perguntas simples e objetivas.
+  return `Você é um configurador de agentes IA da Aikortex. Faça as perguntas abaixo em ordem, UMA por mensagem.
 
-## Regras do wizard
-- Faça UMA pergunta por vez, na ordem abaixo
-- Seja amigável e dê exemplos quando útil
-- Nunca gere o bloco agent-config antes de coletar TODAS as respostas necessárias
-- Se a mensagem do usuário for "start" ou "Vamos criar seu agente inteligente", apenas se apresente e faça a primeira pergunta
-- Para SDR, conduza o diagnóstico pensando em um agente comercial humano que qualifica, coleta dados, agenda e registra tudo no CRM
-- Nunca pule perguntas — todas são necessárias
+REGRAS OBRIGATÓRIAS:
+- Máximo 1 frase por mensagem — só a pergunta, nada mais
+- Sem introduções, sem exemplos, sem explicações
+- Não cumprimente, não se apresente — vá direto à primeira pergunta
+- Aguarde a resposta antes de fazer a próxima pergunta
+- Responda SEMPRE em português do Brasil
 
-## Perguntas (em ordem)
-${qs.map((q, i) => `${i + 1}. Pergunte sobre ${q}`).join("\n")}
+PERGUNTAS (em ordem):
+${qs.map((q, i) => `${i + 1}. ${q}`).join("\n")}
 
-## Início
-Apresente-se brevemente e faça a primeira pergunta.
-
-## Ao finalizar todas as perguntas
-Gere um resumo amigável do agente configurado e então exiba o bloco JSON abaixo com a configuração completa:
-
-\`\`\`agent-config
-{
-  "name": "...",
-  "role": "${agentType || "custom"}",
-  "companyName": "...",
-  "objective": "...",
-  "greetingMessage": "...",
-  "instructions": "...",
-  "toneOfVoice": "...",
-  "description": "..."
-}
-\`\`\`
-
-O campo "instructions" deve ser DETALHADO — inclua: contexto do negócio, fluxo de conversa, regras, restrições e comportamentos específicos do agente. Mínimo 5 parágrafos.
-Para SDR, as instructions DEVEM incluir obrigatoriamente: saudação, identificação, descoberta, qualificação BANT, proposta de valor, pedido de horários, confirmação do agendamento, coleta de nome/email/telefone/empresa/cargo e encerramento com bloco <<<CRM_LEAD>>>{...}<<<END>>>.
-
-Responda SEMPRE em português do Brasil.`;
+Comece agora com a pergunta 1.`;
 }
 
 // ── System prompt builder ─────────────────────────────────────────────────

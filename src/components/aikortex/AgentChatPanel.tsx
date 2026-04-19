@@ -367,11 +367,15 @@ const AgentChatPanel = ({
   };
 
   // Which messages to show based on wizard state
-  // During discover, show the wizard Q&A chat (backed by useAgentChat in wizard-setup mode).
+  // During discover, show the wizard Q&A chat — hide the initial "start" trigger message
   const displayMessages: any[] = wizardStep === "done"
     ? messages
     : wizardStep === "discover"
-      ? (wizardChatMessages || [])
+      ? (wizardChatMessages || []).filter((m, i) => {
+          const text = "text" in m ? (m as any).text : (m as any).content;
+          const role = "text" in m ? (m as any).role : (m as any).role;
+          return !(i === 0 && role === "user" && typeof text === "string" && text.trim().toLowerCase() === "start");
+        })
       : wizardMessages;
 
 
